@@ -1,7 +1,6 @@
 import React from 'react';
 import Layout from '@theme/Layout';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import styles from './index.module.css';
 
 export default function Home() {
@@ -29,7 +28,6 @@ export default function Home() {
           </div>
         </div>
       </main>
-      <HomepageFeatures />
     </Layout>
   );
 }
