@@ -104,36 +104,7 @@ const config: Config = {
     },
     footer: {
       style: 'dark',
-      links: [
-        {
-          title: '文档',
-          items: [
-            {
-              label: '快速开始',
-              to: '/docs/intro',
-            },
-          ],
-        },
-        {
-          title: '社区',
-          items: [
-            {
-              label: 'GitHub',
-              href: 'https://github.com/hanphonejan',
-            },
-          ],
-        },
-        {
-          title: '更多',
-          items: [
-            {
-              label: '博客',
-              to: '/blog',
-            },
-          ],
-        },
-      ],
-      copyright: `Built with ❤️ by HanphoneJan · © ${new Date().getFullYear()}`,
+      copyright: `By HanphoneJan · © ${new Date().getFullYear()}`,
     },
     prism: {
       theme: prismThemes.github,
