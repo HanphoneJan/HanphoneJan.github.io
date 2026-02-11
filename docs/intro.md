@@ -1,47 +1,21 @@
 ---
 sidebar_position: 1
+title: 欢迎使用 HanphoneJan 技术文档站
 ---
 
-# Tutorial Intro
+# 欢迎使用 HanphoneJan 技术文档站
 
-Let's discover **Docusaurus in less than 5 minutes**.
+这是你的个人技术文档站，基于 Docusaurus 搭建。
 
-## Getting Started
+## 功能特性
 
-Get started by **creating a new site**.
+- 📚 Markdown 文档系统
+- 🎨 深色模式支持
+- 💻 代码高亮显示
+- 📊 Mermaid 图表支持
+- 🔍 全文搜索
+- 📱 响应式设计
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+## 快速开始
 
-### What you'll need
-
-- [Node.js](https://nodejs.org/en/download/) version 20.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
-
-## Generate a new site
-
-Generate a new Docusaurus site using the **classic template**.
-
-The classic template will automatically be added to your project after you run the command:
-
-```bash
-npm init docusaurus@latest my-website classic
-```
-
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
-
-The command also installs all necessary dependencies you need to run Docusaurus.
-
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
-```
-
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
-
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
-
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+点击左侧导航栏开始探索文档内容。
