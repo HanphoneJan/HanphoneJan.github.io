@@ -1,41 +1,61 @@
-# Website
+# HanphoneJan.github.io
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+Hanphone 的 Github 个人主页 - 基于 Docusaurus 构建的技术文档站
 
-## Installation
+## 🚀 快速开始
 
-```bash
-yarn
-```
-
-## Local Development
+### 安装依赖
 
 ```bash
-yarn start
+pnpm install
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
-
-## Build
+### 本地开发
 
 ```bash
-yarn build
+pnpm start
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+此命令启动本地开发服务器并打开浏览器窗口。大多数更改会实时反映，无需重启服务器。
 
-## Deployment
-
-Using SSH:
+### 构建
 
 ```bash
-USE_SSH=true yarn deploy
+pnpm build
 ```
 
-Not using SSH:
+此命令将静态内容生成到 `build` 目录，可以使用任何静态内容托管服务提供服务。
+
+### 本地预览构建
 
 ```bash
-GIT_USER=<Your GitHub username> yarn deploy
+pnpm serve
 ```
 
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+## 📦 技术栈
+
+- [Docusaurus 3](https://docusaurus.io/) - 现代化静态网站生成器
+- [React 19](https://react.dev/) - UI 框架
+- [TypeScript](https://www.typescriptlang.org/) - 类型安全
+- [Mermaid](https://mermaid.js.org/) - 图表支持
+- [pnpm](https://pnpm.io/) - 包管理器
+
+## 🎨 功能特性
+
+- 📚 Markdown 文档系统
+- 🎨 深色模式支持
+- 💻 代码高亮显示
+- 📊 Mermaid 图表支持
+- 🔍 全文搜索
+- 📱 响应式设计
+- 🚀 自动部署到 GitHub Pages
+
+## 📝 部署
+
+项目配置了 GitHub Actions 自动部署。推送到 `main` 分支后会自动构建并部署到 GitHub Pages。
+
+访问地址：https://hanphonejan.github.io
+
+## 📄 许可证
+
+Copyright © 2026 HanphoneJan
