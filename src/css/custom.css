@@ -1,59 +1,478 @@
 /**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
+ * 技术知识库 - 极简工程美学设计系统
+ * Design System: Brutalism + Swiss Design
  */
 
-/* You can override the default Infima variables here. */
+/* 导入字体 */
+@import './fonts.css';
+
+/* ============================================
+   配色系统 - Color System
+   ============================================ */
+
 :root {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: rgb(33, 175, 144);
-  --ifm-color-primary-darker: rgb(31, 165, 136);
-  --ifm-color-primary-darkest: rgb(26, 136, 112);
-  --ifm-color-primary-light: rgb(70, 203, 174);
-  --ifm-color-primary-lighter: rgb(92, 230, 203);
-  --ifm-color-primary-lightest: rgb(145, 254, 234);
-  --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  /* 主色调 - 科技蓝系 */
+  --primary-blue: #0066FF;
+  --primary-blue-dark: #0052CC;
+  --primary-blue-light: #3385FF;
+  --accent-cyan: #00D4FF;
+  
+  /* 中性色系统 */
+  --gray-50: #FAFBFC;
+  --gray-100: #F5F7FA;
+  --gray-200: #E4E7EB;
+  --gray-300: #CBD2D9;
+  --gray-600: #616E7C;
+  --gray-900: #1A202C;
+  
+  /* 语义色 */
+  --code-keyword: #FF6B9D;
+  --code-string: #00D084;
+  --code-function: #FFB454;
+  --code-comment: #6B7280;
+  
+  /* Docusaurus 变量映射 */
+  --ifm-color-primary: var(--primary-blue);
+  --ifm-color-primary-dark: var(--primary-blue-dark);
+  --ifm-color-primary-darker: #0047B3;
+  --ifm-color-primary-darkest: #003D99;
+  --ifm-color-primary-light: var(--primary-blue-light);
+  --ifm-color-primary-lighter: #4D9FFF;
+  --ifm-color-primary-lightest: #66B3FF;
+  
+  --ifm-background-color: var(--gray-50);
+  --ifm-background-surface-color: #FFFFFF;
+  --ifm-font-color-base: var(--gray-900);
+  --ifm-font-color-secondary: var(--gray-600);
+  
+  /* 字体系统 */
+  --ifm-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 
+                          'Microsoft YaHei', 'PingFang SC', sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 
+                               'SF Mono', 'Consolas', monospace;
+  
+  /* 字阶系统 */
+  --ifm-font-size-base: 16px;
+  --ifm-line-height-base: 1.6;
+  --ifm-heading-font-weight: 700;
+  --ifm-font-weight-semibold: 600;
+  --ifm-font-weight-bold: 700;
+  
+  /* 间距系统 */
+  --ifm-spacing-horizontal: 1.5rem;
+  --ifm-spacing-vertical: 1.5rem;
+  --ifm-global-spacing: 1rem;
+  
+  /* 圆角 */
+  --ifm-global-radius: 8px;
+  --ifm-code-border-radius: 12px;
+  
+  /* 代码块 */
+  --ifm-code-font-size: 14px;
+  --ifm-code-padding-horizontal: 0.375rem;
+  --ifm-code-padding-vertical: 0.125rem;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 102, 255, 0.08);
+  
+  /* 导航栏 */
+  --ifm-navbar-height: 60px;
+  --ifm-navbar-background-color: rgba(255, 255, 255, 0.8);
+  --ifm-navbar-shadow: 0 1px 0 0 var(--gray-200);
+  
+  /* 过渡动画 */
+  --ifm-transition-fast: 150ms;
+  --ifm-transition-slow: 200ms;
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
+/* ============================================
+   深色模式 - Dark Mode
+   ============================================ */
+
 [data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  /* 主色调 - 降低饱和度 */
+  --primary-blue: #4D9FFF;
+  --primary-blue-dark: #3385FF;
+  --primary-blue-light: #66B3FF;
+  --accent-cyan: #00E5FF;
+  
+  /* 中性色系统 - 真实深色 */
+  --gray-50: #0D1117;
+  --gray-100: #161B22;
+  --gray-200: #21262D;
+  --gray-300: #30363D;
+  --gray-600: #8B949E;
+  --gray-900: #E6EDF3;
+  
+  /* Docusaurus 变量映射 */
+  --ifm-color-primary: var(--primary-blue);
+  --ifm-color-primary-dark: var(--primary-blue-dark);
+  --ifm-color-primary-darker: #1A75FF;
+  --ifm-color-primary-darkest: #0066FF;
+  --ifm-color-primary-light: var(--primary-blue-light);
+  --ifm-color-primary-lighter: #80BFFF;
+  --ifm-color-primary-lightest: #99CCFF;
+  
+  --ifm-background-color: var(--gray-50);
+  --ifm-background-surface-color: var(--gray-100);
+  --ifm-font-color-base: var(--gray-900);
+  --ifm-font-color-secondary: var(--gray-600);
+  
+  /* 导航栏 */
+  --ifm-navbar-background-color: rgba(13, 17, 23, 0.8);
+  --ifm-navbar-shadow: 0 1px 0 0 var(--gray-300);
+  
+  /* 代码块 */
+  --docusaurus-highlighted-code-line-bg: rgba(77, 159, 255, 0.12);
+  
+  /* 链接 */
+  --ifm-link-color: var(--accent-cyan);
+  --ifm-link-hover-color: var(--primary-blue-light);
 }
 
-/* 代码块样式优化 */
-.theme-code-block {
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+/* ============================================
+   全局样式 - Global Styles
+   ============================================ */
+
+* {
+  transition: background-color 0.3s ease,
+              color 0.3s ease,
+              border-color 0.3s ease;
 }
 
-/* 导航栏优化 */
+html {
+  font-feature-settings: 'liga' 1, 'calt' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--ifm-font-family-base);
+  letter-spacing: -0.01em;
+}
+
+/* ============================================
+   导航栏样式 - Navbar
+   ============================================ */
+
 .navbar {
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px) saturate(180%);
+  border-bottom: 1px solid var(--gray-200);
+  box-shadow: none;
 }
 
-/* 文档内容优化 */
-.markdown {
-  line-height: 1.8;
+[data-theme='dark'] .navbar {
+  border-bottom: 1px solid var(--gray-300);
 }
 
-.markdown h1,
-.markdown h2,
-.markdown h3 {
+.navbar__brand {
   font-weight: 700;
-  margin-top: 2em;
+  font-size: 1.125rem;
+  letter-spacing: -0.01em;
 }
 
-/* 目录（TOC）优化 */
+.navbar__link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: all var(--ifm-transition-fast) ease;
+}
+
+.navbar__link:hover {
+  background: var(--gray-100);
+  color: var(--primary-blue);
+}
+
+.navbar__link--active {
+  color: var(--primary-blue);
+  background: rgba(0, 102, 255, 0.08);
+}
+
+[data-theme='dark'] .navbar__link--active {
+  background: rgba(77, 159, 255, 0.12);
+}
+
+/* ============================================
+   内容区域 - Content
+   ============================================ */
+
+.main-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.container {
+  max-width: 1200px;
+}
+
+/* 文档内容 */
+.markdown {
+  line-height: 1.6;
+  color: var(--ifm-font-color-base);
+}
+
+.markdown > h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.markdown > h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+[data-theme='dark'] .markdown > h2 {
+  border-bottom-color: var(--gray-300);
+}
+
+.markdown > h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown > h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown p {
+  margin-bottom: 1rem;
+}
+
+.markdown a {
+  color: var(--primary-blue);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--ifm-transition-fast) ease;
+}
+
+.markdown a:hover {
+  border-bottom-color: var(--primary-blue);
+}
+
+[data-theme='dark'] .markdown a {
+  color: var(--accent-cyan);
+}
+
+[data-theme='dark'] .markdown a:hover {
+  border-bottom-color: var(--accent-cyan);
+}
+
+/* ============================================
+   代码块样式 - Code Blocks
+   ============================================ */
+
+/* 内联代码 */
+code:not(pre code) {
+  background: rgba(0, 102, 255, 0.08);
+  color: var(--primary-blue);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: var(--ifm-font-family-monospace);
+  border: none;
+}
+
+[data-theme='dark'] code:not(pre code) {
+  background: rgba(77, 159, 255, 0.12);
+  color: var(--accent-cyan);
+}
+
+/* 代码块容器 */
+.theme-code-block {
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--ifm-code-border-radius);
+  margin: 2rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] .theme-code-block {
+  background: var(--gray-200);
+  border: 1px solid var(--gray-300);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1),
+              0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.prism-code {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  line-height: 1.6;
+  font-variant-ligatures: common-ligatures;
+  tab-size: 2;
+}
+
+/* 代码行高亮 */
+.theme-code-block-highlighted-line {
+  background: var(--docusaurus-highlighted-code-line-bg);
+  border-left: 3px solid var(--primary-blue);
+  padding-left: 12px;
+  margin-left: -16px;
+  display: block;
+}
+
+/* 复制按钮 */
+.clean-btn {
+  border-radius: 6px;
+  transition: all var(--ifm-transition-fast) ease;
+}
+
+.clean-btn:hover {
+  background: var(--gray-200);
+}
+
+[data-theme='dark'] .clean-btn:hover {
+  background: var(--gray-300);
+}
+
+/* ============================================
+   侧边栏 - Sidebar
+   ============================================ */
+
+.theme-doc-sidebar-container {
+  border-right: 1px solid var(--gray-200);
+}
+
+[data-theme='dark'] .theme-doc-sidebar-container {
+  border-right-color: var(--gray-300);
+}
+
+.menu__link {
+  font-size: 0.875rem;
+  border-radius: 6px;
+  transition: all var(--ifm-transition-fast) ease;
+}
+
+.menu__link:hover {
+  background: var(--gray-100);
+  color: var(--primary-blue);
+}
+
+.menu__link--active {
+  color: var(--primary-blue);
+  background: rgba(0, 102, 255, 0.08);
+  font-weight: 600;
+}
+
+[data-theme='dark'] .menu__link--active {
+  background: rgba(77, 159, 255, 0.12);
+}
+
+/* ============================================
+   目录 - Table of Contents
+   ============================================ */
+
 .table-of-contents {
-  border-left: 2px solid var(--ifm-color-primary);
+  border-left: 2px solid var(--gray-200);
   padding-left: 1rem;
+  font-size: 0.875rem;
+}
+
+[data-theme='dark'] .table-of-contents {
+  border-left-color: var(--gray-300);
+}
+
+.table-of-contents__link {
+  color: var(--gray-600);
+  transition: color var(--ifm-transition-fast) ease;
+}
+
+.table-of-contents__link:hover {
+  color: var(--primary-blue);
+}
+
+.table-of-contents__link--active {
+  color: var(--primary-blue);
+  font-weight: 600;
+}
+
+/* ============================================
+   卡片 - Cards
+   ============================================ */
+
+.card {
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--ifm-global-radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all var(--ifm-transition-slow) ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.12);
+}
+
+[data-theme='dark'] .card {
+  background: var(--gray-100);
+  border-color: var(--gray-300);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1),
+              0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .card:hover {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1),
+              0 4px 16px rgba(77, 159, 255, 0.2);
+}
+
+/* ============================================
+   按钮 - Buttons
+   ============================================ */
+
+.button {
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all var(--ifm-transition-slow) ease;
+}
+
+.button--primary {
+  background: var(--primary-blue);
+  border-color: var(--primary-blue);
+}
+
+.button--primary:hover {
+  background: var(--primary-blue-dark);
+  border-color: var(--primary-blue-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 102, 255, 0.2);
+}
+
+/* ============================================
+   响应式 - Responsive
+   ============================================ */
+
+@media (max-width: 996px) {
+  .navbar__link {
+    padding: 12px 16px;
+  }
+  
+  .markdown > h1 {
+    font-size: 1.875rem;
+  }
+  
+  .markdown > h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .markdown > h1 {
+    font-size: 1.5rem;
+  }
+  
+  .markdown > h2 {
+    font-size: 1.25rem;
+  }
 }

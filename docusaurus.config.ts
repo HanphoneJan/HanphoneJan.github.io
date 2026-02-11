@@ -73,17 +73,15 @@ const config: Config = {
   ],
 
   themeConfig: {
-    // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     colorMode: {
+      defaultMode: 'dark',
+      disableSwitch: false,
       respectPrefersColorScheme: true,
     },
     navbar: {
       title: 'HanphoneJan',
-      logo: {
-        alt: 'My Site Logo',
-        src: 'img/logo.svg',
-      },
+      hideOnScroll: false,
       items: [
         {
           type: 'docSidebar',
@@ -97,6 +95,11 @@ const config: Config = {
           label: 'GitHub',
           position: 'right',
         },
+        {
+          type: 'html',
+          position: 'right',
+          value: '<div style="width: 1px; height: 20px; background: var(--gray-300); margin: 0 8px;"></div>',
+        },
       ],
     },
     footer: {
@@ -106,8 +109,12 @@ const config: Config = {
           title: '文档',
           items: [
             {
-              label: '教程',
+              label: '快速开始',
               to: '/docs/intro',
+            },
+            {
+              label: '核心功能',
+              to: '/docs/feature1',
             },
           ],
         },
@@ -130,15 +137,28 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} HanphoneJan. Built with Docusaurus.`,
+      copyright: `Built with ❤️ by HanphoneJan · © ${new Date().getFullYear()}`,
     },
     prism: {
       theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
-      additionalLanguages: ['bash', 'python', 'java', 'typescript', 'javascript', 'go'],
+      darkTheme: prismThemes.oneDark,
+      additionalLanguages: ['bash', 'python', 'java', 'typescript', 'javascript', 'go', 'rust', 'sql', 'json'],
+      magicComments: [
+        {
+          className: 'theme-code-block-highlighted-line',
+          line: 'highlight-next-line',
+          block: {start: 'highlight-start', end: 'highlight-end'},
+        },
+      ],
     },
     mermaid: {
       theme: {light: 'default', dark: 'dark'},
+    },
+    docs: {
+      sidebar: {
+        hideable: true,
+        autoCollapseCategories: true,
+      },
     },
   } satisfies Preset.ThemeConfig,
 };
