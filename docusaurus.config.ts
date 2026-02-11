@@ -39,6 +39,7 @@ const config: Config = {
 
   markdown: {
     mermaid: true,
+    format: 'detect',
     hooks: {
       onBrokenMarkdownLinks: 'warn',
     },
@@ -94,16 +95,7 @@ const config: Config = {
           label: 'GitHub',
           position: 'right',
         },
-        {
-          type: 'html',
-          position: 'right',
-          value: '<div style="width: 1px; height: 20px; background: var(--gray-300); margin: 0 8px;"></div>',
-        },
       ],
-    },
-    footer: {
-      style: 'dark',
-      copyright: `By HanphoneJan · © ${new Date().getFullYear()}`,
     },
     prism: {
       theme: prismThemes.github,
