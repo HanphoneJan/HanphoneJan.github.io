@@ -39,12 +39,6 @@
   box-shadow: 0 8px 24px rgba(77, 159, 255, 0.2);
 }
 
-.featureIcon {
-  font-size: 3rem;
-  margin-bottom: 16px;
-  line-height: 1;
-}
-
 .featureTitle {
   font-size: 1.25rem;
   font-weight: 700;
