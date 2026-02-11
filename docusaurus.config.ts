@@ -112,10 +112,6 @@ const config: Config = {
               label: '快速开始',
               to: '/docs/intro',
             },
-            {
-              label: '核心功能',
-              to: '/docs/feature1',
-            },
           ],
         },
         {
