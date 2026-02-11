@@ -48,9 +48,18 @@ Maven 下载地址：http://maven.apache.org/download.cgi
 
 ### 依赖管理
 
-<img src="https://hanphone.top/gh/HanphoneJan/public_pictures/backend/maven仓库交互图.webp" alt="maven仓库交互图" style="zoom:80%;" />
+![maven仓库交互图](https://hanphone.top/gh/HanphoneJan/public_pictures/backend/maven仓库交互图.webp)
 
-pom.xml 的 dependencies 列表列出了我们的项目需要构建的所有外部依赖项。
+```xml
+<!-- pom.xml 的 dependencies 列表列出了我们的项目需要构建的所有外部依赖项 -->
+<dependencies>
+  <dependency>
+    <groupId>org.example</groupId>
+    <artifactId>my-project</artifactId>
+    <version>1.0.0</version>
+  </dependency>
+</dependencies>
+```
 
 项目同步依赖前要先配置 JDK。
 
@@ -102,7 +111,7 @@ clean： 生命周期负责清理项目的临时文件和目录（主要是 targ
 
 dafault（build）：Maven 构建（build）生命周期是由以下几个阶段的序列组成的
 
-<img src="https://hanphone.top/gh/HanphoneJan/public_pictures/backend/maven生命周期图.webp" alt="maven生命周期图" style="zoom:80%;" />
+![maven生命周期图](https://hanphone.top/gh/HanphoneJan/public_pictures/backend/maven生命周期图.webp)
 
 site： 生命周期用于生成项目站点文档
 
