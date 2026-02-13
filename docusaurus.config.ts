@@ -64,7 +64,7 @@ const config: Config = {
       {
         hashed: true,
         language: ['en', 'zh'],
-        searchBarPosition: 'left',  // 搜索框在左侧，与文档/博客同侧，自然在 GitHub 左边
+        searchBarPosition: 'right',
       },
     ],
   ],
@@ -90,7 +90,7 @@ const config: Config = {
           onUntruncatedBlogPosts: 'warn',
         },
         theme: {
-          customCss: './src/css/custom.css',
+          customCss: ["./src/css/fonts.css", "./src/css/custom.css"],
         },
       } satisfies Preset.Options,
     ],
@@ -107,6 +107,7 @@ const config: Config = {
       title: 'HanphoneJan',
       hideOnScroll: false,
       items: [
+        {to: '/', label: '首页', position: 'left'},
         {
           type: 'docSidebar',
           sidebarId: 'defaultSidebar',
