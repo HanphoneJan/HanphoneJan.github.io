@@ -31,7 +31,5 @@ export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn
 
 ##### 永久配置（推荐）
 
-- Windows：通过"此电脑 → 右键属性 → 高级系统设置 → 环境变量"，在"用户变量"或"系统变量"中新增两个变量：
-  - `PUB_HOSTED_URL`，值为：https://pub.flutter-io.cn
-  - `FLUTTER_STORAGE_BASE_URL`，值为：https://storage.flutter-io.cn
+- Windows：通过“此电脑 → 右键属性 → 高级系统设置 → 环境变量”，在“用户变量”或“系统变量”中新增两个变量：`PUB_HOSTED_URL`（值：https://pub.flutter-io.cn）、`FLUTTER_STORAGE_BASE_URL`（值：https://storage.flutter-io.cn）。
 - macOS/Linux：编辑 shell 配置文件（bash 为 ~/.bash_profile，zsh 为 ~/.zshrc），添加上述两条 export 指令，保存后执行 `source ~/.bash_profile` 或 `source ~/.zshrc` 生效。

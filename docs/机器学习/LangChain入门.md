@@ -63,12 +63,12 @@ CommaSeparatedListOutputParser：解析为逗号分隔的列表
 - **基础文本模板（PromptTemplate）**：适用于 LLM，支持变量插入，格式为`template + input_variables`。
 
     ```python
-from langchain.prompts import PromptTemplate
-prompt = PromptTemplate(
-    template="请用{'{'}style{'}'}风格总结：{'{'}text{'}'}",
-    input_variables=["style", "text"]  # 动态变量
-)
-formatted_prompt = prompt.format(style="幽默", text="今天天气很好...")
+from langchain.prompts import PromptTemplate  
+prompt = PromptTemplate(  
+	template="请用{style}风格总结：{text}",  
+	input_variables=["style", "text"]  # 动态变量  
+)  
+formatted_prompt = prompt.format(style="幽默", text="今天天气很好...")  
     ```
 
 - **对话模板（ChatPromptTemplate）**：适用于 ChatModel，需指定消息角色（系统、用户、助手），确保对话格式正确。

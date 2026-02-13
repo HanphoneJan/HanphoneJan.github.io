@@ -1,4 +1,4 @@
-Hanphone 2024.8
+Hanphone 2024.9
 
 [教程1](https://www.bilibili.com/video/BV1bv4y1R7dp?p=1 )"正点原子"
 [教程2](https://www.bilibili.com/video/BV1th411z7sn/?share_source=copy_web&vd_source=186f482d5782bc8b1831fb6379b26ea2) "江协科技"
