@@ -9,10 +9,13 @@ title: 欢迎
 
 ## 文档分类
 
-- **前端开发** - Web 开发、框架、工具链
-- **嵌入式** - STM32、ARM、RTOS
+- **前端开发** - Web 开发、React、Vue、TypeScript、Next.js、工具链
+- **后端开发** - Spring、Django、FastAPI、Node.js、Docker、数据库
+- **机器学习** - 深度学习、大模型、Transformer、LangChain
+- **嵌入式** - STM32、ARM、RTOS、数电设计、汇编语言
+- **读书笔记** - 读书心得与摘录
 
 ## 快速导航
 
-点击左侧侧边栏浏览不同分类的文档内容。
+点击左侧侧边栏浏览不同分类，或使用顶部搜索框（`Ctrl+K` / `Cmd+K`）快速查找内容。
 

@@ -10,6 +10,11 @@ const config: Config = {
   tagline: '技术文档与知识分享',
   favicon: 'img/favicon.ico',
 
+  // SEO 元信息
+  customFields: {
+    keywords: ['技术文档', '前端开发', '后端开发', '嵌入式', '机器学习', 'STM32', 'React', 'Next.js'],
+  },
+
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -52,7 +57,17 @@ const config: Config = {
   },
 
 
-  themes: ['@docusaurus/theme-mermaid'],
+  themes: [
+    '@docusaurus/theme-mermaid',
+    [
+      require.resolve('@easyops-cn/docusaurus-search-local'),
+      {
+        hashed: true,
+        language: ['en', 'zh'],
+        searchBarPosition: 'left',  // 搜索框在左侧，与文档/博客同侧，自然在 GitHub 左边
+      },
+    ],
+  ],
 
 
   presets: [
@@ -103,6 +118,7 @@ const config: Config = {
           href: 'https://github.com/hanphonejan',
           label: 'GitHub',
           position: 'right',
+          className: 'navbar-github-icon',
         },
       ],
     },
