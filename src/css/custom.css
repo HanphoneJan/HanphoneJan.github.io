@@ -1,249 +1,51 @@
 /**
- * 技术知识库 - 极简工程美学设计系统
- * Design System: Brutalism + Swiss Design
+ * Docusaurus 官方配色主题
+ * 基于 https://docusaurus.io 使用的青绿色（teal）主题，非默认 Infima 绿色
+ *
+ * 绿色来源说明：Infima 默认 --ifm-color-success: #00a400。
+ * 部分组件/插件可能将该变量用于 strong、li、列表等，导致内容显示为绿色。
+ * 通过在根级覆盖 --ifm-color-success，彻底消除绿色。
  */
 
-/* 导入字体 */
-@import './fonts.css';
-
 /* ============================================
-   配色系统 - Color System
+   蓝色主题 - rgb(37, 99, 235) ≈ hsl(221, 83%, 53%)
    ============================================ */
 
 :root {
-  /* 主色调 - 科技蓝系 */
-  --primary-blue: #0066FF;
-  --primary-blue-dark: #0052CC;
-  --primary-blue-light: #3385FF;
-  --accent-cyan: #00D4FF;
+  --site-primary-hue-saturation: 221 83%;
+  --site-primary-hue-saturation-light: 221 75%;
+}
 
-  /* 中性色系统 */
-  --gray-50: #FAFBFC;
-  --gray-100: #F5F7FA;
-  --gray-200: #E4E7EB;
-  --gray-300: #CBD2D9;
-  --gray-600: #616E7C;
-  --gray-900: #1A202C;
+/* 亮色模式 */
+[data-theme='light'] {
+  --ifm-color-primary: rgb(37, 99, 235);
+  --ifm-color-primary-dark: hsl(var(--site-primary-hue-saturation) 48%);
+  --ifm-color-primary-darker: hsl(var(--site-primary-hue-saturation) 42%);
+  --ifm-color-primary-darkest: hsl(var(--site-primary-hue-saturation) 35%);
+  --ifm-color-primary-light: hsl(var(--site-primary-hue-saturation-light) 60%);
+  --ifm-color-primary-lighter: hsl(var(--site-primary-hue-saturation-light) 70%);
+  --ifm-color-primary-lightest: hsl(var(--site-primary-hue-saturation-light) 80%);
+}
 
-  /* Docusaurus 变量映射 */
-  --ifm-color-primary: var(--primary-blue);
-  --ifm-color-primary-dark: var(--primary-blue-dark);
-  --ifm-background-color: var(--gray-50);
-  --ifm-background-surface-color: #FFFFFF;
-  --ifm-font-color-base: var(--gray-900);
-  --ifm-font-color-secondary: var(--gray-600);
+/* 暗色模式 */
+[data-theme='dark'] {
+  --ifm-color-primary: rgb(37, 99, 235);
+  --ifm-color-primary-dark: hsl(var(--site-primary-hue-saturation) 52%);
+  --ifm-color-primary-darker: hsl(var(--site-primary-hue-saturation) 48%);
+  --ifm-color-primary-darkest: hsl(var(--site-primary-hue-saturation) 42%);
+  --ifm-color-primary-light: hsl(var(--site-primary-hue-saturation-light) 65%);
+  --ifm-color-primary-lighter: hsl(var(--site-primary-hue-saturation-light) 72%);
+  --ifm-color-primary-lightest: hsl(var(--site-primary-hue-saturation-light) 82%);
+}
 
-  /* 字体系统 */
-  --ifm-font-family-base: "Noto Serif SC", "Songti SC", SimSun, "STSong", "Times New Roman", serif;
+/* ============================================
+   消除绿色：覆盖 --ifm-color-success
+   Infima 默认 #00a400，改为与正文色一致，避免 strong/li/列表等显示为绿
+   ============================================ */
+:root {
+  --ifm-color-success: var(--ifm-font-color-base);
 }
 
 [data-theme='dark'] {
-  /* 主色调 - 降低饱和度 */
-  --primary-blue: #4D9FFF;
-  --primary-blue-dark: #3385FF;
-  --primary-blue-light: #66B3FF;
-  --accent-cyan: #00E5FF;
-
-  /* 中性色系统 - 真实深色 */
-  --gray-50: #0D1117;
-  --gray-100: #161B22;
-  --gray-200: #21262D;
-  --gray-300: #30363D;
-  --gray-600: #8B949E;
-  --gray-900: #E6EDF3;
-
-  --ifm-color-primary: var(--primary-blue);
-  --ifm-color-primary-dark: var(--primary-blue-dark);
-  --ifm-background-color: var(--gray-50);
-  --ifm-background-surface-color: var(--gray-100);
-  --ifm-font-color-base: var(--gray-900);
-  --ifm-font-color-secondary: var(--gray-600);
-
-  --ifm-link-color: var(--accent-cyan);
-}
-
-/* ============================================
-   全局样式 - Global Styles
-   ============================================ */
-
-html {
-  font-feature-settings: 'liga' 1, 'calt' 1;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  font-family: var(--ifm-font-family-base);
-  letter-spacing: -0.01em;
-}
-
-/* ============================================
-   内容区域 - Content
-   ============================================ */
-
-.container {
-  max-width: 1200px;
-}
-
-/* 文档内容 */
-.markdown {
-  line-height: 1.6;
-  color: var(--ifm-font-color-base);
-}
-
-.markdown > h1 {
-  font-size: 2.25rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-}
-
-.markdown > h2 {
-  font-size: 1.875rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin-top: 3rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--gray-200);
-}
-
-[data-theme='dark'] .markdown > h2 {
-  border-bottom-color: var(--gray-300);
-}
-
-.markdown > h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  margin-top: 2rem;
-  margin-bottom: 0.75rem;
-}
-
-.markdown > h4 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.markdown p {
-  margin-bottom: 1rem;
-}
-
-.markdown a {
-  color: var(--ifm-link-color);
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: border-color 150ms ease;
-}
-
-.markdown a:hover {
-  border-bottom-color: var(--ifm-link-color);
-}
-
-/* ============================================
-   代码块样式 - Code Blocks
-   ============================================ */
-
-/* 内联代码 */
-code:not(pre code) {
-  background: rgba(0, 102, 255, 0.08);
-  color: var(--ifm-color-primary);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.9em;
-  font-family: monospace;
-}
-
-[data-theme='dark'] code:not(pre code) {
-  background: rgba(77, 159, 255, 0.12);
-  color: var(--accent-cyan);
-}
-
-/* 代码块容器 */
-.theme-code-block {
-  background: var(--gray-100);
-  border: 1px solid var(--gray-200);
-  border-radius: 12px;
-  margin: 2rem 0;
-}
-
-[data-theme='dark'] .theme-code-block {
-  background: var(--gray-200);
-  border-color: var(--gray-300);
-}
-
-/* ============================================
-   导航栏 - 搜索框与图标
-   ============================================ */
-
-/* 若搜索与 GitHub 同处右侧，用 row-reverse 反转顺序使搜索在左 */
-.navbar__inner .navbar__items--right {
-  flex-direction: row-reverse !important;
-}
-
-/* 增大搜索栏与右侧图标的间距 */
-.navbar__inner .navbar__items--right {
-  gap: 8px;
-}
-
-/* GitHub 链接改为图标显示（className 在父级或 link 上） */
-.navbar-github-icon .navbar__link,
-.navbar-github-icon.navbar__link,
-a.navbar__link[href*="github.com"] {
-  font-size: 0;
-  padding: 8px;
-  line-height: 0;
-}
-.navbar-github-icon .navbar__link::before,
-.navbar-github-icon.navbar__link::before,
-a.navbar__link[href*="github.com"]::before {
-  content: '';
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%23637189'%3E%3Cpath d='M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z'/%3E%3C/svg%3E") no-repeat center;
-  background-size: contain;
-}
-.navbar-github-icon .navbar__link:hover::before,
-.navbar-github-icon.navbar__link:hover::before,
-a.navbar__link[href*="github.com"]:hover::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%230066FF'%3E%3Cpath d='M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z'/%3E%3C/svg%3E");
-}
-
-[data-theme='dark'] .navbar-github-icon .navbar__link::before,
-[data-theme='dark'] .navbar-github-icon.navbar__link::before,
-[data-theme='dark'] a.navbar__link[href*="github.com"]::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%238B949E'%3E%3Cpath d='M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z'/%3E%3C/svg%3E");
-}
-[data-theme='dark'] .navbar-github-icon .navbar__link:hover::before,
-[data-theme='dark'] .navbar-github-icon.navbar__link:hover::before,
-[data-theme='dark'] a.navbar__link[href*="github.com"]:hover::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%2300E5FF'%3E%3Cpath d='M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z'/%3E%3C/svg%3E");
-}
-
-/* ============================================
-   响应式 - Responsive
-   ============================================ */
-
-@media (max-width: 996px) {
-  .markdown > h1 {
-    font-size: 1.875rem;
-  }
-
-  .markdown > h2 {
-    font-size: 1.5rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .markdown > h1 {
-    font-size: 1.5rem;
-  }
-
-  .markdown > h2 {
-    font-size: 1.25rem;
-  }
+  --ifm-color-success: var(--ifm-font-color-base);
 }
