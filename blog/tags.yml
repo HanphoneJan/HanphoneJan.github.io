@@ -2,3 +2,19 @@
   label: 欢迎
   permalink: /welcome
   description: 欢迎来到博客
+开源:
+  label: 开源
+  permalink: /opensource
+  description: 开源项目与开源精神
+博客系统:
+  label: 博客系统
+  permalink: /blog-system
+  description: 博客系统技术相关
+Next.js:
+  label: Next.js
+  permalink: /nextjs
+  description: Next.js 框架相关
+技术栈:
+  label: 技术栈
+  permalink: /tech-stack
+  description: 技术栈与技术选型

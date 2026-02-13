@@ -12,6 +12,8 @@ tags: [开源, 博客系统, Next.js, 技术栈]
 - [博客后端仓库](https://github.com/HanphoneJan/hanphone-blog-server)
 - [文件管理后端](https://github.com/HanphoneJan/admin-file)
 
+<!-- truncate -->
+
 <div align="center">
 
 # 🌟 Hanphone's Blog

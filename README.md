@@ -268,9 +268,10 @@ git push origin main
 ├── .github/
 │   └── workflows/        # GitHub Actions 自动部署
 ├── docusaurus.config.ts  # 主配置文件
-├── sidebars.ts          # 侧边栏配置（可选，自动生成）
 └── package.json
 ```
+
+> **说明**：`sidebars.ts` 不是必需的。Docusaurus 会根据 `docs/` 文件夹结构**自动生成**侧边栏，每个文件夹成为分类，每个 `.md` 文件成为链接。仅当需要自定义侧边栏顺序或结构时才需要创建该文件。
 
 **目录说明：**
 
@@ -293,9 +294,9 @@ const config: Config = {
 };
 ```
 
-### 修改导航栏
+### 修改顶部导航栏
 
-编辑 `docusaurus.config.ts` 中的 `navbar` 配置。
+顶部导航栏在 `docusaurus.config.ts` 的 `themeConfig.navbar` 中配置，可自定义 Logo、链接、下拉菜单等。文档与博客入口会根据 `docs/` 和 `blog/` 的存在自动展示。
 
 ### 修改页脚
 
@@ -352,20 +353,13 @@ navbar: {
 
 ### 6. 如何修改侧边栏结构
 
-Docusaurus 默认自动生成侧边栏。如需自定义，编辑 `sidebars.ts`：
+Docusaurus **默认根据 `docs/` 目录结构自动生成侧边栏**，无需配置。每个文件夹成为分类，每个 `.md` 文件成为链接。通过文档的 Front Matter 控制顺序和标签：
 
-```typescript
-const sidebars = {
-  tutorialSidebar: [
-    'intro',
-    {
-      type: 'category',
-      label: '前端',
-      items: ['前端/React基础', '前端/Vue基础'],
-    },
-  ],
-};
-```
+- `sidebar_position`：控制排序（数字越小越靠前）
+- `sidebar_label`：自定义侧边栏显示文字
+- `_category_.json`：在文件夹内添加，可自定义分类标签和顺序
+
+仅当需要完全自定义侧边栏（如手动指定顺序、添加外部链接）时，才需创建 `sidebars.ts` 并配置 `sidebarPath`。
 
 ## 📄 许可证
 

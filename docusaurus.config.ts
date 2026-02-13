@@ -60,8 +60,8 @@ const config: Config = {
       'classic',
       {
         docs: {
-          sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/hanphonejan/HanphoneJan.github.io/tree/main/',
+          editUrl: 'https://github.com/hanphonejan/HanphoneJan.github.io/edit/main/',
+          showLastUpdateTime: true,
         },
         blog: {
           showReadingTime: true,
@@ -69,7 +69,7 @@ const config: Config = {
             type: ['rss', 'atom'],
             xslt: true,
           },
-          editUrl: 'https://github.com/hanphonejan/HanphoneJan.github.io/tree/main/',
+          editUrl: 'https://github.com/hanphonejan/HanphoneJan.github.io/edit/main/',
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
           onUntruncatedBlogPosts: 'warn',
@@ -94,7 +94,7 @@ const config: Config = {
       items: [
         {
           type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          sidebarId: 'defaultSidebar',
           position: 'left',
           label: '文档',
         },
@@ -109,7 +109,7 @@ const config: Config = {
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.oneDark,
-      additionalLanguages: ['bash', 'python', 'java', 'typescript', 'javascript', 'go', 'rust', 'sql', 'json'],
+      additionalLanguages: ['bash', 'python', 'java', 'typescript', 'javascript', 'go', 'rust', 'sql', 'json', 'verilog'],
       magicComments: [
         {
           className: 'theme-code-block-highlighted-line',

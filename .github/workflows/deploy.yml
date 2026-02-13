@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 完整 Git 历史，用于 showLastUpdateTime
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
