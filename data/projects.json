@@ -1,0 +1,153 @@
+{
+  "lastUpdated": "2026-09-03T08:31:32.940Z",
+  "count": 21,
+  "projects": [
+    {
+      "name": "agent-guide",
+      "url": "http://hanphone.cloud/agent-guide/",
+      "source": "main",
+      "stars": 0,
+      "description": ""
+    },
+    {
+      "name": "AutoBuy",
+      "url": "http://hanphone.cloud/AutoBuy/",
+      "source": "main",
+      "stars": 226,
+      "description": "一款基于 Selenium 开发的 Windows 网页端抢购工具，支持淘宝、京东平台商品定时自动提交订单"
+    },
+    {
+      "name": "c-code",
+      "url": "http://hanphone.cloud/c-code/",
+      "source": "main",
+      "stars": 0,
+      "description": "C语言代码"
+    },
+    {
+      "name": "calculator",
+      "url": "http://hanphone.cloud/calculator/",
+      "source": "main",
+      "stars": 0,
+      "description": "C语言四则计算器，有Linux和Windows版本，适合用来入门C编程练手"
+    },
+    {
+      "name": "cloud-disk",
+      "url": "http://hanphone.cloud/cloud-disk/",
+      "source": "main",
+      "stars": 0,
+      "description": "Java后端项目练习，S3 兼容对象存储服务，基于 Spring Cloud Alibaba 微服务架构。支持多存储后端（MinIO / 本地 / 阿里云 OSS）、秒传、分片上传、回收站，Gateway 全链路非阻塞，9 项 JMeter 基准测试验证。"
+    },
+    {
+      "name": "crawler",
+      "url": "http://hanphone.cloud/crawler/",
+      "source": "main",
+      "stars": 0,
+      "description": "寒枫的爬虫程序"
+    },
+    {
+      "name": "edge-ai-smart-waste-sorting",
+      "url": "http://hanphone.cloud/edge-ai-smart-waste-sorting/",
+      "source": "main",
+      "stars": 1,
+      "description": " 01-STM32串口通信与OLED显示：STM32 串口、OLED、LED 基础实验 02-STM32-PWM驱动舵机：STM32 定时器 PWM 与舵机控制实验 03-垃圾智能识别分类：K210 / MaixPy 垃圾识别与舵机联动主项目"
+    },
+    {
+      "name": "generate-poems",
+      "url": "http://hanphone.cloud/generate-poems/",
+      "source": "main",
+      "stars": 0,
+      "description": "诗歌生成器是一个基于 Next.js 15 构建的现代化 Web 应用，支持多种诗歌体裁的智能生成。用户可以选择诗歌类型并输入主题，系统将生成相应风格的诗歌作品。"
+    },
+    {
+      "name": "generate-resume",
+      "url": "http://hanphone.cloud/generate-resume/",
+      "source": "main",
+      "stars": 0,
+      "description": "一个基于 AI 的智能网页版简历生成系统，支持上传 PDF/DOCX 格式简历和头像，自动提取关键信息并生成精美的响应式HTML简历"
+    },
+    {
+      "name": "hanphone-blog",
+      "url": "http://hanphone.cloud/hanphone-blog/",
+      "source": "main",
+      "stars": 3,
+      "description": "寒枫的博客，基于 Next.js 15 + Tauri 的现代化个人博客系统"
+    },
+    {
+      "name": "hanphone-old-blog",
+      "url": "http://hanphone.cloud/hanphone-old-blog/",
+      "source": "main",
+      "stars": 0,
+      "description": "寒枫的最初博客，纯静态个人博客项目"
+    },
+    {
+      "name": "HanphoneJan.github.io",
+      "url": "http://hanphone.cloud/",
+      "source": "main",
+      "stars": 0,
+      "description": "寒枫的技术站 - 基于 Docusaurus 构建的技术文档站。"
+    },
+    {
+      "name": "image-retrieval",
+      "url": "http://hanphone.cloud/image-retrieval/",
+      "source": "main",
+      "stars": 1,
+      "description": "基于 CLIP + Faiss + LLM 的跨模态图像检索引擎。输入文本描述或图片，返回语义最相似的图像。可选集成 LLM（OpenAI 兼容 API）提供查询扩展与结果解释。"
+    },
+    {
+      "name": "material",
+      "url": "http://hanphone.cloud/material/",
+      "source": "main",
+      "stars": 0,
+      "description": "寒枫的个人素材资源仓库，用于存放博客、项目和各种创作中使用的图片、音乐和图标等素材。"
+    },
+    {
+      "name": "notes",
+      "url": "http://hanphone.cloud/notes/",
+      "source": "main",
+      "stars": 0,
+      "description": "基于 pereorga/minimalist-web-notepad 项目的 Node.js 实现，新增密��保护功能，提供极简风格的网页记事本服务。"
+    },
+    {
+      "name": "OpenWrtTrafficMonitor",
+      "url": "http://hanphone.cloud/OpenWrtTrafficMonitor/",
+      "source": "main",
+      "stars": 0,
+      "description": "基于Openwrt虚拟机的流量监控界面开发"
+    },
+    {
+      "name": "public-pictures",
+      "url": "http://hanphone.cloud/public-pictures/",
+      "source": "main",
+      "stars": 0,
+      "description": "寒枫的公开图片库，一个按主题分类维护的个人图片资源仓库。"
+    },
+    {
+      "name": "robot-cloud-system",
+      "url": "http://hanphone.cloud/robot-cloud-system/",
+      "source": "master",
+      "stars": 0,
+      "description": "一个面向 移动机器人远程控制、地图可视化、导航调度、任务管理 的 Web 云控系统原型项目。 项目基于 Flask-SocketIO + ROS 2 + SQLite 构建，通过浏览器即可完成机器人运动控制、SLAM 地图查看、导航点管理、任务创建与系统状态查看，适合作为课程设计、实验项目、演示平台或二次开发基础仓库。"
+    },
+    {
+      "name": "transformer-practice",
+      "url": "http://hanphone.cloud/transformer-practice/",
+      "source": "main",
+      "stars": 1,
+      "description": "从零手写 Transformer，并提供 OpenAI 兼容的推理接口,练习用"
+    },
+    {
+      "name": "Usagi-DesktopPet",
+      "url": "http://hanphone.cloud/Usagi-DesktopPet/",
+      "source": "main",
+      "stars": 0,
+      "description": "桌宠乌萨奇安卓端"
+    },
+    {
+      "name": "VoiceTeach",
+      "url": "http://hanphone.cloud/VoiceTeach/",
+      "source": "main",
+      "stars": 1,
+      "description": "基于TTS大模型微调的教学辅助Agent移动端应用，支持语音交互、教学答疑、有声PPT课件生成"
+    }
+  ]
+}
