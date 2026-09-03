@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# 站点地图索引
+Sitemap: https://www.hanphone.top/sitemap-index.xml
+
+# 主站点地图（向后兼容）
+Sitemap: https://www.hanphone.top/sitemap.xml
+
+# code-training 子项目站点地图
+Sitemap: https://www.hanphone.top/code-training/sitemap.xml

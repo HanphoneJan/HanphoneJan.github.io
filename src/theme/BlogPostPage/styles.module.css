@@ -1,0 +1,16 @@
+/* 博客评论区容器 - 占满可用空间 */
+.blogComments {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  width: 100%;
+}
+
+
+/* 确保 giscus iframe 占满宽度 */
+.blogComments :global(.giscus) {
+  width: 100%;
+}
+
+.blogComments :global(.giscus-frame) {
+  width: 100%;
+}

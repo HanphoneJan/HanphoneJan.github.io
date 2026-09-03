@@ -1,0 +1,20 @@
+博客系统:
+  label: 博客系统
+  permalink: /blog-system
+  description: 博客系统技术相关
+技术栈:
+  label: 技术栈
+  permalink: /tech-stack
+  description: 技术栈与技术选型
+读书笔记:
+  label: 读书笔记
+  permalink: /reading-notes
+  description: 读书心得与阅读记录
+网文:
+  label: 网文
+  permalink: /web-novel
+  description: 网络小说阅读与思考
+诡秘之主:
+  label: 诡秘之主
+  permalink: /lord-of-mysteries
+  description: 《诡秘之主》相关阅读笔记
