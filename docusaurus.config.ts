@@ -83,6 +83,11 @@ const config: Config = {
     },
 
 
+    clientModules: [
+      require.resolve('./src/clientModules/themeColor.ts'),
+    ],
+
+
     themes: [
       '@docusaurus/theme-mermaid',
       [
@@ -184,7 +189,7 @@ const config: Config = {
               href: '/img/pwa/favicon-32x32.png',
             },
             {tagName: 'link', rel: 'apple-touch-icon', href: '/img/pwa/apple-touch-icon.png'},
-            {tagName: 'meta', name: 'theme-color', content: '#2563eb'},
+            {tagName: 'meta', name: 'theme-color', content: '#1b1b1d'},
             {tagName: 'meta', name: 'apple-mobile-web-app-capable', content: 'yes'},
             {tagName: 'meta', name: 'mobile-web-app-capable', content: 'yes'},
             {
