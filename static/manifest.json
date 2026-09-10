@@ -1,6 +1,6 @@
 {
   "name": "寒枫的开荒地",
-  "short_name": "寒枫",
+  "short_name": "寒枫的开荒地",
   "description": "技术文档与知识分享",
   "lang": "zh-CN",
   "dir": "ltr",
@@ -11,7 +11,8 @@
   "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "any",
   "background_color": "#1b1b1d",
-  "theme_color": "#2563eb",
+  "theme_color": "#1b1b1d",
+  "prefer_related_applications": false,
   "categories": ["education", "books", "productivity"],
   "icons": [
     {
@@ -25,6 +26,18 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/img/pwa/maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/img/pwa/maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
