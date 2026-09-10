@@ -169,6 +169,33 @@ const config: Config = {
           ],
         } satisfies import('@docusaurus/plugin-content-docs').Options,
       ],
+      [
+        '@docusaurus/plugin-pwa',
+        {
+          debug: false,
+          offlineModeActivationStrategies: ['appInstalled', 'queryString', 'standalone'],
+          pwaHead: [
+            {tagName: 'link', rel: 'manifest', href: '/manifest.json'},
+            {
+              tagName: 'link',
+              rel: 'icon',
+              type: 'image/png',
+              sizes: '32x32',
+              href: '/img/pwa/favicon-32x32.png',
+            },
+            {tagName: 'link', rel: 'apple-touch-icon', href: '/img/pwa/apple-touch-icon.png'},
+            {tagName: 'meta', name: 'theme-color', content: '#2563eb'},
+            {tagName: 'meta', name: 'apple-mobile-web-app-capable', content: 'yes'},
+            {tagName: 'meta', name: 'mobile-web-app-capable', content: 'yes'},
+            {
+              tagName: 'meta',
+              name: 'apple-mobile-web-app-status-bar-style',
+              content: 'black-translucent',
+            },
+            {tagName: 'meta', name: 'apple-mobile-web-app-title', content: '寒枫'},
+          ],
+        },
+      ],
     ],
 
 
