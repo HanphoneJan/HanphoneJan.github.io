@@ -2,17 +2,11 @@
   "name": "寒枫的开荒地",
   "short_name": "寒枫的开荒地",
   "description": "技术文档与知识分享",
-  "lang": "zh-CN",
-  "dir": "ltr",
-  "id": "/",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "any",
-  "background_color": "#1b1b1d",
   "theme_color": "#1b1b1d",
-  "prefer_related_applications": false,
+  "background_color": "#1b1b1d",
   "categories": ["education", "books", "productivity"],
   "icons": [
     {

@@ -180,7 +180,7 @@ const config: Config = {
           debug: false,
           offlineModeActivationStrategies: ['appInstalled', 'queryString', 'standalone'],
           pwaHead: [
-            {tagName: 'link', rel: 'manifest', href: '/manifest.json'},
+            {tagName: 'link', rel: 'manifest', href: '/manifest.webmanifest'},
             {
               tagName: 'link',
               rel: 'icon',
