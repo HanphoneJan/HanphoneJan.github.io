@@ -251,7 +251,6 @@ def levelOrder(self, root: Optional[TreeNode]) -> List[List[int]]:
 ## 相关知识点
 
 - [二叉树](binary_tree)
-- [二叉搜索树](binary_search_tree)
 - [DFS 模式](../patterns/dfs)
 - [BFS 模式](../patterns/bfs)
 - [递归模式](../patterns/recursion)

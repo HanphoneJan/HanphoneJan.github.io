@@ -206,6 +206,12 @@ def mergeTrees(self, root1: Optional[TreeNode], root2: Optional[TreeNode]) -> Op
 
 **平衡的二叉搜索树插入、查找的时间复杂度都是 O(logn)**
 
+### 常见考点
+
+- 中序遍历有序性
+- 插入与删除
+- 验证与构建
+
 ### 验证 BST
 
 ```python
