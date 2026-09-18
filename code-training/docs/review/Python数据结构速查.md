@@ -56,29 +56,71 @@ CPython 中字符串是**不可变的 Unicode 字符序列**，根据字符范�
 
 ### 常用方法
 
+**参数约定**：下面用 `[, ...]` 表示可选参数（更靠内的方括号为更内层的可选参数），用 `默认值` 标注缺省时的行为。
+
 ```python
-# 格式化与转换
-format(*args, **kwargs)      # 格式化字符串，算法中可用于进制转换
-split(sep=None, maxsplit=-1) # 以sep分割字符串，不指定则按空白符分割
-splitlines([keepends=False]) # 按行分割，返回行列表（不包含
-），keepends=True则保留
+# ============ 分割 / 拼接 / 去除 ============
 
-strip([chars])               # 去除首尾字符，默认去除 \r, \n, " "
-lstrip([chars])              # 只去除左侧
-rstrip([chars])              # 只去除右侧
-join(iterable)               # 拼接字符串，如 ','.join(['leet', 'code']) => "leet,code"
-replace(old, new[, count])   # 字符串替换
+split(
+    sep=None,       # 分隔符；None 表示按任意空白符（空格/制表/换行）切
+    maxsplit=-1     # 最多切 maxsplit 次；-1 表示不限制
+)
+```
 
-# 查询与判断
-count(sub[, start[, end]])   # 统计子串出现次数
-startswith(prefix)           # 是否以prefix开头
-endswith(suffix)             # 是否以suffix结尾
-find(sub[, start[, end]])    # 查找子串位置，找不到返回 -1
-index(sub[, start[, end]])   # 查找子串位置，找不到抛出 ValueError
-rfind(sub)                   # 从右向左查找
-rindex(sub)                  # 从右向左查找，找不到抛出异常
+| 写法 | 含义 |
+|---|---|
+| `s.split()` | 按空白符切成单词（自动合并连续空白，**不保留空串**） |
+| `s.split(',')` | 按 `,` 切，**保留**空串 |
+| `s.split(',', 1)` | 只切第 1 个 `,`，返回 2 段（用于拆分"键=值"） |
 
-# 类型判断
+```python
+join(iterable)      # 用 s 作连接符拼接，如 ','.join(['leet','code']) => 'leet,code'
+```
+
+```python
+strip(
+    [chars]     # 可选：要去除的字符集合，缺省去除 \r \n " " 等空白
+)
+lstrip([chars])     # 只去左侧
+rstrip([chars])     # 只去右侧
+```
+`chars` 是**字符集合**而非子串：`s.strip('ab')` 会去掉首尾任意个 `a`/`b`。
+
+```python
+replace(
+    old,            # 要替换的旧子串
+    new,            # 新子串
+    [, count        # 可选：最多替换 count 次；不写则全部替换
+    ]
+)
+```
+
+```python
+# ============ 查找 / 判断 ============
+
+count(
+    sub,            # 必填：要统计的子串
+    [, start        # 可选：开始位置，默认 0
+        [, end]     # 更内层可选：结束位置，默认到末尾（左闭右开 [start,end)）
+    ]
+)
+```
+
+| 写法 | 含义 |
+|---|---|
+| `s.count(sub)` | 在整个 `s` 中统计 `sub` 出现次数 |
+| `s.count(sub, start)` | 在 `s[start:]` 中统计 |
+| `s.count(sub, start, end)` | 在 `s[start:end]` 中统计 |
+
+```python
+find(sub[, start[, end]])    # 返回第一个匹配的下标，找不到返回 -1（不报错）
+index(sub[, start[, end]])   # 同 find，但找不到抛出 ValueError
+rfind(sub[, start[, end]])   # 从右向左找，返回最后一个匹配下标
+rindex(sub[, start[, end]])  # 从右向左找，找不到抛异常
+startswith(prefix[, start[, end]])  # 在 [start,end) 范围内是否以 prefix 开头
+endswith(suffix[, start[, end]])    # 在 [start,end) 范围内是否以 suffix 结尾
+
+# ============ 类型判断 ============
 isdigit()                    # 是否全为数字字符
 isalpha()                    # 是否全为字母
 isalnum()                    # 是否全为字母或数字
@@ -86,23 +128,25 @@ isspace()                    # 是否全为空白字符
 isupper()                    # 是否全为大写字母
 islower()                    # 是否全为小写字母
 
-# 大小写转换
+# ============ 大小写转换 ============
 upper()                      # 全部大写
 lower()                      # 全部小写
-capitalize()                 # 首字母大写
+capitalize()                 # 首字母大写，其余小写
 title()                      # 每个单词首字母大写
 swapcase()                   # 大小写互换
 
-# 对齐填充
-center(width[, fillchar])    # 居中对齐
+# ============ 对齐填充 ============
+center(width[, fillchar])    # 居中对齐，两侧用 fillchar 填充（默认空格）
 ljust(width[, fillchar])     # 左对齐（右侧填充）
 rjust(width[, fillchar])     # 右对齐（左侧填充）
-zfill(width)                 # 左侧填充 '0'
+zfill(width)                 # 左侧填充 '0'（常用于补位数）
 
-# 字符编码
+# ============ 字符编码 ============
 ord(c)                       # 字符转ASCII码，如 ord('a') => 97
 chr(i)                       # ASCII码转字符，如 chr(97) => 'a'
 ```
+
+> **区分 `find` 与 `index`**：`find` 找不到返回 `-1`（适合判断），`index` 抛 `ValueError`（适合确定存在时取值）。`split` 与 `splitlines`：`splitlines` 只按换行符切，`split('\n')` 在末尾空行时会多出空串。
 
 ### 算法应用
 
@@ -183,27 +227,47 @@ val in s            # ~50ns
 
 ### 常用方法
 
+**增删**（区分 `append` / `extend` / `insert`，三者各司其职）：
+
+| 方法 | 作用 | 复杂度 |
+|---|---|---|
+| `lst.append(x)` | 末尾添加**单个**元素 | O(1) |
+| `lst.extend(t)` | 末尾批量添加（把 `t` 的每个元素逐个加入），等价于 `lst += t` | O(k) |
+| `lst.insert(i, x)` | 在位置 `i` 插入（元素右移） | O(n) |
+| `lst.pop()` | 移除并返回最后一个元素 | O(1) |
+| `lst.pop(i)` | 移除并返回位置 `i` 的元素 | O(n) |
+| `lst.remove(x)` | 移除**第一个**等于 `x` 的元素，不存在抛 `ValueError` | O(n) |
+| `lst.clear()` | 清空 | O(n) |
+
 ```python
+# 易错：append 与 extend 的区别
+lst.append([1, 2])     # 把整个列表作为单个元素加入 → [[1, 2]]
+lst.extend([1, 2])     # 把两个元素逐个加入 → [1, 2]
+```
+
+**查询**：
+
+```python
+count(x)                    # 统计 x 出现次数
+index(
+    x,                      # 必填：要查找的元素
+    [, start                # 可选：从下标 start 开始查，默认 0
+        [, end]             # 更内层可选：查到 end 为止（左闭右开）
+    ]
+)
+```
+- 找到返回下标，找不到抛 `ValueError`
+- `lst.index(x)` 查全表；`lst.index(x, start)` 从 `start` 开始；`lst.index(x, start, end)` 限定范围
+
+```python
+val in lst                  # 判断是否存在，O(n)
+
 # 排序与反转
-lst.sort(key=None, reverse=False)  # 原地排序（稳定排序）
-sorted(lst, key=None, reverse=False)  # 返回新列表，不改变原列表
+lst.sort(key=None, reverse=False)  # 原地排序（稳定）
+sorted(lst, key=None, reverse=False)  # 返回新列表，不改原列表
 lst.reverse()                      # 原地反转
 lst[::-1]                          # 切片反转，返回新列表
-reversed(lst)                      # 返回反向迭代器，不创建新列表（节省内存）
-
-# 增删改查
-lst.append(val)       # 末尾添加元素，O(1)
-lst.extend(t)         # 批量添加，等价于 lst += t
-lst.insert(i, val)    # 在位置i插入元素，O(n)
-lst.pop()             # 移除并返回最后一个元素，O(1)
-lst.pop(i)            # 移除并返回位置i的元素，O(n)
-lst.remove(val)       # 移除第一个值为val的元素，O(n)
-lst.clear()           # 清空列表
-
-# 查询
-lst.count(val)        # 统计val出现次数
-lst.index(val[, start[, end]])  # 查找val的第一个索引，不存在抛出 ValueError，可指定搜索范围
-val in lst            # 判断是否存在，O(n)
+reversed(lst)                      # 返回反向迭代器（不创建新列表，省内存）
 
 # 其他
 lst.copy()            # 浅拷贝
@@ -212,6 +276,8 @@ sum(lst)              # 求和
 min(lst)              # 最小值
 max(lst)              # 最大值
 ```
+
+> **`sort` 的 `key`**：传入一个"取排序依据"的函数，如 `lst.sort(key=lambda x: x[1])` 按第二元素排；`reverse=True` 等价于倒序，也可用 `key=lambda x: -x`。
 
 ### 列表推导式
 
@@ -422,28 +488,56 @@ d = {i: i for i in range(10_000_000)}
 
 ### 常用方法
 
+**读取**（区分 `d[key]` 与 `d.get`，前者可能抛错）：
+
+| 写法 | 不存在时 | 典型用途 |
+|---|---|---|
+| `d[key]` | 抛 `KeyError` | 确定键存在时取值 |
+| `d.get(key, default)` | 返回 `default`（默认 `None`） | 安全读取 |
+| `d.setdefault(key, default)` | 先写入默认值再返回 | 惰性初始化 |
+
 ```python
-# 访问与修改
-d[key]                         # 访问键值，不存在抛出 KeyError
-d.get(key, default=None)       # 安全访问，不存在返回default
-d.setdefault(key, default)     # 如key不存在则设置默认值并返回
-d.update(other)                # 批量更新（可传字典或键值对）
+d.get(
+    key,
+    default=None    # 可选：key 不存在时返回的值，缺省 None
+)
+d.setdefault(
+    key,
+    default=None    # key 不存在时，先把 d[key] 设为 default，再返回 default
+)
+```
 
-# 删除
-d.pop(key[, default])          # 删除并返回指定键值，不存在时返回default
-d.popitem()                    # 删除并返回最后一个键值对（Python 3.7+ LIFO顺序）
-del d[key]                     # 删除指定键，不存在抛出 KeyError
-d.clear()                      # 清空字典
+**修改 / 删除**：
 
-# 视图对象（动态，随字典变化而更新）
-d.keys()                       # 返回键的视图
-d.values()                     # 返回值的视图
-d.items()                      # 返回键值对的视图
+```python
+d[key] = val                     # 键存在则更新，不存在则新增
+d.update(other)                  # 批量更新（other 可为字典 / 键值对 / 可迭代元组）
+d.pop(
+    key,
+    [, default                   # key 不存在时返回 default；缺省且 key 不存在则抛 KeyError
+    ]
+)                                # 删除并返回 key 对应的值
+d.popitem()                      # 删除并返回最后一个键值对（3.7+ LIFO 序）
+del d[key]                       # 删除指定键，不存在抛 KeyError
+d.clear()                        # 清空
+```
 
-# 构造技巧
-dict.fromkeys(iterable, value=None)  # 用可迭代对象创建字典
+**视图对象**（动态，随字典变化同步更新，不复制数据）：
+
+```python
+d.keys()      # 键视图
+d.values()    # 值视图
+d.items()     # (键, 值) 视图
+```
+
+**构造技巧**：
+
+```python
+dict.fromkeys(iterable, value=None)  # 用可迭代对象批量建键，统一初值 value
 {k: v for k, v in pairs}            # 字典推导式
 ```
+
+> **`pop` vs `del`**：`pop` 带默认值、安全；`del` 快但键不存在会抛 `KeyError`。**`get` vs `setdefault`**：`get` 只读不改，`setdefault` 会在缺键时**写回**默认值。
 
 ### 迭代技巧
 
@@ -514,34 +608,41 @@ t0 = time.time(); _ = target in s;    print(time.time()-t0)
 
 ### 常用方法
 
+**创建**：
+
 ```python
-# 创建
-s = {1, 2, 3}
-s = set([1, 2, 3])             # 从可迭代对象创建（可去重）
-s = set()                      # 注意：{} 是空字典而非空集合
+s = {1, 2, 3}              # 字面量（注意：{} 是空字典，空集合必须 set()）
+s = set([1, 2, 2, 3])      # 从可迭代对象创建（自带去重）
+s = set()                  # 空集合（不能写 {}）
+```
 
-# 增删
-s.add(val)                     # 添加元素，已存在则无效
-s.update(*others)              # 迭代添加多个元素/集合
-s.remove(val)                  # 删除元素，不存在则抛出 KeyError
-s.discard(val)                 # 删除元素，不存在则不报错（推荐）
-s.pop()                        # 随机移除并返回一个元素
-s.clear()                      # 清空集合
+**增删**（重点区分 `remove` 与 `discard`）：
 
-# 集合运算
-s1 | s2                        # 并集（union）
-s1 & s2                        # 交集（intersection）
-s1 - s2                        # 差集（difference），属于s1但不属于s2
-s1 ^ s2                        # 对称差集（symmetric_difference），只属于一个集合的元素
-s1.union(s2)                   # 并集（等价于 |）
-s1.intersection(s2)            # 交集（等价于 &）
-s1.difference(s2)              # 差集（等价于 -）
+```python
+s.add(x)                     # 添加单个元素，已存在则无操作
+s.update(*others)            # 批量添加（可传多个集合/可迭代对象）
+s.remove(x)                  # 删除 x，不存在抛 KeyError
+s.discard(x)                 # 删除 x，不存在则不报错（推荐用于"可能不存在"）
+s.pop()                      # 弹出并返回任意一个元素（集合无序，结果随机）
+s.clear()                    # 清空
+```
 
-# 关系判断
-val in s                       # O(1) 查询
-s1.issubset(s2)                # s1是否是s2的子集（s1 <= s2）
-s1.issuperset(s2)              # s1是否是s2的超集（s1 >= s2）
-s1.isdisjoint(s2)              # 两集合是否无交集
+**集合运算**（运算符与等价方法）：
+
+| 运算符 | 等价方法 | 含义 | 复杂度 |
+|---|---|---|---|
+| `s1 \| s2` | `union()` | 并集 | O(n+m) |
+| `s1 & s2` | `intersection()` | 交集 | O(min(n,m)) |
+| `s1 - s2` | `difference()` | 差集（属 s1 不属 s2） | O(n) |
+| `s1 ^ s2` | `symmetric_difference()` | 对称差（只属其一） | O(n+m) |
+
+**关系判断**：
+
+```python
+x in s                     # O(1) 查询
+s1.issubset(s2)            # s1 ⊆ s2（s1 <= s2）
+s1.issuperset(s2)          # s1 ⊇ s2（s1 >= s2）
+s1.isdisjoint(s2)          # 两集合无交集
 ```
 
 ### 去重与快速查找
@@ -597,9 +698,10 @@ cnt = Counter({'a': 3, 'b': 1})      # 直接从字典创建
 
 # 常用操作
 cnt[key]                             # 访问计数，不存在返回0（不是KeyError）
-cnt.most_common(n)                   # 返回出现次数最多的n个元素（列表，降序）
-cnt.most_common()                    # 不指定n则返回所有（按频率降序）
-cnt.elements()                       # 返回所有元素的迭代器（按计数重复）
+cnt.most_common(
+    [n]                              # 可选：返回出现次数最多的 n 个；缺省返回全部（降序）
+)                                    # 返回 [(元素, 次数), ...]
+cnt.elements()                       # 返回所有元素迭代器（按计数重复展开）
 cnt.total()                          # 所有计数总和（Python 3.10+）
 cnt.subtract(iterable)               # 减少计数（计数可变为负数）
 cnt.update(iterable)                 # 增加计数
@@ -746,9 +848,11 @@ dq.pop()                      # 右侧弹出，O(1)
 dq.popleft()                  # 左侧弹出，O(1)
 dq.extend(iterable)           # 右侧批量添加
 dq.extendleft(iterable)       # 左侧批量添加（注意顺序会反转）
-dq.rotate(n)                  # 正数：右旋（尾部移到头部），负数：左旋
+dq.rotate(
+    n                         # 正数右旋（尾部移到头部），负数左旋
+)
 dq.clear()                    # 清空
-dq.insert(i, x)               # 在位置i插入元素，O(n)（不常用，需要时用list）
+dq.insert(i, x)               # 在位置i插入，O(n)（需要时优先用 list）
 dq.count(val)                 # 统计val出现次数
 dq.remove(val)                # 删除第一个值为val的元素
 dq.reverse()                  # 原地反转
