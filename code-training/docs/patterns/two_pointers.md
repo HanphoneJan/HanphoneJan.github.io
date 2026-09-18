@@ -70,13 +70,15 @@ def two_pointer_opposite(arr):
 
 ```python
 def two_pointer_fast_slow(arr):
-    slow = 0
+    slow = 0  # 慢指针：指向下一个应保留元素的位置
     
     for fast in range(len(arr)):
         if condition_met:
-            arr[slow] = arr[fast]
+            arr[slow] = arr[fast]  # 把符合条件的元素挪到 slow 处
             slow += 1
     
+    # 注意返回值：去重类问题中 slow 是新数组的"有效长度"，需返回 slow
+    # （若 slow 从 0 起始、保留了第一个元素，则有效长度为 slow；参考下方 removeDuplicates 返回 slow+1）
     return slow  # 或 arr[:slow]
 ```
 
@@ -136,14 +138,14 @@ def removeDuplicates(nums):
     if not nums:
         return 0
     
-    slow = 0
-    
+    slow = 0  # 已去重部分的末尾下标
+    # fast 从 1 开始，与 nums[slow] 比较；nums[0] 天然保留
     for fast in range(1, len(nums)):
         if nums[fast] != nums[slow]:
             slow += 1
             nums[slow] = nums[fast]
     
-    return slow + 1
+    return slow + 1  # 长度 = 末尾下标 + 1
 ```
 
 ## 解题步骤

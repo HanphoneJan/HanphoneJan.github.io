@@ -189,9 +189,9 @@ def traverse(root):
 
 ```python
 def backtrack(path, choices):
-    # 终止条件
-    if satisfy_condition:
-        result.append(path[:])  # 记录答案
+    # 终止条件：当达到目标状态时记录答案（注意要调用判断函数）
+    if satisfy_condition():          # 根据具体问题定义终止条件
+        result.append(path[:])       # 记录答案（用切片拷贝，避免引用污染）
         return
     
     # 遍历所有选择
