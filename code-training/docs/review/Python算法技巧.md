@@ -39,27 +39,32 @@ def binary_search(arr: List[int], target: int) -> int:
 ### 二分查找变体
 
 ```python
-# 查找第一个 >= target 的位置（下界）
+# 下界 lower_bound：查找第一个 >= target 的位置
+# 左闭右开 [left, right)，循环结束后 left 即为答案
 def lower_bound(arr: List[int], target: int) -> int:
     left, right = 0, len(arr)
     while left < right:
-        mid = left + (right - left) // 2
-        if arr[mid] < target:
-            left = mid + 1
-        else:
-            right = mid
-    return left
+        mid = left + (right - left) // 2   # 防溢出写法，等价于 (left+right)//2
+        if arr[mid] < target:      # 用 <：严格小于才排除，等于 target 的值不会被跳过
+            left = mid + 1         # 目标在右半区，排除 mid 及其左边
+        else:                      # arr[mid] >= target：把右边界收到 mid
+            right = mid            # 因为 mid 本身可能就是第一个 >= 的位置，保留 mid
+    return left                    # 返回第一个 >= target 的下标（找不到时为 len(arr)）
 
-# 查找第一个 > target 的位置（上界）
+# 上界 upper_bound：查找第一个 > target 的位置
+# 与 lower_bound 的唯一区别：判断用 <=，即把等于 target 的值也跳过
 def upper_bound(arr: List[int], target: int) -> int:
     left, right = 0, len(arr)
     while left < right:
         mid = left + (right - left) // 2
-        if arr[mid] <= target:
+        if arr[mid] <= target:     # 用 <=：等于 target 也排除，故最终落在最后一个 target 之后
             left = mid + 1
-        else:
+        else:                      # arr[mid] > target：右边界收到 mid
             right = mid
     return left
+
+# 记忆口诀：带等号（<=）= 跳过相等的 = 上界；不带等号（<）= 保留相等的 = 下界
+# 用 [1,2,4,4,4,5,8], target=4：lower_bound→2（第一个4），upper_bound→5（最后一个4的后一位）
 ```
 
 ## 前缀和
@@ -67,12 +72,15 @@ def upper_bound(arr: List[int], target: int) -> int:
 ### 一维前缀和
 
 ```python
-# 构建
+# 一维前缀和
+# prefix[i] 表示 arr[0] 到 arr[i-1] 的和，多开一位避免边界判断
 prefix = [0] * (n + 1)
 for i in range(n):
     prefix[i + 1] = prefix[i] + arr[i]
 
 # 查询区间和 [l, r]
+# 区间和 = prefix[r+1] - prefix[l]
+# 例：arr = [3,1,4]，prefix = [0,3,4,8]；arr[1:3] 和 = prefix[3]-prefix[1] = 8-3 = 5
 def range_sum(l: int, r: int) -> int:
     return prefix[r + 1] - prefix[l]
 ```
@@ -80,13 +88,16 @@ def range_sum(l: int, r: int) -> int:
 ### 二维前缀和
 
 ```python
-# 构建
+# 二维前缀和
+# prefix[i][j] 表示矩阵左上角 (0,0) 到 (i-1,j-1) 的子矩阵和
 prefix = [[0] * (n + 1) for _ in range(m + 1)]
 for i in range(m):
     for j in range(n):
+        # 当前格 = 上方 + 左侧 - 左上角（多加了一次） + 当前元素
         prefix[i + 1][j + 1] = prefix[i][j + 1] + prefix[i + 1][j] - prefix[i][j] + matrix[i][j]
 
 # 查询子矩阵和 [r1, c1] 到 [r2, c2]
+# 大矩阵 - 左侧 - 上方 + 左上角（被减了两次）
 def submatrix_sum(r1: int, c1: int, r2: int, c2: int) -> int:
     return prefix[r2 + 1][c2 + 1] - prefix[r1][c2 + 1] - prefix[r2 + 1][c1] + prefix[r1][c1]
 ```
@@ -97,13 +108,15 @@ def submatrix_sum(r1: int, c1: int, r2: int, c2: int) -> int:
 
 ```python
 # 一维差分
+# diff 是 arr 的差分数组：diff[i] = arr[i] - arr[i-1]
+# 对区间 [l, r] 整体加 val，只需改 diff 的两端，O(1) 完成（而逐元素加是 O(n)）
 diff = [0] * (n + 1)
 
 # 区间 [l, r] 加 val
-diff[l] += val
-diff[r + 1] -= val
+diff[l] += val        # 从 l 开始，之后的前缀和都会 +val
+diff[r + 1] -= val    # 从 r+1 开始抵消，保证只影响 [l, r]
 
-# 还原
+# 还原：对 diff 求前缀和即得原数组
 arr = [0] * n
 cur = 0
 for i in range(n):
@@ -118,14 +131,14 @@ for i in range(n):
 ```python
 def two_sum(arr: List[int], target: int) -> Tuple[int, int]:
     """在有序数组中找两数之和等于target"""
-    left, right = 0, len(arr) - 1
+    left, right = 0, len(arr) - 1   # 一头一尾
     while left < right:
         s = arr[left] + arr[right]
         if s == target:
             return left, right
-        elif s < target:
+        elif s < target:            # 和太小 → 需要更大的数 → 左指针右移
             left += 1
-        else:
+        else:                       # 和太大 → 需要更小的数 → 右指针左移
             right -= 1
     return -1, -1
 ```
@@ -134,14 +147,16 @@ def two_sum(arr: List[int], target: int) -> Tuple[int, int]:
 
 ```python
 def find_duplicate(nums: List[int]) -> int:
-    """Floyd判圈算法找环"""
+    """Floyd判圈算法找环（数组值当作 next 指针，重复值即环入口）"""
+    # 阶段一：快慢指针在环内相遇
     slow = fast = nums[0]
     while True:
-        slow = nums[slow]
-        fast = nums[nums[fast]]
+        slow = nums[slow]           # 慢指针走一步
+        fast = nums[nums[fast]]     # 快指针走两步
         if slow == fast:
-            break
+            break                   # 相遇点必在环内
 
+    # 阶段二：一指针回到起点，两指针同速前进，再次相遇处即环入口（重复值）
     slow = nums[0]
     while slow != fast:
         slow = nums[slow]
@@ -156,17 +171,17 @@ def find_duplicate(nums: List[int]) -> int:
 ```python
 def max_sliding_window(nums: List[int], k: int) -> List[int]:
     from collections import deque
-    q = deque()  # 存下标，保持单调递减
+    q = deque()  # 存下标，维护成单调递减队列：队头始终是当前窗口的最大值下标
     res = []
     for i, x in enumerate(nums):
-        # 移除窗口外的元素
+        # 移除已滑出窗口的下标（窗口大小为 k，超出范围就出队）
         if q and q[0] <= i - k:
             q.popleft()
-        # 保持单调性
+        # 保持单调递减：队尾元素 <= x 时，x 更大且更靠右，旧的永远不会成为最大值，直接丢弃
         while q and nums[q[-1]] <= x:
             q.pop()
         q.append(i)
-        # 记录结果
+        # 窗口完整（长度达到 k）后才开始记录，队头即当前窗口最大值
         if i >= k - 1:
             res.append(nums[q[0]])
     return res
@@ -193,18 +208,18 @@ def min_subarray_len(target: int, nums: List[int]) -> int:
 
 ```python
 # 常用技巧
-x & 1          # 判断奇偶
-x & (x - 1)    # 消除最低位的1
-x & (-x)       # 获取最低位的1
-x | (1 << n)   # 将第n位置1
+x & 1          # 判断奇偶：结果为 1 是奇数（只保留最低位）
+x & (x - 1)    # 消除最低位的1：x=12(1100) → 8(1000)，常用来统计1的个数
+x & (-x)       # 获取最低位的1：x=12(1100) → 4(0100)，即 lowbit
+x | (1 << n)   # 将第n位置1（n从0开始计，第n位即值 2^n）
 x & ~(1 << n)  # 将第n位置0
-x ^ (1 << n)   # 翻转第n位
+x ^ (1 << n)   # 翻转第n位（0↔1）
 
 # 统计二进制中1的个数
-bin(x).count('1')
+bin(x).count('1')        # 简单直观；或用 while x: cnt += x&1; x >>= 1
 
-# 判断是否是2的幂
-x > 0 and (x & (x - 1)) == 0
+# 判断是否是2的幂：2的幂二进制只有一个1，减1后变成全1
+x > 0 and (x & (x - 1)) == 0   # 例：8(1000) & 7(0111) = 0 → True
 ```
 
 ## Python 内置函数巧用
@@ -248,6 +263,8 @@ combinations([1, 2, 3], 2)  # 所有2个元素的组合
 accumulate([1, 2, 3, 4])  # [1, 3, 6, 10]
 
 # 分组
+# 注意：groupby 只对【连续相邻】的相同值分组，所以必须先用 sorted 排序
+# 返回迭代器，每个元素是 (键, 该组的迭代器)
 groupby(sorted([1, 1, 2, 2, 3]))  # 按连续相同值分组
 ```
 

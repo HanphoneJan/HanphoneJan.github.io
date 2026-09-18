@@ -87,33 +87,15 @@ def search_range(arr: List[int], target: int) -> List[int]:
     
     返回：[起始索引, 结束索引]，不存在返回 [-1, -1]
     """
-    def find_left():
-        left, right = 0, len(arr)
-        while left < right:
-            mid = left + (right - left) // 2
-            if arr[mid] < target:
-                left = mid + 1
-            else:
-                right = mid
-        return left
-    
-    def find_right():
-        left, right = 0, len(arr)
-        while left < right:
-            mid = left + (right - left) // 2
-            if arr[mid] <= target:
-                left = mid + 1
-            else:
-                right = mid
-        return left - 1
-    
-    left_bound = find_left()
+    # 直接复用左/右边界函数：左边界 = 第一个 >= target；
+    # 右边界 = 最后一个 <= target，由 upper_bound(target)-1 得到
+    left_bound = binary_search_left(arr, target)
     
     # 检查是否找到
     if left_bound >= len(arr) or arr[left_bound] != target:
         return [-1, -1]
     
-    right_bound = find_right()
+    right_bound = binary_search_right(arr, target)
     return [left_bound, right_bound]
 ```
 
