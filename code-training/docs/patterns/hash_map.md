@@ -193,11 +193,11 @@ map<int, int> ordered_map;
 ```python
 # 在数组中找两个元素满足条件
 hashmap = {}
-for item in arr:
+for i, item in enumerate(arr):
     if target - item in hashmap:
-        # 找到配对
-        return [hashmap[target - item], item]
-    hashmap[item] = index
+        # 找到配对：complement 存于 hashmap，其索引为 hashmap[target-item]，当前项索引为 i
+        return [hashmap[target - item], i]
+    hashmap[item] = i   # 记录元素 -> 索引
 ```
 
 ### 模式 2：计数去重

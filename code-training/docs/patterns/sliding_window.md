@@ -237,10 +237,11 @@ def lengthOfLongestSubstringKDistinct(s, k):
 ### 变体 2：恰好 K 个不同元素
 
 技巧：至多 K 个 - 至多 K-1 个
+（因为"恰好K个"难直接维护，而"至多K个"可用上方 `len(window) <= k` 的窗口模板实现）
 
 ```python
 def exactly_k_distinct(s, k):
-    return at_most_k(s, k) - at_most_k(s, k - 1)
+    return at_most_k(s, k) - at_most_k(s, k - 1)   # at_most_k 即上方"至多K个"的窗口函数
 ```
 
 ## 时间与空间复杂度
