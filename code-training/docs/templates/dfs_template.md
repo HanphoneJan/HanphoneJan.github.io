@@ -241,11 +241,14 @@ def backtrack_template(nums: List[int]) -> List[List[int]]:
     return result
 
 def satisfy_condition() -> bool:
-    """判断是否满足终止条件"""
+    """判断是否满足终止条件。
+    注意：应依据当前 path 判断，例如 len(path) == k 或 len(path) == len(nums)。
+    需要访问 path 时，可改为闭包嵌套在 backtrack 外层，或将其作为参数传入。"""
     return True
 
 def should_prune(i: int) -> bool:
-    """判断是否需要剪枝"""
+    """判断是否需要剪枝。
+    例：组合题中"剩余元素不够"时提前终止；需要用到 path 时同样建议改为嵌套闭包。"""
     return False
 ```
 
