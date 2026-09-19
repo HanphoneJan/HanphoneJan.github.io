@@ -54,7 +54,7 @@ code-training/
 ├── .github/workflows/             # CI 工作流
 ├── docusaurus.config.ts           # Docusaurus 配置
 ├── sidebars.ts                    # 侧边栏配置
-├── CLAUDE.md                      # 算法文档撰写规范
+├── AGENTS.md                      # 算法文档撰写规范
 ├── DEPLOYMENT.md                  # 部署说明
 └── README.md                      # 本文件
 ```
@@ -116,7 +116,7 @@ date_reviewed: []
 
 ### 文档撰写规范
 
-所有题解文档须遵循 [CLAUDE.md](CLAUDE.md) 规范：
+所有题解文档须遵循 [AGENTS.md](AGENTS.md) 规范：
 
 - 按暴力 → 优化 → 最优的顺序讲解
 - 绝不留下内部思考痕迹
