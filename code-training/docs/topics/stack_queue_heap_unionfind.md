@@ -435,11 +435,16 @@ def heap_sort(arr):
 [2558. 从数量最多的堆取走礼物](https://leetcode.cn/problems/take-gifts-from-the-richest-pile/)
 
 ```python
+from math import isqrt
+import heapq
+
 def pickGifts(self, gifts: List[int], k: int) -> int:
+    # 负数入堆模拟大顶堆
     for i in range(len(gifts)):
         gifts[i] *= -1
     heapq.heapify(gifts)
     while k and -gifts[0] > 1:
+        # 堆顶（最大礼物数）开平方后放回，heapreplace = 弹出+插入
         heapq.heapreplace(gifts, -isqrt(-gifts[0]))
         k -= 1
     return -sum(gifts)

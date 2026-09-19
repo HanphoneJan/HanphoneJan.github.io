@@ -58,18 +58,18 @@ class Node:
         self.val = val
         self.children = children if children else []
 
-# N叉树前序遍历
-def preorder(self, root: 'Node') -> List[int]:
+# N叉树前序遍历（递归）
+def preorder_recursive(self, root: 'Node') -> List[int]:
     res = []
     if root is None:
         return res
     res.append(root.val)
     for child in root.children:
-        res += self.preorder(child)
+        res += self.preorder_recursive(child)
     return res
 
 # N叉树前序遍历（迭代）
-def preorder(self, root: 'Node') -> List[int]:
+def preorder_iterative(self, root: 'Node') -> List[int]:
     if root is None:
         return []
     res = []

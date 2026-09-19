@@ -170,12 +170,16 @@ def traverse(root):
 在「递」的过程中维护值，从根节点向下传递信息。
 
 ```python
-# 求二叉树最大深度（自顶向下思路）
-def maxDepth(self, root: Optional[TreeNode]) -> int:
+# 判断是否存在根到叶的路径和为 targetSum（自顶向下：沿路径累减目标值）
+def hasPathSum(self, root: Optional[TreeNode], targetSum: int) -> bool:
     if not root:
-        return 0
-    # 当前节点深度 = 1 + max(左子树深度, 右子树深度)
-    return self.maxDepth(root.left) + self.maxDepth(root.right) + 1
+        return False
+    # 叶子节点：判断当前累计值是否正好匹配
+    if not root.left and not root.right:
+        return root.val == targetSum
+    # 向下传递 targetSum - root.val（自顶向下传递信息）
+    return (self.hasPathSum(root.left, targetSum - root.val) or
+            self.hasPathSum(root.right, targetSum - root.val))
 ```
 
 ### 自底向上 DFS（后序遍历）
@@ -183,6 +187,13 @@ def maxDepth(self, root: Optional[TreeNode]) -> int:
 在「归」的过程中计算，先递归处理子节点，再处理当前节点。
 
 ```python
+# 求二叉树最大深度（自底向上：先求左右子树深度，再合并 +1）
+# 注意用 max 而非 +：+ 会把左右子树深度相加，得到的是"路径节点总数"
+def maxDepth(self, root: Optional[TreeNode]) -> int:
+    if not root:
+        return 0
+    return max(self.maxDepth(root.left), self.maxDepth(root.right)) + 1
+
 # 合并二叉树
 def mergeTrees(self, root1: Optional[TreeNode], root2: Optional[TreeNode]) -> Optional[TreeNode]:
     if root1 is None:
@@ -266,17 +277,18 @@ def sortedArrayToBST(self, nums: List[int]) -> Optional[TreeNode]:
 
 ```python
 def flatten(self, root: TreeNode) -> None:
-    """将二叉树原地展开为链表（使用先右后左的前序遍历）"""
+    """将二叉树原地展开为链表（Morris 风格，O(1) 额外空间）
+    核心：每遇到有左子树的节点，把当前右子树接到左子树的最右节点下"""
     curr = root
     while curr:
         if curr.left:
-            # 找到左子树的最右节点
+            # 找到左子树的最右节点（左子树中最后一个被访问的节点）
             predecessor = curr.left
             while predecessor.right:
                 predecessor = predecessor.right
-            # 将右子树接到最右节点
+            # 将右子树接到左子树最右节点的右侧
             predecessor.right = curr.right
-            # 左子树移到右边
+            # 左子树整体移到右边，置空左指针
             curr.right = curr.left
             curr.left = None
         curr = curr.right
