@@ -357,8 +357,8 @@ else:
 
 ## 相关链接
 
-- [二分查找](../topics/search)
-- [数组](../topics/array)
+- [查找](../patterns/search)
+- [数组](../data-structures/array)
 
 ## 练习题目
 

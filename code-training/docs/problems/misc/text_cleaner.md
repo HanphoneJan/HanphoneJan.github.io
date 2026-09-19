@@ -1,17 +1,15 @@
 ---
 title: 数据清洗引擎 – 文档过滤与去重
 platform: 自定义
-difficulty: 中等
+difficulty: Medium
 id: text-cleaner
 url: ""
 tags:
   - 字符串处理
   - 正则表达式
   - 去重
-topics:
-  - ../../topics/string-processing.md
-patterns:
-  - ../../patterns/multi-stage-filtering.md
+topics: []
+patterns: []
 date_added: 2025-04-30
 date_reviewed: []
 ---

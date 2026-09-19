@@ -1,17 +1,15 @@
 ---
 title: 快递员极速配送挑战
 platform: CodeFun2000
-difficulty: 中等
+difficulty: Medium
 id: P4730
 url: https://codefun2000.com/p/P4730
 tags:
   - 聚类算法
   - K-Means
   - 几何
-topics:
-  - ../../topics/clustering.md
-patterns:
-  - ../../patterns/kmeans.md
+topics: []
+patterns: []
 date_added: 2025-04-30
 date_reviewed: []
 ---

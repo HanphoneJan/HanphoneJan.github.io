@@ -8,11 +8,8 @@ tags:
   - 字符串
   - 栈
   - 递归
-topics:
-  - ../../topics/stack.md
-  - ../../topics/recursion.md
-patterns:
-  - ../../patterns/nested-structure.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

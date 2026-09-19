@@ -1,7 +1,7 @@
 ---
 title: 单词拆分
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 139
 url: https://leetcode.cn/problems/word-break/
 tags:
@@ -9,12 +9,8 @@ tags:
   - 动态规划
   - 回溯
   - 记忆化搜索
-topics:
-  - ../../topics/string.md
-  - ../../topics/dynamic_programming.md
-  - ../../topics/backtracking.md
-patterns:
-  - ../../patterns/dynamic_programming.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

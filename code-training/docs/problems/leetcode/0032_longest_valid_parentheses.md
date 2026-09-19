@@ -1,17 +1,14 @@
 ---
 title: 最长有效括号
 platform: LeetCode
-difficulty: 困难
+difficulty: Hard
 id: 32
 url: https://leetcode.cn/problems/longest-valid-parentheses/
 tags:
   - 字符串
   - 动态规划
   - 栈
-topics:
-  - ../../topics/string.md
-  - ../../topics/dynamic_programming.md
-  - ../../topics/stack_queue_heap_unionfind.md
+topics: []
 patterns: []
 date_added: 2026-03-20
 date_reviewed: []

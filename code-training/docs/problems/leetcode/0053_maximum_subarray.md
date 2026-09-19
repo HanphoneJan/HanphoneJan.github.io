@@ -1,18 +1,15 @@
 ---
 title: 最大子数组和
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 53
 url: https://leetcode.cn/problems/maximum-subarray/
 tags:
   - 数组
   - 动态规划
   - 分治
-topics:
-  - ../../topics/array.md
-  - ../../topics/dynamic_programming.md
-patterns:
-  - ../../patterns/kadane_algorithm.md
+topics: []
+patterns: []
 date_added: 2026-03-23
 date_reviewed: []
 ---

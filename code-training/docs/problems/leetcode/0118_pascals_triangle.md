@@ -1,17 +1,14 @@
 ---
 title: 杨辉三角
 platform: LeetCode
-difficulty: 简单
+difficulty: Easy
 id: 118
 url: https://leetcode.cn/problems/pascals-triangle/
 tags:
   - 数组
   - 动态规划
-topics:
-  - ../../topics/array.md
-  - ../../topics/dynamic_programming.md
-patterns:
-  - ../../patterns/dynamic_programming.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

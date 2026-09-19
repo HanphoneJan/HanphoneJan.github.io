@@ -178,9 +178,9 @@ def removeDuplicates(nums):
 
 ## 相关知识点
 
-- [数组](../topics/array.md)
+- [数组](../data-structures/array.md)
 - [滑动窗口](sliding_window.md)
-- [排序](../topics/sorting.md)
+- [排序](sorting.md)
 
 ## 练习题目
 

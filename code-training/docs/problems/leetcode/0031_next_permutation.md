@@ -1,16 +1,14 @@
 ---
 title: 下一个排列
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 31
 url: https://leetcode.cn/problems/next-permutation/
 tags:
   - 数组
   - 双指针
-topics:
-  - ../../topics/array.md
-patterns:
-  - ../../patterns/two_pointers.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

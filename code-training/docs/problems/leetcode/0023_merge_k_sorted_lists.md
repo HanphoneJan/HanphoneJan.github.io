@@ -1,7 +1,7 @@
 ---
 title: 合并 K 个升序链表
 platform: LeetCode
-difficulty: 困难
+difficulty: Hard
 id: 23
 url: https://leetcode.cn/problems/merge-k-sorted-lists/
 tags:
@@ -9,11 +9,8 @@ tags:
   - 分治
   - 堆（优先队列）
   - 归并排序
-topics:
-  - ../../topics/linked_list.md
-  - ../../topics/stack_queue_heap_unionfind.md
-patterns:
-  - ../../patterns/recursion.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

@@ -1,18 +1,15 @@
 ---
 title: 相交链表
 platform: LeetCode
-difficulty: 简单
+difficulty: Easy
 id: 160
 url: https://leetcode.cn/problems/intersection-of-two-linked-lists/
 tags:
   - 链表
   - 双指针
   - 哈希表
-topics:
-  - ../../topics/linked_list.md
-  - ../../topics/two_pointers.md
-patterns:
-  - ../../patterns/linked_list.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

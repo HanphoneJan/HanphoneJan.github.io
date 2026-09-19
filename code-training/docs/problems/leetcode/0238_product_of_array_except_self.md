@@ -7,11 +7,8 @@ url: https://leetcode.cn/problems/product-of-array-except-self/
 tags:
   - 数组
   - 前缀和
-topics:
-  - ../../topics/array.md
-  - ../../topics/prefix-sum.md
-patterns:
-  - ../../patterns/prefix-suffix-decomposition.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

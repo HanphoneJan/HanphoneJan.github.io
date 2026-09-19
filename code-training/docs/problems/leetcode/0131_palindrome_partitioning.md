@@ -1,18 +1,15 @@
 ---
 title: 分割回文串
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 131
 url: https://leetcode.cn/problems/palindrome-partitioning/
 tags:
   - 字符串
   - 回溯
   - 动态规划
-topics:
-  - ../../topics/string.md
-  - ../../topics/backtracking.md
-patterns:
-  - ../../patterns/backtracking.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

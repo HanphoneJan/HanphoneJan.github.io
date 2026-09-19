@@ -1,18 +1,15 @@
 ---
 title: 螺旋矩阵
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 54
 url: https://leetcode.cn/problems/spiral-matrix/
 tags:
   - 数组
   - 矩阵
   - 模拟
-topics:
-  - ../../topics/array.md
-  - ../../topics/matrix.md
-patterns:
-  - ../../patterns/matrix_traversal.md
+topics: []
+patterns: []
 date_added: 2026-03-23
 date_reviewed: []
 ---

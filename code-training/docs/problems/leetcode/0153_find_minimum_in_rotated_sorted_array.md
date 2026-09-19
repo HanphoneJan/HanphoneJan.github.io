@@ -1,17 +1,14 @@
 ---
 title: 寻找旋转排序数组中的最小值
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 153
 url: https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array/
 tags:
   - 数组
   - 二分查找
-topics:
-  - ../../topics/array.md
-  - ../../topics/search.md
-patterns:
-  - ../../patterns/binary_search.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

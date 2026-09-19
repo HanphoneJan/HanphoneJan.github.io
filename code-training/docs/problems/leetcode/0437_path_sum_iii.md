@@ -9,11 +9,8 @@ tags:
   - 深度优先搜索
   - 哈希表
   - 前缀和
-topics:
-  - ../../topics/binary-tree.md
-  - ../../topics/prefix-sum.md
-patterns:
-  - ../../patterns/tree-dfs.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

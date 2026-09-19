@@ -1,6 +1,6 @@
 ---
 title: 贪心
-category: 算法思想
+category: 算法模式
 difficulty_range: [中等, 困难]
 last_updated: 2026-03-23
 ---
@@ -147,8 +147,8 @@ def can_complete_circuit(gas: List[int], cost: List[int]) -> int:
 
 - [排序](sorting.md)
 - [动态规划](dynamic_programming.md)
-- [双指针模式](../patterns/two_pointers.md)
-- [堆](stack_queue_heap_unionfind.md)（Top K 类贪心辅助）
+- [双指针模式](two_pointers.md)
+- [堆](../data-structures/stack_queue_heap_unionfind.md)（Top K 类贪心辅助）
 
 ## 题目列表
 

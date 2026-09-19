@@ -1,17 +1,15 @@
 ---
 title: 盛最多水的容器
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 11
 url: https://leetcode.cn/problems/container-with-most-water/
 tags:
   - 数组
   - 双指针
   - 贪心
-topics:
-  - ../../topics/array.md
-patterns:
-  - ../../patterns/two_pointers.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

@@ -1,7 +1,7 @@
 ---
 title: 多数元素
 platform: LeetCode
-difficulty: 简单
+difficulty: Easy
 id: 169
 url: https://leetcode.cn/problems/majority-element/
 tags:
@@ -11,12 +11,8 @@ tags:
   - 计数
   - 排序
   - Boyer-Moore 投票算法
-topics:
-  - ../../topics/array.md
-  - ../../topics/bit_manipulation.md
-  - ../../topics/hash_table.md
-patterns:
-  - ../../patterns/boyer_moore_voting.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

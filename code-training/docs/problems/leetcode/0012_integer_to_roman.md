@@ -1,19 +1,15 @@
 ---
 title: 整数转罗马数字
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 12
 url: https://leetcode.cn/problems/integer-to-roman/
 tags:
   - 哈希表
   - 数学
   - 字符串
-topics:
-  - ../../topics/hash_table.md
-  - ../../topics/string.md
-  - ../../topics/greedy.md
-patterns:
-  - ../../patterns/hash_map.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

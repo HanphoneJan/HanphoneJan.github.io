@@ -1,19 +1,15 @@
 ---
 title: 合并区间
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 56
 url: https://leetcode.cn/problems/merge-intervals/
 tags:
   - 数组
   - 排序
   - 贪心
-topics:
-  - ../../topics/array.md
-  - ../../topics/sorting.md
-  - ../../topics/greedy.md
-patterns:
-  - ../../patterns/interval_problems.md
+topics: []
+patterns: []
 date_added: 2026-03-23
 date_reviewed: []
 ---

@@ -9,11 +9,8 @@ tags:
   - 哈希表
   - 堆
   - 桶排序
-topics:
-  - ../../topics/heap.md
-  - ../../topics/hash-table.md
-patterns:
-  - ../../patterns/top-k.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

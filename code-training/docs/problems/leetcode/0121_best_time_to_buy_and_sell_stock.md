@@ -1,19 +1,15 @@
 ---
 title: 买卖股票的最佳时机
 platform: LeetCode
-difficulty: 简单
+difficulty: Easy
 id: 121
 url: https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/
 tags:
   - 数组
   - 贪心
   - 动态规划
-topics:
-  - ../../topics/array.md
-  - ../../topics/greedy.md
-  - ../../topics/dynamic_programming.md
-patterns:
-  - ../../topics/dynamic_programming.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

@@ -1,17 +1,14 @@
 ---
 title: 全排列
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 46
 url: https://leetcode.cn/problems/permutations/
 tags:
   - 回溯
   - 数组
-topics:
-  - ../../topics/array.md
-  - ../../topics/backtracking.md
-patterns:
-  - ../../patterns/backtracking_template.md
+topics: []
+patterns: []
 date_added: 2026-03-23
 date_reviewed: []
 ---

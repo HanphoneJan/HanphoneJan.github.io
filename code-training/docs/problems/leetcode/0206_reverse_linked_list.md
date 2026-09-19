@@ -7,10 +7,8 @@ url: https://leetcode.cn/problems/reverse-linked-list/
 tags:
   - 链表
   - 递归
-topics:
-  - ../../topics/linked-list.md
-patterns:
-  - ../../patterns/two-pointers.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

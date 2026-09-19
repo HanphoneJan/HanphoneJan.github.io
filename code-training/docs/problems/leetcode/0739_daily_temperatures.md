@@ -8,11 +8,8 @@ tags:
   - 栈
   - 数组
   - 单调栈
-topics:
-  - ../../topics/monotonic-stack.md
-  - ../../topics/array.md
-patterns:
-  - ../../patterns/next-greater-element.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

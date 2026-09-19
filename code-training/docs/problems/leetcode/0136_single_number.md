@@ -1,17 +1,14 @@
 ---
 title: 只出现一次的数字
 platform: LeetCode
-difficulty: 简单
+difficulty: Easy
 id: 136
 url: https://leetcode.cn/problems/single-number/
 tags:
   - 数组
   - 位运算
-topics:
-  - ../../topics/array.md
-  - ../../topics/bit_manipulation.md
-patterns:
-  - ../../patterns/bit_manipulation.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

@@ -10,12 +10,8 @@ tags:
   - 并查集
   - 数组
   - 矩阵
-topics:
-  - ../../topics/graph.md
-  - ../../topics/dfs.md
-  - ../../topics/bfs.md
-patterns:
-  - ../../patterns/flood-fill.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

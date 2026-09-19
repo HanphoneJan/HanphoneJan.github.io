@@ -1,15 +1,13 @@
 ---
 title: 有效的括号
 platform: LeetCode
-difficulty: 简单
+difficulty: Easy
 id: 20
 url: https://leetcode.cn/problems/valid-parentheses/
 tags:
   - 字符串
   - 栈
-topics:
-  - ../../topics/string.md
-  - ../../topics/stack_queue_heap_unionfind.md
+topics: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

@@ -1,18 +1,15 @@
 ---
 title: 跳跃游戏
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 55
 url: https://leetcode.cn/problems/jump-game/
 tags:
   - 贪心
   - 数组
   - 动态规划
-topics:
-  - ../../topics/array.md
-  - ../../topics/greedy.md
-patterns:
-  - ../../patterns/greedy_range.md
+topics: []
+patterns: []
 date_added: 2026-03-23
 date_reviewed: []
 ---

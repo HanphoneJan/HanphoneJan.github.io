@@ -259,10 +259,10 @@ def exactly_k_distinct(s, k):
 
 ## 相关知识点
 
-- [数组](../topics/array)
-- [字符串](../topics/string)
+- [数组](../data-structures/array)
+- [字符串](../data-structures/string)
 - [双指针](two_pointers)
-- [哈希表](../topics/hash_table)
+- [哈希表](../data-structures/hash_table)
 
 ## 练习题目
 

@@ -224,61 +224,93 @@ x > 0 and (x & (x - 1)) == 0   # 例：8(1000) & 7(0111) = 0 → True
 
 ## Python 内置函数巧用
 
-### zip 函数
+> 这几个函数是算法题里的高频工具，能省掉 2-3 层手写循环。
+
+### zip 函数 —— 把多个序列"按位置对齐打包"
+
+**作用**：把多个可迭代对象中**下标相同**的元素配成元组，返回迭代器。
+`zip(a, b)` ≈ `[(a[0],b[0]), (a[1],b[1]), ...]`，长度以最短的为准。
+
+**算法用途**：
+1. 同时遍历多个数组，避免下标循环
+2. 矩阵转置 `list(zip(*matrix))`
+3. 两个并行列表拼成字典 `dict(zip(keys, values))`
 
 ```python
-# 矩阵转置
+names  = ['a', 'b', 'c']
+scores = [90, 85, 88]
+for name, score in zip(names, scores):   # 同时遍历两个列表
+    print(name, score)                    # a 90 / b 85 / c 88
+
+list(zip([1, 2, 3], ['x', 'y', 'z']))    # [(1,'x'), (2,'y'), (3,'z')]
+
+# 矩阵转置（*matrix 表示把 matrix 拆成多行，等价于 zip(row1, row2, ...)）
 matrix = [[1, 2, 3], [4, 5, 6]]
-transposed = list(zip(*matrix))  # [(1, 4), (2, 5), (3, 6)]
-
-# 同时遍历多个列表
-for a, b in zip(list1, list2):
-    print(a, b)
+list(zip(*matrix))                        # [(1, 4), (2, 5), (3, 6)]
 ```
 
-### enumerate 函数
+### enumerate 函数 —— 遍历时同时拿到下标和值
+
+**作用**：把可迭代对象变成"（下标, 元素）"对，省去手动维护计数器。
+`enumerate(arr)` ≈ `[(0,arr[0]), (1,arr[1]), ...]`，第二个参数指定起始下标（默认 0）。
+
+**算法用途**：任何需要下标的地方（记录位置、比较相邻元素、滑动窗口右指针）几乎必用。
 
 ```python
-# 获取索引和值
-for i, val in enumerate(arr):
-    print(f"索引 {i}: 值 {val}")
+arr = ['a', 'b', 'c']
+for i, val in enumerate(arr):      # 同时拿到下标和值
+    print(i, val)                   # 0 a / 1 b / 2 c
 
-# 指定起始索引
-for i, val in enumerate(arr, 1):  # 从1开始
+for i, val in enumerate(arr, 1):   # 下标从 1 开始（如打印"第几行"）
     print(i, val)
+
+# 经典用法：一边遍历一边记录元素位置（如两数之和）
+for i, x in enumerate(nums):
+    if x == target:
+        print(i)
 ```
 
-### itertools 模块
+### itertools 模块 —— 排列组合与迭代工具
+
+**作用**：标准库的迭代工具集，重点记 4 个：`permutations`、`combinations`、`accumulate`、`groupby`。
+
+| 函数 | 作用 | 返回内容 |
+|------|------|---------|
+| `permutations(a, r)` | **排列**：考虑顺序，从 a 中取 r 个 | `(1,2),(1,3),(2,1),...` |
+| `combinations(a, r)` | **组合**：不考虑顺序，从 a 中取 r 个 | `(1,2),(1,3),(2,3),...` |
+| `accumulate(a)` | **前缀和**：逐个累加（可传其他二元函数） | `[1,3,6,10]` |
+| `groupby(a)` | **分组**：连续相邻的相同值归一组 | `(键, 组迭代器)` |
+
+**算法用途**：`permutations`/`combinations` 直接枚举所有排列组合（回溯题的"暴力验算"）；`accumulate` 一行实现前缀和（差分数组还原）。
 
 ```python
-from itertools import *
+from itertools import permutations, combinations, accumulate, groupby
 
-# 排列
-permutations([1, 2, 3])  # 所有排列
+# 排列 vs 组合的唯一区别：是否考虑顺序
+list(permutations([1, 2, 3], 2))   # 6种：[(1,2),(1,3),(2,1),(2,3),(3,1),(3,2)]
+list(combinations([1, 2, 3], 2))   # 3种：[(1,2),(1,3),(2,3)]
 
-# 组合
-combinations([1, 2, 3], 2)  # 所有2个元素的组合
+# accumulate 一行前缀和（等价于手写循环）
+list(accumulate([1, 2, 3, 4]))     # [1, 3, 6, 10]
 
-# 累加
-accumulate([1, 2, 3, 4])  # [1, 3, 6, 10]
-
-# 分组
-# 注意：groupby 只对【连续相邻】的相同值分组，所以必须先用 sorted 排序
-# 返回迭代器，每个元素是 (键, 该组的迭代器)
-groupby(sorted([1, 1, 2, 2, 3]))  # 按连续相同值分组
+# groupby 只对【连续相邻】的相同值分组，必须先 sorted 排序
+# 每个元素是 (键, 该组的迭代器)
+[(k, list(g)) for k, g in groupby(sorted([1, 1, 2, 2, 3]))]  # [(1,[1,1]),(2,[2,2]),(3,[3])]
 ```
 
 ## 输入输出模板
 
 ### 快速读入（大量数据时）
 
+**为什么用 `sys.stdin.readline`？** 内置 `input()` 每行都做一次缓冲处理，数据量大时慢；`readline` 直接读行，速度快数倍。**ACM/笔试必用。**
+
 ```python
 import sys
-input = sys.stdin.readline
+input = sys.stdin.readline    # 覆盖 input，之后照常使用
 
-# 读取一行
-n = int(input())
-arr = list(map(int, input().split()))
+# 读取一行整数：input().split() 按空白切分，map(int, ...) 逐个转 int
+n = int(input())                       # 第一行读个数
+arr = list(map(int, input().split()))  # 第二行读整行整数列表
 
 # 读取多行
 n = int(input())
@@ -286,18 +318,22 @@ for _ in range(n):
     a, b = map(int, input().split())
 ```
 
+> 变体：不确定行数读到文件尾，用 `for line in sys.stdin:`；需要一次性读完用 `sys.stdin.read().split()`。详见 [ACM模式输入输出处理](ACM模式输入输出处理.md)。
+
 ## 常用装饰器
 
 ### 记忆化搜索
 
+**作用**：`@cache` / `@lru_cache` 自动缓存函数的返回值——相同参数只算一次，后续直接取缓存。**递归里大量重复子问题时，能把指数级复杂度降到多项式级。**
+
 ```python
 from functools import lru_cache, cache
 
-@cache  # Python 3.9+
+@cache  # Python 3.9+，无参数版（等价于 lru_cache(maxsize=None)）
 def fib(n):
     if n <= 1:
         return n
-    return fib(n - 1) + fib(n - 2)
+    return fib(n - 1) + fib(n - 2)   # 无缓存 O(2^n) → 有缓存 O(n)
 
 @lru_cache(maxsize=None)  # Python 3.8 及以下
 def fib(n):
@@ -305,6 +341,8 @@ def fib(n):
         return n
     return fib(n - 1) + fib(n - 2)
 ```
+
+> **限制**：参数必须可哈希（`list`/`dict` 要转 `tuple`/`frozenset`）；只适用于纯函数（同样输入同样输出）。
 
 ## 参考
 

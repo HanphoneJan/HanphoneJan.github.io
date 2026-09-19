@@ -9,11 +9,8 @@ tags:
   - 递归
   - 链表
   - 双指针
-topics:
-  - ../../topics/linked-list.md
-  - ../../topics/two-pointers.md
-patterns:
-  - ../../patterns/slow-fast-pointer.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

@@ -1,17 +1,14 @@
 ---
 title: 组合总和
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 39
 url: https://leetcode.cn/problems/combination-sum/
 tags:
   - 数组
   - 回溯
-topics:
-  - ../../topics/array.md
-patterns:
-  - ../../patterns/backtracking.md
-  - ../../patterns/dfs.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

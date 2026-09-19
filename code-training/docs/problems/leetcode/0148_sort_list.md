@@ -1,7 +1,7 @@
 ---
 title: 排序链表
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 148
 url: https://leetcode.cn/problems/sort-list/
 tags:
@@ -10,12 +10,8 @@ tags:
   - 分治
   - 排序
   - 归并排序
-topics:
-  - ../../topics/linked_list.md
-  - ../../topics/divide_and_conquer.md
-  - ../../topics/sorting.md
-patterns:
-  - ../../patterns/merge_sort.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

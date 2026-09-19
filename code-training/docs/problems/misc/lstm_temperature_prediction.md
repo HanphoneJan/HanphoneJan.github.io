@@ -1,17 +1,15 @@
 ---
 title: LSTM 室内温度预测
 platform: 自定义
-difficulty: 困难
+difficulty: Hard
 id: lstm-temperature
 url: ""
 tags:
   - LSTM
   - 神经网络
   - 序列建模
-topics:
-  - ../../topics/neural-networks.md
-patterns:
-  - ../../patterns/lstm-forward.md
+topics: []
+patterns: []
 date_added: 2025-04-30
 date_reviewed: []
 ---

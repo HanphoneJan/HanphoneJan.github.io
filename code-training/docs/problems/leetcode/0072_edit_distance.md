@@ -1,18 +1,14 @@
 ---
 title: 编辑距离
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 72
 url: https://leetcode.cn/problems/edit-distance/
 tags:
   - 字符串
   - 动态规划
-topics:
-  - ../../topics/string.md
-  - ../../topics/dynamic_programming.md
-patterns:
-  - ../../patterns/edit_distance.md
-  - ../../patterns/space_optimization.md
+topics: []
+patterns: []
 date_added: 2026-03-23
 date_reviewed: []
 ---

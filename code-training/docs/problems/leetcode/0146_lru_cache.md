@@ -1,7 +1,7 @@
 ---
 title: LRU 缓存
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 146
 url: https://leetcode.cn/problems/lru-cache/
 tags:
@@ -9,12 +9,8 @@ tags:
   - 哈希表
   - 链表
   - 双向链表
-topics:
-  - ../../topics/design.md
-  - ../../topics/hash_table.md
-  - ../../topics/linked_list.md
-patterns:
-  - ../../patterns/lru_cache.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

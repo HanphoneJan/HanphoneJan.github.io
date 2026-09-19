@@ -1,13 +1,12 @@
 ---
 title: 最长公共前缀
 platform: LeetCode
-difficulty: 简单
+difficulty: Easy
 id: 14
 url: https://leetcode.cn/problems/longest-common-prefix/
 tags:
   - 字符串
-topics:
-  - ../../topics/string.md
+topics: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

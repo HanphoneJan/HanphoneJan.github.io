@@ -346,8 +346,8 @@ def levelOrder(root: Node) -> List[List[int]]:
 ## 相关资源
 
 - [BFS 模式](../patterns/bfs)
-- [二叉树](../topics/binary_tree)
-- [图](../topics/graph)
+- [二叉树](../data-structures/binary_tree)
+- [图](../data-structures/graph)
 
 ## 练习题目
 
@@ -383,4 +383,4 @@ def levelOrder(root: Node) -> List[List[int]]:
 
 - [BFS 模式](../patterns/bfs.md)
 - [DFS 模板](dfs_template.md)
-- [二叉树](../topics/binary_tree.md)
+- [二叉树](../data-structures/binary_tree.md)

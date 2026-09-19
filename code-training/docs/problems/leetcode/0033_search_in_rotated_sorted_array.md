@@ -1,15 +1,13 @@
 ---
 title: 搜索旋转排序数组
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 33
 url: https://leetcode.cn/problems/search-in-rotated-sorted-array/
 tags:
   - 数组
   - 二分查找
-topics:
-  - ../../topics/array.md
-  - ../../topics/search.md
+topics: []
 patterns: []
 date_added: 2026-03-20
 date_reviewed: []
@@ -131,22 +129,22 @@ class Solution:
 
 以 `nums = [4, 5, 6, 7, 0, 1, 2]`，`target = 0` 为例：
 
-初始：`left = 0`，`right = 6`
+初始：`left = 0`，`right = 7`（`len(nums) = 7`，左闭右开）
 
 **第一轮**：
-- `mid = (0+6)//2 = 3`，`nums[3] = 7`，不等于 target=0
+- `mid = (0+7)//2 = 3`，`nums[3] = 7`，不等于 target=0
 - 判断有序段：`nums[0]=4 <= nums[3]=7`，左半段 `[4,5,6,7]` 有序
 - target=0 在 `[4, 7)` 范围内吗？`4 <= 0 < 7`？否
 - target 不在左半段，搜索右半：`left = 4`
 
-**第二轮**：`left=4`，`right=6`
-- `mid = (4+6)//2 = 5`，`nums[5] = 1`，不等于 target=0
+**第二轮**：`left=4`，`right=7`
+- `mid = (4+7)//2 = 5`，`nums[5] = 1`，不等于 target=0
 - 判断有序段：`nums[4]=0 <= nums[5]=1`，左半段 `[0,1]` 有序
 - target=0 在 `[0, 1)` 范围内吗？`0 <= 0 < 1`？是
-- target 在左半段，搜索左半：`right = 4`
+- target 在左半段，搜索左半：`right = mid = 5`
 
-**第三轮**：`left=4`，`right=4`
-- `mid = 4`，`nums[4] = 0`，等于 target=0
+**第三轮**：`left=4`，`right=5`
+- `mid = (4+5)//2 = 4`，`nums[4] = 0`，等于 target=0
 
 **返回下标 4**，正确。
 
@@ -154,16 +152,16 @@ class Solution:
 
 **再看 target 不存在的情况**：`nums = [4,5,6,7,0,1,2]`，`target = 3`
 
-**第一轮**：`left=0`，`right=6`，`mid=3`，`nums[3]=7`
+**第一轮**：`left=0`，`right=7`，`mid=3`，`nums[3]=7`
 - 左半段有序，`4 <= 3 < 7`？否，搜索右半：`left=4`
 
-**第二轮**：`left=4`，`right=6`，`mid=5`，`nums[5]=1`
+**第二轮**：`left=4`，`right=7`，`mid=5`，`nums[5]=1`
 - 左半段有序（`nums[4]=0 <= nums[5]=1`），`0 <= 3 < 1`？否，搜索右半：`left=6`
 
-**第三轮**：`left=6`，`right=6`，`mid=6`，`nums[6]=2`
-- 左半段有序，`2 <= 3 < 2`？否，搜索右半：`left=7`
+**第三轮**：`left=6`，`right=7`，`mid=6`，`nums[6]=2`
+- 左半段（单个元素）有序，`2 <= 3 < 2`？否，搜索右半：`left=7`
 
-**循环结束**（`left=7 > right=6`），返回 `-1`，正确。
+**循环结束**（`left == right == 7`，不满足 `left < right`），返回 `-1`，正确。
 
 ---
 

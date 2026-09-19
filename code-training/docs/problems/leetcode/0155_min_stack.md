@@ -1,17 +1,14 @@
 ---
 title: 最小栈
 platform: LeetCode
-difficulty: 简单
+difficulty: Easy
 id: 155
 url: https://leetcode.cn/problems/min-stack/
 tags:
   - 栈
   - 设计
-topics:
-  - ../../topics/stack.md
-  - ../../topics/design.md
-patterns:
-  - ../../topics/stack.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

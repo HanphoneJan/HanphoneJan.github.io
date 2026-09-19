@@ -1,16 +1,14 @@
 ---
 title: 两两交换链表中的节点
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 24
 url: https://leetcode.cn/problems/swap-nodes-in-pairs/
 tags:
   - 链表
   - 递归
-topics:
-  - ../../topics/linked_list.md
-patterns:
-  - ../../patterns/recursion.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

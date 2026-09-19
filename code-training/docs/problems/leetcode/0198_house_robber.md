@@ -7,10 +7,8 @@ url: https://leetcode.cn/problems/house-robber/
 tags:
   - 动态规划
   - 数组
-topics:
-  - ../../topics/dynamic-programming.md
-patterns:
-  - ../../patterns/dp-linear.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---
