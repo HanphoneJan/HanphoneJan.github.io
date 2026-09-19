@@ -79,27 +79,35 @@ def maxProductPath(self, grid: List[List[int]]) -> int:
     mod = 10**9 + 7
     m, n = len(grid), len(grid[0])
 
-    # 需要同时维护最大和最小值，因为负数×负数=正数
-    maxgt = [[0] * n for _ in range(m)]
-    minlt = [[0] * n for _ in range(m)]
+    # 关键：需要同时维护到每格的【最大积】和【最小积】
+    # 因为负数 × 负数 = 正数：当前格是负数时，"之前的最小积"反而可能产生最大积
+    maxgt = [[0] * n for _ in range(m)]   # 到 (i,j) 的最大积
+    minlt = [[0] * n for _ in range(m)]   # 到 (i,j) 的最小积
 
+    # 初始化起点与第一行/第一列（只有一条路径可达）
     maxgt[0][0] = minlt[0][0] = grid[0][0]
-    for i in range(1, n):
+    for i in range(1, n):                       # 第一行：只能从左边来
         maxgt[0][i] = minlt[0][i] = maxgt[0][i - 1] * grid[0][i]
-    for i in range(1, m):
+    for i in range(1, m):                       # 第一列：只能从上面来
         maxgt[i][0] = minlt[i][0] = maxgt[i - 1][0] * grid[i][0]
 
     for i in range(1, m):
         for j in range(1, n):
+            # 当前格 >= 0：最大积 × 正数 = 最大积，最小积 × 正数 = 最小积（方向不变）
             if grid[i][j] >= 0:
                 maxgt[i][j] = max(maxgt[i][j - 1], maxgt[i - 1][j]) * grid[i][j]
                 minlt[i][j] = min(minlt[i][j - 1], minlt[i - 1][j]) * grid[i][j]
             else:
+                # 当前格 < 0：乘负数后符号翻转！
+                # 最大积 ← 之前的最小积（负负得正）
                 maxgt[i][j] = min(minlt[i][j - 1], minlt[i - 1][j]) * grid[i][j]
+                # 最小积 ← 之前的最大积
                 minlt[i][j] = max(maxgt[i][j - 1], maxgt[i - 1][j]) * grid[i][j]
 
     return maxgt[m - 1][n - 1] % mod if maxgt[m - 1][n - 1] >= 0 else -1
 ```
+
+> **核心套路**：DP 中出现"负数乘法"时，不能只存一维状态（最大值），必须**同时维护最大和最小**，转移时根据符号切换取法。
 
 ## 0-1 背包
 
@@ -147,3 +155,16 @@ def longestCommonSubsequence(self, s: str, t: str) -> int:
 3. **确定初始状态**：边界条件
 4. **确定遍历顺序**：确保计算当前状态时，依赖的状态已经计算过
 5. **空间优化**（可选）：滚动数组等技巧
+
+## 常见 DP 类型
+
+| 类型 | 状态定义 | 典型题 |
+|------|---------|--------|
+| **线性 DP** | `dp[i]`：以 i 结尾的最优值 | 最长递增子序列、打家劫舍、爬楼梯 |
+| **网格 DP** | `dp[i][j]`：走到 (i,j) 的最优值 | 不同路径、最小路径和、矩阵最大积 |
+| **区间 DP** | `dp[i][j]`：区间 [i,j] 的最优值 | 石子合并、最长回文子序列 |
+| **背包 DP** | `dp[j]`：容量 j 的最优值 | 0-1 背包、完全背包、分割等和子集 |
+| **树形 DP** | `dp[node]`：以 node 为根的子树的解 | 打家劫舍 III、监控二叉树 |
+| **状态压缩 DP** | `dp[mask]`：用二进制表示集合状态 | 旅行商问题、子集枚举 |
+
+> 大部分 DP 题先判断属于哪种类型，再套用该类型的套路确定状态与转移方向。

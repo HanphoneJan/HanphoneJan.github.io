@@ -44,6 +44,16 @@ last_updated: 2026-03-23
 - 数组去重
 - 移动零
 
+```python
+# 对撞指针模板（有序数组）
+left, right = 0, len(arr) - 1
+while left < right:
+    s = arr[left] + arr[right]
+    if s == target: break
+    elif s < target: left += 1    # 和太小，左移
+    else: right -= 1              # 和太大，右移
+```
+
 **相关题目：**
 - [1. 两数之和](../problems/leetcode/0001_two_sum.md)
 
@@ -52,15 +62,45 @@ last_updated: 2026-03-23
 - 子数组问题
 - 最大/最小子数组
 
+```python
+# 固定窗口：长度为 k 的最大子数组和
+window_sum = sum(arr[:k])
+max_sum = window_sum
+for i in range(k, len(arr)):
+    window_sum += arr[i] - arr[i - k]   # 滑入右侧，滑出左侧
+    max_sum = max(max_sum, window_sum)
+```
+
 ### 3. 前缀和
 
 - 区间和查询
 - 连续子数组和
 
+```python
+# prefix[i] = arr[0..i-1] 的和，多开一位避免边界判断
+prefix = [0] * (n + 1)
+for i in range(n):
+    prefix[i + 1] = prefix[i] + arr[i]
+# 区间 [l, r] 的和
+range_sum = prefix[r + 1] - prefix[l]
+```
+
 ### 4. 二分查找
 
 - 搜索元素
 - 搜索插入位置
+
+```python
+# 左闭右开 [left, right)，返回第一个 >= target 的位置（即 lower_bound）
+left, right = 0, len(arr)
+while left < right:
+    mid = left + (right - left) // 2
+    if arr[mid] < target:
+        left = mid + 1
+    else:
+        right = mid
+# left 即插入位置；若需判断存在性，检查 arr[left] == target
+```
 
 ## 解题技巧
 
@@ -99,9 +139,13 @@ while left < right:
 
 **简单：**
 - [1. 两数之和](../problems/leetcode/0001_two_sum.md)
+- 删除有序数组中的重复项
+- 移动零
 
 **中等：**
-- TBD
+- 盛最多水的容器
+- 三数之和
+- 最长连续序列
 
 **困难：**
 - [4. 寻找两个正序数组的中位数](../problems/leetcode/0004_median_of_two_sorted_arrays.md)

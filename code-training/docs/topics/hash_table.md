@@ -104,9 +104,13 @@ index_map = {val: idx for idx, val in enumerate(arr)}
 
 **简单：**
 - [1. 两数之和](../problems/leetcode/0001_two_sum.md)
+- 有效的字母异位词
+- 两个数组的交集
 
 **中等：**
-- TBD
+- 字母异位词分组
+- 最长连续序列
+- 和为 K 的子数组
 
 ## 注意事项
 
