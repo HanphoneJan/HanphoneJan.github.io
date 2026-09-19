@@ -1,14 +1,13 @@
 ---
 title: 回文数
 platform: LeetCode
-difficulty: 简单
+difficulty: Easy
 id: 9
 url: https://leetcode.cn/problems/palindrome-number/
 tags:
   - 数学
-topics:
-patterns:
-  - ../../patterns/two_pointers.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

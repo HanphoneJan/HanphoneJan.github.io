@@ -1,17 +1,15 @@
 ---
 title: 平衡路径计数
 platform: 自定义
-difficulty: 中等
+difficulty: Medium
 id: balance-paths
 url: ""
 tags:
   - 二叉树
   - DFS
   - 枚举
-topics:
-  - ../../topics/binary-tree.md
-patterns:
-  - ../../patterns/dfs-on-tree.md
+topics: []
+patterns: []
 date_added: 2025-04-30
 date_reviewed: []
 ---

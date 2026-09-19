@@ -1,7 +1,7 @@
 ---
 title: 整数反转
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 7
 url: https://leetcode.cn/problems/reverse-integer/
 tags:

@@ -1,17 +1,15 @@
 ---
 title: 最长回文子串
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 5
 url: https://leetcode.cn/problems/longest-palindromic-substring/
 tags:
   - 字符串
   - 动态规划
   - 双指针
-topics:
-  - ../../topics/string.md
-patterns:
-  - ../../patterns/two_pointers.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

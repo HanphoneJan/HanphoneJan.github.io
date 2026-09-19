@@ -1,18 +1,15 @@
 ---
 title: 罗马数字转整数
 platform: LeetCode
-difficulty: 简单
+difficulty: Easy
 id: 13
 url: https://leetcode.cn/problems/roman-to-integer/
 tags:
   - 哈希表
   - 数学
   - 字符串
-topics:
-  - ../../topics/hash_table.md
-  - ../../topics/string.md
-patterns:
-  - ../../patterns/hash_map.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

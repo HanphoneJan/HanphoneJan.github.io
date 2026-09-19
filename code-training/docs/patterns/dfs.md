@@ -280,8 +280,8 @@ def dfs_with_memo(state):
 
 ## 相关知识点
 
-- [树](../topics/tree)
-- [二叉树](../topics/binary_tree)
+- [树](../data-structures/tree)
+- [二叉树](../data-structures/binary_tree)
 - [BFS 模式](bfs)
 - [回溯模式](backtracking)
 - [DFS 模板](../templates/dfs_template)

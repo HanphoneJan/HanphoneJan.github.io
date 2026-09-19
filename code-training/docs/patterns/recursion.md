@@ -192,8 +192,8 @@ def fib_iter(n: int) -> int:
 
 - [DFS 模式](dfs)
 - [回溯模式](backtracking)
-- [树](../topics/tree)
-- [动态规划](../topics/dynamic_programming)
+- [树](../data-structures/tree)
+- [动态规划](dynamic_programming)
 
 ## 练习题目
 

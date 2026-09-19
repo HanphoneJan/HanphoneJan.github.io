@@ -1,18 +1,15 @@
 ---
 title: 环形链表
 platform: LeetCode
-difficulty: 简单
+difficulty: Easy
 id: 141
 url: https://leetcode.cn/problems/linked-list-cycle/
 tags:
   - 链表
   - 双指针
   - 哈希表
-topics:
-  - ../../topics/linked_list.md
-  - ../../topics/two_pointers.md
-patterns:
-  - ../../patterns/floyd_cycle_detection.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

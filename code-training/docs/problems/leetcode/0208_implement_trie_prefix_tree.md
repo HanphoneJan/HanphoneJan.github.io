@@ -9,10 +9,8 @@ tags:
   - 字典树
   - 哈希表
   - 字符串
-topics:
-  - ../../topics/trie.md
-patterns:
-  - ../../patterns/prefix-tree.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

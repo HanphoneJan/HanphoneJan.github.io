@@ -1,18 +1,15 @@
 ---
 title: 正则表达式匹配
 platform: LeetCode
-difficulty: 困难
+difficulty: Hard
 id: 10
 url: https://leetcode.cn/problems/regular-expression-matching/
 tags:
   - 字符串
   - 动态规划
   - 递归
-topics:
-  - ../../topics/string.md
-  - ../../topics/dynamic_programming.md
-patterns:
-  - ../../patterns/recursion.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

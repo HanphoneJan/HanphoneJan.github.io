@@ -8,11 +8,8 @@ tags:
   - 数组
   - 哈希表
   - 找规律
-topics:
-  - ../../topics/array.md
-  - ../../topics/hash-table.md
-patterns:
-  - ../../patterns/find-cycle.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

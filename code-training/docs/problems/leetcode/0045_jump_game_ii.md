@@ -1,17 +1,14 @@
 ---
 title: 跳跃游戏 II
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 45
 url: https://leetcode.cn/problems/jump-game-ii/
 tags:
   - 贪心
   - 数组
-topics:
-  - ../../topics/array.md
-  - ../../topics/greedy.md
-patterns:
-  - ../../patterns/greedy_range.md
+topics: []
+patterns: []
 date_added: 2026-03-23
 date_reviewed: []
 ---

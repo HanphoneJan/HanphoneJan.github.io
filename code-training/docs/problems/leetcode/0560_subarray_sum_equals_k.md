@@ -8,11 +8,8 @@ tags:
   - 数组
   - 哈希表
   - 前缀和
-topics:
-  - ../../topics/prefix-sum.md
-  - ../../topics/hash-table.md
-patterns:
-  - ../../patterns/subarray-sum.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

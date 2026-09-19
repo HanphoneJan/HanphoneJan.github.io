@@ -9,12 +9,8 @@ tags:
   - 深度优先搜索
   - 广度优先搜索
   - 二叉树
-topics:
-  - ../../topics/binary-tree.md
-  - ../../topics/dfs.md
-  - ../../topics/bfs.md
-patterns:
-  - ../../patterns/tree-traversal.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

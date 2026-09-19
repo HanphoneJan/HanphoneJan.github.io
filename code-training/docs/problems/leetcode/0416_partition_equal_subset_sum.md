@@ -8,11 +8,8 @@ tags:
   - 数组
   - 动态规划
   - 背包问题
-topics:
-  - ../../topics/dynamic-programming.md
-  - ../../topics/knapsack.md
-patterns:
-  - ../../patterns/0-1-knapsack.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

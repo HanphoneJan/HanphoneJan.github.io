@@ -1,17 +1,14 @@
 ---
 title: 缺失的第一个正数
 platform: LeetCode
-difficulty: 困难
+difficulty: Hard
 id: 41
 url: https://leetcode.cn/problems/first-missing-positive/
 tags:
   - 数组
   - 哈希表
-topics:
-  - ../../topics/array.md
-  - ../../topics/hash_table.md
-patterns:
-  - ../../patterns/hash_map.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

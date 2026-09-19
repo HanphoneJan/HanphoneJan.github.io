@@ -1,13 +1,12 @@
 ---
 title: Z 字形变换
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 6
 url: https://leetcode.cn/problems/zigzag-conversion/
 tags:
   - 字符串
-topics:
-  - ../../topics/string.md
+topics: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

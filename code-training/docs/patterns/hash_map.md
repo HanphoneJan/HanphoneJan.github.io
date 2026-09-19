@@ -267,8 +267,8 @@ for right, char in enumerate(s):
 
 ## 相关知识点
 
-- [数组](../topics/array.md)
-- [哈希表](../topics/hash_table.md)
+- [数组](../data-structures/array.md)
+- [哈希表](../data-structures/hash_table.md)
 - [双指针](two_pointers.md)
 - [滑动窗口](sliding_window.md)
 

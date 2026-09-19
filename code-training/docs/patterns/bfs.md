@@ -222,9 +222,9 @@ while queue:
 
 ## 相关知识点
 
-- [树](../topics/tree)
-- [二叉树](../topics/binary_tree)
-- [图](../topics/graph)
+- [树](../data-structures/tree)
+- [二叉树](../data-structures/binary_tree)
+- [图](../data-structures/graph)
 - [DFS 模式](dfs)
 - [BFS 模板](../templates/bfs_template)
 

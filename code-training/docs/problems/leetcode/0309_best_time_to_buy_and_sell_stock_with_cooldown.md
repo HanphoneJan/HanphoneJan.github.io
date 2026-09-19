@@ -7,10 +7,8 @@ url: https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-with-cooldown/
 tags:
   - 数组
   - 动态规划
-topics:
-  - ../../topics/dynamic_programming.md
-patterns:
-  - ../../patterns/state_machine_dp.md
+topics: []
+patterns: []
 date_added: 2026-04-28
 date_reviewed: []
 ---

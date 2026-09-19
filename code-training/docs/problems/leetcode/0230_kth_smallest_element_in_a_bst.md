@@ -9,11 +9,8 @@ tags:
   - 深度优先搜索
   - 二叉搜索树
   - 二叉树
-topics:
-  - ../../topics/binary-search-tree.md
-  - ../../topics/dfs.md
-patterns:
-  - ../../patterns/inorder-traversal.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

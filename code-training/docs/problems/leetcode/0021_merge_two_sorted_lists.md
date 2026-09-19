@@ -1,16 +1,14 @@
 ---
 title: 合并两个有序链表
 platform: LeetCode
-difficulty: 简单
+difficulty: Easy
 id: 21
 url: https://leetcode.cn/problems/merge-two-sorted-lists/
 tags:
   - 链表
   - 递归
-topics:
-  - ../../topics/linked_list.md
-patterns:
-  - ../../patterns/recursion.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

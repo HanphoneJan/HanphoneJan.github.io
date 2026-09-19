@@ -1,17 +1,15 @@
 ---
 title: 路由器资源用量预测
 platform: CodeFun2000
-difficulty: 中等
+difficulty: Medium
 id: P4729
 url: https://codefun2000.com/p/P4729
 tags:
   - 机器学习
   - 线性回归
   - 梯度下降
-topics:
-  - ../../topics/linear-regression.md
-patterns:
-  - ../../patterns/gradient-descent.md
+topics: []
+patterns: []
 date_added: 2025-04-30
 date_reviewed: []
 ---

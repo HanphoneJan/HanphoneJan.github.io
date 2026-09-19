@@ -1,16 +1,14 @@
 ---
 title: 最小 Token 分配
 platform: 自定义
-difficulty: 简单
+difficulty: Easy
 id: min-token-allocation
 url: ""
 tags:
   - 贪心
   - 双指针
-topics:
-  - ../../topics/greedy.md
-patterns:
-  - ../../patterns/two-pass-greedy.md
+topics: []
+patterns: []
 date_added: 2025-04-30
 date_reviewed: []
 ---

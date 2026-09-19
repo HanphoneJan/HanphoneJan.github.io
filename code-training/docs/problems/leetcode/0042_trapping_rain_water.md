@@ -1,7 +1,7 @@
 ---
 title: 接雨水
 platform: LeetCode
-difficulty: 困难
+difficulty: Hard
 id: 42
 url: https://leetcode.cn/problems/trapping-rain-water/
 tags:
@@ -9,12 +9,8 @@ tags:
   - 双指针
   - 动态规划
   - 单调栈
-topics:
-  - ../../topics/array.md
-  - ../../topics/dynamic_programming.md
-  - ../../topics/stack_queue_heap_unionfind.md
-patterns:
-  - ../../patterns/two_pointers.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

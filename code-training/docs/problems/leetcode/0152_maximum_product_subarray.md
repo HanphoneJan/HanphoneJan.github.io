@@ -1,17 +1,14 @@
 ---
 title: 乘积最大子数组
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 152
 url: https://leetcode.cn/problems/maximum-product-subarray/
 tags:
   - 数组
   - 动态规划
-topics:
-  - ../../topics/array.md
-  - ../../topics/dynamic_programming.md
-patterns:
-  - ../../topics/dynamic_programming.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

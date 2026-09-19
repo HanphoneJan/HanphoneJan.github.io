@@ -8,10 +8,8 @@ tags:
   - 数组
   - 双指针
   - 数学
-topics:
-  - ../../topics/array.md
-patterns:
-  - ../../patterns/two-pointers.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

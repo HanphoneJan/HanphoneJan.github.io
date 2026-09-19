@@ -129,7 +129,7 @@ while left < right:
 ## 相关知识点
 
 - [哈希表](hash_table.md)
-- [排序](sorting.md)
+- [排序](../patterns/sorting.md)
 - [双指针模式](../patterns/two_pointers.md)
 - [滑动窗口模式](../patterns/sliding_window.md)
 

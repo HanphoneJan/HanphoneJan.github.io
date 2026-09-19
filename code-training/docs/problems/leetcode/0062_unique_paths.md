@@ -1,18 +1,15 @@
 ---
 title: 不同路径
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 62
 url: https://leetcode.cn/problems/unique-paths/
 tags:
   - 数学
   - 动态规划
   - 组合
-topics:
-  - ../../topics/math.md
-  - ../../topics/dynamic_programming.md
-patterns:
-  - ../../topics/combinatorics.md
+topics: []
+patterns: []
 date_added: 2026-03-23
 date_reviewed: []
 ---

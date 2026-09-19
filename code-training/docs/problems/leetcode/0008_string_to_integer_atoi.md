@@ -1,13 +1,12 @@
 ---
 title: 字符串转换整数 (atoi)
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 8
 url: https://leetcode.cn/problems/string-to-integer-atoi/
 tags:
   - 字符串
-topics:
-  - ../../topics/string.md
+topics: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

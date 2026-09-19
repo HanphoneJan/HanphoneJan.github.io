@@ -10,11 +10,8 @@ tags:
   - 快速选择
   - 排序
   - 堆（优先队列）
-topics:
-  - ../../topics/quickselect.md
-  - ../../topics/heap.md
-patterns:
-  - ../../patterns/divide-and-conquer.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

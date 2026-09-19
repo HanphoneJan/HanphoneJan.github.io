@@ -1,17 +1,15 @@
 ---
 title: 最大传播链
 platform: 自定义
-difficulty: 中等
+difficulty: Medium
 id: max-propagation-chain
 url: ""
 tags:
   - 图论
   - 最长路径
   - 记忆化搜索
-topics:
-  - ../../topics/graph-theory.md
-patterns:
-  - ../../patterns/dag-longest-path.md
+topics: []
+patterns: []
 date_added: 2025-04-30
 date_reviewed: []
 ---

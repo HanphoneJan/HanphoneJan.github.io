@@ -1,19 +1,15 @@
 ---
 title: 括号生成
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 22
 url: https://leetcode.cn/problems/generate-parentheses/
 tags:
   - 字符串
   - 动态规划
   - 回溯
-topics:
-  - ../../topics/string.md
-  - ../../topics/dynamic_programming.md
-patterns:
-  - ../../patterns/backtracking.md
-  - ../../patterns/dfs.md
+topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

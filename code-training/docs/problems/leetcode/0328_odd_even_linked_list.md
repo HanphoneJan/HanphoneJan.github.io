@@ -7,10 +7,8 @@ url: https://leetcode.cn/problems/odd-even-linked-list/
 tags:
   - 链表
   - 双指针
-topics:
-  - ../../topics/linked_list.md
-patterns:
-  - ../../patterns/two_pointers.md
+topics: []
+patterns: []
 date_added: 2026-04-28
 date_reviewed: []
 ---

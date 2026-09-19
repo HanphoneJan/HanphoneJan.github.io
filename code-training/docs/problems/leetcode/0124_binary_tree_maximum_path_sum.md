@@ -1,19 +1,15 @@
 ---
 title: 二叉树中的最大路径和
 platform: LeetCode
-difficulty: 困难
+difficulty: Hard
 id: 124
 url: https://leetcode.cn/problems/binary-tree-maximum-path-sum/
 tags:
   - 二叉树
   - 深度优先搜索
   - 动态规划
-topics:
-  - ../../topics/binary_tree.md
-  - ../../topics/dfs.md
-  - ../../topics/dynamic_programming.md
-patterns:
-  - ../../patterns/tree_traversal.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

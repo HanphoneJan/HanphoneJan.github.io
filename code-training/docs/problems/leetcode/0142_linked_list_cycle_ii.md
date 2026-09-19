@@ -1,19 +1,15 @@
 ---
 title: 环形链表 II
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 142
 url: https://leetcode.cn/problems/linked-list-cycle-ii/
 tags:
   - 链表
   - 双指针
   - 数学
-topics:
-  - ../../topics/linked_list.md
-  - ../../topics/two_pointers.md
-  - ../../topics/math.md
-patterns:
-  - ../../patterns/floyd_cycle_detection.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

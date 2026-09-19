@@ -19,14 +19,14 @@
 
 > **数据库思维，不是平台思维**
 
-| 层级   | 目录                | 说明                          |
-| ------ | ------------------- | ----------------------------- |
-| 原子层 | `docs/problems/`  | 每道题目独立存档              |
-| 聚合层 | `docs/topics/`    | 按数据结构/算法分类的知识体系 |
-| 抽象层 | `docs/patterns/`  | 通用解题模式和思维框架        |
-| 工具层 | `docs/templates/` | 常用算法的标准实现            |
-| 反馈层 | `docs/review/`    | 错题本和周总结                |
-| 代码层 | `leetcode/`       | LeetCode 刷题代码文件         |
+| 层级   | 目录                       | 说明                          |
+| ------ | -------------------------- | ----------------------------- |
+| 原子层 | `docs/problems/`         | 每道题目独立存档              |
+| 聚合层 | `docs/data-structures/`  | 按数据结构分类的知识体系      |
+| 抽象层 | `docs/patterns/`         | 通用解题模式和算法思想        |
+| 工具层 | `docs/templates/`        | 常用算法的标准实现            |
+| 反馈层 | `docs/review/`           | 错题本和周总结                |
+| 代码层 | `leetcode/`              | LeetCode 刷题代码文件         |
 
 ## 目录结构
 
@@ -35,8 +35,8 @@ code-training/
 ├── docs/                          # 文档内容（Docusaurus 源文件）
 │   ├── problems/                  # 题解文档
 │   │   └── leetcode/              # LeetCode 题解（120+ 道）
-│   ├── topics/                    # 知识点（14 个）
-│   ├── patterns/                  # 算法模式（7 个）
+│   ├── data-structures/           # 数据结构（8 个）
+│   ├── patterns/                  # 算法模式（11 个）
 │   ├── templates/                 # 代码模板（4 个）
 │   ├── review/                    # 复习系统
 │   └── resources.md               # 学习资源汇总
@@ -86,14 +86,12 @@ pnpm serve
 ---
 title: 题目名称
 platform: LeetCode
-difficulty: 简单/中等/困难
+difficulty: Easy/Medium/Hard
 id: 题号
 url: 题目链接
 tags: [标签1, 标签2]
-topics:
-  - ../../topics/知识点.md
-patterns:
-  - ../../patterns/模式.md
+topics: []
+patterns: []
 date_added: YYYY-MM-DD
 date_reviewed: []
 ---
@@ -161,7 +159,7 @@ Skill 会自动：
 ### 推荐做法
 
 - 一题多解，记录不同解法
-- 建立知识点之间的关联（通过 YAML 中的 `topics` 和 `patterns`）
+- 在正文中通过相对路径链接到对应数据结构/模式，形成知识网络（如 `](../data-structures/array.md)`）
 - 定期复习错题和总结
 - 使用相对路径链接形成知识网络
 

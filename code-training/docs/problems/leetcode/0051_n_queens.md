@@ -1,17 +1,14 @@
 ---
 title: N 皇后
 platform: LeetCode
-difficulty: 困难
+difficulty: Hard
 id: 51
 url: https://leetcode.cn/problems/n-queens/
 tags:
   - 回溯
   - 数组
-topics:
-  - ../../topics/array.md
-  - ../../topics/backtracking.md
-patterns:
-  - ../../patterns/backtracking_constraint.md
+topics: []
+patterns: []
 date_added: 2026-03-23
 date_reviewed: []
 ---

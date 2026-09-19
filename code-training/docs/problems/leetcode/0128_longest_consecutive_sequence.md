@@ -1,18 +1,15 @@
 ---
 title: 最长连续序列
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 128
 url: https://leetcode.cn/problems/longest-consecutive-sequence/
 tags:
   - 数组
   - 哈希表
   - 并查集
-topics:
-  - ../../topics/array.md
-  - ../../topics/hash_table.md
-patterns:
-  - ../../patterns/hash_table.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

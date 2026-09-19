@@ -9,11 +9,8 @@ tags:
   - 广度优先搜索
   - 图
   - 拓扑排序
-topics:
-  - ../../topics/graph.md
-  - ../../topics/topological-sort.md
-patterns:
-  - ../../patterns/graph-cycle-detection.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

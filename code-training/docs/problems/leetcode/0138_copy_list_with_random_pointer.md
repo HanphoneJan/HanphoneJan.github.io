@@ -1,17 +1,14 @@
 ---
 title: 随机链表的复制
 platform: LeetCode
-difficulty: 中等
+difficulty: Medium
 id: 138
 url: https://leetcode.cn/problems/copy-list-with-random-pointer/
 tags:
   - 链表
   - 哈希表
-topics:
-  - ../../topics/linked_list.md
-  - ../../topics/hash_table.md
-patterns:
-  - ../../patterns/linked_list.md
+topics: []
+patterns: []
 date_added: 2026-04-03
 date_reviewed: []
 ---

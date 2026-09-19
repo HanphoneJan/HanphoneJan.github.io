@@ -8,11 +8,8 @@ tags:
   - 字符串
   - 哈希表
   - 滑动窗口
-topics:
-  - ../../topics/sliding-window.md
-  - ../../topics/hash-table.md
-patterns:
-  - ../../patterns/fixed-size-window.md
+topics: []
+patterns: []
 date_added: 2026-04-09
 date_reviewed: []
 ---

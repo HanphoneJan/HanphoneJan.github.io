@@ -1,18 +1,15 @@
 ---
 title: 寻找两个正序数组的中位数
 platform: LeetCode
-difficulty: 困难
+difficulty: Hard
 id: 4
 url: https://leetcode.cn/problems/median-of-two-sorted-arrays/
 tags:
   - 数组
   - 二分查找
   - 分治
-topics:
-  - ../../topics/array.md
-  - ../../topics/search.md
-patterns:
-  - ../../patterns/binary_search.md
+topics: []
+patterns: []
 date_added: 2026-03-10
 date_reviewed: []
 ---

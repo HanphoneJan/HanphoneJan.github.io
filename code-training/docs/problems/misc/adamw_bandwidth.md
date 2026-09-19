@@ -1,17 +1,15 @@
 ---
 title: 基于 AdamW 优化的网络带宽预测模型
 platform: CodeFun2000
-difficulty: 中等
+difficulty: Medium
 id: P4779
 url: https://codefun2000.com/p/P4779
 tags:
   - 优化算法
   - AdamW
   - 梯度下降
-topics:
-  - ../../topics/optimization.md
-patterns:
-  - ../../patterns/gradient-descent.md
+topics: []
+patterns: []
 date_added: 2025-04-30
 date_reviewed: []
 ---

@@ -1,17 +1,15 @@
 ---
 title: K 个一组翻转链表
 platform: LeetCode
-difficulty: 困难
+difficulty: Hard
 id: 25
 url: https://leetcode.cn/problems/reverse-nodes-in-k-group/
 tags:
   - 链表
   - 递归
   - 迭代
-topics:
-  - ../../topics/linked_list.md
-patterns:
-  - ../../patterns/linked_list_reversal.md
+topics: []
+patterns: []
 date_added: 2026-03-23
 date_reviewed: []
 ---
