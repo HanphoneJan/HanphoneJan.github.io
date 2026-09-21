@@ -1,5 +1,5 @@
 ---
-title: 下一个排列
+title: 31. 下一个排列
 platform: LeetCode
 difficulty: Medium
 id: 31

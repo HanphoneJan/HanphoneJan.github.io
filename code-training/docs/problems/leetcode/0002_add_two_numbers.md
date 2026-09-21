@@ -1,5 +1,5 @@
 ---
-title: 两数相加
+title: 2. 两数相加
 platform: LeetCode
 difficulty: Medium
 id: 2

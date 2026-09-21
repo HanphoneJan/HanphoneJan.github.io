@@ -1,5 +1,5 @@
 ---
-title: 二叉树的序列化与反序列化
+title: 297. 二叉树的序列化与反序列化
 platform: LeetCode
 difficulty: Hard
 id: 297

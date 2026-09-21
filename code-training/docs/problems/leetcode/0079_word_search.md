@@ -1,5 +1,5 @@
 ---
-title: 单词搜索
+title: 79. 单词搜索
 platform: LeetCode
 difficulty: Medium
 id: 79

@@ -1,5 +1,5 @@
 ---
-title: 分割等和子集
+title: 416. 分割等和子集
 platform: LeetCode
 difficulty: Medium
 id: 416

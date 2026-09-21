@@ -1,5 +1,5 @@
 ---
-title: 字母异位词分组
+title: 49. 字母异位词分组
 platform: LeetCode
 difficulty: Medium
 id: 49

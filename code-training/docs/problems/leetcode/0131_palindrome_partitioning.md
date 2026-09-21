@@ -1,5 +1,5 @@
 ---
-title: 分割回文串
+title: 131. 分割回文串
 platform: LeetCode
 difficulty: Medium
 id: 131

@@ -1,5 +1,5 @@
 ---
-title: 寻找重复数
+title: 287. 寻找重复数
 platform: LeetCode
 difficulty: Medium
 id: 287

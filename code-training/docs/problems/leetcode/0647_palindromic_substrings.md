@@ -1,5 +1,5 @@
 ---
-title: 回文子串
+title: 647. 回文子串
 platform: LeetCode
 difficulty: Medium
 id: 647

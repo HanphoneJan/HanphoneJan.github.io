@@ -1,5 +1,5 @@
 ---
-title: 最长递增子序列
+title: 300. 最长递增子序列
 platform: LeetCode
 difficulty: Medium
 id: 300

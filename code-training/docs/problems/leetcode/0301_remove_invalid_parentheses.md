@@ -1,5 +1,5 @@
 ---
-title: 删除无效的括号
+title: 301. 删除无效的括号
 platform: LeetCode
 difficulty: Hard
 id: 301

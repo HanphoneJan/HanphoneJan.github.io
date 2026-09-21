@@ -1,5 +1,5 @@
 ---
-title: 多数元素
+title: 169. 多数元素
 platform: LeetCode
 difficulty: Easy
 id: 169

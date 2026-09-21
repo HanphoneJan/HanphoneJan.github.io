@@ -1,5 +1,5 @@
 ---
-title: 接雨水
+title: 42. 接雨水
 platform: LeetCode
 difficulty: Hard
 id: 42

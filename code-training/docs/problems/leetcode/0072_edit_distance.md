@@ -1,5 +1,5 @@
 ---
-title: 编辑距离
+title: 72. 编辑距离
 platform: LeetCode
 difficulty: Medium
 id: 72

@@ -1,5 +1,5 @@
 ---
-title: 乘积最大子数组
+title: 152. 乘积最大子数组
 platform: LeetCode
 difficulty: Medium
 id: 152

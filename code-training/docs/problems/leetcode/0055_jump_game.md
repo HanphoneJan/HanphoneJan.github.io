@@ -1,5 +1,5 @@
 ---
-title: 跳跃游戏
+title: 55. 跳跃游戏
 platform: LeetCode
 difficulty: Medium
 id: 55

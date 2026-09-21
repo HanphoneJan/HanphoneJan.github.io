@@ -1,5 +1,5 @@
 ---
-title: 全排列
+title: 46. 全排列
 platform: LeetCode
 difficulty: Medium
 id: 46

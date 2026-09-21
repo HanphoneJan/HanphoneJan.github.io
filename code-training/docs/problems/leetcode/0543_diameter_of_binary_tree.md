@@ -1,5 +1,5 @@
 ---
-title: 二叉树的直径
+title: 543. 二叉树的直径
 platform: LeetCode
 difficulty: Easy
 id: 543

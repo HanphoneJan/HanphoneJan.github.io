@@ -1,5 +1,5 @@
 ---
-title: 从前序与中序遍历序列构造二叉树
+title: 105. 从前序与中序遍历序列构造二叉树
 platform: LeetCode
 difficulty: Medium
 id: 105

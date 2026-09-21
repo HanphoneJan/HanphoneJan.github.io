@@ -1,5 +1,5 @@
 ---
-title: 特殊的二进制字符串
+title: 761. 特殊的二进制字符串
 platform: LeetCode
 difficulty: Hard
 id: 761

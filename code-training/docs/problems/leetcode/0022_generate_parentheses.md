@@ -1,5 +1,5 @@
 ---
-title: 括号生成
+title: 22. 括号生成
 platform: LeetCode
 difficulty: Medium
 id: 22

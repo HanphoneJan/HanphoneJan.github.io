@@ -1,5 +1,5 @@
 ---
-title: 回文数
+title: 9. 回文数
 platform: LeetCode
 difficulty: Easy
 id: 9

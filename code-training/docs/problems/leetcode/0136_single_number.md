@@ -1,5 +1,5 @@
 ---
-title: 只出现一次的数字
+title: 136. 只出现一次的数字
 platform: LeetCode
 difficulty: Easy
 id: 136

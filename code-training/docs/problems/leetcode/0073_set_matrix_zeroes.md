@@ -1,5 +1,5 @@
 ---
-title: 矩阵置零
+title: 73. 矩阵置零
 platform: LeetCode
 difficulty: Medium
 id: 73

@@ -1,5 +1,5 @@
 ---
-title: 删除链表的倒数第 N 个结点
+title: 19. 删除链表的倒数第 N 个结点
 platform: LeetCode
 difficulty: Medium
 id: 19

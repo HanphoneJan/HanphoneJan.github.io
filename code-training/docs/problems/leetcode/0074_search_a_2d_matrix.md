@@ -1,5 +1,5 @@
 ---
-title: 搜索二维矩阵
+title: 74. 搜索二维矩阵
 platform: LeetCode
 difficulty: Medium
 id: 74

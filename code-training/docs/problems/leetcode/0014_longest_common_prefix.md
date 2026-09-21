@@ -1,5 +1,5 @@
 ---
-title: 最长公共前缀
+title: 14. 最长公共前缀
 platform: LeetCode
 difficulty: Easy
 id: 14

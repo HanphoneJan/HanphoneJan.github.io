@@ -1,5 +1,5 @@
 ---
-title: 最长有效括号
+title: 32. 最长有效括号
 platform: LeetCode
 difficulty: Hard
 id: 32

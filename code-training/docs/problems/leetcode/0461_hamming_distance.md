@@ -1,5 +1,5 @@
 ---
-title: 汉明距离
+title: 461. 汉明距离
 platform: LeetCode
 difficulty: Easy
 id: 461

@@ -1,5 +1,5 @@
 ---
-title: 最小覆盖子串
+title: 76. 最小覆盖子串
 platform: LeetCode
 difficulty: Hard
 id: 76

@@ -1,5 +1,5 @@
 ---
-title: 爬楼梯
+title: 70. 爬楼梯
 platform: LeetCode
 difficulty: Easy
 id: 70

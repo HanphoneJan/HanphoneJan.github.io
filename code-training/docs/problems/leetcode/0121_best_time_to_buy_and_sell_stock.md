@@ -1,5 +1,5 @@
 ---
-title: 买卖股票的最佳时机
+title: 121. 买卖股票的最佳时机
 platform: LeetCode
 difficulty: Easy
 id: 121

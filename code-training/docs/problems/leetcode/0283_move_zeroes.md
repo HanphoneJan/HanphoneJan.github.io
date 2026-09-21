@@ -1,5 +1,5 @@
 ---
-title: 移动零
+title: 283. 移动零
 platform: LeetCode
 difficulty: Easy
 id: 283

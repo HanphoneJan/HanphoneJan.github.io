@@ -1,5 +1,5 @@
 ---
-title: 二叉搜索树中第 K 小的元素
+title: 230. 二叉搜索树中第 K 小的元素
 platform: LeetCode
 difficulty: Medium
 id: 230

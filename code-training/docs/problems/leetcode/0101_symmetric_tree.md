@@ -1,5 +1,5 @@
 ---
-title: 对称二叉树
+title: 101. 对称二叉树
 platform: LeetCode
 difficulty: Easy
 id: 101

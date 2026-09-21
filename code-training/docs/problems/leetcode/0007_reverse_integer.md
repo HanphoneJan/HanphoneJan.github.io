@@ -1,5 +1,5 @@
 ---
-title: 整数反转
+title: 7. 整数反转
 platform: LeetCode
 difficulty: Medium
 id: 7

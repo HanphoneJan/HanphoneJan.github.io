@@ -1,5 +1,5 @@
 ---
-title: Z 字形变换
+title: 6. Z 字形变换
 platform: LeetCode
 difficulty: Medium
 id: 6

@@ -1,5 +1,5 @@
 ---
-title: N 皇后
+title: 51. N 皇后
 platform: LeetCode
 difficulty: Hard
 id: 51

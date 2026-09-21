@@ -1,5 +1,5 @@
 ---
-title: 字符串转换整数 (atoi)
+title: 8. 字符串转换整数 (atoi)
 platform: LeetCode
 difficulty: Medium
 id: 8
