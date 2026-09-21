@@ -32,7 +32,7 @@ class Solution:
     地图分析 - 计算 0 到最近 1 的最大距离（多源 BFS）
 
     问题描述：
-    给定一个 n×n 的 0-1 网格，0 表示海洋，1 表示陆地。
+    给定一个 m×n 的 0-1 网格，0 表示海洋，1 表示陆地。
     对每个海洋格子（0），计算它到最近的陆地格子（1）的距离
     （只能上下左右移动，每走一步距离 +1），
     返回所有海洋格子中该距离的最大值。
@@ -49,21 +49,21 @@ class Solution:
     BFS 天然按"距离递增"的顺序访问节点，且第一次访问到某个格子
     的层数一定是最短距离（最短路性质）。
 
-    时间复杂度：O(n*n)，每个格子最多入队一次
-    空间复杂度：O(n*n)，队列 + 原地标记
+    时间复杂度：O(m*n)，每个格子最多入队一次
+    空间复杂度：O(m*n)，队列 + 原地标记
     """
 
     def maxDistance(self, grid: List[List[int]]) -> int:
-        n = len(grid)
+        m, n = len(grid), len(grid[0])
         # 多源 BFS：把所有陆地格子(1)都作为起点入队
         q = deque()
-        for i in range(n):
+        for i in range(m):
             for j in range(n):
                 if grid[i][j] == 1:
                     q.append((i, j))
 
         # 没有陆地，或没有海洋，都不存在合法答案
-        if not q or len(q) == n * n:
+        if not q or len(q) == m * n:
             return -1
 
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
@@ -76,7 +76,7 @@ class Solution:
                 for dx, dy in directions:
                     nx, ny = x + dx, y + dy
                     # 是未访问的海洋格子，就"被陆地感染"，入队
-                    if 0 <= nx < n and 0 <= ny < n and grid[nx][ny] == 0:
+                    if 0 <= nx < m and 0 <= ny < n and grid[nx][ny] == 0:
                         grid[nx][ny] = 1      # 原地标记为已访问
                         q.append((nx, ny))
 
@@ -94,6 +94,7 @@ if __name__ == "__main__":
         ([[1, 1], [1, 1]], -1),   # 没有海洋
         ([[0, 0], [0, 0]], -1),   # 没有陆地
         ([[0, 0, 1], [0, 0, 0], [0, 0, 0]], 4),
+        ([[1, 0], [0, 0], [0, 0]], 3),        # m×n 非方阵：3 行 2 列
         ([[1]], -1),              # 既无海洋也无陆地可用
     ]
 

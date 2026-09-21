@@ -20,7 +20,7 @@ date_reviewed: []
 
 ## 题目描述
 
-给定一个 `n × n` 的二维网格 `grid`，其中每个格子的取值是 `0` 或 `1`：
+给定一个 `m × n` 的二维网格 `grid`，其中每个格子的取值是 `0` 或 `1`：
 
 - `0` 表示**海洋**；
 - `1` 表示**陆地**。
@@ -31,7 +31,7 @@ date_reviewed: []
 
 ## 输入格式
 
-- 一个 `n × n` 的二维数组 `grid`，元素为 `0` 或 `1`。
+- 一个 `m × n` 的二维数组 `grid`，元素为 `0` 或 `1`。
 
 ## 输出格式
 
@@ -112,12 +112,12 @@ grid = [[0, 0, 0], [0, 0, 0]]
 
 ```python
 def maxDistance(self, grid):
-    n = len(grid)
-    lands = [(i, j) for i in range(n) for j in range(n) if grid[i][j] == 1]
-    if not lands or len(lands) == n * n:
+    m, n = len(grid), len(grid[0])
+    lands = [(i, j) for i in range(m) for j in range(n) if grid[i][j] == 1]
+    if not lands or len(lands) == m * n:
         return -1
     ans = -1
-    for i in range(n):
+    for i in range(m):
         for j in range(n):
             if grid[i][j] == 0:
                 d = min(abs(i - x) + abs(j - y) for x, y in lands)
@@ -127,8 +127,8 @@ def maxDistance(self, grid):
 
 **为什么不够好：**
 
-- 每个海洋格子都要扫一遍所有陆地格子，时间复杂度 **O(n⁴)**；
-- n 较大时（如 n=100、200）完全不可行；
+- 每个海洋格子都要扫一遍所有陆地格子，时间复杂度 **O(m²·n²)**；
+- 网格较大时（如 m=n=100、200）完全不可行；
 - 大量重复计算：不同的海洋格子到同一块陆地的路径被反复求解。
 
 ### 第三步：优化解法（对每个海洋做单源 BFS）
@@ -140,7 +140,7 @@ def maxDistance(self, grid):
 
 **特点：**
 
-- 单个 BFS 最坏 O(n²)，共 O(n²) 个海洋格子，总复杂度 **O(n⁴)**，依然不可行；
+- 单个 BFS 最坏 O(m·n)，共 O(m·n) 个海洋格子，总复杂度 **O(m²·n²)**，依然不可行；
 - 但揭示了关键点：**BFS 的层数天然等于最短距离**。
 
 ### 第四步：最优解法（多源 BFS）
@@ -159,7 +159,7 @@ def maxDistance(self, grid):
 **实现细节：**
 
 1. 把所有值为 `1` 的格子全部入队；
-2. 若队列为空（没有陆地）或队列长度等于 `n*n`（全是陆地），返回 `-1`；
+2. 若队列为空（没有陆地）或队列长度等于 `m*n`（全是陆地），返回 `-1`；
 3. 按层 BFS：每处理完一层，`distance += 1`；
 4. 访问到海洋格子时原地标记为 `1`（相当于"被陆地感染"），避免重复入队；
 5. BFS 结束后返回 `distance`。
@@ -174,16 +174,16 @@ from typing import List
 
 class Solution:
     def maxDistance(self, grid: List[List[int]]) -> int:
-        n = len(grid)
+        m, n = len(grid), len(grid[0])
         # 多源 BFS：把所有陆地格子(1)都作为起点入队
         q = deque()
-        for i in range(n):
+        for i in range(m):
             for j in range(n):
                 if grid[i][j] == 1:
                     q.append((i, j))
 
         # 没有陆地，或没有海洋，都不存在合法答案
-        if not q or len(q) == n * n:
+        if not q or len(q) == m * n:
             return -1
 
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
@@ -196,7 +196,7 @@ class Solution:
                 for dx, dy in directions:
                     nx, ny = x + dx, y + dy
                     # 是未访问的海洋格子，就"被陆地感染"，入队
-                    if 0 <= nx < n and 0 <= ny < n and grid[nx][ny] == 0:
+                    if 0 <= nx < m and 0 <= ny < n and grid[nx][ny] == 0:
                         grid[nx][ny] = 1      # 原地标记为已访问
                         q.append((nx, ny))
 
@@ -243,11 +243,11 @@ class Solution:
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 |------|-----------|-----------|------|
-| 暴力（枚举 0 遍历所有 1） | O(n⁴) | O(n²) | 每个海洋格子扫一遍所有陆地 |
-| 单源 BFS（对每个 0） | O(n⁴) | O(n²) | 每个海洋格子做一次 BFS |
-| 多源 BFS（最优） | O(n²) | O(n²) | 每个格子最多入队一次 |
+| 暴力（枚举 0 遍历所有 1） | O(m²·n²) | O(m·n) | 每个海洋格子扫一遍所有陆地 |
+| 单源 BFS（对每个 0） | O(m²·n²) | O(m·n) | 每个海洋格子做一次 BFS |
+| 多源 BFS（最优） | O(m·n) | O(m·n) | 每个格子最多入队一次 |
 
-其中 n 为网格边长。
+其中 `m`、`n` 分别为网格的行数与列数。
 
 ---
 
@@ -256,7 +256,7 @@ class Solution:
 ### 1. 忘了"没有陆地/没有海洋"返回 -1
 
 - 没有陆地：`q` 为空；
-- 没有海洋：`len(q) == n*n`。
+- 没有海洋：`len(q) == m*n`。
 两个条件都要判断，缺一不可。
 
 ### 2. 层数计数错误
@@ -280,7 +280,7 @@ class Solution:
 ## 扩展思考
 
 - **多源 BFS 的本质：** 把"多个源点求最近距离"转化为"从超源点（一个虚拟节点连向所有陆地）出发的单源 BFS"，层数即距离。这是网格 BFS 的通用套路。
-- **DP 两遍扫描：** 本题也可以用两次动态规划（左上→右下、右下→左上）在 O(n²) 内求出每个 0 到最近 1 的距离，不需要显式队列，可作为理解"动态规划 vs BFS"的对比练习。
+- **DP 两遍扫描：** 本题也可以用两次动态规划（左上→右下、右下→左上）在 O(m·n) 内求出每个 0 到最近 1 的距离，不需要显式队列，可作为理解"动态规划 vs BFS"的对比练习。
 - **相关题目：** [542. 01 矩阵](https://leetcode.cn/problems/01-matrix/)（求每个 0 到最近 1 的距离矩阵）、[994. 腐烂的橘子](https://leetcode.cn/problems/rotting-oranges/)（多源 BFS + 最短时间）、[286. 墙与门](https://leetcode.cn/problems/walls-and-gates/)（多源 BFS）。
 - **面试追问：** 如果要求返回"最远海洋格子的坐标"而不是距离，只需在最后一层出队时记录坐标即可。
 
