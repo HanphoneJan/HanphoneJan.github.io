@@ -1,5 +1,5 @@
 ---
-title: 完全平方数
+title: 279. 完全平方数
 platform: LeetCode
 difficulty: Medium
 id: 279

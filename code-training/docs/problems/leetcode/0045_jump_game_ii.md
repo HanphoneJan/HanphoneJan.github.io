@@ -1,5 +1,5 @@
 ---
-title: 跳跃游戏 II
+title: 45. 跳跃游戏 II
 platform: LeetCode
 difficulty: Medium
 id: 45

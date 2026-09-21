@@ -1,5 +1,5 @@
 ---
-title: 搜索插入位置
+title: 35. 搜索插入位置
 platform: LeetCode
 difficulty: Easy
 id: 35

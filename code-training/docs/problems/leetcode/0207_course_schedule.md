@@ -1,5 +1,5 @@
 ---
-title: 课程表
+title: 207. 课程表
 platform: LeetCode
 difficulty: Medium
 id: 207

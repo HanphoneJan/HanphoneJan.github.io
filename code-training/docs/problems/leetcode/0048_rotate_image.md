@@ -1,5 +1,5 @@
 ---
-title: 旋转图像
+title: 48. 旋转图像
 platform: LeetCode
 difficulty: Medium
 id: 48

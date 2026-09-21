@@ -1,5 +1,5 @@
 ---
-title: 两数之和
+title: 1. 两数之和
 platform: LeetCode
 difficulty: Easy
 id: 1

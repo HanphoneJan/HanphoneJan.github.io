@@ -1,5 +1,5 @@
 ---
-title: 滑动窗口最大值
+title: 239. 滑动窗口最大值
 platform: LeetCode
 difficulty: Hard
 id: 239

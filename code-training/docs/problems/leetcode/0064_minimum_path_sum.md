@@ -1,5 +1,5 @@
 ---
-title: 最小路径和
+title: 64. 最小路径和
 platform: LeetCode
 difficulty: Medium
 id: 64

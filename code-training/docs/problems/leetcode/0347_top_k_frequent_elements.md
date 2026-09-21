@@ -1,5 +1,5 @@
 ---
-title: 前 K 个高频元素
+title: 347. 前 K 个高频元素
 platform: LeetCode
 difficulty: Medium
 id: 347

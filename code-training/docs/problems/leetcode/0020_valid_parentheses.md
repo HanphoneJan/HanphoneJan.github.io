@@ -1,5 +1,5 @@
 ---
-title: 有效的括号
+title: 20. 有效的括号
 platform: LeetCode
 difficulty: Easy
 id: 20

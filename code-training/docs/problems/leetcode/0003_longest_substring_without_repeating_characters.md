@@ -1,5 +1,5 @@
 ---
-title: 无重复字符的最长子串
+title: 3. 无重复字符的最长子串
 platform: LeetCode
 difficulty: Medium
 id: 3

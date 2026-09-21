@@ -1,5 +1,5 @@
 ---
-title: 搜索旋转排序数组
+title: 33. 搜索旋转排序数组
 platform: LeetCode
 difficulty: Medium
 id: 33

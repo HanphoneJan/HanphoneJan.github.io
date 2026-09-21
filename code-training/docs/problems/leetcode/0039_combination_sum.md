@@ -1,5 +1,5 @@
 ---
-title: 组合总和
+title: 39. 组合总和
 platform: LeetCode
 difficulty: Medium
 id: 39

@@ -1,5 +1,5 @@
 ---
-title: 寻找旋转排序数组中的最小值
+title: 153. 寻找旋转排序数组中的最小值
 platform: LeetCode
 difficulty: Medium
 id: 153

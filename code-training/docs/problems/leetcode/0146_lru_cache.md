@@ -1,5 +1,5 @@
 ---
-title: LRU 缓存
+title: 146. LRU 缓存
 platform: LeetCode
 difficulty: Medium
 id: 146

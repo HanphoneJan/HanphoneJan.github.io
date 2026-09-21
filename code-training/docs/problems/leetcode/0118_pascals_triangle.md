@@ -1,5 +1,5 @@
 ---
-title: 杨辉三角
+title: 118. 杨辉三角
 platform: LeetCode
 difficulty: Easy
 id: 118

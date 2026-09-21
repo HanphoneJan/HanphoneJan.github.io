@@ -1,5 +1,5 @@
 ---
-title: K 个一组翻转链表
+title: 25. K 个一组翻转链表
 platform: LeetCode
 difficulty: Hard
 id: 25

@@ -1,5 +1,5 @@
 ---
-title: 目标和
+title: 494. 目标和
 platform: LeetCode
 difficulty: Medium
 id: 494

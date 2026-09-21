@@ -1,5 +1,5 @@
 ---
-title: 和为 K 的子数组
+title: 560. 和为 K 的子数组
 platform: LeetCode
 difficulty: Medium
 id: 560

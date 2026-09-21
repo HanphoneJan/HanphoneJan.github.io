@@ -1,5 +1,5 @@
 ---
-title: 柱状图中最大的矩形
+title: 84. 柱状图中最大的矩形
 platform: LeetCode
 difficulty: Hard
 id: 84

@@ -1,5 +1,5 @@
 ---
-title: 合并 K 个升序链表
+title: 23. 合并 K 个升序链表
 platform: LeetCode
 difficulty: Hard
 id: 23

@@ -1,5 +1,5 @@
 ---
-title: 二叉树的最近公共祖先
+title: 236. 二叉树的最近公共祖先
 platform: LeetCode
 difficulty: Medium
 id: 236

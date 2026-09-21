@@ -1,5 +1,5 @@
 ---
-title: 颜色分类
+title: 75. 颜色分类
 platform: LeetCode
 difficulty: Medium
 id: 75

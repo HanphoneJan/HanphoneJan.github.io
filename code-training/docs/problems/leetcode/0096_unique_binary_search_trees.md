@@ -1,5 +1,5 @@
 ---
-title: 不同的二叉搜索树
+title: 96. 不同的二叉搜索树
 platform: LeetCode
 difficulty: Medium
 id: 96

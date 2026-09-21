@@ -1,5 +1,5 @@
 ---
-title: 合并区间
+title: 56. 合并区间
 platform: LeetCode
 difficulty: Medium
 id: 56

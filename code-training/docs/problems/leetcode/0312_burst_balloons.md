@@ -1,5 +1,5 @@
 ---
-title: 戳气球
+title: 312. 戳气球
 platform: LeetCode
 difficulty: Hard
 id: 312

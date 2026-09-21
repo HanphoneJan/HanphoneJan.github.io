@@ -1,5 +1,5 @@
 ---
-title: 数据流的中位数
+title: 295. 数据流的中位数
 platform: LeetCode
 difficulty: Hard
 id: 295

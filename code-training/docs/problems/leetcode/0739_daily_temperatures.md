@@ -1,5 +1,5 @@
 ---
-title: 每日温度
+title: 739. 每日温度
 platform: LeetCode
 difficulty: Medium
 id: 739

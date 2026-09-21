@@ -1,5 +1,5 @@
 ---
-title: 字符串解码
+title: 394. 字符串解码
 platform: LeetCode
 difficulty: Medium
 id: 394

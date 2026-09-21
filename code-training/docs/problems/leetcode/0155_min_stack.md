@@ -1,5 +1,5 @@
 ---
-title: 最小栈
+title: 155. 最小栈
 platform: LeetCode
 difficulty: Easy
 id: 155

@@ -1,5 +1,5 @@
 ---
-title: 缺失的第一个正数
+title: 41. 缺失的第一个正数
 platform: LeetCode
 difficulty: Hard
 id: 41

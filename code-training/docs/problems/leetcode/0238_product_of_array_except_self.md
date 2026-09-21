@@ -1,5 +1,5 @@
 ---
-title: 除了自身以外数组的乘积
+title: 238. 除了自身以外数组的乘积
 platform: LeetCode
 difficulty: Medium
 id: 238

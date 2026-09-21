@@ -1,5 +1,5 @@
 ---
-title: 二叉树的右视图
+title: 199. 二叉树的右视图
 platform: LeetCode
 difficulty: Medium
 id: 199

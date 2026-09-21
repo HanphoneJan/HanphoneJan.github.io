@@ -1,5 +1,5 @@
 ---
-title: N 天后的牢房
+title: 957. N 天后的牢房
 platform: LeetCode
 difficulty: Medium
 id: 957

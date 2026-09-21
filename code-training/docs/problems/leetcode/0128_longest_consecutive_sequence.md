@@ -1,5 +1,5 @@
 ---
-title: 最长连续序列
+title: 128. 最长连续序列
 platform: LeetCode
 difficulty: Medium
 id: 128

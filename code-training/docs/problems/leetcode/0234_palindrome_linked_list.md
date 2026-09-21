@@ -1,5 +1,5 @@
 ---
-title: 回文链表
+title: 234. 回文链表
 platform: LeetCode
 difficulty: Easy
 id: 234
