@@ -1,8 +1,21 @@
 ---
-title: pca
+title: 主成分分析 PCA
 _synced: true
 ---
+# 主成分分析 PCA 实践
 
+
+主成分分析（Principal Component Analysis,
+PCA）是最经典的线性降维方法。它通过寻找数据方差最大的方向，把高维数据投影到低维空间，同时尽量保留原始信息。
+
+本文从零实现
+PCA，并用可视化展示中心化、协方差矩阵、特征值分解和降维结果，帮助你理解
+PCA 每一步在做什么。
+
+## 1. 导入依赖
+
+使用 PyTorch 完成矩阵运算，`make_blobs` 生成聚类数据，`seaborn`
+绘制协方差热力图。设置随机种子保证结果可复现。
 
 ``` python
 import torch
@@ -15,6 +28,21 @@ import seaborn as sns  # 用于更美观的热图展示
 torch.manual_seed(42)
 np.random.seed(42)
 
+```
+
+## 2. 从零实现 PCA
+
+PCA 的核心步骤：
+
+1.  **中心化**：减去每个特征的均值，使数据中心落在原点。
+2.  **计算协方差矩阵**：$C = \frac{1}{n-1} X_{centered}^\top X_{centered}$，它刻画各特征自身的方差以及特征之间的相关性。
+3.  **特征值分解**：对协方差矩阵求特征值与特征向量，特征向量即主成分方向，特征值大小代表该方向承载的方差。
+4.  **投影**：按特征值从大到小取前 $k$
+    个特征向量，将中心化数据投影到这些方向上。
+
+下面实现 `PCA` 类，包含 `fit`、`transform` 和 `fit_transform` 三个方法。
+
+``` python
 # 定义PCA类（与之前相同，此处省略注释）
 class PCA:
     def __init__(self, n_components=2):
@@ -46,6 +74,14 @@ class PCA:
         self.fit(X)
         return self.transform(X)
 
+```
+
+## 3. 生成测试数据
+
+用 `make_blobs` 生成 300 个样本、10 个特征、3 个簇的数据，并转换为
+PyTorch 张量。
+
+``` python
 # 生成测试数据
 n_samples = 300
 n_features = 10
@@ -55,6 +91,17 @@ X_np, y_np = make_blobs(n_samples=n_samples, n_features=n_features,
 X = torch.tensor(X_np, dtype=torch.float32)
 y = torch.tensor(y_np, dtype=torch.int64)
 
+```
+
+## 4. 观察数据：原始分布、中心化与协方差
+
+先画三张图直观理解 PCA 的前置处理：
+
+- **原始数据**：任选两个特征，查看原始分布。
+- **中心化后**：每个特征减去均值后，数据围绕原点分布。
+- **协方差矩阵热力图**：对角线表示各特征方差，非对角线表示特征间的相关性。
+
+``` python
 # --------------- 新增可视化1：原始数据的两个特征分布 ---------------
 plt.figure(figsize=(15, 5))
 
@@ -92,10 +139,26 @@ plt.title('特征协方差矩阵', fontsize=12)
 plt.tight_layout()
 plt.show()
 
+```
+
+## 5. 执行 PCA 降维
+
+调用 `fit_transform`，把 10 维数据降到 2 维。
+
+``` python
 # 执行PCA降维
 pca = PCA(n_components=2)
 X_pca = pca.fit_transform(X)
 
+```
+
+## 6. 特征值与方差解释率
+
+特征值越大，说明对应主成分保留的信息越多。**方差解释率** = 单个特征值 /
+特征值总和，**累积解释率**表示前 $k$
+个主成分保留了多少信息。通常累积达到 90% 即可认为保留了主要信息。
+
+``` python
 # --------------- 新增可视化4：特征值排序与方差解释率 ---------------
 plt.figure(figsize=(12, 5))
 
@@ -122,6 +185,13 @@ plt.grid(alpha=0.3)
 plt.tight_layout()
 plt.show()
 
+```
+
+## 7. PCA 降维结果
+
+将降维后的二维结果按类别着色，并用箭头标出前两个主成分在原特征空间中的方向。
+
+``` python
 # --------------- 原有可视化：PCA降维结果 ---------------
 plt.figure(figsize=(10, 8))
 scatter = plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap='viridis', 
@@ -145,9 +215,3 @@ plt.legend()
 plt.grid(True, linestyle='--', alpha=0.7)
 plt.show()
 ```
-
-![](pca_files/figure-commonmark/cell-2-output-1.png)
-
-![](pca_files/figure-commonmark/cell-2-output-2.png)
-
-![](pca_files/figure-commonmark/cell-2-output-3.png)

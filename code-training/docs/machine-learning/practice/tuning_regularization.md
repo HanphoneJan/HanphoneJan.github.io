@@ -1,8 +1,17 @@
 ---
-title: tuning_regularization
+title: 正则化参数调优
 _synced: true
 ---
+# 正则化参数调优
 
+
+正则化强度 $\lambda$
+决定模型对复杂度的惩罚力度：太小容易过拟合，太大则欠拟合。本文通过**验证集**从一组候选
+$\lambda$ 中选出最优值，并观察训练/验证损失曲线。
+
+## 1. 导入依赖与绘图设置
+
+导入数值计算与绘图库，并配置中文字体避免图表乱码。
 
 ``` python
 # 导入numpy库并简写为np，用于数值计算和数组操作
@@ -17,6 +26,14 @@ plt.rcParams["font.family"] = ["sans-serif","SimHei"]
 # 设置坐标轴负号显示（避免负号显示为方块等乱码）
 plt.rcParams['axes.unicode_minus'] = False
 
+```
+
+## 2. Sigmoid 激活函数
+
+$$\sigma(z)=\frac{1}{1+e^{-z}}$$，将线性输出映射为概率，并对 $z$
+做裁剪防止溢出。
+
+``` python
 # 定义sigmoid函数，将输入映射到(0,1)区间，用于逻辑回归的激活函数
 def sigmoid(z):
     # 限制输入z的范围在[-500, 500]，避免np.exp(-z)因z过大导致溢出（数值稳定处理）
@@ -25,6 +42,14 @@ def sigmoid(z):
     g = 1.0 / (1.0 + np.exp(-z))
     return g
 
+```
+
+## 3. 带 L2 正则化的逻辑回归成本函数
+
+在交叉熵损失基础上加入
+$\frac{\lambda}{2m}\sum_j w_j^2$，惩罚过大的权重以抑制过拟合。
+
+``` python
 # 定义带L2正则化的逻辑回归成本函数
 def compute_cost_logistic_reg(X, y, w, b, lambda_=1):
     m, n = X.shape  # m为样本数，n为特征数
@@ -47,6 +72,14 @@ def compute_cost_logistic_reg(X, y, w, b, lambda_=1):
     total_cost = cost + reg_cost  # 总成本 = 交叉熵损失 + 正则化项
     return total_cost
 
+```
+
+## 4. 带 L2 正则化的梯度
+
+权重梯度在原始梯度上额外加上 $\frac{\lambda}{m}w$，偏置 $b$
+不参与正则化。
+
+``` python
 # 定义带L2正则化的逻辑回归梯度计算函数
 def compute_gradient_logistic_reg(X, y, w, b, lambda_):
     m, n = X.shape          # m为样本数，n为特征数
@@ -74,6 +107,14 @@ def compute_gradient_logistic_reg(X, y, w, b, lambda_):
     
     return dj_db, dj_dw  # 返回偏置梯度和权重梯度
 
+```
+
+## 5. 梯度下降优化器
+
+通用梯度下降：传入成本函数与梯度函数即可训练，每 100
+次迭代记录一次成本。
+
+``` python
 # 定义梯度下降优化函数，用于更新参数w和b
 def gradient_descent(X, y, w_in, b_in, cost_function, gradient_function, 
                      alpha, num_iters, lambda_):
@@ -97,6 +138,15 @@ def gradient_descent(X, y, w_in, b_in, cost_function, gradient_function,
     # 返回优化后的参数和成本历史
     return w, b, J_history
 
+```
+
+## 6. 正则化参数调优函数
+
+在一组对数尺度的候选 $\lambda$ 上分别训练模型，用**验证集损失**选择最优
+$\lambda$。评估损失时使用
+$\lambda=0$（只算交叉熵），这样才能公平比较不同正则化强度下模型的拟合能力。
+
+``` python
 # 定义正则化参数调优函数，通过验证集选择最优λ
 def tune_regularization(X_train, y_train, X_cv, y_cv):
     # 定义候选正则化参数λ的范围（对数尺度，覆盖从0到100的范围）
@@ -171,6 +221,14 @@ def tune_regularization(X_train, y_train, X_cv, y_cv):
     
     return best_w, best_b, best_lambda, err_train, err_cv
 
+```
+
+## 7. 生成数据
+
+生成 500 个样本、10 个有效特征，再拼接 5
+个与标签无关的**噪声特征**，人为制造过拟合风险，从而凸显正则化的作用。
+
+``` python
 # 生成随机数据用于测试正则化调优
 np.random.seed(42)  # 设置随机种子，确保每次运行结果一致
 
@@ -197,6 +255,14 @@ noise_features = np.random.randn(m, 5)  # 噪声特征（服从正态分布）
 X = np.hstack([X, noise_features])     # 合并原始特征和噪声特征
 n = X.shape[1]  # 更新特征数（10+5=15）
 
+```
+
+## 8. 划分数据集并标准化
+
+按 8:2
+划分训练集与验证集。标准化使用**训练集**的均值和标准差，并应用到验证集，避免数据泄露。
+
+``` python
 # 划分训练集和验证集（8:2比例）
 split_idx = int(m * 0.8)  # 分割索引（前80%为训练集）
 X_train, X_cv = X[:split_idx], X[split_idx:]  # 特征分割
@@ -209,9 +275,23 @@ std[std == 0] = 1  # 避免标准差为0时除以0的错误
 X_train = (X_train - mean) / std  # 训练集标准化
 X_cv = (X_cv - mean) / std        # 验证集使用训练集的均值和标准差标准化（避免数据泄露）
 
+```
+
+## 9. 执行调优
+
+在训练集上训练、在验证集上评估，输出损失曲线并找出最优 $\lambda$。
+
+``` python
 # 执行正则化参数调优，得到最优参数
 best_w, best_b, best_lambda, train_errors, cv_errors = tune_regularization(X_train, y_train, X_cv, y_cv)
 
+```
+
+## 10. 预测函数
+
+用训练好的参数计算概率，以 0.5 为阈值得到类别标签。
+
+``` python
 # 定义预测函数，使用训练好的参数w和b预测标签
 def predict(X, w, b):
     """使用训练好的参数进行预测"""
@@ -225,6 +305,13 @@ def predict(X, w, b):
         y_pred[i] = 1 if f_wb >= 0.5 else 0
     return y_pred
 
+```
+
+## 11. 评估准确率
+
+在训练集和验证集上分别计算准确率，观察模型泛化能力。
+
+``` python
 # 使用最优参数在训练集和验证集上预测
 y_pred_train = predict(X_train, best_w, best_b)
 y_pred_cv = predict(X_cv, best_w, best_b)
@@ -237,26 +324,3 @@ cv_accuracy = np.mean(y_pred_cv == y_cv)
 print(f"训练集准确率: {train_accuracy:.4f}")
 print(f"验证集准确率: {cv_accuracy:.4f}")
 ```
-
-    正在训练 lambda = 0.0
-    正在训练 lambda = 1e-06
-    正在训练 lambda = 1e-05
-    正在训练 lambda = 0.0001
-    正在训练 lambda = 0.001
-    正在训练 lambda = 0.01
-    正在训练 lambda = 0.1
-    正在训练 lambda = 1.0
-    正在训练 lambda = 10.0
-    正在训练 lambda = 100.0
-    正在训练 lambda = 200.0
-    正在训练 lambda = 300.0
-    正在训练 lambda = 500.7
-    正在训练 lambda = 800.0
-    正在训练 lambda = 1000.0
-
-![](tuning_regularization_files/figure-commonmark/cell-2-output-2.png)
-
-    最优正则化参数: λ = 100.0
-    最优参数对应的验证集损失: 0.6117
-    训练集准确率: 0.7575
-    验证集准确率: 0.6500

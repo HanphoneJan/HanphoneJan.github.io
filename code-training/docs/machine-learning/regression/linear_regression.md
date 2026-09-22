@@ -1,8 +1,35 @@
 ---
-title: linear_regression
+title: 线性回归
 _synced: true
 ---
+# 线性回归
 
+
+线性回归是最基础的机器学习算法，用来学习特征 $x$ 与目标值 $y$
+之间的**线性关系**：
+
+$$y = w \cdot x + b$$
+
+其中 $w$ 是权重（斜率），$b$ 是偏置（截距）。目标是学出一组
+$(w, b)$，让模型的预测值尽量接近真实值。
+
+本 notebook 用三种方式实现线性回归，方便对比不同工具的使用方法：
+
+- **PyTorch 实现**：利用自动微分和优化器，快速搭建线性模型
+- **NumPy
+  从零实现**：手动推导并实现成本函数、梯度与梯度下降，理解算法原理
+- **scikit-learn 实现**：多项式线性回归，一行代码完成训练
+
+学习目标：看懂每一行代码，理解「建模 → 训练 → 评估 →
+可视化」的完整流程。
+
+## 一、使用 PyTorch 实现线性回归
+
+### 1. 导入库与基础设置
+
+先导入 PyTorch（张量与神经网络）、NumPy（数值计算）和
+Matplotlib（绘图），并设置中文字体避免乱码。`torch.manual_seed(42)` 与
+`np.random.seed(42)` 固定随机种子，保证每次运行结果一致。
 
 ``` python
 # 用pytorch实现线性回归
@@ -23,7 +50,21 @@ plt.rcParams['axes.unicode_minus'] = False # 部分中文字体对 Unicode 负�
 # 设置随机种子，保证结果可复现
 torch.manual_seed(42) #设置后，每次运行程序时，PyTorch 生成的随机数序列会完全相同。
 np.random.seed(42) #为 NumPy 库设置随机种子
+```
 
+### 2. 生成模拟数据
+
+用一个**已知**的线性关系生成训练数据：
+
+$$y = 2.5x + 1.8 + \varepsilon,\quad \varepsilon \sim \mathcal{N}(0, 2^2)$$
+
+- `true_w = 2.5`、`true_b = 1.8` 是”真实参数”，用来验证学习结果
+- $x$ 是 $[0, 10]$ 之间的 100 个随机点，$y$
+  上叠加了高斯噪声，模拟真实世界中”数据不完美”的情况
+- 注意 PyTorch 的**广播机制**：标量 $b$ 会自动扩展成与 $x$
+  相同的形状参与逐元素运算
+
+``` python
 # 1. 生成模拟数据
 # 真实的权重和偏置
 true_w = 2.5
@@ -38,7 +79,16 @@ x = torch.tensor(np.random.rand(100, 1) * 10, dtype=torch.float32)
 # 广播机制！形状不匹配但 “兼容” 的张量，能进行 element-wise（逐元素）运算
 # yTorch 的广播是「逻辑上的扩展」，不会实际复制数据，只是在计算时 “虚拟地” 将标量的数值应用到每个位置
 y = true_w * x + true_b + torch.tensor(np.random.randn(100, 1) * 2, dtype=torch.float32)
+```
 
+### 3. 定义线性回归模型
+
+`nn.Module` 是所有 PyTorch 模型的基类。我们的模型内部只包含一个
+`nn.Linear(in_features=1, out_features=1)`：输入一个特征，输出一个预测值，即
+$y = wx + b$。`forward` 方法定义前向传播，模型会在训练时自动学习层内的
+$w$ 和 $b$。
+
+``` python
 # 2. 定义线性回归模型
 # nn.Module 是 PyTorch 中 所有神经网络模型的 “基类”（可以理解为 “模板”），它封装了模型训练所需的核心功能，比如：
 #自动管理模型中的可训练参数（如线性回归的 w 和 b）；支持前向传播（forward 方法）的调用逻辑；
@@ -56,7 +106,15 @@ class LinearRegressionModel(nn.Module):
 
 # 实例化模型
 model = LinearRegressionModel()
+```
 
+### 4. 定义损失函数与优化器
+
+- **损失函数**：均方误差（MSE）$J = \frac{1}{n}\sum_{i=1}^{n}(\hat{y}_i - y_i)^2$，衡量预测与真实的差距
+- **优化器**：随机梯度下降（SGD），学习率
+  `lr=0.01`，决定每次参数更新的步长
+
+``` python
 # 3. 定义损失函数和优化器
 # 使用均方误差作为损失函数
 criterion = nn.MSELoss()
@@ -64,7 +122,21 @@ criterion = nn.MSELoss()
 # 使用随机梯度下降(SGD)作为优化器，学习率0.01
 # 每次更新参数前，不从全部样本中计算梯度，而是随机挑选部分样本。后面可以指定选取全部。
 optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+```
 
+### 5. 训练模型
+
+训练循环是深度学习的核心套路，共四步：
+
+1.  **前向传播**：`y_pred = model(x)` 得到预测值
+2.  **计算损失**：比较预测与真实
+3.  **反向传播**：`loss.backward()` 自动计算梯度
+4.  **参数更新**：`optimizer.step()` 沿负梯度方向更新 $w$、$b$
+
+记得每轮先 `optimizer.zero_grad()` 清零梯度，避免多次累加。每训练 10
+轮打印一次损失和参数，观察收敛过程。
+
+``` python
 # 4. 训练模型
 epochs = 30  # 训练轮次
 losses = []  # 记录损失变化
@@ -89,7 +161,14 @@ for epoch in range(epochs):
         w, b = model.parameters()
         # f-string 是 Python 3.6+ 引入的字符串格式化方式，以 f 或 F 开头，字符串内部通过 {变量/表达式} 嵌入动态内容
         print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}, w: {w.item():.4f}, b: {b.item():.4f}')
+```
 
+### 6. 查看学习到的参数
+
+训练结束后，把学习到的 $w$、$b$
+与真实参数对比。学习率合适时，两者应当比较接近（噪声会让结果有轻微偏差）。
+
+``` python
 # 5. 输出最终学习到的参数和真实参数
 # str.format() 是 Python 中用于字符串格式化的经典方法（适用于所有 Python 3 版本，兼容性比 f-string 更广）。其核心逻辑是：
 #先定义一个「带占位符的字符串模板」（占位符用 {} 表示）；
@@ -97,7 +176,17 @@ for epoch in range(epochs):
 print("\n真实参数: w = {:.4f}, b = {:.4f}".format(true_w, true_b))
 w_final, b_final = model.parameters()
 print("学习到的参数: w = {:.4f}, b = {:.4f}".format(w_final.item(), b_final.item()))
+```
 
+### 7. 可视化拟合结果
+
+- **上图**：散点展示原始数据，红色直线展示拟合效果
+- **下图**：绘制损失随训练轮次下降的曲线，验证模型确实在收敛
+
+`detach()` 的作用是把张量从计算图中剥离，再用 `.numpy()` 转成 Matplotlib
+可用的 NumPy 数组。
+
+``` python
 # 6. 可视化结果
 # 生成预测值
 # .detach()：将张量从计算图中 “剥离”（PyTorch 的张量默认会记录计算历史用于反向传播），此时后续转换为 NumPy 数组时避免因关联计算图而报错。
@@ -122,16 +211,12 @@ plt.tight_layout()
 plt.show()
 ```
 
-    Epoch [10/30], Loss: 3.5492, w: 2.5710, b: 1.1697
-    Epoch [20/30], Loss: 3.5152, w: 2.5622, b: 1.2271
-    Epoch [30/30], Loss: 3.4848, w: 2.5539, b: 1.2814
+## 二、使用 NumPy 从零实现线性回归
 
-    真实参数: w = 2.5000, b = 1.8000
-    学习到的参数: w = 2.5539, b = 1.2814
+### 1. 导入库与基础设置
 
-![](linear_regression_files/figure-commonmark/cell-2-output-2.png)
-
-![](linear_regression_files/figure-commonmark/cell-2-output-3.png)
+与第一部分不同，这里**不使用任何深度学习框架**，只用 NumPy
+手工实现线性回归的每一步，真正理解算法内部发生了什么。
 
 ``` python
 # 用纯numpy实现线性回归
@@ -144,7 +229,18 @@ plt.rcParams["font.family"] = ["SimHei"]
 # 解决负号显示问题
 plt.rcParams['axes.unicode_minus'] = False 
 
+```
 
+### 2. 生成示例数据函数
+
+`generate_sample_data` 生成 $m$ 个样本、$n$
+个特征的**多维**线性回归数据：
+
+$$y = X \cdot w + b + \varepsilon$$
+
+返回特征矩阵 $X$、目标值 $y$ 以及用于生成数据的”真实参数” $(w, b)$。
+
+``` python
 # 生成示例数据（模拟真实世界的多特征数据集）
 def generate_sample_data(m=100, n=3, random_state=42):
     """生成用于测试的样本数据
@@ -173,7 +269,17 @@ def generate_sample_data(m=100, n=3, random_state=42):
     y = np.dot(X, true_w) + true_b + np.random.randn(m) * 2
     
     return X, y, true_w, true_b
+```
 
+### 3. 成本函数（均方误差）
+
+成本函数衡量当前参数 $(w,b)$ 下模型的表现：
+
+$$J(w, b) = \frac{1}{2m}\sum_{i=1}^{m}\left(f_{w,b}(x^{(i)}) - y^{(i)}\right)^2$$
+
+分母取 $2m$ 是为了让后续求导更简洁。目标是让 $J$ 尽量小。
+
+``` python
 def compute_cost(X, y, w, b): 
     """
     计算线性回归的成本（均方误差损失）
@@ -199,7 +305,18 @@ def compute_cost(X, y, w, b):
     cost = cost / (2 * m)                     
     
     return cost
+```
 
+### 4. 梯度函数
+
+梯度是成本函数对每个参数的偏导数，指向成本**增长最快**的方向，负梯度就是下降方向：
+
+$$\frac{\partial J}{\partial w_j} = \frac{1}{m}\sum_{i=1}^{m}\left(f_{w,b}(x^{(i)}) - y^{(i)}\right) x_j^{(i)},\quad
+\frac{\partial J}{\partial b} = \frac{1}{m}\sum_{i=1}^{m}\left(f_{w,b}(x^{(i)}) - y^{(i)}\right)$$
+
+代码用两层循环逐个样本累加误差，最后除以 $m$ 取平均。
+
+``` python
 def compute_gradient(X, y, w, b): 
     """
     计算线性回归的梯度
@@ -235,7 +352,18 @@ def compute_gradient(X, y, w, b):
     dj_db = dj_db / m                                
     
     return dj_db, dj_dw
+```
 
+### 5. 梯度下降主循环
+
+参数更新规则：
+
+$$w \leftarrow w - \alpha \frac{\partial J}{\partial w},\quad b \leftarrow b - \alpha \frac{\partial J}{\partial b}$$
+
+其中 $\alpha$ 是学习率。`gradient_descent`
+每轮计算梯度并更新参数，同时记录成本历史，方便观察收敛过程。
+
+``` python
 def gradient_descent(X, y, w_in, b_in, cost_function, gradient_function, alpha, num_iters): 
     """
     执行批量梯度下降算法来学习模型参数，通过num_iters次迭代更新参数，学习率为alpha
@@ -280,7 +408,16 @@ def gradient_descent(X, y, w_in, b_in, cost_function, gradient_function, alpha, 
             print(f"迭代次数 {i:4d}: 成本 {J_history[-1]:8.2f}")
         
     return w, b, J_history  # 返回最终参数和成本历史
+```
 
+### 6. 可视化辅助函数
+
+`plot_regression_results` 画出两个图表：
+
+- 预测值 vs 真实值的散点图（越靠近 $y=x$ 直线说明预测越准）
+- 每个特征与目标值的关系，以及拟合曲线与真实曲线的对比
+
+``` python
 def plot_regression_results(X, y, w, b, true_w, true_b):
     """
     绘制回归结果的可视化图表
@@ -343,7 +480,15 @@ def plot_regression_results(X, y, w, b, true_w, true_b):
     
     plt.tight_layout()
     plt.show()
+```
 
+### 7. 主程序：执行多维度线性回归
+
+主程序按流程运行：生成数据 → 初始化参数 → 计算初始成本与梯度 →
+设置超参数 → 运行梯度下降 → 打印结果 →
+绘制成本曲线和拟合效果。运行后对比学习到的参数与真实参数，检验算法是否正确。
+
+``` python
 # 主程序：执行多维度线性回归
 if __name__ == "__main__":
     # 1. 生成样本数据
@@ -414,39 +559,12 @@ if __name__ == "__main__":
     plot_regression_results(X_train, y_train, w_final, b_final, true_w, true_b)
 ```
 
-    生成的数据 - 真实权重: [ 4.96714153 -1.38264301  6.47688538], 真实偏置: 7.62
+## 三、使用 scikit-learn 实现多项式线性回归
 
-    初始成本: 56.09
-    初始参数下的dj_db: -7.2001
-    初始参数下的dj_dw: [-3.89509922  2.1378427  -4.6795502 ]
+### 1. 导入库与基础设置
 
-    开始梯度下降...
-    迭代次数    0: 成本    55.62
-    迭代次数  100: 成本    24.62
-    迭代次数  200: 成本    11.52
-    迭代次数  300: 成本     5.90
-    迭代次数  400: 成本     3.45
-    迭代次数  500: 成本     2.38
-    迭代次数  600: 成本     1.90
-    迭代次数  700: 成本     1.68
-    迭代次数  800: 成本     1.58
-    迭代次数  900: 成本     1.54
-
-    梯度下降找到的参数 - b: 7.78, w: [ 5.17080554 -1.43021924  6.01866073]
-    真实参数 - b: 7.62, w: [ 4.96714153 -1.38264301  6.47688538]
-
-    部分预测结果与真实值对比:
-    预测值: 16.41, 真实值: 16.96
-    预测值: 15.69, 真实值: 15.82
-    预测值: 7.51, 真实值: 10.08
-    预测值: -3.03, 真实值: -4.33
-    预测值: -3.37, 真实值: -2.64
-
-![](linear_regression_files/figure-commonmark/cell-3-output-2.png)
-
-![](linear_regression_files/figure-commonmark/cell-3-output-3.png)
-
-![](linear_regression_files/figure-commonmark/cell-3-output-4.png)
+scikit-learn 提供了开箱即用的
+`LinearRegression`，同时引入多项式特征、数据划分与评估工具。
 
 ``` python
 # 用sklearn实现多项式线性回归
@@ -463,16 +581,39 @@ np.set_printoptions(precision=2)
 # 定义颜色
 dlblue = '#0096ff'; dlorange = '#FF9300'; dldarkred='#C00000'; 
 dlmagenta='#FF40FF'; dlpurple='#7030A0'; 
+```
 
+### 2. 生成示例数据
+
+生成 $y = 2 + x + 0.5x^2 + \text{噪声}$ 的数据。目标值与 $x$
+是**二次**关系，但线性模型通过多项式特征依然能拟合。
+
+``` python
 # 1. 生成示例数据
 np.random.seed(42)
 X = np.linspace(-3, 3, 100).reshape(-1, 1)  # 特征
 y = 2 + X + 0.5 * X**2 + np.random.normal(0, 0.5, size=X.shape)  # 二次函数关系 + 噪声
 y = y.ravel()  # 将y转换为一维数组，避免后续问题
+```
 
+### 3. 划分训练集与测试集
+
+用 `train_test_split`
+把数据分成训练集（80%）和测试集（20%）。训练集用来学参数，测试集用来检验泛化能力。
+
+``` python
 # 2. 划分训练集和测试集，测试集占20%
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+```
 
+### 4. 创建多项式特征
+
+原始特征只有 $x$，通过 `PolynomialFeatures` 扩展为
+$[x,\ x^2]$，这样线性模型就能拟合二次曲线：
+
+$$\hat{y} = w_1 x + w_2 x^2 + b$$
+
+``` python
 # 3. 创建多项式特征 (这里选择2次多项式)
 degree = 2  # 多项式阶数
 poly = PolynomialFeatures(degree=degree, include_bias=False)
@@ -483,11 +624,25 @@ print(f"原始特征形状: {X_train.shape}")
 print(f"多项式特征形状: {X_train_poly.shape}")
 print("前5个样本的多项式特征:")
 print(X_train_poly[:5])
+```
 
+### 5. 训练模型
+
+`LinearRegression().fit(...)`
+内部用最小二乘法一步求出最优参数，无需手动迭代。
+
+``` python
 # 4. 训练多项式线性回归模型
 model = LinearRegression()
 model.fit(X_train_poly, y_train)  #自动计算出最优的模型参数
+```
 
+### 6. 查看模型参数
+
+打印学习到的偏置 $b$ 和权重 $w$，与真实生成关系 $y = 2 + x + 0.5x^2$
+对照：$b \approx 2,\ w_1 \approx 1,\ w_2 \approx 0.5$。
+
+``` python
 # 5. 获取模型参数，确保是标量
 b = model.intercept_  # 偏置
 w = model.coef_   # 系数
@@ -498,7 +653,14 @@ if isinstance(b, np.ndarray):
 print(f"\n模型参数:")
 print(f"偏置 b = {b:.2f}")
 print(f"权重 w = {w}")
+```
 
+### 7. 模型预测与评估
+
+在训练集和测试集上分别预测，并用 MSE 评估误差。测试集 MSE
+反映模型的**泛化能力**。
+
+``` python
 # 6. 模型预测与评估
 y_pred_train = model.predict(X_train_poly)
 y_pred_test = model.predict(X_test_poly)
@@ -507,7 +669,13 @@ train_mse = mean_squared_error(y_train, y_pred_train)
 test_mse = mean_squared_error(y_test, y_pred_test)
 print(f"\n训练集MSE: {train_mse:.4f}")
 print(f"测试集MSE: {test_mse:.4f}")
+```
 
+### 8. 可视化结果
+
+绘制原始数据、训练集预测和二次多项式拟合曲线，直观看到拟合效果。
+
+``` python
 # 7. 可视化结果
 plt.figure(figsize=(10, 6))
 plt.scatter(X, y, color=dlblue, alpha=0.5, label='原始数据')
@@ -521,21 +689,3 @@ plt.grid(True)
 plt.show()
     
 ```
-
-    原始特征形状: (80, 1)
-    多项式特征形状: (80, 2)
-    前5个样本的多项式特征:
-    [[ 0.33  0.11]
-     [ 2.33  5.44]
-     [-1.42  2.03]
-     [-0.45  0.21]
-     [ 1.18  1.4 ]]
-
-    模型参数:
-    偏置 b = 1.91
-    权重 w = [1.01 0.51]
-
-    训练集MSE: 0.2151
-    测试集MSE: 0.1549
-
-![](linear_regression_files/figure-commonmark/cell-4-output-2.png)
