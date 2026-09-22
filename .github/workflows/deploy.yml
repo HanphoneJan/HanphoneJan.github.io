@@ -35,10 +35,7 @@ jobs:
           node-version: 24
 
       - name: Install dependencies
-        run: |
-          pnpm --version
-          node --version
-          pnpm install --frozen-lockfile 2>&1 | tee /tmp/install.log; exit ${PIPESTATUS[0]}
+        run: pnpm install --frozen-lockfile
 
       - name: Fetch latest GitHub data
         env:
