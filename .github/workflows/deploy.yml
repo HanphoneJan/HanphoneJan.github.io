@@ -34,6 +34,15 @@ jobs:
         with:
           node-version: 20
 
+      - name: Diagnose environment
+        run: |
+          pnpm --version
+          node --version
+          ls -la
+          head -3 pnpm-lock.yaml
+          pnpm config get store-dir || true
+          pnpm install --frozen-lockfile --reporter=append-only 2>&1 || true
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
