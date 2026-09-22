@@ -107,13 +107,22 @@ async function sync() {
         cwd: path.dirname(file)
       });
 
+      // 读取源 notebook 的 metadata.title，优先作为页面标题（可读中文标题）
+      let sourceTitle: string | undefined;
+      try {
+        const nb = JSON.parse(await fs.readFile(file, 'utf-8'));
+        sourceTitle = nb?.metadata?.title;
+      } catch {
+        // 忽略读取失败，回退到默认标题
+      }
+
       // 读取生成的文件，添加 frontmatter 标记
       const content = await fs.readFile(targetMdPath, 'utf-8');
       const { data, content: body } = matter(content);
 
       const cleanData = {
         ...data,
-        title: data.title || path.basename(file, '.ipynb'),
+        title: sourceTitle || data.title || path.basename(file, '.ipynb'),
         _synced: true
       };
 

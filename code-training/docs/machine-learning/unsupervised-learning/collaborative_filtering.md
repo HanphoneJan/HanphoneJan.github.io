@@ -1,8 +1,40 @@
 ---
-title: collaborative_filtering
+title: 协同过滤推荐系统
 _synced: true
 ---
+# 协同过滤推荐系统（Collaborative Filtering）
 
+
+**协同过滤**是推荐系统中最经典的思路之一，可以用一句话概括：**「物以类聚，人以群分」**。它不关心电影的内容是什么，只利用「用户
+× 物品」的评分矩阵，从大量用户的集体行为中寻找规律。
+
+本 notebook
+将实现一个基于**低秩矩阵分解**的协同过滤模型：把「用户对电影的评分」拆解为**电影特征**
+$X$ 与**用户偏好** $W$ 的点积加上用户偏置：
+
+$$\hat y^{(i,j)} = x^{(i)} \cdot w^{(j)} + b^{(j)}$$
+
+其中：
+
+- $x^{(i)}$：第 $i$ 部电影的特征向量，描述电影的主题。
+- $w^{(j)}$：第 $j$ 个用户的偏好向量，描述用户喜欢什么样的电影。
+- $b^{(j)}$：用户的偏置项（有些人天生打分偏高或偏低）。
+
+学习的目标就是：**同时**调整 $X$ 和 $W$，让预测评分尽量接近真实评分。
+
+## 1. 导入库与加载数据
+
+加载预计算的小型数据集：
+
+- `Y`：评分矩阵，形状 `(电影数, 用户数)`，`Y[i,j]` 是用户 $j$ 对电影 $i$
+  的评分。
+- `R`：指示矩阵，`R[i,j]=1` 表示用户 $j$ 对电影 $i$ 评过分，`0`
+  表示未评分。
+- `X`：预计算的电影特征矩阵 `(电影数, 特征数)`。
+- `W`：预计算的用户参数矩阵 `(用户数, 特征数)`。
+- `b`：用户偏置向量 `(1, 用户数)`。
+
+最后演示如何用 `R` 过滤出真实评分，计算某部电影的平均分。
 
 ``` python
 # 协同过滤
@@ -32,6 +64,26 @@ print("用户数量", num_users)
 tsmean = np.mean(Y[0, R[0, :].astype(bool)])
 print(f"电影1的平均评分为: {tsmean:0.3f} / 5")
 
+```
+
+## 2. 协同过滤成本函数
+
+协同过滤要**同时学习电影特征和用户偏好**，目标是让预测评分
+$\hat y = x^{(i)} \cdot w^{(j)} + b^{(j)}$
+尽量接近真实评分。损失函数为：
+
+$$J(X,W,b) = \frac{1}{2}\sum_{(i,j):R_{ij}=1} \left(x^{(i)} \cdot w^{(j)} + b^{(j)} - y^{(i,j)}\right)^2 + \frac{\lambda}{2}\left(\sum_i \|x^{(i)}\|^2 + \sum_j \|w^{(j)}\|^2\right)$$
+
+几个关键点：
+
+- 求和**只**在 `R[i,j]=1`（有真实评分）的位置上进行，代码里用
+  `(预测 - 真实) * R` 一次性地把所有未评分位置的误差置零。
+- 第二项是**正则化**，防止 $X$ 和 $W$ 参数过大导致过拟合。
+- 系数 $\frac{1}{2}$ 是为了求导后约掉平方项的指数，让梯度公式更简洁。
+
+用官方单元测试验证实现正确性。
+
+``` python
 # 协同过滤成本函数（numpy实现）
 def cofi_cost_func(X, W, b, Y, R, lambda_):
     """
@@ -65,6 +117,17 @@ def cofi_cost_func(X, W, b, Y, R, lambda_):
 from public_tests import *
 test_cofi_cost_func(cofi_cost_func)
 
+```
+
+### 2.1 用缩小数据集验证成本函数
+
+为了快速验证，先截取一个小的子集（5 部电影、4 个用户、3
+个特征）。可以看到：
+
+- 无正则化（`lambda_=0`）时成本为 13.67；
+- 加上正则化（`lambda_=1.5`）后成本变大，因为多了参数大小的惩罚项。
+
+``` python
 # 缩小数据集以加速测试（取部分电影、用户和特征）
 num_users_r = 4
 num_movies_r = 5 
@@ -84,6 +147,16 @@ print(f"成本值: {J:0.2f}")
 J = cofi_cost_func(X_r, W_r, b_r, Y_r, R_r, 1.5);
 print(f"带正则化的成本值: {J:0.2f}")
 
+```
+
+## 3. PyTorch 向量化成本函数
+
+`cofi_cost_func_v` 是 `cofi_cost_func` 的 PyTorch
+版本，两者数学上完全等价，但使用**张量运算**，可以借助自动求导（`backward()`）在训练中直接计算梯度。
+
+用同一组数据测试两个版本，得到的结果应完全一致。
+
+``` python
 # 协同过滤成本函数（PyTorch向量化版本，用于高效训练）
 def cofi_cost_func_v(X, W, b, Y, R, lambda_):
     """
@@ -119,6 +192,17 @@ print(f"向量化成本值: {J.item():0.2f}")
 J = cofi_cost_func_v(X_r_torch, W_r_torch, b_r_torch, Y_r_torch, R_r_torch, 1.5);
 print(f"带正则化的向量化成本值: {J.item():0.2f}")
 
+```
+
+## 4. 构造一个新用户
+
+推荐系统的魅力在于「冷启动」也能工作：我们模拟一个刚注册的新用户，手动给
+13 部电影打分（填 `my_ratings`），然后让模型推测他还可能喜欢什么。
+
+- `my_ratings` 长度等于 `num_movies`，只有打了分的位置非零。
+- `my_rated` 记录所有已评分的电影索引，后面生成推荐时会跳过这些电影。
+
+``` python
 # 加载电影列表（包含电影ID和名称对应关系）
 movieList, movieList_df = load_Movie_List_pd()
 
@@ -150,6 +234,19 @@ for i in range(len(my_ratings)):
         print(f'为 {movieList_df.loc[i,"title"]} 打了 {my_ratings[i]} 分');
 
 
+```
+
+## 5. 将新用户加入数据集并标准化
+
+把新用户作为第 0 列拼接进 `Y` 和 `R`，成为数据集的第 0 个用户（`np.c_`
+表示按列拼接）。
+
+然后用 `normalizeRatings`
+对评分**按电影去均值**：每部电影减去自己的平均分，得到标准化评分 `Ynorm`
+和每部电影的平均分
+`Ymean`。这样能消除「有些人天生打分高、有些人天生打分低」的偏差，模型只需要学习相对偏好。
+
+``` python
 # 将新用户的评分添加到原有数据集
 Y, R = load_ratings_small()  # 重新加载原始评分数据
 Y    = np.c_[my_ratings, Y]  # 在Y的第一列添加当前用户的评分（成为新用户）
@@ -159,6 +256,16 @@ R    = np.c_[(my_ratings != 0).astype(int), R]  # 更新指示矩阵（标记新
 Ynorm, Ymean = normalizeRatings(Y, R)
 
 
+```
+
+## 6. 初始化参数与优化器
+
+- 用 `nn.Parameter` 包装 $X, W, b$，让 PyTorch 自动追踪梯度。
+- 特征维度设为 100（即潜在因子数量）。
+- 使用 **Adam** 优化器，学习率 0.1。
+- 把 `Ynorm` 和 `R` 提前转换为张量，加速训练。
+
+``` python
 # 模型训练参数设置
 num_movies, num_users = Y.shape  # 此时用户数已包含新用户
 num_features = 100  # 特征维度（潜在因子数量）
@@ -176,6 +283,17 @@ optimizer = torch.optim.Adam([X, W, b], lr=1e-1)
 Ynorm_tensor = torch.tensor(Ynorm, dtype=torch.float64)
 R_tensor = torch.tensor(R, dtype=torch.float64)
 
+```
+
+## 7. 训练模型
+
+在 200 次迭代中反复执行：**前向传播 → 反向传播 → 更新参数**：
+
+$$\theta \leftarrow \theta - \alpha \cdot \nabla_\theta J$$
+
+观察打印的损失从百万级迅速下降到千级，说明模型正在快速拟合评分矩阵。
+
+``` python
 # 训练模型
 iterations = 200  # 迭代次数
 lambda_ = 1       # 正则化系数
@@ -196,6 +314,22 @@ for iter in range(iterations):
     if iter % 20 == 0:
         print(f"第 {iter} 次迭代的训练损失: {cost_value.item():0.1f}")
 
+```
+
+## 8. 预测与推荐
+
+训练完成后按步骤产出推荐结果：
+
+1.  用公式 $\hat y = X W^T + b$ 预测所有评分，并加上 `Ymean`
+    还原为真实量纲。
+2.  取出新用户（第 0 列）的预测，**降序排序**，排除已看过的电影，给出
+    Top 17 推荐。
+3.  对比新用户已打分的电影：「原始评分 vs
+    预测评分」非常接近，说明模型记住了他的偏好。
+4.  最后用 `movieList_df` 进一步筛选「评价人数 \>
+    20」的热门电影，按平均评分排序，得到更稳妥的推荐列表。
+
+``` python
 # 使用训练好的模型进行预测
 with torch.no_grad():  # 关闭梯度计算，节省资源
     # 计算预测评分（标准化后的结果）

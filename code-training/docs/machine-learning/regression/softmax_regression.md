@@ -1,8 +1,30 @@
 ---
-title: softmax_regression
+title: Softmax 回归与多分类
 _synced: true
 ---
+# Softmax 回归与多分类
 
+
+Softmax 回归是逻辑回归在多分类问题上的推广。对 $K$ 个类别的线性得分
+$z_1,\dots,z_K$，Softmax 把它们转化为一个概率分布：
+
+$$\hat{p}_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}$$
+
+所有概率之和为 1，取最大值对应的类别即为预测结果。本 notebook 使用
+**PyTorch** 完成两个任务：
+
+1.  **多分类问题**：构建带隐藏层、批归一化与 Dropout
+    的神经网络，并用交叉熵损失、Adam 优化器、学习率调度和早停策略训练
+2.  **多标签分类问题**：一个样本可能同时属于多个类别，用 sigmoid +
+    二元交叉熵处理
+
+## 一、多分类问题（Softmax 回归）
+
+### 1. 导入库
+
+导入
+PyTorch（张量、神经网络模块、优化器、数据集与数据加载器）、scikit-learn（数据生成、划分、评估、标准化）和
+NumPy。
 
 ``` python
 # 导入PyTorch库，用于构建和训练神经网络
@@ -23,7 +45,14 @@ from sklearn.metrics import accuracy_score, classification_report
 from sklearn.preprocessing import StandardScaler
 # 导入NumPy库，用于数值计算和数组操作
 import numpy as np
+```
 
+### 2. 设置随机种子与设备
+
+固定随机种子保证结果可复现。`device` 自动检测 GPU，没有 GPU 时回退到
+CPU，后续张量和模型都通过 `.to(device)` 放到对应设备上。
+
+``` python
 # 设置PyTorch的随机种子，确保实验结果可复现
 torch.manual_seed(42)
 # 设置NumPy的随机种子，确保实验结果可复现
@@ -33,7 +62,13 @@ np.random.seed(42)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # 打印当前使用的计算设备（CPU或GPU）
 print(f"使用设备: {device}")
+```
 
+### 3. 打印示例标题
+
+打印分隔线美化输出，提示下面进入”改进的多分类问题示例”。
+
+``` python
 # --------------------------
 # 改进的多分类问题实现
 # --------------------------
@@ -43,7 +78,15 @@ print("\n" + "="*50)
 print("改进的多分类问题示例")
 # 打印分隔线，美化输出
 print("="*50)
+```
 
+### 4. 生成多分类数据集
+
+`make_classification` 生成 1000 个样本、20 个特征、5
+个类别的数据集。其中 15 个是有用特征，5
+个是由有用特征组合而成的冗余特征。
+
+``` python
 # 生成多分类数据集
 X_multi, y_multi = make_classification(
     n_samples=1000,          # 样本数量：1000个
@@ -53,7 +96,15 @@ X_multi, y_multi = make_classification(
     n_classes=5,             # 类别数量：5个（多分类问题）
     random_state=42          # 随机种子，保证结果可复现
 )
+```
 
+### 5. 数据标准化与张量转换
+
+`StandardScaler` 把每个特征缩放到均值为 0、标准差为
+1，能显著加速梯度下降收敛。之后把 NumPy 数组转换为 PyTorch 张量：特征用
+`float32`，标签用 `long`（CrossEntropyLoss 的输入要求）。
+
+``` python
 # 初始化标准化器，用于将特征缩放到均值为0、标准差为1的分布
 scaler = StandardScaler()
 # 对特征进行标准化处理，改善模型训练效果
@@ -63,14 +114,27 @@ X_multi_scaled = scaler.fit_transform(X_multi)
 X_multi = torch.tensor(X_multi_scaled, dtype=torch.float32).to(device)
 # 将标签数据转换为PyTorch长整数张量，并移动到指定设备（CPU或GPU）
 y_multi = torch.tensor(y_multi, dtype=torch.long).to(device)
+```
 
+### 6. 划分训练集与测试集
+
+训练集占 80%、测试集占 20%。测试集不参与训练，用来评估模型的泛化能力。
+
+``` python
 # 将数据集划分为训练集和测试集
 X_train_multi, X_test_multi, y_train_multi, y_test_multi = train_test_split(
     X_multi, y_multi,       # 要划分的特征和标签
     test_size=0.2,          # 测试集占比：20%
     random_state=42         # 随机种子，保证划分结果可复现
 )
+```
 
+### 7. 构建数据加载器（DataLoader）
+
+`DataLoader` 把数据切成批次（`batch_size=32`）并支持打乱顺序，是 PyTorch
+中批量训练的标配。
+
+``` python
 # 创建训练数据集，将特征和标签组合在一起
 train_dataset_multi = TensorDataset(X_train_multi, y_train_multi)
 # 创建测试数据集，将特征和标签组合在一起
@@ -88,7 +152,21 @@ test_loader_multi = DataLoader(
     batch_size=32,          # 批处理大小：32个样本 per batch
     shuffle=False           # 测试时不打乱数据顺序
 )
+```
 
+### 8. 定义神经网络分类器
+
+`ImprovedClassifier` 是一个三层结构：
+
+- 输入层 → 64 维隐藏层：`Linear + ReLU + BatchNorm + Dropout`
+- 64 → 32 维隐藏层：同样组合
+- 输出层：`Linear(hidden_dim//2, num_classes)`，输出 5 个类别的 logits
+
+**BatchNorm** 加速收敛、稳定训练；**Dropout**
+随机失活部分神经元，防止过拟合。最后的 logits 会在损失函数内部自动经过
+Softmax。
+
+``` python
 # 定义改进的神经网络分类器模型
 class ImprovedClassifier(nn.Module):
     # 初始化方法，定义模型结构
@@ -123,7 +201,16 @@ class ImprovedClassifier(nn.Module):
     def forward(self, x):
         # 将输入x传入定义好的层序列进行处理
         return self.layers(x)
+```
 
+### 9. 初始化模型、损失函数与优化器
+
+- 损失函数：`nn.CrossEntropyLoss()`，内部组合了 Softmax 与交叉熵
+- 优化器：Adam（收敛通常比 SGD 快），带 `weight_decay` 做 L2 正则
+- 学习率调度器：验证损失不再下降时，学习率自动乘以 `factor=0.5`
+- 早停参数：验证损失连续 `patience=20` 轮无改善则提前结束训练
+
+``` python
 # 初始化模型、损失函数和优化器
 # 获取输入特征的维度（20）
 input_dim = X_multi.shape[1]
@@ -155,7 +242,19 @@ patience = 20                 # 早停耐心值：20个epoch无改善则停止�
 counter = 0                   # 计数器：记录验证损失无改善的epoch数
 # 记录初始学习率，用于跟踪学习率变化
 prev_lr = optimizer_multi.param_groups[0]['lr']
+```
 
+### 10. 训练模型
+
+每个 epoch 中：
+
+1.  `model.train()` 启用训练模式，遍历所有批次做前向、反向、更新
+2.  结束后 `model.eval()` 在测试集上计算验证损失
+3.  `scheduler.step(val_loss)` 根据验证损失调整学习率
+4.  早停检查：验证损失创新低就保存最佳模型，否则计数；连续 `patience`
+    轮无改善则停止
+
+``` python
 # 训练模型
 epochs = 300  # 最大训练轮数
 # 遍历每个训练轮次
@@ -233,7 +332,15 @@ for epoch in range(epochs):
     # 每10个epoch打印一次训练信息
     if (epoch + 1) % 10 == 0:
         print(f'Epoch [{epoch+1}/{epochs}], 训练损失: {train_loss:.4f}, 验证损失: {val_loss:.4f}, 学习率: {current_lr:.6f}')
+```
 
+### 11. 加载最佳模型并评估
+
+训练结束后加载验证损失最低的模型，在测试集上预测。`torch.max(outputs, 1)`
+取每行最大概率的索引作为预测类别，最后打印准确率和包含精确率、召回率、F1
+的分类报告。
+
+``` python
 # 加载之前保存的最佳模型参数
 model_multi.load_state_dict(torch.load('best_model.pth'))
 
@@ -267,43 +374,16 @@ print("\n分类报告:")
 print(classification_report(all_labels, all_preds))
 ```
 
-    使用设备: cpu
+## 二、多标签分类问题
 
-    ==================================================
-    改进的多分类问题示例
-    ==================================================
-    Epoch [10/300], 训练损失: 0.9265, 验证损失: 0.8729, 学习率: 0.001000
-    Epoch [20/300], 训练损失: 0.7409, 验证损失: 0.7428, 学习率: 0.001000
-    Epoch [30/300], 训练损失: 0.6931, 验证损失: 0.6956, 学习率: 0.001000
-    Epoch [40/300], 训练损失: 0.6163, 验证损失: 0.6733, 学习率: 0.001000
-    Epoch [50/300], 训练损失: 0.5790, 验证损失: 0.6503, 学习率: 0.001000
-    Epoch [60/300], 训练损失: 0.4927, 验证损失: 0.6442, 学习率: 0.001000
-    学习率已调整为: 0.000500
-    Epoch [70/300], 训练损失: 0.5147, 验证损失: 0.6372, 学习率: 0.000500
-    Epoch [80/300], 训练损失: 0.4452, 验证损失: 0.6366, 学习率: 0.000500
-    Epoch [90/300], 训练损失: 0.4561, 验证损失: 0.6406, 学习率: 0.000500
-    学习率已调整为: 0.000250
-    Epoch [100/300], 训练损失: 0.4671, 验证损失: 0.6411, 学习率: 0.000250
+多标签分类中，一个样本可能同时属于多个类别。此时**不能再使用
+Softmax**（它强制所有输出之和为 1），而是对每个类别独立使用
+**sigmoid**，把每个输出都压缩到 $(0,1)$，用 0.5
+阈值逐个判断”是否属于该类别”，损失函数用二元交叉熵 `BCELoss`。
 
-    早停在第 103 个epoch
+### 1. 打印分区标题
 
-    改进后的多分类问题测试集准确率: 0.7950
-
-    分类报告:
-                  precision    recall  f1-score   support
-
-               0       0.72      0.70      0.71        30
-               1       0.90      0.83      0.86        46
-               2       0.83      0.80      0.81        44
-               3       0.64      0.76      0.70        38
-               4       0.86      0.86      0.86        42
-
-        accuracy                           0.80       200
-       macro avg       0.79      0.79      0.79       200
-    weighted avg       0.80      0.80      0.80       200
-
-    C:\Users\11955\AppData\Local\Temp\ipykernel_8500\2852974574.py:158: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
-      model_multi.load_state_dict(torch.load('best_model.pth'))
+先打印分隔线和”多标签分类问题示例”标题，分隔多个示例的输出。
 
 ``` python
 # --------------------------
@@ -312,7 +392,18 @@ print(classification_report(all_labels, all_preds))
 print("\n" + "="*50)
 print("多标签分类问题示例")
 print("="*50)
+```
 
+### 2. 生成多标签数据集
+
+`make_multilabel_classification`
+生成每个样本可能同时属于多个类别的数据（5 个类别，平均每个样本 2
+个标签）。
+
+> 注意：此函数来自 `sklearn.datasets`，运行前需要先导入，例如
+> `from sklearn.datasets import make_multilabel_classification`。
+
+``` python
 # 生成多标签分类数据集
 X_multi_label, y_multi_label = make_multilabel_classification(
     n_samples=1000,    # 样本数量：1000个
@@ -321,7 +412,14 @@ X_multi_label, y_multi_label = make_multilabel_classification(
     n_labels=2,        # 每个样本的平均标签数：2个
     random_state=42    # 随机种子，保证结果可复现
 )
+```
 
+### 3. 数据转换与划分
+
+特征与标签都转成 `float32` 张量（多标签的标签是 0/1
+矩阵，不再是整数类别），然后划分训练集与测试集。
+
+``` python
 # 转换为PyTorch张量并移动到指定设备
 X_multi_label = torch.tensor(X_multi_label, dtype=torch.float32).to(device)  # 特征转换为float32类型
 y_multi_label = torch.tensor(y_multi_label, dtype=torch.float32).to(device)  # 多标签转换为float32类型
@@ -330,7 +428,13 @@ y_multi_label = torch.tensor(y_multi_label, dtype=torch.float32).to(device)  # �
 X_train_ml, X_test_ml, y_train_ml, y_test_ml = train_test_split(
     X_multi_label, y_multi_label, test_size=0.2, random_state=42
 )
+```
 
+### 4. 构建数据加载器
+
+与第一部分相同，用 `TensorDataset` + `DataLoader` 构造批量数据。
+
+``` python
 # 创建数据集和数据加载器
 train_dataset_ml = TensorDataset(X_train_ml, y_train_ml)  # 训练集
 test_dataset_ml = TensorDataset(X_test_ml, y_test_ml)  # 测试集
@@ -338,7 +442,14 @@ test_dataset_ml = TensorDataset(X_test_ml, y_test_ml)  # 测试集
 # 创建数据加载器
 train_loader_ml = DataLoader(train_dataset_ml, batch_size=32, shuffle=True)  # 训练集打乱
 test_loader_ml = DataLoader(test_dataset_ml, batch_size=32, shuffle=False)  # 测试集不打乱
+```
 
+### 5. 定义多标签分类模型
+
+只有一个线性层：输入 20 维特征，输出 5 个值，每个值经过 **sigmoid**
+变成该标签为 1 的概率。相当于并行的 5 个二分类器。
+
+``` python
 # 定义多标签分类的softmax回归模型
 class MultiLabelSoftmaxRegression(nn.Module):
     def __init__(self, input_dim, num_classes):
@@ -350,7 +461,14 @@ class MultiLabelSoftmaxRegression(nn.Module):
         # 前向传播：线性变换后应用sigmoid激活函数
         # sigmoid将输出映射到[0,1]区间，表示每个标签的概率
         return torch.sigmoid(self.linear(x))
+```
 
+### 6. 初始化模型、损失函数与优化器
+
+用 `BCELoss`（二元交叉熵）作为损失，SGD 优化器（带动量
+`momentum=0.9`）更新参数。
+
+``` python
 # 初始化模型、损失函数和优化器
 num_classes_ml = y_multi_label.shape[1]  # 多标签分类的类别数：5
 
@@ -360,7 +478,14 @@ model_ml = MultiLabelSoftmaxRegression(input_dim, num_classes_ml).to(device)
 criterion_ml = nn.BCELoss()
 # 定义优化器：随机梯度下降
 optimizer_ml = optim.SGD(model_ml.parameters(), lr=0.03, momentum=0.9)
+```
 
+### 7. 训练模型
+
+与第一部分类似：每个 epoch 遍历所有批次，做前向 → 计算损失 → 反向传播 →
+参数更新。这里没有学习率调度和早停，只打印每 10 轮的损失。
+
+``` python
 # 训练模型
 epochs = 100  # 训练轮数：100
 for epoch in range(epochs):
@@ -386,7 +511,17 @@ for epoch in range(epochs):
     # 每10个epoch打印一次信息
     if (epoch + 1) % 10 == 0:
         print(f'Epoch [{epoch+1}/{epochs}], 训练损失: {train_loss:.4f}')
+```
 
+### 8. 测试集评估
+
+预测时用 0.5 阈值把概率转为 0/1。用
+**汉明损失**（预测与标签不一致的占比，越小越好）评估整体性能，并为每个类别单独打印分类报告。
+
+> 注意：`hamming_loss` 来自 `sklearn.metrics`，运行前需要先导入，例如
+> `from sklearn.metrics import hamming_loss`。
+
+``` python
 # 在测试集上评估
 model_ml.eval()  # 设置为评估模式
 all_preds_ml = []  # 存储多标签预测结果

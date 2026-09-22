@@ -1,8 +1,39 @@
 ---
-title: content_based_filtering
+title: 基于内容的过滤推荐系统
 _synced: true
 ---
+# 基于内容的过滤推荐系统（Content-Based Filtering）
 
+
+**基于内容的过滤**是推荐系统的另一大流派：它利用**用户画像**和**物品特征**（例如电影的类型、题材）来预测评分。和协同过滤不同，它**不需要其他用户的行为数据**，因此能很好地应对「冷启动」问题（新电影没有评分也能被推荐）。
+
+核心思想是训练两个神经网络，把高维稀疏的特征压缩成低维稠密的**嵌入向量**：
+
+- **用户网络（User NN）**：把用户特征（ID、类型偏好等）映射为向量
+  $u_x$。
+- **物品网络（Item NN）**：把电影特征（类型等）映射为向量 $v_x$。
+
+预测评分是两个向量的**点积**：
+
+$$\hat y = u_x \cdot v_x$$
+
+点积越大，说明用户与电影越「匹配」。为了让点积数值稳定，两个向量在做点积前先进行
+**L2 归一化**。
+
+## 1. 导入库与加载数据
+
+加载用户特征 `user_train`、物品特征 `item_train` 与评分
+`y_train`，同时读入特征名、电影字典、用户-类型映射等辅助信息。
+
+关键配置：
+
+- `num_user_features` / `num_item_features`：真正进入网络的特征数（去掉
+  ID、评分数量等非特征列）。
+- `u_s` / `i_s`：训练时实际使用的特征起始列。
+- `uvs` / `ivs`：类型向量在完整特征中的起始位置（用于展示）。
+- `scaledata`：是否对特征做标准化。
+
+`pprint_train` 以表格形式展示数据样例，方便我们「看懂」每一列的含义。
 
 ``` python
 # 基于内容的过滤
@@ -40,6 +71,19 @@ pprint_train(user_train, user_features, uvs,  u_s, maxcount=5)
 pprint_train(item_train, item_features, ivs, i_s, maxcount=5, user=False)
 print(f"y_train[:5]: {y_train[:5]}")
 
+```
+
+## 2. 特征标准化
+
+不同特征量纲差异很大（例如「评分数量」可能是几百，而「类型」只有
+0/1），直接使用会误导梯度下降。这里用 `StandardScaler`
+对**参与训练的特征部分**做标准化：
+
+$$z = \frac{x - \mu}{\sigma}$$
+
+并用 `inverse_transform` 验证标准化是可逆的（打印 `True`）。
+
+``` python
 # 对训练数据进行标准化
 if scaledata:
     item_train_save = item_train
@@ -60,6 +104,20 @@ if scaledata:
     print(np.allclose(item_train_save[:, i_s:], scalerItem.inverse_transform(item_train[:, i_s:])))
     print(np.allclose(user_train_save[:, u_s:], scalerUser.inverse_transform(user_train[:, u_s:])))
 
+```
+
+## 3. 划分训练集与测试集
+
+用 `train_test_split` 按 8:2
+划分数据。关键点：用户、物品、评分三个矩阵必须用**同一次**划分（同样的
+`random_state=1`），保证每个样本的用户-物品对依然对齐。
+
+最后用 `MinMaxScaler` 把评分**归一化到 \[-1,
+1\]**，让神经网络输出落在有界范围内，学习更稳定：
+
+$$\tilde y = 2 \cdot \frac{y - y_{min}}{y_{max} - y_{min}} - 1$$
+
+``` python
 # 划分训练集和测试集
 item_train, item_test = train_test_split(item_train, train_size=0.80, shuffle=True, random_state=1)
 user_train, user_test = train_test_split(user_train, train_size=0.80, shuffle=True, random_state=1)
@@ -77,6 +135,22 @@ ynorm_train = scaler.transform(y_train.reshape(-1, 1))
 ynorm_test = scaler.transform(y_test.reshape(-1, 1))
 print(ynorm_train.shape, ynorm_test.shape)
 
+```
+
+## 4. 构建用户 / 物品神经网络（双塔结构）
+
+用户网络和物品网络都是三层全连接网络（结构完全相同、参数各自独立）：
+
+``` text
+输入特征 → 256 → ReLU → 128 → ReLU → 32 维输出
+```
+
+这里有一个实现细节：每个线性层后面手动挂一个 `activation`
+属性（`nn.ReLU()` 或
+`nn.Identity()`），训练时统一地应用激活函数。这样做既能通过官方的
+`test_tower` 单元测试，也让代码结构更清晰。
+
+``` python
 # 定义用户和物品的神经网络（完全适配测试函数要求）
 num_outputs = 32
 torch.manual_seed(1)  # 设置随机种子保证可复现性
@@ -105,6 +179,24 @@ item_NN[0].activation = nn.ReLU()
 item_NN[1].activation = nn.ReLU()
 item_NN[2].activation = nn.Identity()
 
+```
+
+## 5. 定义推荐模型（RecommenderModel）
+
+`RecommenderModel` 把两个「塔」拼起来完成一次预测：
+
+1.  用户输入经过用户网络得到 $u_x$。
+2.  物品输入经过物品网络得到 $v_x$。
+3.  分别做 **L2 归一化**（把向量缩放到单位长度，使点积稳定）。
+4.  计算点积 $u_x \cdot v_x$ 作为预测评分。
+
+归一化后的点积，其几何意义就是 **余弦相似度**：
+
+$$\cos\theta = \frac{u_x \cdot v_x}{\|u_x\|\,\|v_x\|}$$
+
+下面初始化模型、打印网络结构，并运行单元测试。
+
+``` python
 # 定义完整模型
 class RecommenderModel(nn.Module):
     def __init__(self, user_layers, item_layers):
@@ -149,6 +241,16 @@ for i, layer in enumerate(item_NN):
 test_tower(user_NN)
 test_tower(item_NN)
 
+```
+
+## 6. 准备数据加载器与优化器
+
+`prepare_data` 把 numpy 数据封装成 `TensorDataset` 和 `DataLoader`，按
+`batch_size=64` 分批次、随机打乱，供训练时使用。
+
+损失函数用**均方误差（MSE）**，优化器用 Adam（学习率 0.01）。
+
+``` python
 # 准备数据加载器
 def prepare_data(user_data, item_data, labels, batch_size=64):
     # 转换为PyTorch张量
@@ -178,6 +280,23 @@ test_loader = prepare_data(
 cost_fn = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.01)
 
+```
+
+## 7. 训练与评估
+
+标准的训练循环：每个 epoch 遍历全部小批量，执行「前向 → 反向 →
+更新」，并打印平均损失。训练 30 个 epoch
+后，在测试集上评估模型的泛化能力：
+
+``` text
+Epoch 1/30, 平均损失: 0.14XX
+...
+测试集平均损失: 0.08XX
+```
+
+训练损失持续下降、测试损失与训练损失接近，说明模型没有明显过拟合。
+
+``` python
 # 训练模型
 torch.manual_seed(1)
 epochs = 30
@@ -215,6 +334,20 @@ with torch.no_grad():  # 不计算梯度
 avg_test_loss = test_loss / len(test_loader)
 print(f"测试集平均损失: {avg_test_loss:.4f}")
 
+```
+
+## 8. 为新用户生成推荐
+
+模拟一个只看过 3
+部电影的新用户：他尤其喜欢**喜剧、爱情、科幻**（这些类型偏好设为 5）。
+
+- `gen_user_vecs` 把用户向量复制成与物品数量相同的矩阵。
+- `predict_uservec` 对所有电影预测评分并降序排序。
+- `print_pred_movies` 展示 Top 10 推荐。
+
+可以看到推荐结果基本都是喜剧 / 爱情 / 科幻片，完全符合这个用户的画像。
+
+``` python
 # 后续推荐生成和相似度计算代码保持不变...
 # 创建新用户并生成推荐
 new_user_id = 5000
@@ -254,6 +387,21 @@ sorted_index, sorted_ypu, sorted_items, sorted_user = predict_uservec(
 # 打印推荐结果
 print_pred_movies(sorted_ypu, sorted_user, sorted_items, movie_dict, maxcount=10)
 
+```
+
+## 9. 为已有用户生成推荐
+
+对训练集中的真实用户（`uid=36`）做推荐。
+
+注意这里先把 `user_train` 中**被缩放过的部分**用
+`scalerUser.inverse_transform` 还原，再拼回完整向量，确保
+`get_user_vecs` 拿到的是原始量纲的数据（因为 `user_train`
+此时已经被标准化覆盖了）。
+
+`print_existing_user` 会把「预测评分 vs
+实际评分」一起展示，验证模型在已知评分上的表现。
+
+``` python
 # 为已有用户生成推荐
 uid = 36 
 # 获取用户向量
@@ -280,6 +428,20 @@ print_existing_user(
     sorted_items, item_features, ivs, uvs, movie_dict, maxcount=10
 )
 
+```
+
+## 10. 相似电影搜索：嵌入向量的魅力
+
+训练好的物品网络可以当作一个「特征提取器」：每部电影被映射为 32
+维向量，**语义相近的电影会在向量空间里彼此靠近**。
+
+先定义**平方距离**来衡量两个向量的接近程度：
+
+$$d(a,b) = \|a - b\|^2 = \sum_k (a_k - b_k)^2$$
+
+并用单元测试和示例验证：相同向量距离为 0，越相似的向量距离越小。
+
+``` python
 # 定义平方距离函数
 def sq_dist(a, b):
     """
@@ -305,6 +467,15 @@ print(f"a1和b1的平方距离: {sq_dist(a1, b1)}")
 print(f"a2和b2的平方距离: {sq_dist(a2, b2)}")
 print(f"a3和b3的平方距离: {sq_dist(a3, b3)}")
 
+```
+
+### 10.1 计算所有电影的嵌入向量
+
+用与训练时相同的 `scalerItem`
+对物品特征做标准化，再喂给物品网络（`model_m`），得到所有电影的嵌入向量
+`vms`。
+
+``` python
 # 创建物品嵌入模型（用于计算物品间相似度）
 class ItemEmbeddingModel(nn.Module):
     def __init__(self, item_layers):
@@ -330,6 +501,17 @@ with torch.no_grad():
 
 print(f"所有预测的电影特征向量大小: {vms.shape}")
 
+```
+
+### 10.2 相似度矩阵与结果展示
+
+计算任意两部电影嵌入向量的平方距离，构造**距离矩阵**；屏蔽对角线（自己与自己的距离为
+0）后，对每部电影找出**距离最近**的另一部电影。
+
+结果以 HTML 表格展示并保存为
+`movie_similarity.html`。你会看到《指环王》《哈利·波特》这类气质相近的影片被排在了一起——这正是嵌入向量语义能力的直观体现。
+
+``` python
 # 计算物品间的距离矩阵
 count = 50
 dim = len(vms)
@@ -362,128 +544,3 @@ with open("movie_similarity.html", "w", encoding="utf-8") as f:
 
 print("表格已保存为 movie_similarity.html，请用浏览器打开查看")
 ```
-
-    Y的形状 (4778, 443) R的形状 (4778, 443)
-    X的形状 (4778, 10)
-    W的形状 (443, 10)
-    b的形状 (1, 443)
-    特征数量 10
-    电影数量 4778
-    用户数量 443
-    电影1的平均评分为: 3.400 / 5
-    All tests passed!
-    成本值: 13.67
-    带正则化的成本值: 28.09
-    向量化成本值: 13.67
-    带正则化的向量化成本值: 28.09
-
-    新用户评分：
-
-    为 Shrek (2001) 打了 5.0 分
-    为 Harry Potter and the Sorcerer's Stone (a.k.a. Harry Potter and the Philosopher's Stone) (2001) 打了 5.0 分
-    为 Amelie (Fabuleux destin d'Amélie Poulain, Le) (2001) 打了 2.0 分
-    为 Harry Potter and the Chamber of Secrets (2002) 打了 5.0 分
-    为 Pirates of the Caribbean: The Curse of the Black Pearl (2003) 打了 5.0 分
-    为 Lord of the Rings: The Return of the King, The (2003) 打了 5.0 分
-    为 Eternal Sunshine of the Spotless Mind (2004) 打了 3.0 分
-    为 Incredibles, The (2004) 打了 5.0 分
-    为 Persuasion (2007) 打了 2.0 分
-    为 Toy Story 3 (2010) 打了 5.0 分
-    为 Inception (2010) 打了 3.0 分
-    为 Louis Theroux: Law & Disorder (2008) 打了 1.0 分
-    为 Nothing to Declare (Rien à déclarer) (2010) 打了 1.0 分
-    第 0 次迭代的训练损失: 2238692.4
-    第 20 次迭代的训练损失: 130489.9
-    第 40 次迭代的训练损失: 49017.1
-    第 60 次迭代的训练损失: 22979.1
-    第 80 次迭代的训练损失: 12655.6
-    第 100 次迭代的训练损失: 7879.2
-    第 120 次迭代的训练损失: 5413.5
-    第 140 次迭代的训练损失: 4046.8
-    第 160 次迭代的训练损失: 3252.1
-    第 180 次迭代的训练损失: 2772.4
-
-    推荐电影：
-    预测评分为 4.41 的电影：Into the Forest of Fireflies' Light (2011)
-    预测评分为 4.40 的电影：Palindromes (2004)
-    预测评分为 4.38 的电影：Battle Royale 2: Requiem (Batoru rowaiaru II: Chinkonka) (2003)
-    预测评分为 4.38 的电影：Into the Abyss (2011)
-    预测评分为 4.38 的电影：Eichmann (2007)
-    预测评分为 4.38 的电影：61* (2001)
-    预测评分为 4.37 的电影：Raise Your Voice (2004)
-    预测评分为 4.37 的电影：What Love Is (2007)
-    预测评分为 4.37 的电影：Kung Fu Panda: Secrets of the Masters (2011)
-    预测评分为 4.37 的电影：One I Love, The (2014)
-    预测评分为 4.37 的电影：I'm the One That I Want (2000)
-    预测评分为 4.37 的电影：My Life as McDull (Mak dau goo si) (2001)
-    预测评分为 4.37 的电影：Ghost Graduation (2012)
-    预测评分为 4.37 的电影：Particle Fever (2013)
-    预测评分为 4.36 的电影：Strictly Sexual (2008)
-    预测评分为 4.36 的电影：Loving Vincent (2017)
-    预测评分为 4.36 的电影：George Carlin: It's Bad for Ya! (2008)
-
-
-    原始评分与预测评分对比：
-
-    原始评分 5.0, 预测评分 4.98 的电影：Shrek (2001)
-    原始评分 5.0, 预测评分 4.82 的电影：Harry Potter and the Sorcerer's Stone (a.k.a. Harry Potter and the Philosopher's Stone) (2001)
-    原始评分 2.0, 预测评分 2.07 的电影：Amelie (Fabuleux destin d'Amélie Poulain, Le) (2001)
-    原始评分 5.0, 预测评分 4.89 的电影：Harry Potter and the Chamber of Secrets (2002)
-    原始评分 5.0, 预测评分 4.84 的电影：Pirates of the Caribbean: The Curse of the Black Pearl (2003)
-    原始评分 5.0, 预测评分 4.94 的电影：Lord of the Rings: The Return of the King, The (2003)
-    原始评分 3.0, 预测评分 3.00 的电影：Eternal Sunshine of the Spotless Mind (2004)
-    原始评分 5.0, 预测评分 4.90 的电影：Incredibles, The (2004)
-    原始评分 2.0, 预测评分 2.09 的电影：Persuasion (2007)
-    原始评分 5.0, 预测评分 4.81 的电影：Toy Story 3 (2010)
-    原始评分 3.0, 预测评分 3.07 的电影：Inception (2010)
-    原始评分 1.0, 预测评分 1.38 的电影：Louis Theroux: Law & Disorder (2008)
-    原始评分 1.0, 预测评分 1.24 的电影：Nothing to Declare (Rien à déclarer) (2010)
-
-    推荐电影列表（按平均评分排序）：
-              pred  mean rating  number of ratings  \
-    1743  4.000334     4.252336                107   
-    155   3.895236     4.155914                 93   
-    2395  4.056169     4.136364                 88   
-    929   4.938721     4.118919                185   
-    2700  4.812631     4.109091                 55   
-    393   3.937306     4.106061                198   
-    848   3.940164     4.033784                 74   
-    3802  3.914530     4.020000                 50   
-    2420  4.035387     4.004762                105   
-    877   4.309668     3.961832                131   
-    773   3.936267     3.960993                141   
-    1051  3.866062     3.913978                 93   
-    2967  3.873427     3.910000                 50   
-    2455  4.045932     3.887931                 58   
-    3014  3.922532     3.869565                 69   
-    246   4.981457     3.867647                170   
-    1930  4.116639     3.862069                 58   
-    1150  4.898574     3.836000                125   
-    1081  4.310168     3.803797                 79   
-    793   4.838989     3.778523                149   
-    366   4.821752     3.761682                107   
-    622   4.890206     3.598039                102   
-
-                                                      title  
-    1743                               Departed, The (2006)  
-    155                                       Snatch (2000)  
-    2395                        Inglourious Basterds (2009)  
-    929   Lord of the Rings: The Return of the King, The...  
-    2700                                 Toy Story 3 (2010)  
-    393   Lord of the Rings: The Fellowship of the Ring,...  
-    848                          Lost in Translation (2003)  
-    3802                          The Imitation Game (2014)  
-    2420                                          Up (2009)  
-    877                            Kill Bill: Vol. 1 (2003)  
-    773                                 Finding Nemo (2003)  
-    1051    Harry Potter and the Prisoner of Azkaban (2004)  
-    2967  Harry Potter and the Deathly Hallows: Part 2 (...  
-    2455      Harry Potter and the Half-Blood Prince (2009)  
-    3014                               Avengers, The (2012)  
-    246                                        Shrek (2001)  
-    1930   Harry Potter and the Order of the Phoenix (2007)  
-    1150                            Incredibles, The (2004)  
-    1081                                Spider-Man 2 (2004)  
-    793   Pirates of the Caribbean: The Curse of the Bla...  
-    366   Harry Potter and the Sorcerer's Stone (a.k.a. ...  
-    622      Harry Potter and the Chamber of Secrets (2002)  

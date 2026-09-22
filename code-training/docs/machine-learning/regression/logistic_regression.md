@@ -1,8 +1,29 @@
 ---
-title: logistic_regression
+title: 逻辑回归
 _synced: true
 ---
+# 逻辑回归
 
+
+逻辑回归虽然名字带”回归”，实际上是最常用的**二分类**算法。它先对特征做线性组合
+$z = w \cdot x + b$，再通过 **sigmoid 函数** 将结果压缩到
+$(0,1)$，当作”属于正类的概率”：
+
+$$\hat{p} = \sigma(z) = \frac{1}{1 + e^{-z}},\quad \hat{y} = \begin{cases}1 & \hat{p} \ge 0.5\\0 & \hat{p} < 0.5\end{cases}$$
+
+本 notebook 用三种方式实现逻辑回归，并可视化 sigmoid
+函数、损失下降曲线和决策边界：
+
+- **纯 NumPy 手动实现**：理解交叉熵损失与梯度下降的本质
+- **PyTorch 实现**：用自动微分替代手推梯度
+- **scikit-learn 实现**：直接调用成熟库，一行训练
+
+## 一、使用 NumPy 手动实现逻辑回归
+
+### 1. 导入库与基础设置
+
+导入 NumPy（数值计算）、Matplotlib（绘图）和
+`ListedColormap`（决策边界配色）。这里**不依赖任何深度学习框架**，手写整个算法。
 
 ``` python
 # 手动实现逻辑回归
@@ -14,7 +35,20 @@ import seaborn as sns
 # 设置中文字体
 plt.rcParams["font.family"] = ["SimHei"]
 plt.rcParams["axes.unicode_minus"] = False  # 正确显示负号
+```
 
+### 2. 定义逻辑回归模型类
+
+`LogisticRegression` 类封装了整个模型，包含三个关键部分：
+
+- **sigmoid**：$\sigma(z) = \frac{1}{1+e^{-z}}$，把任意实数映射到
+  $(0,1)$
+- **交叉熵损失**：$J = -\frac{1}{m}\sum_{i=1}^{m}\left[y^{(i)}\log\hat{p}^{(i)} + (1-y^{(i)})\log(1-\hat{p}^{(i)})\right]$，比
+  MSE 更适合分类
+- **梯度下降**：$w \leftarrow w - \alpha\frac{1}{m}X^T(\hat{p}-y)$，`fit`
+  循环迭代更新参数，`predict` 用 0.5 作为阈值输出类别
+
+``` python
 class LogisticRegression:
     """逻辑回归模型实现"""
     
@@ -72,7 +106,14 @@ class LogisticRegression:
         y_pred_proba = self.sigmoid(linear_output)
         y_pred = [1 if i > 0.5 else 0 for i in y_pred_proba]
         return np.array(y_pred), y_pred_proba
+```
 
+### 3. 生成二分类示例数据
+
+生成两类数据：正类集中在 $(2,2)$ 附近，负类集中在 $(-2,-2)$ 附近，各有
+100 个样本。`np.vstack` 垂直堆叠特征，`np.hstack` 拼接标签。
+
+``` python
 # 生成示例数据
 def generate_data(n_samples=100):
     """生成用于逻辑回归的二分类数据"""
@@ -89,7 +130,18 @@ def generate_data(n_samples=100):
     y = np.hstack((np.ones(n_samples), np.zeros(n_samples))) # 水平堆叠，形成形状为(2*n_samples,)的标签数组
     
     return X, y
+```
 
+### 4. 可视化辅助函数
+
+三个绘图函数分别负责：
+
+- `plot_sigmoid_function`：绘制 sigmoid 曲线、0.5 阈值线
+- `plot_loss_curve`：绘制交叉熵损失随迭代次数的变化
+- `plot_decision_boundary`：在网格上逐点预测，用 `contourf`
+  画出分类区域和决策边界
+
+``` python
 def plot_loss_curve(ax, model):
     """在指定的子图上绘制损失曲线"""
     ax.plot(range(len(model.loss_history)), model.loss_history, color='#2E86AB')
@@ -137,7 +189,14 @@ def plot_sigmoid_function(ax):
     ax.set_ylabel('输出 σ(x)', fontsize=10)
     ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3, linestyle='--')
+```
 
+### 5. 主函数：训练与可视化
+
+`main` 生成数据、训练模型，并把 sigmoid
+图像、损失曲线、决策边界三幅图并排展示。
+
+``` python
 def main():
     # 生成数据
     X, y = generate_data(n_samples=100)
@@ -162,18 +221,22 @@ def main():
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.4)  # 调整水平间距
     plt.show()
+```
 
+### 6. 运行程序
+
+notebook 中 `__name__ == "__main__"` 成立，直接执行 `main()`。
+
+``` python
 if __name__ == "__main__":
     main()
 ```
 
-    迭代 0/500, 损失: 0.6931
-    迭代 100/500, 损失: 0.0321
-    迭代 200/500, 损失: 0.0208
-    迭代 300/500, 损失: 0.0163
-    迭代 400/500, 损失: 0.0138
+## 二、使用 PyTorch 实现逻辑回归
 
-![](logistic_regression_files/figure-commonmark/cell-2-output-2.png)
+### 1. 导入库与基础设置
+
+在手动实现的基础上引入 PyTorch，用张量和自动微分来训练模型。
 
 ``` python
 # pytorch实现逻辑回归
@@ -187,7 +250,16 @@ import torch.optim as optim
 # 设置中文字体
 plt.rcParams["font.family"] = ["SimHei"]
 plt.rcParams["axes.unicode_minus"] = False  # 正确显示负号
+```
 
+### 2. 定义 PyTorch 逻辑回归模型
+
+与手动实现相比，这里用 `nn.Linear` 完成 $z = wx+b$，用 `torch.sigmoid`
+激活，用 `nn.BCELoss()` 内置交叉熵损失，梯度由 `loss.backward()`
+自动计算，`optimizer.step()`
+更新参数——**我们不再需要手动推导和编写梯度公式**。
+
+``` python
 class LogisticRegression(nn.Module):
     """PyTorch逻辑回归模型实现"""
     
@@ -251,7 +323,14 @@ class LogisticRegression(nn.Module):
         y_pred = (y_pred_proba_np > 0.5).astype(int)
         
         return y_pred, y_pred_proba_np
+```
 
+### 3. 生成二分类示例数据
+
+与第一部分相同的数据生成方式：正类在 $(2,2)$ 附近，负类在 $(-2,-2)$
+附近。
+
+``` python
 # 生成示例数据
 def generate_data(n_samples=100):
     """生成用于逻辑回归的二分类数据"""
@@ -266,7 +345,13 @@ def generate_data(n_samples=100):
     y = np.hstack((np.ones(n_samples), np.zeros(n_samples)))
     
     return X, y
+```
 
+### 4. 可视化辅助函数
+
+三个绘图函数与第一部分相同，直接复用同样的可视化逻辑。
+
+``` python
 def plot_loss_curve(ax, model):
     """在指定的子图上绘制损失曲线"""
     ax.plot(range(len(model.loss_history)), model.loss_history, color='#2E86AB')
@@ -314,7 +399,14 @@ def plot_sigmoid_function(ax):
     ax.set_ylabel('输出 σ(x)', fontsize=10)
     ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3, linestyle='--')
+```
 
+### 5. 主函数：训练与可视化
+
+`main` 中通过 `input_dim = X.shape[1]`
+自动获取特征维度来构建模型，其余流程与第一部分一致。
+
+``` python
 def main():
     # 生成数据
     X, y = generate_data(n_samples=100)
@@ -342,18 +434,24 @@ def main():
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.4)  # 调整水平间距
     plt.show()
+```
 
+### 6. 运行程序
+
+直接执行 `main()` 训练并展示结果。
+
+``` python
 if __name__ == "__main__":
     main()
 ```
 
-    迭代 0/500, 损失: 0.6931
-    迭代 100/500, 损失: 0.0321
-    迭代 200/500, 损失: 0.0208
-    迭代 300/500, 损失: 0.0163
-    迭代 400/500, 损失: 0.0138
+## 三、使用 scikit-learn 实现逻辑回归
 
-![](logistic_regression_files/figure-commonmark/cell-3-output-2.png)
+### 1. 导入库与基础设置
+
+scikit-learn 提供了成熟的
+`LogisticRegression`，无需自己实现算法，只需要准备数据、调用 `fit` 和
+`predict`。
 
 ``` python
 # 用sklearn实现逻辑回归
@@ -371,7 +469,15 @@ np.set_printoptions(precision=2)
 # 定义颜色
 dlblue = '#0096ff'; dlorange = '#FF9300'; dldarkred='#C00000'; 
 dlmagenta='#FF40FF'; dlpurple='#7030A0'; 
+```
 
+### 2. 自定义逻辑回归类
+
+scikit-learn 的 `LogisticRegression`
+不暴露训练过程中的损失历史，因此继承它并覆写 `fit`，在训练结束后用
+`log_loss` 记录最终损失，便于画损失图。
+
+``` python
 # 自定义逻辑回归类，记录损失历史
 class CustomLogisticRegression(LogisticRegression):
     def __init__(self, **kwargs):
@@ -388,7 +494,13 @@ class CustomLogisticRegression(LogisticRegression):
         self.loss_history = [loss]  # !!!由于sklearn不提供迭代历史，这里只记录最终损失
         
         return self
+```
 
+### 3. 生成二分类示例数据
+
+同样的二分类数据集：正类在 $(2,2)$ 附近，负类在 $(-2,-2)$ 附近。
+
+``` python
 # 生成示例数据
 def generate_data(n_samples=100):
     """生成用于逻辑回归的二分类数据"""
@@ -403,7 +515,15 @@ def generate_data(n_samples=100):
     y = np.hstack((np.ones(n_samples), np.zeros(n_samples)))
     
     return X, y
+```
 
+### 4. 可视化辅助函数
+
+比手动实现多了一个
+`plot_training_data`，用于绘制训练数据分布。`plot_loss_curve`
+也会判断模型是否有损失历史，没有时显示提示文字。
+
+``` python
 def plot_loss_curve(ax, model):
     """在指定的子图上绘制损失曲线"""
     if hasattr(model, 'loss_history') and model.loss_history:
@@ -464,7 +584,15 @@ def plot_training_data(ax, X, y):
     ax.set_xlabel('特征1', fontsize=10)
     ax.set_ylabel('特征2', fontsize=10)
     ax.grid(True, alpha=0.3, linestyle='--')
+```
 
+### 5. 主函数：训练与可视化
+
+`main` 用 `CustomLogisticRegression`
+训练模型，打印学习到的偏置和权重，并用 2×2 网格展示 sigmoid
+函数、模型损失、训练数据分布和决策边界四幅图。
+
+``` python
 def main():
     # 生成数据
     X, y = generate_data(n_samples=100)
@@ -502,14 +630,13 @@ def main():
     # 调整子图之间的间距
     plt.tight_layout()
     plt.show()
+```
 
+### 6. 运行程序
+
+直接执行 `main()`。
+
+``` python
 if __name__ == "__main__":
     main()
 ```
-
-
-    模型参数:
-    偏置 b = -0.35
-    权重 w = [[1.93 1.51]]
-
-![](logistic_regression_files/figure-commonmark/cell-4-output-2.png)

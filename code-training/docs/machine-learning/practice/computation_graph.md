@@ -1,8 +1,19 @@
 ---
-title: computation_graph
+title: 线性回归计算图可视化
 _synced: true
 ---
+# 线性回归的计算图可视化
 
+
+**计算图 (Computation Graph)**
+是深度学习反向传播的底层表示：把前向计算拆解成一个有向图，数据从输入流向输出，梯度则反向从损失流向参数。
+
+本文用 PyTorch 训练一个最简单的**单变量线性回归**模型，并用 `torchviz`
+把它的计算图画出来，直观展示前向传播与反向传播的路径。
+
+## 1. 导入库并设置随机种子
+
+设置随机种子可以保证每次运行得到相同的数据与结果，便于复现：
 
 ``` python
 import torch
@@ -19,12 +30,28 @@ plt.rcParams['axes.unicode_minus'] = False
 torch.manual_seed(42)
 np.random.seed(42)
 
+```
+
+## 2. 生成模拟数据
+
+用真实参数 $w=2.5,\ b=1.8$ 生成线性数据并叠加高斯噪声，作为训练样本：
+$$y = 2.5x + 1.8 + \epsilon,\quad \epsilon\sim\mathcal{N}(0,2^2)$$
+
+``` python
 # 1. 生成模拟数据
 true_w = 2.5
 true_b = 1.8
 x = torch.tensor(np.random.rand(100, 1) * 10, dtype=torch.float32)
 y = true_w * x + true_b + torch.tensor(np.random.randn(100, 1) * 2, dtype=torch.float32)
 
+```
+
+## 3. 定义线性回归模型
+
+使用 `nn.Linear(1,1)` 表示一个输入 1 维、输出 1 维的线性层，参数即权重
+$w$ 与偏置 $b$：
+
+``` python
 # 2. 定义模型
 class LinearRegressionModel(nn.Module):
     def __init__(self):
@@ -36,10 +63,25 @@ class LinearRegressionModel(nn.Module):
 
 model = LinearRegressionModel()
 
+```
+
+## 4. 定义损失函数与优化器
+
+回归任务常用**均方误差 (MSE)**，优化器使用随机梯度下降 SGD：
+
+``` python
 # 3. 定义损失函数和优化器
 criterion = nn.MSELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 
+```
+
+## 5. 生成横向计算图
+
+前向计算一次得到预测 $\hat y$ 和损失 $L$，再用 `make_dot`
+把计算图导出。`rankdir="LR"` 让图从左到右排列：
+
+``` python
 # 4. 生成横向计算图
 y_pred = model(x)
 loss = criterion(y_pred, y)
@@ -55,6 +97,14 @@ dot.format = 'pdf'
 dot.directory = './'
 dot.view(filename='linear_regression_graph_LR')  # 文件名含 LR 区分横向图
 
+```
+
+## 6. 训练模型
+
+循环 30 轮：前向计算损失、反向传播梯度、用 SGD
+更新参数。损失随训练应不断下降，参数逼近真实值 $w=2.5,\ b=1.8$：
+
+``` python
 # 5. 训练模型（省略，同之前代码）
 epochs = 30
 losses = []
@@ -71,6 +121,13 @@ for epoch in range(epochs):
         w, b = model.parameters()
         print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}, w: {w.item():.4f}, b: {b.item():.4f}')
 
+```
+
+## 7. 输出参数并可视化拟合结果
+
+比较学习到的参数与真实参数，并绘制数据散点图、拟合直线和损失下降曲线：
+
+``` python
 # 后续参数输出和可视化（同之前代码）
 print("\n真实参数: w = {:.4f}, b = {:.4f}".format(true_w, true_b))
 w_final, b_final = model.parameters()
@@ -93,13 +150,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-    Epoch [10/30], Loss: 3.5492, w: 2.5710, b: 1.1697
-    Epoch [20/30], Loss: 3.5152, w: 2.5622, b: 1.2271
-    Epoch [30/30], Loss: 3.4848, w: 2.5539, b: 1.2814
+## 8. 小结
 
-    真实参数: w = 2.5000, b = 1.8000
-    学习到的参数: w = 2.5539, b = 1.2814
-
-![](computation_graph_files/figure-commonmark/cell-2-output-2.png)
-
-![](computation_graph_files/figure-commonmark/cell-2-output-3.png)
+计算图把前向传播和反向传播都组织成清晰的数据流，理解它能帮你理解梯度为何沿正确路径传递，也是理解自动求导
+(autograd) 的基础。

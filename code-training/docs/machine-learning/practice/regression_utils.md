@@ -1,8 +1,16 @@
 ---
-title: regression_utils
+title: 回归与分类工具函数
 _synced: true
 ---
+# 回归与分类工具函数
 
+
+本文汇总线性回归与逻辑回归中常用的工具函数：sigmoid
+激活、成本函数、梯度计算、梯度下降以及特征标准化。它们都是矩阵化实现，可直接复用于后续实验。
+
+## 1. 导入依赖与绘图配色
+
+导入数值计算与数学库，并把 NumPy 数组的打印精度设为两位小数，方便观察。
 
 ``` python
 import copy
@@ -10,10 +18,23 @@ import math
 import numpy as np
 np.set_printoptions(precision=2)
 
+```
+
+### 配色方案
+
+定义深度学习课程中常用的五种颜色，便于后续绘图保持一致。
+
+``` python
 dlc = dict(dlblue = '#0096ff', dlorange = '#FF9300', dldarkred='#C00000', dlmagenta='#FF40FF', dlpurple='#7030A0')
 dlblue = '#0096ff'; dlorange = '#FF9300'; dldarkred='#C00000'; dlmagenta='#FF40FF'; dlpurple='#7030A0'
 dlcolors = [dlblue, dlorange, dldarkred, dlmagenta, dlpurple]
 ```
+
+## 2. Sigmoid 激活函数
+
+$$\sigma(z) = \frac{1}{1+e^{-z}}$$ 它把任意实数映射到
+$(0,1)$，是逻辑回归的输出层。这里把 $z$ 裁剪到 $[-500, 500]$
+防止指数溢出。
 
 ``` python
 def sigmoid(z):
@@ -35,6 +56,13 @@ def sigmoid(z):
 
     return g
 ```
+
+## 3. 逻辑回归成本函数（逐样本版）
+
+逻辑回归使用交叉熵损失：
+$$J(w,b) = -\frac{1}{m}\sum_{i=1}^{m}\left[y_i\log(f_{w,b}(x_i)) + (1-y_i)\log(1-f_{w,b}(x_i))\right]$$
+加上 L2 正则化后为 $J + \frac{\lambda}{2m}\sum_j w_j^2$。`safe=True`
+时使用数值稳定的等价形式。
 
 ``` python
 def compute_cost_logistic(X, y, w, b, lambda_=0, safe=False):
@@ -71,6 +99,11 @@ def compute_cost_logistic(X, y, w, b, lambda_=0, safe=False):
 
     return cost + reg_cost
 ```
+
+## 4. 数值稳定的 $\log(1+e^x)$
+
+当 $x$ 很大时 $e^x$ 会溢出。利用 $\log(1+e^x)\approx x$（$x$
+较大时），分段计算即可保持数值稳定。
 
 ``` python
 def log_1pexp(x, maximum=20):
@@ -110,6 +143,11 @@ def log_1pexp(x, maximum=20):
     # 返回计算得到的近似结果
     return out
 ```
+
+## 5. 矩阵化成本函数
+
+用矩阵运算一次性计算所有样本的成本，支持线性回归（均方误差）和逻辑回归（交叉熵），并可叠加
+L2 正则化，比逐样本循环快得多。
 
 ``` python
 import numpy as np
@@ -175,6 +213,12 @@ def compute_cost_matrix(X, y, w, b, logistic=False, lambda_=0, safe=True):
     return total_cost
 ```
 
+## 6. 矩阵化梯度计算
+
+$$dw = \frac{1}{m}X^\top(f_{w,b}(X)-y), \qquad db = \frac{1}{m}\sum_i (f_{w,b}(x_i)-y_i)$$
+若使用 L2 正则化，还需在 $dw$ 上加上 $\frac{\lambda}{m}w$（偏置 $b$
+不正则化）。
+
 ``` python
 def compute_gradient_matrix(X, y, w, b, logistic=False, lambda_=0):
     """
@@ -223,6 +267,11 @@ def compute_gradient_matrix(X, y, w, b, logistic=False, lambda_=0):
     return dj_db, dj_dw
 ```
 
+## 7. 梯度下降
+
+反复执行
+$\theta \leftarrow \theta - \alpha \nabla J$，并记录每轮成本用于绘制收敛曲线。支持线性/逻辑回归与正则化。
+
 ``` python
 def gradient_descent(X, y, w_in, b_in, alpha, num_iters, logistic=False, lambda_=0, verbose=True):
     """
@@ -269,6 +318,11 @@ def gradient_descent(X, y, w_in, b_in, alpha, num_iters, logistic=False, lambda_
 
     return w.reshape(w_in.shape), b, J_history  #return final w,b and J history for graphing
 ```
+
+## 8. Z-score 特征标准化
+
+$$x' = \frac{x-\mu}{\sigma}$$
+把不同量纲的特征缩放到同一尺度，可显著加快梯度下降的收敛速度。函数同时返回均值和标准差，便于在测试集上复用同样的变换。
 
 ``` python
 def zscore_normalize_features(X):
