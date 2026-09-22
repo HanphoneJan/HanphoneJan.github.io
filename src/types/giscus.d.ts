@@ -1,6 +1,6 @@
-import type { ThemeConfig as BaseThemeConfig } from '@docusaurus/preset-classic';
+import type { ThemeConfig as BaseThemeConfig } from '@docusaurus/theme-common';
 
-declare module '@docusaurus/preset-classic' {
+declare module '@docusaurus/theme-common' {
   interface ThemeConfig extends BaseThemeConfig {
     giscus?: {
       repo: string;

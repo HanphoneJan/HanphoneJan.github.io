@@ -11,8 +11,11 @@ import DocItemTOCDesktop from '@theme/DocItem/TOC/Desktop';
 import DocItemContent from '@theme/DocItem/Content';
 import DocBreadcrumbs from '@theme/DocBreadcrumbs';
 import ContentVisibility from '@theme/ContentVisibility';
-import type {Props} from '@theme/DocItem/Layout';
 import GiscusComments from '@site/src/components/GiscusComments';
+
+export interface Props {
+  readonly children: ReactNode;
+}
 
 import styles from './styles.module.css';
 
@@ -43,7 +46,7 @@ function useDocTOC() {
 export default function DocItemLayout({children}: Props): ReactNode {
   const docTOC = useDocTOC();
   const {metadata, frontMatter} = useDoc();
-  const hideComment = frontMatter.hide_comment as boolean | undefined;
+  const hideComment = (frontMatter as Record<string, unknown>).hide_comment as boolean | undefined;
   return (
     <div className="row">
       <div className={clsx('col', !docTOC.hidden && styles.docItemCol)}>
