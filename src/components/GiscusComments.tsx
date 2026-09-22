@@ -9,7 +9,7 @@ interface GiscusCommentsProps {
     categoryId?: string;
 }
 
-export default function GiscusComments({ category, categoryId }: GiscusCommentsProps): JSX.Element | null {
+export default function GiscusComments({ category, categoryId }: GiscusCommentsProps): React.ReactNode | null {
     const { siteConfig } = useDocusaurusContext();
     const { colorMode } = useColorMode();
     const giscusConfig = (siteConfig.themeConfig as any).giscus;
