@@ -36,12 +36,19 @@ jobs:
 
       - name: Diagnose environment
         run: |
+          echo "=== pnpm version ==="
           pnpm --version
+          echo "=== node version ==="
           node --version
-          ls -la
+          echo "=== files ==="
+          ls pnpm-lock.yaml package.json pnpm-workspace.yaml 2>&1 || true
+          echo "=== lockfile head ==="
           head -3 pnpm-lock.yaml
-          pnpm config get store-dir || true
-          pnpm install --frozen-lockfile --reporter=append-only 2>&1 || true
+          echo "=== install attempt ==="
+          set +e
+          pnpm install --frozen-lockfile 2>&1 | tail -40
+          echo "INSTALL_EXIT=${PIPESTATUS[0]}"
+          set -e
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
