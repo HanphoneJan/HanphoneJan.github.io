@@ -24,6 +24,9 @@ yarn-error.log*
 __pycache__/
 *.pyc
 
+# LeetCode sync temp cookie output
+.lc-cookie.tmp
+
 .vscode
 .codebuddy
 .cursor

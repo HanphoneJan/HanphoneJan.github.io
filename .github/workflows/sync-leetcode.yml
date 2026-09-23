@@ -1,0 +1,63 @@
+name: Sync LeetCode Progress
+
+on:
+  schedule:
+    - cron: '0 3 */2 * *' # 每两天 03:00 UTC (北京时间 11:00)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: 'leetcode-sync'
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Sync LeetCode submissions
+        id: sync
+        env:
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+        run: |
+          node scripts/sync-leetcode.js
+          # 输出续期后的 cookie(供后续 secret 更新)
+          cp .lc-cookie.tmp /tmp/lc-cookie.tmp
+
+      - name: Refresh LEETCODE_SESSION secret
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_PAT || secrets.STARS_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          NEW_COOKIE="$(cat /tmp/lc-cookie.tmp)"
+          CURRENT_COOKIE="${{ secrets.LEETCODE_SESSION }}"
+          if [ -n "$NEW_COOKIE" ] && [ "$NEW_COOKIE" != "$CURRENT_COOKIE" ] && [ "$GH_TOKEN" != "${{ secrets.GITHUB_TOKEN }}" ]; then
+            printf '%s' "$NEW_COOKIE" > /tmp/cookie.txt
+            gh secret set LEETCODE_SESSION --repo "$GITHUB_REPOSITORY" --body-file /tmp/cookie.txt
+            echo "✅ LEETCODE_SESSION secret refreshed"
+          else
+            echo "ℹ️ Cookie unchanged or no PAT available, skipping secret update"
+          fi
+
+      - name: Commit new problems
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add code-training/leetcode/ code-training/docs/problems/leetcode/
+            git commit -m "chore: sync LeetCode progress $(date +%Y-%m-%d)"
+            git push
+            echo "✅ Committed new problems"
+          else
+            echo "ℹ️ No changes, nothing to commit"
+          fi
