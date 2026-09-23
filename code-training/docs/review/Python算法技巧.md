@@ -385,6 +385,48 @@ print('\n'.join(map(str, ans)))
 | `' '.join(map(str, arr))` 一次 print | 快 |
 | `sys.stdout.write(' '.join(...))` | 最快，一次 I/O |
 
+### 本地调试（自测工具）
+
+> 本地跑题时常用的三个工具：传参、加大递归上限、捕获 stdout 断言输出。
+
+**`sys.argv` —— 命令行传参跑多组样例**
+
+```python
+import sys
+
+# 运行：python a.py 1 2 3
+# sys.argv = ['a.py', '1', '2', '3']，argv[0] 是脚本名
+if len(sys.argv) > 1:
+    n = int(sys.argv[1])
+```
+
+**`sys.setrecursionlimit` —— 深递归防爆栈**
+
+```python
+import sys
+sys.setrecursionlimit(10**6)   # 默认 ~1000，深递归（树/回溯）经常需要调大
+```
+
+**`io.StringIO` —— 捕获 stdout 做断言自测**
+
+```python
+import io
+import sys
+
+def solve():
+    print("hello")     # 正常输出到 stdout
+
+# 把 sys.stdout 临时替换成内存缓冲，跑完再还原
+old = sys.stdout
+sys.stdout = io.StringIO()
+solve()
+out = sys.stdout.getvalue()
+sys.stdout = old
+assert out == "hello\n", f"输出不对: {out!r}"
+```
+
+`StringIO` 也常用于把多行字符串当文件读，避免为测试真的创建文件。
+
 ## 常用装饰器
 
 ### 记忆化搜索
