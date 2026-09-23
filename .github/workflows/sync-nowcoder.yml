@@ -1,0 +1,68 @@
+name: Sync NowCoder Progress
+
+on:
+  schedule:
+    - cron: '0 3 */2 * *' # 每两天 03:00 UTC (北京时间 11:00)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: 'nowcoder-sync'
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Sync NowCoder submissions
+        id: sync
+        env:
+          NOWCODER_COOKIE: ${{ secrets.NOWCODER_COOKIE }}
+          NOWCODER_UID: ${{ secrets.NOWCODER_UID }}
+        run: |
+          # 捕获 cookie 失效标记
+          node scripts/sync-nowcoder.js | tee /tmp/nc-sync.log
+          COOKIE_EXPIRED=$(grep -c "COOKIE_EXPIRED=true" /tmp/nc-sync.log || true)
+          if [ "$COOKIE_EXPIRED" != "0" ]; then
+            echo "cookie_expired=true" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit new problems
+        if: steps.sync.outputs.has_changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add code-training/nowcoder/ code-training/docs/problems/nowcoder/
+          git commit -m "chore: sync NowCoder progress $(date +%Y-%m-%d)"
+          git push
+          echo "✅ Committed new problems"
+
+      - name: No changes
+        if: steps.sync.outputs.has_changes == 'false'
+        run: |
+          echo "ℹ️ No changes, nothing to commit"
+
+      # cookie 失效时标记 workflow 失败 —— GitHub 会私密通知仓库 owner(仅本人可见),不创建公开 issue
+      - name: Fail to notify cookie expiry
+        if: steps.sync.outputs.cookie_expired == 'true'
+        run: |
+          echo "❌ NOWCODER_COOKIE 已失效：请更新仓库 secret NOWCODER_COOKIE（牛客无自动续期）。"
+          echo "   浏览器登录 nowcoder.com（勾选「记住我」）→ F12 Network → 复制 Cookie → Settings → Secrets 更新。"
+          exit 1
