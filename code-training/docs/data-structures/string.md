@@ -162,7 +162,7 @@ format(10, 'b')            # 整数转二进制字符串 => '1010'
 - [哈希表](hash_table.md)
 - [双指针模式](../patterns/two_pointers.md)
 - [滑动窗口模式](../patterns/sliding_window.md)
-- [Python 数据结构速查](../review/Python数据结构速查.md)
+- [Python 速查](../review/Python速查.md)
 
 ## 题目列表
 

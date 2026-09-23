@@ -1,6 +1,9 @@
-# OJ系统中Python的多行输入
+---
+title: ACM模式输入输出处理
+---
+# ACM模式输入输出处理
 
-转载自 [ACM模式下C语言和Python的测试用例输入方式整理 | sitJac&#39;s Blog](https://sitjac.github.io/blog/acm-codeing-tips/)
+> 本文档汇总 ACM 模式下 Python 的多行输入处理套路。转载自 [ACM模式下C语言和Python的测试用例输入方式整理 | sitJac&#39;s Blog](https://sitjac.github.io/blog/acm-codeing-tips/)，输出格式化部分见 [Python算法技巧](Python算法技巧.md)。
 
 ## 1. `input()` 与 `sys.stdin` 概述
 

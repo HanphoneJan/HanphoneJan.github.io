@@ -1,11 +1,11 @@
 ---
-title: Python数据结构速查
+title: Python速查
 category: 参考手册
 last_updated: 2026-03-23
 ---
-# Python数据结构速查
+# Python速查
 
-> 本文档汇总Python中常用的数据结构及其方法，便于快速查阅。
+> 本文档汇总Python面试/竞赛中常用知识，便于快速查阅。从数据结构起步，持续补充适合速查的 Python 语法与内建函数细节。
 
 ---
 
