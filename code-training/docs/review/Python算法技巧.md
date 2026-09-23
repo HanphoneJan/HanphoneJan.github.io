@@ -320,6 +320,71 @@ for _ in range(n):
 
 > 变体：不确定行数读到文件尾，用 `for line in sys.stdin:`；需要一次性读完用 `sys.stdin.read().split()`。详见 [ACM模式输入输出处理](ACM模式输入输出处理.md)。
 
+### print 的参数（sep / end / file / flush）
+
+`print` 比表面看起来复杂——默认 `sep=' '`（多个值之间用空格）、`end='\n'`（行尾换行）。这两个参数在 ACM 输出格式里天天用到，**笔试/面试手写输出必考**。
+
+| 参数 | 默认值 | 作用 |
+|------|--------|------|
+| `sep` | `' '` | 多个值之间的分隔符，如 `print(1, 2, sep='-')` → `1-2` |
+| `end` | `'\n'` | 行尾追加的字符串，如 `print(1, end='')` → 不换行 |
+| `file` | `sys.stdout` | 输出到哪个流，可写文件或标准错误 `sys.stderr` |
+| `flush` | `False` | 是否立即刷新缓冲区（交互式进度提示时用 `flush=True`） |
+
+### 快速输出（大量数据时）
+
+**为什么用 `sys.stdout.write`？** 循环里逐元素 `print()` 每次调用都有函数开销；把结果拼成一个大字符串一次性写出，速度快数倍。**输出量大时必用。**
+
+```python
+import sys
+
+# 一行空格分隔：join 拼成一个字符串，一次写出
+sys.stdout.write(' '.join(map(str, arr)) + '\n')
+
+# 多行输出：全部结果先存起来，最后一次性 write
+out = []
+for ans in results:
+    out.append(str(ans))
+sys.stdout.write('\n'.join(out))
+```
+
+### ACM 输出套路
+
+**场景 1：一行输出，空格分隔，末尾无多余空格**
+
+```python
+print(' '.join(map(str, arr)))   # 推荐：join 拼接，元素需是 str
+# 或
+print(*arr)                       # 展开列表，print 自动用空格分隔
+```
+
+**场景 2：题目要求每个数后带一个空格（含最后一个，如 HJ48）**
+
+```python
+for x in arr:
+    print(x, end=' ')   # 不换行，只追加空格
+print()                 # 循环结束后必须补一个换行！
+```
+
+**场景 3：多行输出**
+
+```python
+print('\n'.join(map(str, ans)))
+```
+
+### 常见坑
+
+- **`end=' '` 不会换行**：所有输出会挤在同一行，循环结束必须手动 `print()` 补换行。
+- **`join` 要求元素全是 `str`**：数值要先 `map(str, ...)`，直接 `','.join([1,2])` 会报 TypeError。
+- **`print(*arr)` 展开大数组**：元素极多时展开成大量位置参数，用 `join` 更稳。
+- **输出性能对比**：
+
+| 写法 | 大数据量表现 |
+|------|-------------|
+| 循环 `print(x, end=' ')` | 慢，每次调用有开销 |
+| `' '.join(map(str, arr))` 一次 print | 快 |
+| `sys.stdout.write(' '.join(...))` | 最快，一次 I/O |
+
 ## 常用装饰器
 
 ### 记忆化搜索
