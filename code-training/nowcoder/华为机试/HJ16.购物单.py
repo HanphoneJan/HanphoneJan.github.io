@@ -66,7 +66,9 @@ def solve() -> None:
         items[i] = (v // 10, v * p)
         if q == 0:
             main_idx.append(i)
-            attachments[i] = []
+            # 注意：附件可能先于主件出现（输入顺序不定），不能直接覆盖，
+            # 否则会清掉之前已登记到 attachments[i] 的附件列表
+            attachments.setdefault(i, [])
         else:
             attachments.setdefault(q, []).append(i)
 
@@ -115,6 +117,11 @@ def run_tests() -> None:
         (
             "800 2\n800 2 0\n400 5 1\n",
             "1600",
+        ),
+        # 附件先于主件出现（主件编号大于附件编号），且存在多个附件
+        (
+            "50 5\n20 3 5\n20 3 5\n10 3 0\n10 2 0\n10 1 0\n",
+            "130",
         ),
     ]
     for i, (inp, expected) in enumerate(test_cases, 1):
