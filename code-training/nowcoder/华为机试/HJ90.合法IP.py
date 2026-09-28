@@ -56,6 +56,9 @@ def is_valid_ip(ip: str) -> bool:
     for part in parts:
         if not part.isdigit():  # 每段必须是纯数字且非空
             return False
+        # 不能有前导零（除非整段就是 "0"，如 "0.0.0.0"）
+        if len(part) > 1 and part[0] == '0':
+            return False
         if not (0 <= int(part) <= 255):  # 数值范围 0~255
             return False
     return True
@@ -79,7 +82,9 @@ def run_tests() -> None:
         ("a.b.c.d\n", "NO"),
         ("0.0.0.0\n", "YES"),
         ("255.255.255.255\n", "YES"),
-        ("1.2.3.04\n", "YES"),
+        ("01.2.3.8\n", "NO"),    # 前导零非法
+        ("1.2.3.04\n", "NO"),    # 前导零非法
+        ("1.02.3.4\n", "NO"),    # 前导零非法
     ]
     for i, (inp, expected) in enumerate(test_cases, 1):
         sys.stdin = io.StringIO(inp)
