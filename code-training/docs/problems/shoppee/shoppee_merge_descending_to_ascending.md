@@ -210,7 +210,7 @@ class Solution:
         return prev
 ```
 
-> 笔试环境已提供 `ListNode` 定义，只需实现类方法；本地测试时可补定义并添加用例（见 `code-training/shoppee/2.py`）。
+> 笔试环境已提供 `ListNode` 定义，只需实现类方法；本地测试时可补定义并添加用例（见 `code-training/shoppee/shoppee_merge_descending_to_ascending.py`）。
 
 ---
 
