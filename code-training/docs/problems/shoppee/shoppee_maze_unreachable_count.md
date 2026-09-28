@@ -206,7 +206,7 @@ class Solution:
         return n * n - reachable
 ```
 
-> 笔试环境为"核心代码模式"，只需实现类方法；本地测试时在 `if __name__ == "__main__":` 中补充测试用例即可（见 `code-training/shoppee/1.py`）。
+> 笔试环境为"核心代码模式"，只需实现类方法；本地测试时在 `if __name__ == "__main__":` 中补充测试用例即可（见 `code-training/shoppee/shoppee_maze_unreachable_count.py`）。
 
 ---
 
