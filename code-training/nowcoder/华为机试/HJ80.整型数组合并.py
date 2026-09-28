@@ -52,7 +52,7 @@ def solve() -> None:
     arr2 = [int(next(it)) for _ in range(n2)]
 
     merged = sorted(set(arr1) | set(arr2))  # 合并 + 去重 + 排序
-    print(' '.join(map(str, merged)))
+    print(''.join(map(str, merged)))         # 元素间不加空格
 
 
 def run_tests() -> None:
@@ -60,8 +60,9 @@ def run_tests() -> None:
     import io
 
     test_cases = [
-        ("3\n1 2 5\n4\n-1 0 3 2\n", "-1 0 1 2 3 5"),
-        ("2\n1 1\n2\n1 2\n", "1 2"),
+        ("3\n1 2 5\n4\n-1 0 3 2\n", "-101235"),
+        ("1\n11\n1\n111\n", "11111"),
+        ("6\n2 8 3 6 3 2\n6\n6 3 6 2 8 11\n", "236811"),
     ]
     for i, (inp, expected) in enumerate(test_cases, 1):
         class FakeStdin:
