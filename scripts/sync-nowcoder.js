@@ -257,7 +257,12 @@ async function existingTitles() {
 }
 
 function normalize(s) {
-  return s.toLowerCase().replace(/\s+/g, '');
+  // 标题规范化:转小写、去所有空白与常见标点/全角括号,避免
+  // 「【模板】滑动窗口」vs「模板滑动窗口」、「a,b」vs「ab」这类
+  // 仅因符号差异就重复生成文档。
+  return String(s)
+    .toLowerCase()
+    .replace(/[\s【】\[\]()（）.,，。、:：;；'"“”‘’!！?？*+_\-|\\/]+/g, '');
 }
 
 /** 生成代码文件头(与插件格式兼容) */
