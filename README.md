@@ -9,15 +9,14 @@ Hanphone 的 Github 个人主页 - 基于 Docusaurus 构建的技术文档站。
 ### 核心同步指令
 
 ```bash
-pnpm sync     # 同步通用笔记与博客
+pnpm sync     # 同步通用笔记
 pnpm sync:ml  # 同步机器学习笔记 (ipynb -> md)
 ```
 
 ### 如何发布笔记？
 
-1. **在私人笔记中标记**：在你的 `.md` 文件 Front Matter 中添加 `publish: true`。
-   - 默认同步到 `docs/`。
-   - 若添加 `type: blog`，则同步到 `blog/`。
+1. **在私人笔记中标记**：在你的 `.md` 文件 Front Matter 中添加 `publish: true`，同步到 `docs/`。
+   - 标记 `type: blog` 的笔记会被**跳过**：博客已经搬到独立站点 [hanphone.cn](https://hanphone.cn)，本仓库不再有 `blog/`。
 2. **运行同步**：在本项目根目录执行 `pnpm sync`。
 3. **自动处理**：
    - **一致性维护**：脚本会保持两端内容一致，私人笔记是唯一事实来源。
@@ -64,15 +63,15 @@ git commit -m "feat: sync notes and update"
 git push origin main
 ```
 
-- **主站**：[https://www.hanphone.top](https://www.hanphone.top)
-- **算法训练站**：[https://www.hanphone.top/code-training/](https://www.hanphone.top/code-training/)
+- **主站**：[https://docs.hanphone.cn](https://docs.hanphone.cn)
+- **算法训练站**：[https://docs.hanphone.cn/code-training/](https://docs.hanphone.cn/code-training/)
+- **博客**：[https://hanphone.cn](https://hanphone.cn)（独立站点，不在本仓库）
 
 ---
 
 ## 📁 项目结构
 
 ```
-├── blog/                   # 同步生成的博客文章
 ├── docs/                   # 同步生成的结构化文档
 ├── code-training/          # 算法训练子项目（独立维护）
 ├── scripts/                # 自动化脚本（包含同步逻辑）

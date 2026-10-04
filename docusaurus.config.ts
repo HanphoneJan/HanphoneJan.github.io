@@ -117,19 +117,7 @@ const config: Config = {
             remarkPlugins: [remarkMath],
             rehypePlugins: [rehypeKatex],
           },
-          blog: {
-            showReadingTime: true,
-            feedOptions: {
-              type: ['rss', 'atom'],
-              xslt: true,
-            },
-            editUrl: 'https://github.com/hanphonejan/HanphoneJan.github.io/edit/main/',
-            onInlineTags: 'warn',
-            onInlineAuthors: 'warn',
-            onUntruncatedBlogPosts: 'warn',
-            remarkPlugins: [remarkMath],
-            rehypePlugins: [rehypeKatex],
-          },
+          // 没有 blog：真正的博客站是 hanphone.cn，这里只放文档
           theme: {
             customCss: [
               "./src/css/custom.css",
@@ -226,8 +214,6 @@ const config: Config = {
         repoId: process.env.GISCUS_REPO_ID || 'R_kgDOQn_P0g',
         category: 'Docs Comments',
         categoryId: process.env.GISCUS_CATEGORY_ID || 'DIC_kwDOQn_P0s4C3pOL',
-        blogCategory: 'Blog Comments',
-        blogCategoryId: process.env.GISCUS_BLOG_CATEGORY_ID || 'DIC_kwDOQn_P0s4C3qJX',
       },
       navbar: {
         title: 'HanphoneJan',
@@ -240,7 +226,6 @@ const config: Config = {
             position: 'left',
             label: '文档',
           },
-          {to: '/blog', label: '博客', position: 'left'},
           {to: '/stars', label: 'Stars', position: 'left'},
           {to: '/projects', label: '项目', position: 'left'},
           {
