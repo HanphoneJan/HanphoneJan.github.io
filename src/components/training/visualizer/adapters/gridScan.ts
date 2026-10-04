@@ -242,6 +242,25 @@ export function adaptGrid(trace: RawTrace): AdapterResult | null {
   }
   const frames: Frame[] = [];
   let declared = false;
+  /**
+   * 网格**自己有没有变过，或者有没有光标**。
+   *
+   * 「是二维数组」不等于「是网格题」。0399 口袋算式的 `equations` 是
+   * `[["a","b"],["b","c"]]` —— 形状不变、内容不变、也没有光标，
+   * 画出来是一张 38 帧都不变的字母表，而这题真正在动的是带权并查集的
+   * `parent` / `weight` 两个一维数组（路径压缩时它们一格一格改）。
+   *
+   * 两条里满足一条就行：
+   *
+   * - **格子变过** —— 置零、填岛、旋转、螺旋、铺砖、杨辉三角
+   *   （逐行新建，形状在长），没有一条网格题是静止的。
+   * - **有光标** —— 0221 最大正方形的 `matrix` 是**只读**的
+   *   （真正在变的是滚动数组 `dp`），但光标沿着矩阵走，
+   *   「算的是哪一格」正是这题要讲的，硬说它「没过程」就错了。
+   *   0207 课程表同理：邻接表长成什么样不是重点，DFS 染色走到哪一格才是。
+   */
+  const shapes = new Set<string>();
+  let sawCursor = false;
 
   const lastCursor = new Map<string, string>();
 
@@ -285,6 +304,13 @@ export function adaptGrid(trace: RawTrace): AdapterResult | null {
       }
     }
 
+    shapes.add(
+      `${grid.rows}x${grid.cols}|${cells.map((c) => `${c.value}/${c.state}`).join(',')}`,
+    );
+    if (cursorPos) {
+      sawCursor = true;
+    }
+
     frames.push({
       note: cursorPos
         ? `${gridName}[${cursorPos[0]}][${cursorPos[1]}]：${src || `第 ${e.line} 行`}`
@@ -297,7 +323,7 @@ export function adaptGrid(trace: RawTrace): AdapterResult | null {
     }
   }
 
-  if (frames.length < 3) {
+  if (frames.length < 3 || (shapes.size < 2 && !sawCursor)) {
     return null;
   }
   return {frames, display: 'boxes'};
