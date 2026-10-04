@@ -14,7 +14,7 @@ import DocBreadcrumbs from '@theme/DocBreadcrumbs';
 import ContentVisibility from '@theme/ContentVisibility';
 import GiscusComments from '@site/src/components/GiscusComments';
 import SelfTest from '@site/src/components/training/selftest';
-import PyRunner from '@site/src/components/training/pyrunner';
+import {PyRunnerScopeProvider} from '@site/src/components/training/pyrunner/scope';
 import type {SelfTestData} from '@site/plugins/self-test';
 import type {PySamplesData} from '@site/plugins/py-samples';
 
@@ -77,11 +77,14 @@ export default function DocItemLayout({children}: Props): ReactNode {
     selfTestKeyValue && selfTestDocIds?.includes(selfTestKeyValue),
   );
 
-  // 浏览器内跑代码：题库里有这篇的代码才渲染
+  // 浏览器内跑代码：不在页面末尾渲染任何东西（那正是我们要消除的割裂感），
+  // 而是把「这篇题解的 md 路径」交给正文里的每个代码块，
+  // 由 @theme/CodeBlock/Layout 决定要不要给某个块挂运行条。
+  // 详见 src/components/training/pyrunner/scope.tsx。
   const pyEntries = (
     usePluginData('py-samples') as unknown as PySamplesData | undefined
   )?.entries;
-  const hasPyRunner = Boolean(selfTestKeyValue && pyEntries?.[selfTestKeyValue]);
+  const inPyRunnerScope = Boolean(selfTestKeyValue && pyEntries?.[selfTestKeyValue]);
 
   return (
     <div className="row">
@@ -93,9 +96,12 @@ export default function DocItemLayout({children}: Props): ReactNode {
             <DocBreadcrumbs />
             <DocVersionBadge />
             {docTOC.mobile}
-            <DocItemContent>{children}</DocItemContent>
-            {hasPyRunner && selfTestKeyValue && (
-              <PyRunner docId={selfTestKeyValue} />
+            {inPyRunnerScope && selfTestKeyValue ? (
+              <PyRunnerScopeProvider docId={selfTestKeyValue}>
+                <DocItemContent>{children}</DocItemContent>
+              </PyRunnerScopeProvider>
+            ) : (
+              <DocItemContent>{children}</DocItemContent>
             )}
             {hasSelfTest && selfTestKeyValue && (
               <SelfTest docId={selfTestKeyValue} />
