@@ -30,8 +30,9 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 - **NowCoder progress sync** (`scripts/sync-nowcoder.js`): Pulls accepted NowCoder submissions using `NOWCODER_COOKIE` + `NOWCODER_UID` secrets, diffs against local `code-training/nowcoder/`, and generates new code files + `docs/problems/nowcoder/*.md`. Runs every 2 days via `sync-nowcoder.yml`; commits only when new problems exist.
 - **自测题库** (`static/quiz/bank.json`): 主动回忆题，加在题解正文末尾。`plugins/self-test/index.ts` 只把「哪些题解有题」的清单放进 globalData，`src/theme/DocItem/Layout/index.tsx`（已 swizzle）在正文末尾渲染 `<SelfTest>`，题目数据由组件在用户点开时 fetch。**题解 md 一行都不用改** —— 题库是唯一事实来源。详见「自测题库」小节。
 - **间隔重复复习** (`/code-training/review`): `plugins/srs-cards/index.ts` 构建期把 182 篇题解解析成复习卡片（题号/难度/标签/首解日期），进度存浏览器 localStorage。调度器是 SM-2 lite 三档（忘了/记得/秒答）。
-- **算法可视化** (`/code-training/visualizer`): `src/components/training/visualizer/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。
-- **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测、复习队列、可视化三处都用它跳转。
+- **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量落成 `static/traces/*.json`（进 git，356KB）；`plugins/vis-traces` 在构建期把轨迹过一遍 adapter（`visualizer/adapters/`）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `DocItem/Layout` 渲染 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`），展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 详见「算法可视化」小节。
+- **算法可视化（独立页，手写）** (`/code-training/visualizer`): `src/components/training/visualizer/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。
+- **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测、复习队列、手写 tracer 三处都用它跳转（录制式可视化不跳转，它就长在那篇题解里）。
 
 ### Dual-plugin docs setup
 
@@ -181,9 +182,112 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 - 题解里的难度有中英两套（`Easy/Medium/Hard` 与 `简单/中等/入门`），
   插件负责归一化成 1/2/3。
 
-### 算法可视化 (`/code-training/visualizer`)
+### 算法可视化（两条路，别混）
 
-核心是 `src/components/training/visualizer/types.ts` 里的 tracer 契约：
+可视化有两套实现，**互不替代**：
+
+| | 录制式（题解内嵌） | 手写 tracer（独立页） |
+|---|---|---|
+| 入口 | `code-training/docs/problems/**/*.md` | `/code-training/visualizer` |
+| 代码 | `visualizer/recorder/` + `visualizer/adapters/` | `visualizer/tracers/` |
+| 覆盖 | 每道能录制的题（当前 27/126） | 10 个算法模式 |
+| 产出 | 逐题，零手写 | 每个算法手写 30~60 行 |
+| 视图 | 一维数组 + 指针 | 数组 / 网格 BFS / DP 表格 |
+| 单测 | `pnpm test:adapters` | `pnpm test:tracers` |
+
+**为什么要有录制这条路**：手写 tracer 覆盖不了 126 篇题解，而且手写的帧
+**会骗人** —— 算法写错了动画照样流畅跑完，读者反而更确信自己错了。
+录制直接跑题解里那份已经通过样例的代码，帧来自真实执行，不可能骗人。
+
+```bash
+pnpm trace:record          # 构建期跑 Pyodide 采执行轨迹 -> static/traces/*.json
+pnpm trace:record 0001 0034  # 只录这几篇
+pnpm test:adapters         # 468 项断言，跑在真实录制产物上
+```
+
+`trace:record` 需要先 `pnpm sync:pyodide`（12.9MB，已 gitignore）；
+没下运行时脚本会打印提示后以 0 退出，**不影响 `pnpm build`**。
+
+#### 录制管线的形状
+
+`sys.settrace` 在 Pyodide 里装一个 line 事件的采集器，把「第几行 +
+局部变量快照」记下来落成 `static/traces/<题解文件名>.json`。**不采
+call/return**：`line` 事件的 `f_locals` 是「即将执行这一行」的时刻，
+正好对应一帧；`call` 会给每个辅助函数和递归都产生一条，纯噪音。
+
+录制是**通用**的（跟算法无关），翻译成画面才需要分类，所以分两层：
+录制一次，所有 adapter 复用同一份轨迹。改 adapter 不用重录。
+
+录制阶段的自检很硬：**跑出来的结果必须与题面样例一致**，否则整份轨迹丢弃
+（`result-mismatch`）。可视化是拿来帮助理解的，拿一份跑不出正确答案的代码
+演示等于教错。
+
+#### 角色识别是最容易出错的地方（`visualizer/adapters/roles.ts`）
+
+「哪个变量是数组、哪个是指针」判错**不会报错**，只会画出一个看起来正常、
+实则在误导读者的动画。这类 bug 踩了一堆，`pnpm test:adapters`
+的断言就是为了把它们钉死。已经踩过的：
+
+- **取值落在数组下标范围内 ≠ 是指针。** 0011 盛水容器的 `max_area` 取过
+  0/8/49，其中 8 恰好落在长度 9 里；0053 最大子数组和的 `max_sum` 比例
+  高到 0.88。累加器会以 `count += 1` 移动，`±1` 这条判据被骗到。
+  真正的判据是「源码里从不被用作下标」。
+- **也不能太严。** 二分的 `left`/`right` 从不写成 `nums[left]`，
+  判据太严会把它们全误杀（0034/0035 一度只剩 mid）。
+  所以分两轮：前面只负责**提名**（取值形状 + 源码证据 + 命名，宁可多提），
+  最后一关 `isLinkedToArray` 负责**否决**。
+- **指针必须能索引到画出来的那个数组。** 0079 单词搜索里 `i`/`j` 是
+  board 的行列、`k` 才是 word 的下标，而 board 录成嵌套 list 被排除，
+  主数组选中了 word。偏偏 board 是 3×3、word 长 3，`i`/`j` 的取值全在
+  word 的下标范围内，**范围检查过得去、画面上有指针还会动、没有一项
+  断言会失败** —— 但它画的是「board 的第几行」标在 word 的格子上。
+- **数组名正则前面要加 `\b`。** `s[...]` 不加边界会匹配到 `rows[index]`
+  的尾巴，0006 因此被误判成「index 在给 s 下标」。
+- **`enumerate` 必须连 iterate 部分一起匹配。** 只匹配 `for x,` 会把
+  0079 的 `for x, y in (i, j-1), ...`（四方向邻居）当成数组下标。
+- **主数组优先选入参。** 0300 里 nums 与 dp 都被 i/j 下标，光看下标关系
+  分不出高下，但题面描述的是 nums，dp 是中间产物。
+- **0647 反过来：指针在带哨兵的 `t` 上算**，硬套到入参 `s`（3 格）上会让
+  62% 的帧指针越界。指针能索引到哪个数组就画哪个数组。
+- **哨兵填充的数组直接放弃。** `nums = [1] + nums + [1]`（0312）、
+  `heights = [0] + heights + [0]`（0084）会让画面比题面多两格、
+  末尾永远没有高亮。宁可整题不画。
+- **`"<function>"` / `"<deque>"` 这类摘要串不是序列。** 0079 一度把 `dfs`
+  这个函数当成主数组（`"<function>"` 有 11 个字符）。
+- **取值范围是 `[-1, len]` 而不是 `[0, len)`。** 上界含 len 是因为左闭右开
+  二分的 `right` 初值就是 len（写死 `< n` 会把 0034 的 right 误杀）；
+  下界含 -1 是因为它就是 Python 约定的「没找到」哨兵（0076 的 `ans_left`、
+  0322 的 dfs 里的 `i - 1`）。
+- **`OVERRIDES` 覆盖表被断言护栏包着。** 覆盖表是手写的，题解改个变量名
+  就会指向不存在的变量。`test:adapters` 逐条核对覆盖表里的每个名字都真的
+  出现在该题轨迹里，题解一改就报错，不会悄悄画错。
+
+#### 内嵌的技术约束
+
+- **播放器 `React.lazy` + 帧数据运行时 `fetch`**：题解有 126 篇，
+  全打进主 bundle 的话每个读者都要为用不到的那几篇付费。globalData 只发
+  「哪篇有可视化 + 帧数 + 源码」这份清单（与自测题库同一个取舍）。
+- **键盘监听挂在容器上而不是 `window`**。这是内嵌必须付的代价：题解正文很长，
+  读者滚动、按空格翻页是常态，独立页那样在 window 上监听会抢走整页的
+  方向键与空格。容器 `tabIndex={0}`，点播放时把焦点收进来。
+- **不复用 `AlgoPlayer`**：那个组件的输入框假设「输入可编辑、改完重跑
+  `run()`」，而录制式的帧是固定的（换输入要重录，构建期才能做）。
+  硬塞给它只会得到一个「改了输入但画面不变」的假输入框。
+- **`note` 里放的是源码那一行**（去注释）+ 指针当前值。代码行才是作者
+  真正想说的话，自动生成的文案再漂亮也比不上。
+- **TOC 用显式 id**（`VIS_ANCHOR = 'visualizer'`），机制与自测小节共用
+  `selftest/toc.tsx` 的 `ExtraTocProvider`。
+- **端到端靠无头 Chrome 点真实按钮验证**，不是肉眼看：`static/traces` 的
+  帧要过浏览器才能确认渲染与单步都工作。
+
+#### 手写 tracer（`/code-training/visualizer`）
+
+覆盖数组扫描之外的三类形态：排序（柱状图）、网格 BFS、DP 表格。
+录制式管线目前只出一维数组 + 指针，所以这三类还得靠手写。
+`patterns/sorting.md` 三个算法、`templates/binary_search_template.md` 两个
+都是纯手写的。
+
+核心是 `types.ts` 里的 tracer 契约：
 **tracer 只产出「状态帧」，播放器负责全部交互**。新增算法 = 写 30~60 行
 trace 函数，白送一整套播放/暂停/单步/回退/调速/换输入/源码高亮。
 
@@ -209,6 +313,23 @@ pnpm test:tracers   # 90 项断言：算法结果与参考实现逐一对拍
 - **网格类 tracer 找到答案后不要再补「不可达」的尾帧**，画面会自相矛盾。
 - 帧数上限 1500（`MAX_FRAMES`），超限截断并插入提示帧。快排在 50 个元素上
   就可能几百帧，动画太慢也看不清。
+
+#### 当前覆盖与缺口
+
+126 篇力扣题里 27 篇有可视化。跳过的 99 篇分三类，各有原因，
+`pnpm trace:record` 会打印 `no-sample` / `no-entry` / `exec-error` /
+`result-mismatch` 的计数：
+
+- **`no-entry=45`**：抽不到入口方法（多为树/链表题，`## 完整代码实现` 里
+  第一个 `def` 是辅助函数）
+- **`no-sample=56`**：抽不到「数字数组或字符串」形态的样例
+  （网格题、树题的样例是嵌套结构）
+- **`exec-error=21` / `result-mismatch=22`**：跑不起来，或跑出来与样例不符
+- **录到了但没有 adapter 认识**（6 篇）：0020 有效括号（栈）、0084 单调栈、
+  0169 投票、0312 区间 DP、0494 记忆化、0560 前缀和
+
+要提覆盖率，缺的是 **adapter**（网格、单调栈、DP 表格、链表/树），
+不是 tracer —— 录制这一步对它们已经能跑通。
 
 ### 浏览器内跑代码（Pyodide）
 

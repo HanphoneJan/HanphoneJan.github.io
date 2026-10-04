@@ -131,6 +131,8 @@ const config: Config = {
     plugins: [
       // 把「哪些题解有自测题」这份清单注入 globalData（只发键，不发题目正文）
       path.join(__dirname, 'plugins/self-test/index.ts'),
+      // 题解里的录制式可视化：构建期跑 Pyodide 采执行轨迹，落在 static/traces/
+      path.join(__dirname, 'plugins/vis-traces/index.ts'),
       // 复习卡片的元数据（题号/难度/标签/首解日期），进度存在浏览器 localStorage
       path.join(__dirname, 'plugins/srs-cards/index.ts'),
       // code-training 文档的 md 相对路径 -> 真实 permalink 映射
