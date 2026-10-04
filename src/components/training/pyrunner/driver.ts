@@ -69,7 +69,23 @@ def __j__(v):
     # json.dumps 会把 None 写成 Python 的 None，而题面写的是 JavaScript 的
     # null。不改的话两边的 JSON 都解析不了，比较必然失败。
     # 只替换不在引号里的 None（负向前瞻保证字符串里的 "None" 不受影响）。
-    return __re__.sub(r'(?<!["\\w])None(?!["\\w])', 'null', __json__.dumps(v, default=str, ensure_ascii=False))`;
+    return __re__.sub(r'(?<!["\\w])None(?!["\\w])', 'null', __json__.dumps(v, default=str, ensure_ascii=False))
+
+def __dump_text__(v):
+    # 按「程序打印出来」的样子序列化，而不是 JSON。
+    # 期望值是 stdout 文本时必须用这个：函数返回字符串 "0"、程序打印 0，
+    # 按 JSON 比会判成不一致，而代码其实是对的。
+    # （注意：这个文件里的 Python 代码嵌在 TS 模板字符串中，
+    #   注释里不能出现反引号，否则会提前结束模板字符串。）
+    if isinstance(v, str):
+        return v
+    if isinstance(v, list):
+        return '[' + ', '.join(__dump_text__(x) for x in v) + ']'
+    if isinstance(v, dict):
+        return '{' + ', '.join(str(k) + ': ' + __dump_text__(x) for k, x in v.items()) + '}'
+    if v is None:
+        return 'null'
+    return str(v)`;
 
 /**
  * 把**入参**里的数组字面量还原成链表/树对象。
@@ -112,6 +128,75 @@ const BUILDER = `def __mk__(v, __k__):
  * 所以这里补上，跟平台保持一致。用 `globals().setdefault`：
  * 题解自己定义了同名类的话以题解为准（它的 `__init__` 可能带额外字段）。
  */
+/**
+ * 接管 stdin 的小类。
+ *
+ * 必须是 StringIO 的**子类**才能挂 `.buffer`：原生 `_io.StringIO` 没有 __dict__，
+ * 直接赋值会抛
+ *   AttributeError: '_io.StringIO' object has no attribute 'buffer'
+ * 而不少 ACM 题解就是 `sys.stdin.buffer.read().split()`（HJ24 是其中一篇）——
+ * 那个报错看起来像是读者的代码写错了。
+ *
+ * 同时这也是「不让标签页卡死」的关键：Python 跑在主线程上，
+ * JS 定时器救不了它，读 stdin 卡住就是整个标签页卡死。
+ */
+const STDIN_SHIM = `class __StdinBuf__:
+    # 只借用 owner 的游标，不自己维护位置 —— 这样文本读与字节读天然同步，
+    # 跟真实终端一致（stdin 是 TextIOWrapper 包着 BufferedReader）。
+    def __init__(self, __owner__):
+        self.__o__ = __owner__
+
+    def read(self, __n__=-1):
+        return self.__o__.__take__(__n__).encode()
+
+    def readline(self):
+        return self.__o__.__take_line__().encode()
+
+    def readlines(self):
+        return list(iter(self.readline, b''))
+
+    def __iter__(self):
+        return iter(self.readline, b'')
+
+    def readable(self):
+        return True
+
+
+class __Stdin__:
+    def __init__(self, __s__=''):
+        self.__s__ = __s__
+        self.__p__ = 0
+        self.buffer = __StdinBuf__(self)
+
+    def __take__(self, __n__=-1):
+        if __n__ is None or __n__ < 0:
+            __d__ = self.__s__[self.__p__:]
+            self.__p__ = len(self.__s__)
+            return __d__
+        __d__ = self.__s__[self.__p__:self.__p__ + __n__]
+        self.__p__ += len(__d__)
+        return __d__
+
+    def __take_line__(self):
+        __i__ = self.__s__.find('\\n', self.__p__)
+        __end__ = len(self.__s__) if __i__ == -1 else __i__ + 1
+        return self.__take__(__end__ - self.__p__)
+
+    def read(self, __n__=-1):
+        return self.__take__(__n__)
+
+    def readline(self):
+        return self.__take_line__()
+
+    def readlines(self):
+        return list(iter(self.readline, ''))
+
+    def __iter__(self):
+        return iter(self.readline, '')
+
+    def readable(self):
+        return True`;
+
 const LEETCODE_TYPES = `__ns__ = globals()
 if 'ListNode' not in __ns__:
     class ListNode:
@@ -224,8 +309,9 @@ export function buildPrelude(opts: {
     'import sys as __sys__',
     'import io as __io__',
     'import re as __re__',
+    STDIN_SHIM,
     `__lc__.cache[${JSON.stringify(opts.filename)}] = (0, None, ${JSON.stringify(lines)}, ${JSON.stringify(opts.filename)})`,
-    `__sys__.stdin = __io__.StringIO(${JSON.stringify(opts.stdin)})`,
+    `__sys__.stdin = __Stdin__(${JSON.stringify(opts.stdin)})`,
     // 编码器放在 prelude 里执行，而不是只留在驱动里：
     // 驱动里的 def 属于**驱动自己的 globals**？不对 —— 它们共用同一个 dict，
     // 所以能互相看到。这里显式执行一次，是为了让 ENCODER/BUILDER 这两段
@@ -263,8 +349,14 @@ export function buildCallDriver(
    * 三个元素的链表和二叉树的 [left,val,right] 在字面量上无法区分。
    */
   nodeKinds: Array<'none' | 'list' | 'tree'> = [],
+  /**
+   * 用 str() 而不是 json 序列化返回值。
+   * 期望值是「程序打印的文本」时必须这样 —— 见 PySample.textCompare。
+   */
+  textCompare = false,
 ): string {
   const kinds = (cases[0] ?? []).map((_, i) => nodeKinds[i] ?? 'none');
+  const dump = textCompare ? '__dump_text__' : '__j__';
 
   return [
     'import json as __json__',
@@ -281,7 +373,7 @@ export function buildCallDriver(
     // 直接 splat 过去，入口拿到的是 "9" 而不是 9，`target - n` 立刻 TypeError。
     // （literal_eval 只认字面量、不执行代码，对用户粘贴的样例是安全的）
     '        __p__ = [__mk__(__ast__.literal_eval(x), __k__) for x, __k__ in zip(__a__, __kinds__)]',
-    `        __r__.append({"v": __j__(__enc__(${target.expr}(*__p__)))})`,
+    `        __r__.append({"v": ${dump}(__enc__(${target.expr}(*__p__)))})`,
     '    except Exception:',
     '        __r__.append({"e": __tb__.format_exc()})',
     '__json__.dumps(__r__, ensure_ascii=False)',

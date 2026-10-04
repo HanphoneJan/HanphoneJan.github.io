@@ -20,11 +20,20 @@ import {
 import {loadPyodideRuntime, type PyodideRuntime} from './runtime';
 import {execPython} from './exec';
 
+/**
+ * 与 plugins/py-samples 的 PySample 同构。
+ *
+ * 重复定义而不是 import：runner 会被动态 import 进单独 chunk，
+ * 从这里 import 构建期插件的类型会把整个插件拖进依赖图。
+ * 字段必须与那边保持一致。
+ */
 export interface PySample {
   /** 位置参数，按入口签名顺序 */
   args: string[];
   /** 期望输出（原始文本，可能含省略号等） */
   expected: string;
+  /** 期望值是「程序打印的文本」而非返回值 JSON，见插件侧同名注释 */
+  textCompare?: boolean;
 }
 
 export interface StdinSample {
@@ -33,7 +42,8 @@ export interface StdinSample {
 }
 
 export type RunMode =
-  | {type: 'samples'; samples: PySample[]}
+  /** textCompare 的样例按「程序打印的文本」比较，见 PySample.textCompare */
+  | {type: 'samples'; samples: PySample[]; textCompare?: boolean}
   | {type: 'manual'; argsText: string}
   | {type: 'stdin'; stdin: string; expected: string}
   | {type: 'plain'};
@@ -144,7 +154,12 @@ export async function runSnippet(opts: {
 
       const driver =
         cases && target
-          ? buildCallDriver(cases, target, nodeParams(entry!, code))
+          ? buildCallDriver(
+              cases,
+              target,
+              nodeParams(entry!, code),
+              mode.type === 'samples' ? mode.textCompare : false,
+            )
           : undefined;
       const result = await execPython(py, {
         code,
@@ -296,6 +311,75 @@ function fixNull(arg: string): string {
     i++;
   }
   return out;
+}
+
+/**
+ * 把 stdin 样例的一行变成调用实参。
+ *
+ * 与 `quoteIfStr` 的区别：那套只认「标注明确写了 str」，用于**手动输入**
+ * （用户自己敲的，标注是唯一线索）。这里处理的是**样例文本**，线索更多：
+ *
+ * 1. 标注写了 str → 加引号
+ * 2. 标注写了 list / int / float / dict 之类 → 原样传（那是数组/数字样例）
+ * 3. 没有标注 → **看这段文本本身能不能当 Python 字面量解析**：
+ *    - `HelloNowcoder` 解析不了 → 它本来就是一段文本，加引号
+ *    - `5` / `[1,2]` 能解析 → 原样传
+ *
+ * ## 为什么必须有第 3 条
+ *
+ * 题解「解题思路」小节里那些纯函数定义大多**不带类型标注**（只有
+ * `def last_word_split(line)` 这种）。只认标注的话，
+ * `last_word_split(HelloNowcoder)` 会报 `ValueError: malformed node or string`
+ * —— 一个与代码对错无关的红字。
+ */
+export function asCallArgument(text: string, annotation?: string): string {
+  const ann = (annotation ?? '').trim().toLowerCase();
+  if (ann) {
+    if (/\bstr\b/.test(ann)) {
+      return quoteIfStr(text, ann);
+    }
+    // 明确是数组/数字/布尔，样例本身就是字面量，别动
+    if (
+      /\b(list|tuple|dict|set|int|float|bool|complex)\b/.test(ann) ||
+      /^\w+\[/.test(ann)
+    ) {
+      return text.trim();
+    }
+  }
+  const t = text.trim();
+  // 已经是字面量（数字 / 数组 / 字典 / None / True）或带引号的，就原样传
+  if (isPythonLiteral(t)) {
+    return t;
+  }
+  // 加引号时用**原文**而不是 trim 过的：样例里的前导空格是有意义的
+  // （HJ1 的 `   fly me   to   the moon` 就是靠 strip 处理它的）。
+  // 这里不复用 quoteIfStr —— 它会 trim，而我们要保留首尾空白。
+  return `"${text.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
+function isPythonLiteral(t: string): boolean {
+  if (t.length === 0) {
+    return false;
+  }
+  if (/^(?:[frbu]{0,2})["']/.test(t)) {
+    return true;
+  }
+  if (/^[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?[jJ]?$/.test(t)) {
+    return true;
+  }
+  if (/^(None|True|False)\b/.test(t)) {
+    return true;
+  }
+  if (/^[[{(]/.test(t)) {
+    try {
+      // eslint-disable-next-line no-new-func
+      new Function(`return (${t.replace(/null/g, 'None')});`);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return false;
 }
 
 /** 只保留期望值可判定的样例；省略号的样例（「[0,1,2,...]」）没法比 */

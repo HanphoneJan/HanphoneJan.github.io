@@ -38,7 +38,13 @@ import React, {
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import type {PySample, StdinSample} from '@site/plugins/py-samples';
 import {analyzeSnippet, samplesFit} from './snippet';
-import {usableSamples, type RunMode, type RunOutcome} from './runner';
+import {isUsableExpected} from './compare';
+import {
+  asCallArgument,
+  usableSamples,
+  type RunMode,
+  type RunOutcome,
+} from './runner';
 import styles from './styles.module.css';
 
 // CodeMirror 有几百 KB，且只有点「改代码」的人才需要 —— 动态加载，
@@ -102,10 +108,47 @@ export default function SnippetBar({
     [stdinSamples],
   );
 
+  /**
+   * 牛客/ACM 题：把 stdin 样例当成调用参数。
+   *
+   * ## 为什么需要
+   *
+   * ACM 题的样例天然是 stdin/stdout（`输入：1516000` → `输出：0006151`），
+   * 但一篇题解里通常有好几个块共享同一个函数：解题思路里的纯函数定义，
+   * 以及完整代码实现里那个带 `__main__` 的。
+   *
+   * 带 `__main__` 的块跑 stdin 模式没问题；纯函数块就只能手动输参 ——
+   * 于是同一页上三个块里两个是「▶ 运行」，读起来像「这题没法一键跑」。
+   *
+   * ## 规则刻意收得很紧
+   *
+   * 只有「入口恰好 1 个必填参数」+「样例输入恰好 1 行」时才转。
+   * 参数多于一行就说明那道题是多行输入的批处理程序（而不是一个函数），
+   * 硬按行拆会得到一个与代码对错无关的判定。
+   *
+   * 引号交给 `quoteIfStr` 按类型标注决定，和手动模式是同一套规则。
+   */
+  const derivedCallSamples = useMemo(() => {
+    if (argSamples.length > 0 || !entry || analysis.isProgram) {
+      return argSamples;
+    }
+    if (entry.requiredCount !== 1) {
+      return argSamples;
+    }
+    return usableStdin
+      .filter((s) => !s.stdin.includes('\n') && isUsableExpected(s.expected))
+      .map((s) => ({
+        args: [asCallArgument(s.stdin, entry.annotations[0])],
+        expected: s.expected,
+        // 期望值是程序打印的文本，不是返回值的 JSON 表示
+        textCompare: true,
+      }));
+  }, [argSamples, entry, analysis.isProgram, usableStdin]);
+
   // 参数个数对不上就别跑样例 —— 顺序错会得到一个看起来很合理的错误答案，
   // 那比不给按钮有害得多。
   const canRunSamples = entry
-    ? samplesFit(entry, argSamples.map((s) => s.args))
+    ? samplesFit(entry, derivedCallSamples.map((s) => s.args))
     : false;
 
   // 只有「程序」（带 __main__ 的块）才能用 stdin 模式。解题思路里那些
@@ -118,7 +161,11 @@ export default function SnippetBar({
       return null;
     }
     if (canRunSamples) {
-      return {type: 'samples', samples: argSamples};
+      return {
+        type: 'samples',
+        samples: derivedCallSamples,
+        textCompare: derivedCallSamples[0]?.textCompare === true,
+      };
     }
     if (canRunStdin) {
       return {
@@ -128,10 +175,10 @@ export default function SnippetBar({
       };
     }
     return {type: 'manual', argsText};
-  }, [entry, canRunSamples, argSamples, canRunStdin, usableStdin, argsText]);
+  }, [entry, canRunSamples, derivedCallSamples, canRunStdin, usableStdin, argsText]);
 
   const runLabel = canRunSamples
-    ? `▶ 跑样例（${argSamples.length}）`
+    ? `▶ 跑样例（${derivedCallSamples.length}）`
     : baseMode?.type === 'stdin'
       ? '▶ 跑样例'
       : '▶ 运行';
@@ -167,8 +214,14 @@ export default function SnippetBar({
     result !== null && result.rows.length === 0 && Boolean(result.output);
 
   // 手动模式没填参数就别让读者点出一个 `missing 1 required positional argument`
-  // 的 Python traceback —— 那看着像代码写错了，其实只是没填输入框
-  const needArgs = baseMode.type === 'manual' && argsText.trim() === '';
+  // 的 Python traceback —— 那看着像代码写错了，其实只是没填输入框。
+  //
+  // 注意要排除「没有必填参数」的情况（HJ150 的 `def backtrack():`）：
+  // 那种块本来就不需要填任何东西，按钮必须可点，否则永远跑不了。
+  const needArgs =
+    baseMode.type === 'manual' &&
+    entry.requiredCount > 0 &&
+    argsText.trim() === '';
 
   return (
     <div className={styles.bar} data-testid="snippet-bar">
@@ -184,7 +237,7 @@ export default function SnippetBar({
         </button>
 
         {/* 71 篇力扣题解抽不到样例，给个参数输入框，否则这部分读者完全用不上 */}
-        {baseMode.type === 'manual' && (
+        {baseMode.type === 'manual' && entry.requiredCount > 0 && (
           <input
             type="text"
             className={styles.args}
