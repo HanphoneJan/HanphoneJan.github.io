@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Project Overview
 
-Personal tech documentation site built with Docusaurus 3.9, deployed via GitHub Pages to `www.hanphone.top`. The site includes docs, blog, a code-training sub-site (algorithm problem solutions), GitHub Stars showcase, and projects display.
+Personal tech documentation site built with Docusaurus 3.9, deployed via GitHub Pages to `docs.hanphone.cn`. The site includes docs, a code-training sub-site (algorithm problem solutions), GitHub Stars showcase, and projects display. **There is no blog here — the real blog is the separate site `hanphone.cn`.** Don't reintroduce `blog/` or the blog preset options; see "博客已迁走" below.
 
 ## Commands
 
@@ -23,7 +23,7 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 
 ### Content sources and data flow
 
-- **Private notes sync** (`scripts/sync-notes.ts`): Reads markdown files from `E:/hanphonejan/hanphone-note`, publishes those with `publish: true` frontmatter to `docs/` or `blog/` (controlled by `type: blog`). Auto-cleans files when `publish` is removed.
+- **Private notes sync** (`scripts/sync-notes.ts`): Reads markdown files from `E:/hanphonejan/hanphone-note`, publishes those with `publish: true` frontmatter to `docs/`. Files with `type: blog` are **skipped** — the blog lives on hanphone.cn. Auto-cleans files when `publish` is removed.
 - **ML notebook sync** (`scripts/sync-machine-learning.ts`): Converts `.ipynb` files in `code-training/machine-learning/` to markdown via Quarto, outputs to `code-training/docs/machine-learning/`. 页面标题优先取源 notebook 的 `metadata.title`（可读中文标题），否则回退到文件名。
 - **GitHub data** (`data/`): `github-stars.json`, `projects.json`, `star-tags.json` are auto-fetched/updated by GitHub Actions workflows and consumed at build time by the Stars and Projects pages via `@site/data/`.
 - **LeetCode progress sync** (`scripts/sync-leetcode.js`): Pulls accepted LeetCode (leetcode.cn) submissions using the `LEETCODE_SESSION` cookie (stored as GitHub secret), diffs against local `code-training/leetcode/`, and generates new `*.py` + `docs/problems/leetcode/*.md` files. Runs every 2 days via `sync-leetcode.yml`; commits only when new problems exist. The script also **auto-refreshes the session cookie** (LeetCode returns a renewed `LEETCODE_SESSION` in `Set-Cookie` on every GraphQL call); the workflow writes it back to the `LEETCODE_SESSION` secret when a PAT (`SYNC_PAT` / `STARS_PAT`) is available.
@@ -39,6 +39,18 @@ The site uses two `@docusaurus/plugin-content-docs` instances:
 1. **Default** (id: `default`) — main docs at `/docs`, sidebar from `sidebars.ts`
 2. **Code-training** (id: `code-training`) — algorithm training at `/code-training`, sidebar from `code-training/sidebars.ts`
 
+### 博客已迁走（别再加回来）
+
+真正的博客站是 **hanphone.cn**，这个仓库不再有博客。已删除：`blog/`（5 个文件）、
+classic preset 里的 `blog` 选项、导航栏「博客」项、`src/theme/BlogLayout/` 与
+`src/theme/BlogPostPage/`、giscus 的 `blogCategory`/`blogCategoryId`。
+
+旧 URL（`/blog/welcome` 等）**故意让它 404**，没加重定向 —— 用户明确选的。
+`sync-notes.ts` 现在跳过 `type: blog` 的笔记，所以那些文章以后也不会被同步回来。
+
+`@docusaurus/plugin-content-blog` 还留在 `dependencies` 里：preset-classic 依赖它，
+即使不配 blog 选项也会被装上，删掉只会让 lockfile 动。
+
 ### Custom pages
 
 - `src/pages/index.tsx` — Landing page
@@ -48,8 +60,6 @@ The site uses two `@docusaurus/plugin-content-docs` instances:
 
 ### Swizzled theme components
 
-- `src/theme/BlogLayout/index.tsx` — Wraps blog layout
-- `src/theme/BlogPostPage/` — Custom blog post page (with StructuredData, Metadata)
 - `src/theme/DocItem/Layout/` — Custom doc item layout (adds Giscus comments to docs)
 
 ### CI/CD (GitHub Actions)

@@ -7,8 +7,6 @@ declare module '@docusaurus/theme-common' {
       repoId: string;
       category: string;
       categoryId: string;
-      blogCategory?: string;
-      blogCategoryId?: string;
     };
   }
 }

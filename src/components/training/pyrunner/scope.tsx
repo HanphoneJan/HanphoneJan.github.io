@@ -4,8 +4,8 @@
  * ## 为什么不直接 useDoc()
  *
  * `@theme/CodeBlock/Layout` 是**全站**代码块共用的 —— docs/ 里的 Python 片段、
- * blog 正文里的代码块都会经过它。而 `useDoc()` 在非 docs 页会 throw
- * （`ReactContextError: DocProvider`），博客页会直接白屏。
+ * stars/projects 页 Markdown 里的代码块都会经过它。而 `useDoc()` 在非 docs 页
+ * 会 throw（`ReactContextError: DocProvider`），那些页面会直接白屏。
  *
  * 自己开一个 Context，由已经 swizzle 过的 `DocItem/Layout` 提供值，
  * 没提供就当作「不在题解页」，安静地不渲染运行条。

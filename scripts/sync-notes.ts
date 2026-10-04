@@ -4,11 +4,12 @@ import matter from 'gray-matter';
 import { glob } from 'glob';
 
 const SOURCE_DIR = 'E:/hanphonejan/hanphone-note';
+// 只同步文档。博客站是 hanphone.cn，这个仓库不再有 blog/，
+// 笔记里 type: blog 的条目会被跳过。
 const DEST_DOCS = path.join(process.cwd(), 'docs');
-const DEST_BLOG = path.join(process.cwd(), 'blog');
 
 async function cleanup(trackedFiles: string[]) {
-  const destDirs = [DEST_DOCS, DEST_BLOG];
+  const destDirs = [DEST_DOCS];
   const normalizedTrackedFiles = trackedFiles.map(f => path.normalize(f).toLowerCase());
 
   for (const dir of destDirs) {
@@ -56,9 +57,10 @@ async function sync() {
 
     if (data.publish === true) {
       const relPath = path.relative(SOURCE_DIR, file);
-      const isBlog = data.type === 'blog';
-      const targetBase = isBlog ? DEST_BLOG : DEST_DOCS;
-      const targetPath = path.join(targetBase, relPath);
+      if (data.type === 'blog') {
+        continue;
+      }
+      const targetPath = path.join(DEST_DOCS, relPath);
 
       // 处理内容：移除 img 标签中的 style 属性
       const cleanBody = body.replace(imgStylePattern, '$1');
@@ -66,7 +68,7 @@ async function sync() {
       // 处理元数据
       const cleanData = { ...data };
       delete cleanData.publish;
-      if (isBlog) delete cleanData.type;
+      delete cleanData.type;
       cleanData._synced = true; // 标记为同步生成
 
       const output = matter.stringify(cleanBody, cleanData);
@@ -74,7 +76,7 @@ async function sync() {
       await fs.writeFile(targetPath, output);
 
       trackedFiles.push(targetPath);
-      console.log(`[Sync] Updated: ${relPath} -> ${isBlog ? 'blog' : 'docs'}`);
+      console.log(`[Sync] Updated: ${relPath} -> docs`);
     }
   }
 
