@@ -322,11 +322,21 @@ for (const file of files) {
      * 静止的字典画出来就是一张表，读者学不到任何东西
      * （0560 前缀和计数这一类题的要点全在「哪个前缀和第一次出现」）。
      */
-    const keyCounts = frames.map(
-      (f) => (asArray(f)?.aux ?? []).map((a) => a.values.length).join(','),
-    );
+    /**
+     * 字典必须**真的在变**。
+     *
+     * 两种形态都要查：字典挂在 aux 行上（0560 前缀和计数），
+     * 或者字典的键**就是主画面**（0146 LRU 缓存没有可画的入参数组，
+     * 「缓存里现在有哪几个 key」就是全部状态）。
+     * 静止的字典画出来就是一张表，读者学不到任何东西。
+     */
+    const keyCounts = frames.map((f) => {
+      const a = asArray(f);
+      const aux = (a?.aux ?? []).map((x) => x.values.length).join(',');
+      return aux || `main:${a?.array.join(',') ?? ''}`;
+    });
     check(
-      `${label}：字典行数在变`,
+      `${label}：字典在变（aux 行或主画面）`,
       new Set(keyCounts).size >= 2,
       [...new Set(keyCounts)].slice(0, 6),
     );
