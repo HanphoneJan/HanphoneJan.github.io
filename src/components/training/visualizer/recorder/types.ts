@@ -29,8 +29,17 @@ export type Json =
 export interface TraceEvent {
   /** 1 起，与题解代码块的行号一致 */
   line: number;
-  /** 局部变量快照。`self` 被丢掉（对读者没意义） */
+  /** 局部变量快照。`self` 被丢掉（对读者没意思） */
   locals: Record<string, Json>;
+  /**
+   * 此刻在目标文件里的调用层数（1 = 顶层）。
+   *
+   * 树题与分治题的核心教学点是「一层层下去再逐层回来」，而这类题解的
+   * 局部变量里往往**只有一个**节点变量 —— 0104 的 `maxDepth` 每层的
+   * `root` 都是「当前这棵子树」，光看它看不出深浅（满树时每层长度一样）。
+   * 深度是唯一能把递归过程讲清楚的信息。
+   */
+  depth?: number;
 }
 
 /**
@@ -62,8 +71,24 @@ export interface RawTrace {
    * dp 是算法的中间产物。所以「是入参」优先于「被下标得多」。
    */
   paramNames?: string[];
-  /** 录制用的实参（Python 字面量文本） */
+  /**
+   * 每个入参的结构类型：`none` / `list` / `tree` / `randlist` / `byval`。
+   *
+   * 与 `pyrunner/snippet.ts` 的 `NodeKind` 同构。adapter 靠它决定
+   * 「这个局部变量是不是平台对象」—— 不看的话会把 ListNode 录成的
+   * `"<ListNode val=1>"` 摘要串当成字符串数组画出来。
+   */
+  argKinds?: string[];
+  /** 录制用的实参（Python 字面量文本）。stdin 模式为空数组 */
   args: string[];
+  /**
+   * stdin 模式喂进去的原始文本（牛客/ACM 题）。
+   *
+   * 非空表示「这个入口是读 stdin 的程序」，adapter 要据此知道
+   * 局部变量里的字符串是**逐行读进来的**而不是函数参数 ——
+   * 两者的画面语义不一样。
+   */
+  stdin?: string;
   /** 期望返回值，仅用于自检：录制跑出来的结果必须与样例一致 */
   expected: string;
   /** 实际返回值 */

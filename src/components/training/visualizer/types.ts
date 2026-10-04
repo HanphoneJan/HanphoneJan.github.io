@@ -32,10 +32,14 @@ export type CellState =
 
 export type Display = 'bars' | 'boxes';
 
-/** 辅助数组（归并排序的第二路、双指针的双数组等） */
+/** 辅助数组（归并排序的第二路、双指针的双数组、栈/队列等） */
 export interface AuxArray {
   label: string;
-  values: number[];
+  /**
+   * 元素类型跟主数组一样允许 string —— 栈里装的是字符
+   * （0020 有效括号的 `stack = ['(', '[']`）。
+   */
+  values: Array<number | string>;
   states?: CellState[];
 }
 
@@ -46,9 +50,16 @@ export interface GridFrame {
   /** 长度 = rows * cols，行优先 */
   cells: GridCell[];
   /** 当前遍历位置 [r, c] */
-  cursor?: [number, number];
-  /** 队列/栈里待访问的格子 */
-  frontier?: Array<[number, number]>;
+  cursor?: number[];
+  /**
+   * 队列/栈里待访问的格子。
+   *
+   * 用 `number[][]` 而不是 `Array<[number, number]>`：destructuring 出来的
+   * `[r, c]` 推断成 `number[]`，赋给元组类型会报错（gridAndDp.ts 里 3 处）。
+   * 行优先的两元素数组与元组在运行时没有区别，硬钉成元组只是为了让每个
+   * 调用点各写一次 `as [number, number]`。
+   */
+  frontier?: number[][];
 }
 
 export interface GridCell {
@@ -99,21 +110,91 @@ export interface ArrayFrame extends BaseFrame {
   aux?: AuxArray[];
   grid?: never;
   table?: never;
+  tree?: never;
 }
 
 export interface GridFrameWrapper extends BaseFrame {
   grid: GridFrame;
   array?: never;
   table?: never;
+  tree?: never;
 }
 
 export interface TableFrameWrapper extends BaseFrame {
   table: TableFrame;
   array?: never;
   grid?: never;
+  tree?: never;
 }
 
-export type Frame = ArrayFrame | GridFrameWrapper | TableFrameWrapper;
+/**
+ * 单个树节点格子的类型。
+ *
+ * `empty` 与 `null` 分开是有意的：`null` 是「这格没有孩子」（力扣层序里
+ * 的占位），`empty` 是「孩子是空字符串」（0084 那种把访问过的格子置空的
+ * DFS）。混成一个就会丢掉「这里原本没有节点」与「这里被算法改过」的区别。
+ */
+export type TreeCellKind = 'number' | 'string' | 'null' | 'empty';
+
+export interface TreeCell {
+  value: number | string | null;
+  kind: TreeCellKind;
+}
+
+/**
+ * 二叉树的一帧。
+ *
+ * ## 为什么不用 `grid`
+ *
+ * 网格有明确的行列边长，树是**不完全满**的 —— 层序数组 `[1,2,3,null,5]`
+ * 里第 5 格挂在第 2 格下面。用 GridView 画要么留一堆空格（看不出父子关系），
+ * 要么把树摊平成网格（读者看不出谁是谁的孩子）。
+ *
+ * 树视图按层序画：**下一行的两格是上一格的两个孩子**，中间的空位用
+ * 虚线连到父节点。这与力扣题面的写法一致，读者对得上号。
+ */
+export interface TreeFrameWrapper extends BaseFrame {
+  tree: {
+    /** 层序数组，与力扣题面写法一致：`[1,2,3,null,5]` */
+    cells: TreeCell[];
+    /** 当前聚焦的层序下标 */
+    cursor?: number;
+  };
+  array?: never;
+  grid?: never;
+  table?: never;
+}
+
+export type Frame =
+  | ArrayFrame
+  | GridFrameWrapper
+  | TableFrameWrapper
+  | TreeFrameWrapper;
+
+/**
+ * Frame 是 union，另外几个分支把 `grid`/`table`/`tree` 声明成了 `?: never`，
+ * TS 的 `in`/真值收窄**不生效**（optional 属性存在 undefined 的可能），
+ * 所以手写守卫。两个播放器（AlgoPlayer / RecordedPlayer）共用这三个。
+ */
+export function isGridFrame(f: Frame): f is GridFrameWrapper {
+  return f.grid !== undefined;
+}
+
+export function isTableFrame(f: Frame): f is TableFrameWrapper {
+  return f.table !== undefined;
+}
+
+export function isTreeFrame(f: Frame): f is TreeFrameWrapper {
+  return f.tree !== undefined;
+}
+
+/** 四种帧里当前这个是哪一种，给错误信息用 */
+export function frameKind(f: Frame): 'array' | 'grid' | 'table' | 'tree' {
+  if (isGridFrame(f)) return 'grid';
+  if (isTableFrame(f)) return 'table';
+  if (isTreeFrame(f)) return 'tree';
+  return 'array';
+}
 
 /** 输入解析结果。用 discriminated union 让调用方必须处理失败分支 */
 export type ParseResult<T> =
