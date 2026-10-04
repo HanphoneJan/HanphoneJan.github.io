@@ -225,6 +225,8 @@ if __name__ == "__main__":
 用 `read()` 一次读完再按 token 取用：速度快、不关心输入分布在几行。
 `StringIO` 没有 `.buffer`，本地测试需用 `sys.stdin.read().encode()` 兜底。
 
+（`min_blocks` 与写法一完全相同，这里再写一遍是为了让这段能独立运行。）
+
 ```python
 import sys
 
@@ -234,6 +236,18 @@ def _read_input():
         return sys.stdin.buffer.read()
     except AttributeError:
         return sys.stdin.read().encode()
+
+def min_blocks(r, c):
+    """返回 (是否可填满, 最少方块数)；不可填满时返回 (False, -1)"""
+    if (r * c) % 2 == 1:
+        return False, -1
+
+    if r % 2 == 0:
+        # 以 r 为偶数维，按 2 行一组铺 2×2，剩余一列用竖放 1×2 补齐
+        return True, (r // 2) * ((c + 1) // 2)
+    else:
+        # r 为奇数则 c 必为偶数，以 c 为偶数维
+        return True, (c // 2) * ((r + 1) // 2)
 
 def solve():
     data = _read_input().split()

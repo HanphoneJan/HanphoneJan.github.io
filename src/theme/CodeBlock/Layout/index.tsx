@@ -76,6 +76,7 @@ export default function CodeBlockLayout({className}: Props): ReactNode {
           code={metadata.code}
           samples={docEntry.samples}
           stdinSamples={docEntry.stdinSamples}
+          entryName={docEntry.method}
         />
       )}
     </Container>
