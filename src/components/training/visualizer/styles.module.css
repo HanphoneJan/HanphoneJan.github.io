@@ -558,3 +558,78 @@
   background: transparent;
   padding: 0.75rem 0 0;
 }
+
+/* ---------- 二叉树视图 ---------- */
+/*
+ * 按层画，每层是一个 flex 行；槽位用 marginLeft 做百分比居中偏移。
+ * 不用嵌套 DOM 画连线 —— 那样每加一层深度就要加一层 wrapper，
+ * 而连线的位置用 CSS 就能表达（父节点居中在两个孩子中间）。
+ */
+
+.treeWrap {
+  padding: 0.75rem 0.25rem;
+  overflow-x: auto;
+}
+
+.treeLevel {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.treeSlot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+/* 上层的连线：一条竖线 + 一段斜线，示意「连到父节点」 */
+.treeLink {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  width: 1px;
+  height: 14px;
+  background: var(--ifm-color-emphasis-400);
+}
+
+.treeBox,
+.treeCursor,
+.treeGhost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--ifm-color-emphasis-400);
+  background: var(--ifm-background-surface-color);
+}
+
+.treeCursor {
+  border-color: var(--ifm-color-primary);
+  background: color-mix(in srgb, var(--ifm-color-primary) 18%, transparent);
+}
+
+/*
+ * 空位画成虚线小点而不是隐藏。
+ * 隐藏的话 `[1,2,3,null,5]` 里 5 的位置会跳到左边，读者看不出
+ * 5 是 2 的右孩子、3 没有孩子 —— 「空 = 没孩子」这个语义恰恰是树题的重点。
+ */
+.treeGhost {
+  border-style: dashed;
+  border-color: var(--ifm-color-emphasis-300);
+  background: transparent;
+  color: var(--ifm-color-emphasis-500);
+}
+
+.treeIndex {
+  font-size: 0.62rem;
+  color: var(--ifm-color-emphasis-600);
+  font-variant-numeric: tabular-nums;
+}

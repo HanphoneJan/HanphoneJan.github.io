@@ -43,6 +43,29 @@ async function main(): Promise<void> {
       `写入 static/traces/：${written.slice(0, 6).join(', ')}${written.length > 6 ? ' …' : ''}`,
     );
   }
+
+  /**
+   * 失败清单。
+   *
+   * 只有聚合计数（「no-sample=56」）没法指导下一步 —— 不知道是哪 56 篇、
+   * 缺什么。所以按原因分组打出「题 + 细节」，补 adapter 时直接照着单子做。
+   * 只在详细模式或全部录制时打，否则 `trace:record 0001` 会被刷屏。
+   */
+  if (stats.failures.length > 0 && (only.length === 0 || process.env.VERBOSE)) {
+    const grouped = new Map<string, typeof stats.failures>();
+    for (const f of stats.failures) {
+      const list = grouped.get(f.reason) ?? [];
+      list.push(f);
+      grouped.set(f.reason, list);
+    }
+    for (const [reason, list] of [...grouped.entries()].sort((a, b) => b[1].length - a[1].length)) {
+      console.log(`\n--- ${reason} (${list.length}) ---`);
+      for (const f of list) {
+        console.log(`  ${f.doc.padEnd(52)} ${f.detail}`);
+      }
+    }
+  }
+
   console.log('\n下一步：pnpm test:adapters');
 }
 
