@@ -494,3 +494,67 @@
     gap: 0.35rem;
   }
 }
+/* ---------- 题解内嵌的可视化折叠壳 ---------- */
+/*
+ * 与自测（SelfTest）区块的定位差别：
+ * 自测渲染在正文末尾，是个「读完来做几道题」的主动区块；
+ * 可视化必须紧跟在解题思路之后、正文自测之前 ——
+ * 它是理解算法的一部分，不是读完之后的附加练习。
+ */
+
+/* 聚焦时给个轮廓：播放器用键盘操作，没有视觉焦点就找不到自己在控制什么 */
+.visBox:focus-within .player {
+  border-color: var(--ifm-color-primary);
+}
+
+.visBox {
+  margin: 1.5rem 0;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 10px;
+  background: var(--ifm-color-emphasis-100);
+  overflow: hidden;
+}
+
+.visSummary {
+  padding: 0.7rem 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ifm-color-emphasis-800);
+  background: var(--ifm-color-emphasis-200);
+}
+
+.visSummary:hover {
+  background: var(--ifm-color-emphasis-300);
+}
+
+.visMeta {
+  margin-left: 0.6rem;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.visBody {
+  padding: 0.4rem 0.9rem 0.9rem;
+}
+
+.visHint {
+  margin: 0.5rem 0;
+  font-size: 0.88rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.visError {
+  margin: 0.5rem 0;
+  font-size: 0.88rem;
+  color: var(--ifm-color-danger);
+}
+
+/* 内嵌时播放器不再自带外边距与背景（外层壳已经有了） */
+.visBody .player {
+  margin-bottom: 0;
+  border: none;
+  background: transparent;
+  padding: 0.75rem 0 0;
+}

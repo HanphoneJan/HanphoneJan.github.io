@@ -85,7 +85,14 @@ export interface BaseFrame {
 }
 
 export interface ArrayFrame extends BaseFrame {
-  array: number[];
+  /**
+   * 数组内容。
+   *
+   * 元素类型是 `number | string` 而不是纯 number：字符串类题目
+   * （0003 无重复子串这类滑动窗口）在画面上就是一串字符，
+   * 而 ArrayView 的 Cell 本来就渲染 string。
+   */
+  array: Array<number | string>;
   states?: CellState[];
   /** 指针标注，如 {left: 0, right: 3}，渲染成数组上方的标签 */
   pointers?: Record<string, number>;
@@ -181,7 +188,7 @@ export class TraceBuilder {
   /** 便捷方法：数组 + 状态 + 指针 + 说明 */
   step(opts: {
     note: string;
-    array: number[];
+    array: Array<number | string>;
     states?: CellState[];
     pointers?: Record<string, number>;
     aux?: AuxArray[];
