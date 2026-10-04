@@ -188,11 +188,35 @@ pnpm test:tracers   # 90 项断言：算法结果与参考实现逐一对拍
 
 ### 浏览器内跑代码（Pyodide）
 
-题解页面底部的「在浏览器里运行」按钮，用 Pyodide 真跑一遍题解代码并对比样例。
+运行入口**长在每个代码块下方**（`src/components/training/pyrunner/SnippetBar.tsx`），
+由 `@theme/CodeBlock/Layout` 这个官方 swizzle 接缝挂上去。没有页面末尾的运行区。
 
 ```bash
-pnpm sync:pyodide   # 下载 12.9MB 运行时到 static/pyodide/
+pnpm test:pyrunner   # 纯函数：可运行性判定、样例抽取、驱动代码生成（必跑）
+pnpm test:pyodide    # 用真 Pyodide 跑执行协议；需要先 pnpm sync:pyodide
+pnpm sync:pyodide    # 下载 12.9MB 运行时到 static/pyodide/
 ```
+
+**为什么是这个 swizzle 接缝**（三条路都走过）：remark 插件把代码块换成自定义组件 ——
+手写进 mdast 的 `mdxjsEsm` 不带 `data.estree` 会被 MDX 静默丢弃（见上面那节）；
+客户端从 DOM 反解源码 —— Docusaurus 3.9 把代码拆成 `span.token-line`，拼不回源码；
+`useCodeBlockContext()` 直接给 `metadata.code`（已剥掉高亮注释的干净源码）与
+`metadata.language`，不碰 DOM、不碰 mdast。
+
+**执行协议里有几处不显眼但一改就坏的地方：**
+
+- **prelude 要登记 linecache**，否则 traceback 只有行号没有源码行（`File "snippet-1.py", line 4` 后面是空的）。linecache 的行必须**带换行符**，用 `match(/[^\n]*\n|[^\n]+/g)` 而不是 `split('\n')`。
+- **每次运行用全新的 globals**（`globalsInit(asMain)` 返回一个 dict 字面量）。共用默认全局的话，上一轮定义的变量会漏进下一轮，判定结果毫无意义。
+- **`__name__` 分两种**：样例/手动参数给 `__snippet__`（跳过题解里的 `if __name__ == "__main__"` 自测块）；stdin 模式给 `__main__`（牛客题的程序入口全在那个 if 里）。
+- **prelude 必须把 `sys.stdin` 换成 StringIO**。Python 跑在主线程上，JS 定时器救不了它，读 stdin 卡住就是整个标签页卡死。
+- **驱动以裸表达式收尾**（`__json__.dumps(...)`），靠 `runPythonAsync` 的返回值把结果带回 JS。不要改回 `print(MARKER + ...)` 再从 stdout 反解 —— `batched` 回调会切块。
+- **样例参数要 `ast.literal_eval`**：cases 经 JSON 传来，元素是字符串，直接 splat 会让 `target - n` 抛 TypeError。
+- **题面是 JavaScript 记法**：`null` 要翻成 `None`（`toPythonLiteral`），否则 `literal_eval` 直接 ValueError，树题全判失败。
+- **树是层序格式**（`[3,9,20,null,null,15,7]`），不是力扣内部比对的递归 `[left,val,right]`；入参构造和返回值序列化都要按层序来。
+
+**已知限制**：没有超时保护。Python 死循环会卡死标签页（Pyodide 的
+`setInterruptBuffer` 需要 COOP/COEP 头，GitHub Pages 不发）。要解决只能把运行时
+挪进 Web Worker，加起来是一套独立架构，先记着。
 
 **必须自托管，绝不能走 CDN。** Pyodide 默认 `cdnUrl` 指向
 `cdn.jsdelivr.net`，国内访问慢且经常失败；更隐蔽的是
@@ -213,8 +237,10 @@ webpack 打浏览器 bundle 时会连这些分支一起解析。**与体积无�
 
 | 约束 | 做法 |
 |---|---|
-| 12.9MB 不能预加载 | 折叠态只有一行按钮，**点开才加载** |
+| 12.9MB 不能预加载 | 运行条上只有一枚按钮，**点它才加载**，不做体积提示 |
 | 同一页面内重复运行 | 运行时是模块级单例，解释器不重建 |
+| 同一页面多个代码块 | **运行必须串行**：`setStdout` 是解释器级回调，并发会串台 |
+| CodeMirror 几百 KB | `React.lazy` 在点「改代码」时才加载，不点的人零下载 |
 | 跨页面复用 | 页面内 `fetch` 拦截 + Cache API |
 | `static/pyodide/` 12.9MB | gitignore，`deploy.yml` 构建时下载 |
 

@@ -1,222 +1,131 @@
-.wrapper {
-  padding: 1.25rem;
-  margin-top: 1.5rem;
-  border: 1px solid var(--ifm-color-emphasis-200);
-  border-radius: 12px;
-  background: var(--ifm-color-emphasis-100);
+/**
+ * 运行条与编辑器的样式。
+ *
+ * ## 为什么挂在 theme-code-block 容器**里面**
+ *
+ * 容器上带着 `--prism-background-color` / `--prism-color`（由 Container
+ * 组件内联注入），运行条放进去就自动继承代码块配色，深浅色跟随零成本。
+ *
+ * 代价是要处理圆角：容器 `overflow` 默认 visible，运行条得自己把底部两个角
+ * 补上，否则代码块圆角和运行条直角之间会露出一条缝。
+ */
+
+.bar {
+  border-top: 1px solid var(--ifm-color-emphasis-300);
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+  font-size: var(--ifm-code-font-size);
 }
 
-.collapsed {
-  margin-top: 1.5rem;
-}
-
-.openButton {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.9rem 1.25rem;
-  font: inherit;
-  color: var(--ifm-font-color-base);
-  text-align: left;
-  cursor: pointer;
-  border: 1px dashed var(--ifm-color-emphasis-300);
-  border-radius: 12px;
-  background: var(--ifm-color-emphasis-100);
-  transition: border-color 0.2s, background 0.2s;
-}
-
-.openButton:hover {
-  border-style: solid;
-  border-color: var(--ifm-color-primary);
-  background: var(--ifm-color-emphasis-200);
-}
-
-.badge {
-  flex: 0 0 auto;
-  padding: 0.15rem 0.6rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #fff;
-  background: #2f855a;
-  border-radius: 999px;
-}
-
-.head {
-  margin-bottom: 0.75rem;
-}
-
-.title {
-  margin: 0 0 0.25rem;
-  font-size: 1.05rem;
-}
-
-.meta {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--ifm-color-emphasis-600);
-}
-
-.meta code {
-  font-size: 0.9em;
-}
-
-.hint {
-  margin-bottom: 0.75rem;
-  font-size: 0.88rem;
-  color: var(--ifm-color-emphasis-700);
-}
-
-.hint code {
-  padding: 0.05rem 0.3rem;
-  font-size: 0.85em;
-  background: var(--ifm-color-emphasis-200);
-  border-radius: 4px;
-}
-
-/* ---------- 加载中 ---------- */
-.loadingBox {
-  padding: 1.5rem;
-  text-align: center;
-  border: 1px solid var(--ifm-color-emphasis-200);
-  border-radius: 10px;
-  background: var(--ifm-background-color);
-}
-
-.loadingBox p {
-  margin: 0.4rem 0;
-  font-size: 0.9rem;
-}
-
-.spinner {
-  width: 26px;
-  height: 26px;
-  margin: 0 auto;
-  border: 3px solid var(--ifm-color-emphasis-300);
-  border-top-color: var(--ifm-color-primary);
-  border-radius: 50%;
-  animation: pyr-spin 0.8s linear infinite;
-}
-
-@keyframes pyr-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .spinner {
-    animation: none;
-  }
-}
-
-/* ---------- 控件 ---------- */
+/* ---------- 按钮行 ---------- */
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.5rem;
   align-items: center;
-  margin-bottom: 0.75rem;
+  padding: 0.4rem var(--ifm-pre-padding);
+  /* rtl:ignore */
+  direction: ltr;
 }
 
-.primaryButton,
-.secondaryButton {
-  padding: 0.45rem 1rem;
+.runButton {
+  padding: 0.3rem 0.75rem;
   font: inherit;
   font-weight: 600;
-  color: #fff;
+  color: var(--prism-color);
   cursor: pointer;
-  border: none;
-  border-radius: 8px;
-  background: #2f855a;
-  transition: filter 0.15s;
+  border: 1px solid var(--ifm-color-emphasis-500);
+  border-radius: var(--ifm-global-radius);
+  background: transparent;
+  transition: background 0.15s, border-color 0.15s;
 }
 
-.secondaryButton {
-  color: var(--ifm-font-color-base);
-  border: 1px solid var(--ifm-color-emphasis-300);
-  background: var(--ifm-background-color);
+.runButton:hover:not(:disabled) {
+  border-color: var(--ifm-color-primary);
+  background: color-mix(in srgb, var(--ifm-color-primary) 15%, transparent);
 }
 
-.primaryButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+.runButton:disabled {
+  cursor: progress;
+  opacity: 0.6;
 }
 
 .linkButton {
-  padding: 0.35rem 0.2rem;
+  padding: 0.2rem 0.1rem;
   font: inherit;
-  font-size: 0.88rem;
-  color: var(--ifm-color-primary);
+  color: var(--prism-color);
   cursor: pointer;
-  background: none;
   border: none;
+  background: none;
+  opacity: 0.7;
 }
 
-.input {
-  width: 100%;
-  padding: 0.5rem 0.7rem;
-  margin-bottom: 0.75rem;
+.linkButton:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.args {
+  flex: 1 1 12rem;
+  min-width: 8rem;
+  max-width: 28rem;
+  padding: 0.3rem 0.6rem;
   font: inherit;
-  color: var(--ifm-font-color-base);
-  border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 8px;
-  background: var(--ifm-background-color);
+  color: var(--prism-color);
+  border: 1px solid var(--ifm-color-emphasis-500);
+  border-radius: var(--ifm-global-radius);
+  background: color-mix(in srgb, var(--prism-color) 6%, transparent);
 }
 
-.editor {
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 0.75rem;
-  font-family: var(--ifm-font-family-monospace);
-  font-size: 0.82rem;
-  line-height: 1.6;
-  color: var(--ifm-font-color-base);
-  border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 8px;
-  background: var(--ifm-background-color);
-  resize: vertical;
+.args:focus {
+  outline: 1px solid var(--ifm-color-primary);
+}
+
+.args::placeholder {
+  color: var(--ifm-color-emphasis-600);
 }
 
 /* ---------- 结果 ---------- */
 .results {
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--ifm-color-emphasis-200);
-  border-radius: 10px;
-  background: var(--ifm-background-color);
+  padding: 0.25rem var(--ifm-pre-padding) 0.75rem;
 }
 
 .summary {
-  margin: 0 0 0.6rem;
-  font-size: 0.92rem;
+  margin: 0.3rem 0 0.5rem;
   font-weight: 600;
 }
 
-.sampleList {
+.list {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.sampleItem {
+.row {
   display: flex;
-  gap: 0.6rem;
-  padding: 0.5rem 0;
-  border-top: 1px solid var(--ifm-color-emphasis-200);
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--ifm-color-emphasis-1000);
 }
 
-.sampleItem:first-child {
+.row:first-child {
   border-top: none;
 }
 
-.verdict {
+.mark {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.4rem;
-  height: 1.4rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.1rem;
   font-weight: 700;
+  line-height: 1;
   color: #fff;
   border-radius: 50%;
 }
@@ -229,14 +138,13 @@
   background: #c53030;
 }
 
-.sampleBody {
+.rowBody {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.sampleArgs {
-  font-size: 0.85rem;
-  font-weight: 600;
+.call {
+  font-size: 0.95em;
   word-break: break-all;
 }
 
@@ -246,71 +154,94 @@
   gap: 0.4rem;
   align-items: baseline;
   margin-top: 0.25rem;
-  font-size: 0.85rem;
 }
 
 .diffLabel {
-  font-size: 0.75rem;
-  color: var(--ifm-color-emphasis-600);
+  font-size: 0.85em;
+  opacity: 0.7;
 }
 
 .diff code {
-  padding: 0.05rem 0.35rem;
+  padding: 0 0.3rem;
   border-radius: 4px;
-}
-
-.ok {
-  color: #2f855a;
-  background: color-mix(in srgb, #2f855a 12%, transparent);
+  background: color-mix(in srgb, var(--prism-color) 10%, transparent);
 }
 
 .bad {
-  color: #c53030;
+  background: color-mix(in srgb, #c53030 25%, transparent);
+}
+
+.reason,
+.output,
+.error {
+  margin: 0.4rem 0 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.92em;
+  line-height: 1.5;
+}
+
+.error {
+  padding: 0.6rem var(--ifm-pre-padding);
+  color: #ffb4b4;
+  border-top: 1px solid color-mix(in srgb, #c53030 40%, transparent);
   background: color-mix(in srgb, #c53030 12%, transparent);
 }
 
-.reason {
-  margin: 0.25rem 0 0;
-  font-size: 0.8rem;
-  color: var(--ifm-color-emphasis-700);
-}
-
 .output {
-  padding: 0.7rem 0.85rem;
-  margin: 0.5rem 0 0;
-  overflow-x: auto;
-  font-size: 0.82rem;
-  line-height: 1.55;
-  border-radius: 8px;
-  background: var(--ifm-color-emphasis-200);
+  padding: 0.5rem var(--ifm-pre-padding);
 }
 
-/* ---------- 错误 ---------- */
-.errorBox {
-  padding: 0.85rem 1rem;
-  margin-top: 0.75rem;
-  border-left: 3px solid #c53030;
-  border-radius: 0 8px 8px 0;
-  background: color-mix(in srgb, #c53030 8%, transparent);
+.loading {
+  padding: 0 0.75rem 0.6rem;
+  margin: 0;
+  opacity: 0.7;
 }
 
-.errorBox p {
-  margin: 0 0 0.5rem;
-  font-size: 0.9rem;
+/* ---------- 编辑器 ---------- */
+.editorHost {
+  border-top: 1px solid var(--ifm-color-emphasis-1000);
 }
 
-.errorBox strong {
-  display: block;
-  margin-bottom: 0.4rem;
+/*
+ * 高度给 .cm-editor 而不是外层容器。
+ *
+ * CM6 内部结构是 `.cm-editor > .cm-scroller`，scroller 默认 overflow:hidden，
+ * 高度由 CM 自己按文档行数算。外层容器限高 + overflow:auto 也能滚，但那样
+ * CM 的 viewport margin（虚拟化视口）算的是外层滚动位置，滚到某处会出现
+ * 一片空白。给 .cm-editor 限高、让 CM 自己的 scroller 滚，是它唯一可靠的
+ * 路径 —— 官方示例都是这么做的。
+ */
+.editorHost :global(.cm-editor) {
+  max-height: 22rem;
+}
+
+.editorHost :global(.cm-scroller) {
+  overflow-y: auto;
+}
+
+.editorHint {
+  margin: 0;
+  padding: 0.2rem var(--ifm-pre-padding) 0.5rem;
+  font-size: 0.85em;
+  opacity: 0.6;
+}
+
+/* traceback 指到的出错行 */
+.cmErrorLine {
+  background: color-mix(in srgb, #c53030 22%, transparent);
+  box-shadow: inset 2px 0 0 #c53030;
 }
 
 @media (max-width: 576px) {
-  .wrapper {
-    padding: 1rem;
-  }
-
   .diff {
     flex-direction: column;
     gap: 0.15rem;
+  }
+
+  .args {
+    flex-basis: 100%;
+    max-width: none;
   }
 }
