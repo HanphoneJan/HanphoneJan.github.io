@@ -45,7 +45,10 @@ const config: Config = {
     },
 
     // Set the production url of your site here
-    url: 'https://www.hanphone.top',
+    // 必须与根目录 CNAME 一致（docs.hanphone.cn）。
+    // 这个值决定 canonical URL / sitemap.xml / Open Graph / 结构化数据，
+    // 配错等于告诉搜索引擎「我的正式地址在别处」。
+    url: 'https://docs.hanphone.cn',
     // Set the /<baseUrl>/ pathname under which your site is served
     // For GitHub pages deployment, it is often '/<projectName>/'
     baseUrl: '/',

@@ -1,11 +1,12 @@
 User-agent: *
 Allow: /
 
-# 站点地图索引
-Sitemap: https://www.hanphone.top/sitemap-index.xml
+# 站点地图索引（由 Docusaurus 从 config.url 生成）
+Sitemap: https://docs.hanphone.cn/sitemap-index.xml
 
-# 主站点地图（向后兼容）
-Sitemap: https://www.hanphone.top/sitemap.xml
+# 主站点地图
+Sitemap: https://docs.hanphone.cn/sitemap.xml
 
-# code-training 子项目站点地图
-Sitemap: https://www.hanphone.top/code-training/sitemap.xml
+# 注意：不要再声明 /code-training/sitemap.xml ——
+# code-training 是本仓库内的一个 docs 插件实例（routeBasePath: 'code-training'），
+# 不是独立子站，构建产物里并没有这个文件，声明它等于给爬虫一个 404。
