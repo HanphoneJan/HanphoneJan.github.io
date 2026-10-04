@@ -308,6 +308,25 @@ function pickSamples(
 }
 
 /**
+ * 样例里有没有「环形链表」的 `pos = N` 约定。
+ *
+ * 力扣的 0141/0142 题面写的是 `head = [3,2,0,-4], pos = 1`：
+ * 把尾部接到第 pos 个节点上。入口只收 `head`，多出来的 `pos` 是给评测驱动
+ * 的元信息 —— 但**不接环就跑不出正确结果**（`hasCycle` 返回 False，
+ * 与题面期望的 True 判不上，录制直接 result-mismatch 丢掉）。
+ *
+ * 只在**第一段样例**里找，且只认紧跟在 `输入` 之后的那个 `pos = N`。
+ */
+function cyclePosOf(md: string): number | undefined {
+  const at = md.search(/输入(?:\*\*)?[：:]/);
+  if (at === -1) {
+    return undefined;
+  }
+  const m = /\bpos\s*=\s*(\d+)/.exec(md.slice(at, at + 400));
+  return m ? Number(m[1]) : undefined;
+}
+
+/**
  * 样例实参 -> Python 字面量。**必须走 `asCallArgument`**，与页面上
  * 「跑样例」那条路（runner.ts 的第 143 行）完全一致。
  *
@@ -473,6 +492,8 @@ export async function recordTraces(
       multiAnswer?: boolean;
       /** 操作脚本模式（class-API 设计题） */
       script?: ScriptSample;
+      /** 环形链表：尾部接到第 N 个节点（0141/0142） */
+      cyclePos?: number;
     }> = [];
 
     // 先按候选顺序各自备好实参
@@ -492,6 +513,29 @@ export async function recordTraces(
           });
         }
         continue;
+      }
+      /**
+       * 环形链表（0141/0142）：样例多一个 `pos = N`，常规抽取必然落空。
+       *
+       * 这里把 `pos` 也当成一个形参去抽（键数就对上了），
+       * 抽完**丢掉**这个实参 —— 它不是入口的参数，而是建链表时要用的。
+       * 只对「第一个形参是链表」的入口这么做，别的一律不碰。
+       */
+      const cyclePos = cyclePosOf(md);
+      if (cyclePos !== undefined && c.requiredCount === 1 && !c.stdin) {
+        const withPos = pickSamples(
+          extractDocSamples(md, [...c.paramNames, 'pos'], 2),
+          c.paramNames,
+        );
+        if (withPos.length > 0) {
+          attempts.push({
+            candidate: c,
+            args: withPos[0].args.slice(0, 1),
+            expected: withPos[0].expected,
+            cyclePos,
+          });
+          continue;
+        }
       }
       // 读 stdin 的入口：喂第一组 stdin 样例，期望值按文本比
       //
@@ -611,6 +655,7 @@ export async function recordTraces(
             args: pyArgs,
             kinds: realKinds,
             stdin: attempt.stdinText,
+            cyclePos: attempt.cyclePos,
             script: attempt.script
               ? {
                   className: attempt.script.className,

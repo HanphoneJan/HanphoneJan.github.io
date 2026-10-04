@@ -378,6 +378,17 @@ export function buildRecordDriver(opts: {
     ctorArgs: unknown[];
     steps: Array<{method: string; args: unknown[]}>;
   };
+  /**
+ * 环形链表的约定：`head = [3,2,0,-4], pos = 1` —— 把尾部接到第 pos 个节点。
+ *
+ * 入口只收 `head`，`pos` 是给评测驱动用的元信息。0141/0142 的样例都这么写，
+ * 而题解的 `hasCycle(head)` 只接一个参数：多一个键就被 py-samples 的
+ * 「键比形参多就不抽」守卫丢掉；硬抽出来按无环链表跑，`hasCycle` 返回 False，
+ * 与题面期望的 True 判不上 → result-mismatch。
+ *
+ * 给上之后才能录出「快慢指针在环上相遇」的完整过程。
+ */
+cyclePos?: number;
   /** 只采这么多条，防止死循环题把构建拖垮 */
   eventLimit: number;
   /** 源码行数，用来把事件行号限制在文件范围内 */
@@ -437,7 +448,13 @@ ${
       ? `        # 脚本模式下没有「一次调用」的实参；单参为空的入口也走这里
         _args = []`
       : `        _args = ast.literal_eval("(" + ${JSON.stringify(args.join(', '))} + ",)")
-        _args = [__mk__(v, k) for v, k in zip(_args, __kinds__)]`
+        ${
+          opts.cyclePos === undefined
+            ? '_args = [__mk__(v, k) for v, k in zip(_args, __kinds__)]'
+            : // 环形链表：pos 只作用在**第一个**链表实参上
+              // （0160 那种两条链表的题不传 cyclePos）
+              `_args = [__mk__(v, k, ${opts.cyclePos} if i == 0 else None) for i, (v, k) in enumerate(zip(_args, __kinds__))]`
+        }`
     : `        # stdin 模式：ACM 题的 solve() 自己读 stdin、print 到 stdout。
         # 没有「调用入口」这一步，录的是整个程序的一次执行，
         # 所以 stdout 就是它的返回值。
