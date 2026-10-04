@@ -28,6 +28,10 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 - **GitHub data** (`data/`): `github-stars.json`, `projects.json`, `star-tags.json` are auto-fetched/updated by GitHub Actions workflows and consumed at build time by the Stars and Projects pages via `@site/data/`.
 - **LeetCode progress sync** (`scripts/sync-leetcode.js`): Pulls accepted LeetCode (leetcode.cn) submissions using the `LEETCODE_SESSION` cookie (stored as GitHub secret), diffs against local `code-training/leetcode/`, and generates new `*.py` + `docs/problems/leetcode/*.md` files. Runs every 2 days via `sync-leetcode.yml`; commits only when new problems exist. The script also **auto-refreshes the session cookie** (LeetCode returns a renewed `LEETCODE_SESSION` in `Set-Cookie` on every GraphQL call); the workflow writes it back to the `LEETCODE_SESSION` secret when a PAT (`SYNC_PAT` / `STARS_PAT`) is available.
 - **NowCoder progress sync** (`scripts/sync-nowcoder.js`): Pulls accepted NowCoder submissions using `NOWCODER_COOKIE` + `NOWCODER_UID` secrets, diffs against local `code-training/nowcoder/`, and generates new code files + `docs/problems/nowcoder/*.md`. Runs every 2 days via `sync-nowcoder.yml`; commits only when new problems exist.
+- **自测题库** (`static/quiz/bank.json`): 主动回忆题，加在题解正文末尾。`plugins/self-test/index.ts` 只把「哪些题解有题」的清单放进 globalData，`src/theme/DocItem/Layout/index.tsx`（已 swizzle）在正文末尾渲染 `<SelfTest>`，题目数据由组件在用户点开时 fetch。**题解 md 一行都不用改** —— 题库是唯一事实来源。详见「自测题库」小节。
+- **间隔重复复习** (`/code-training/review`): `plugins/srs-cards/index.ts` 构建期把 182 篇题解解析成复习卡片（题号/难度/标签/首解日期），进度存浏览器 localStorage。调度器是 SM-2 lite 三档（忘了/记得/秒答）。
+- **算法可视化** (`/code-training/visualizer`): `src/components/training/visualizer/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。
+- **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测、复习队列、可视化三处都用它跳转。
 
 ### Dual-plugin docs setup
 
@@ -54,6 +58,18 @@ The site uses two `@docusaurus/plugin-content-docs` instances:
 - **refresh-data.yml**: Daily at 3am UTC. Fetches stars and projects via `scripts/fetch-stars.js` / `scripts/fetch-projects.js`, then rebuilds and redeploys. Data is used at build time only — **never committed to git**, keeping history clean. `data/*.json` are fallback snapshots for local development.
 - **sync-leetcode.yml**: Every 2 days at 3am UTC + manual dispatch. Runs `scripts/sync-leetcode.js` with the `LEETCODE_SESSION` secret, auto-refreshes the cookie into the secret (needs `SYNC_PAT`/`STARS_PAT`), and commits new problems. **Only commits when `git status` has changes** — no-op sync produces no commit.
 - **sync-nowcoder.yml**: Every 2 days at 3am UTC + manual dispatch. Runs `scripts/sync-nowcoder.js` with the `NOWCODER_COOKIE` and `NOWCODER_UID` secrets, and commits new problems. **Only commits when `git status` has changes** — no-op sync produces no commit.
+
+### 字体：不用任何 Web Font
+
+`src/css/fonts.css` 已删除（原本是 `@import` Google Fonts 的 Noto Sans SC）。
+该域名在国内被墙，表现为首屏字体闪一下再回落（FOUT），外加每次访问一次失败请求。
+
+现在 `--ifm-font-family-base` 是纯系统字体栈（`system-ui` + PingFang SC /
+Microsoft YaHei / Noto Sans CJK SC），定义在 `src/css/custom.css` 顶部。
+中文交给系统 CJK 字体渲染，零网络请求、零 FOUT。
+
+**注意**：`docs/前端/前端基础.md` 里仍有 `fonts.googleapis` —— 那是教程正文里
+教别人用 Google Fonts 的代码示例，不是站点配置，别删。
 
 ### Key config details
 
@@ -96,6 +112,133 @@ Minimal Python project (`pyproject.toml`, `uv.lock`) with numpy dependency. The 
 - **标题匹配去重**：脚本先读本地 `.py` 文件头部 `# [N] 中文标题` 注释，与提交列表的中文标题比对，已存在的直接跳过，**不会**调 detail API（避免力扣频率限制）。
 - **slug 差异**：力扣 API 的 `titleSlug`（如 `3sum-closest`）可能与插件生成的文件名 slug（`3-sum-closest`）不一致。文件名以标题匹配为准，新增文件用 API slug。
 - **新题生成的 md 是「结构化占位」**：含题目描述/示例/代码，解题思路留待补充。处理已同步题目的题解时，遵循 `code-training/AGENTS.md` 的撰写规范。
+
+### 自测题库（code-training）
+
+题解末尾的「自测」区块用于**主动回忆**，题库是唯一事实来源。
+
+```bash
+pnpm quiz:gen       # 从「复杂度分析」表格自动生成候选题 -> bank.generated.json
+pnpm quiz:merge     # 合并进 bank.json（自动题来自 generated，人工题保留）
+pnpm quiz:validate  # 校验；有 error 退出非 0
+```
+
+- `static/quiz/bank.generated.json` 是 `quiz:gen` 的产物，**已 gitignore，不要手改**。
+- `static/quiz/bank.json` 是正式题库，**要提交**。
+- `quiz:validate` 会**交叉校验答案**：凡 `source` 指向某个小节的题，都去题解
+  对应小节里字面核对答案文本，找不到就报错。**改动题解后必须重跑**。
+- 出题规范（含干扰项设计、红线、常见错误）见
+  `.agents/skills/quiz-bank-processor/SKILL.md`。
+
+### ⚠️ 为什么不用 remark 插件注入 JSX 组件
+
+试过，会被 MDX **静默丢弃**：手写进 mdast 的 `mdxjsEsm` 节点必须自带
+`data.estree` 才会被编译成 import，否则整条语句消失，SSR 直接报
+`Expected component SelfTest to be defined`。要补 estree 就得引 JS 解析器，
+为了一个组件不值得。改在已 swizzle 的 `DocItem/Layout` 里渲染，
+位置等价于「正文末尾」，且 126 篇 md 一行都不用改。
+
+另外两条弯路也记录一下，避免重复踩：
+- **不要用 JSX 属性传 JSON**：`mdxJsxAttributeValueExpression` 同样需要 `estree`，
+  题目数据会被丢弃。
+- **不要 `import` 整份题库**：几百道题会被打进每一个题解页面的 JS bundle。
+  题库放 `static/`，运行时 fetch。
+
+### 间隔重复复习 (`/code-training/review`)
+
+- **卡片数据**：`plugins/srs-cards/index.ts` 构建期用 gray-matter 解析
+  `code-training/docs/problems/**/*.md`（182 篇），产出题号/难度/标签/首解日期。
+- **进度**存在浏览器 localStorage（`srs.progress.v1`），**不进 git**。
+  静态站没有后端，进度数据的价值在于「随手就能记一笔」；代价是清缓存/换设备会丢，
+  所以导出/导入 JSON 是必需功能。
+- **调度器** `src/components/training/srs/scheduler.ts` 是 SM-2 lite 三档
+  （忘了/记得/秒答）。纯函数、无 DOM，时间用「天序号」而非 `Date`，
+  避开时区与夏令时的跨天错乱。
+- 题解里的难度有中英两套（`Easy/Medium/Hard` 与 `简单/中等/入门`），
+  插件负责归一化成 1/2/3。
+
+### 算法可视化 (`/code-training/visualizer`)
+
+核心是 `src/components/training/visualizer/types.ts` 里的 tracer 契约：
+**tracer 只产出「状态帧」，播放器负责全部交互**。新增算法 = 写 30~60 行
+trace 函数，白送一整套播放/暂停/单步/回退/调速/换输入/源码高亮。
+
+```bash
+pnpm test:tracers   # 90 项断言：算法结果与参考实现逐一对拍
+```
+
+**这个单测不是可选项。** tracer 的 `run()` 有两类高危 bug：
+状态记录错了（画面元素乱跳但不报错）、算法本身写错了（可视化会**掩盖**它）。
+所以断言的是「最后一帧的数组 == 独立参考实现的输出」。
+
+已经踩过的坑，别再犯：
+
+- **`formatInput` 必须由 tracer 自己提供。** 播放器曾在内部用 `String(value)`
+  兜底格式化，对象类型的 `defaultInput` 变成 `"[object Object]"`，解析必然失败、
+  首屏 0 帧。现在契约里有 `formatInput`，且有断言保证
+  `parseInput(formatInput(defaultInput))` 一定能解析回来。
+- **滑动窗口的 `left` 约定必须与题解一致。** 题解用的是「left 指向被排除的
+  重复字符、`ans = i - left`」。曾写成「left = prev + 1 却算 `i - left`」，
+  混用两套约定导致 off-by-one，结果比正确答案少 1。断言
+  「abcbbad = 3」抓住了它。
+- **`frame.note` 是给读者看的文案，不是 markdown。** 写 `**强调**` 会原样显示星号。
+- **网格类 tracer 找到答案后不要再补「不可达」的尾帧**，画面会自相矛盾。
+- 帧数上限 1500（`MAX_FRAMES`），超限截断并插入提示帧。快排在 50 个元素上
+  就可能几百帧，动画太慢也看不清。
+
+### 浏览器内跑代码（Pyodide）
+
+题解页面底部的「在浏览器里运行」按钮，用 Pyodide 真跑一遍题解代码并对比样例。
+
+```bash
+pnpm sync:pyodide   # 下载 12.9MB 运行时到 static/pyodide/
+```
+
+**必须自托管，绝不能走 CDN。** Pyodide 默认 `cdnUrl` 指向
+`cdn.jsdelivr.net`，国内访问慢且经常失败；更隐蔽的是
+`loadPackagesFromImports` —— 它检测到 `import numpy` 会**自动去 CDN 装包**，
+静默失败。所以这里绝不调 `loadPackagesFromImports`。
+
+**loader 不能用 npm 的 import（实测过）**：
+`import {loadPyodide} from 'pyodide'` 构建直接失败 ——
+`UnhandledSchemeError: Reading from "node:fs" is not handled`
+（还有 node:child_process / node:crypto / node:path / node:url / node:vm）。
+因为 `pyodide.mjs` 是浏览器/Node 双用产物，内部写了 Node 专用分支，
+webpack 打浏览器 bundle 时会连这些分支一起解析。**与体积无关。**
+所以 loader 只能用 `webpackIgnore` 按 URL 加载。
+
+**但 npm 仍然有用武之地**：`pyodide` 作为 devDependency 提供那 12.9MB
+资源文件，版本被 pnpm-lock.yaml 锁死，`pnpm install` 时就装好，
+`scripts/fetch-pyodide.js` 直接从 node_modules 拷，不再联网执行 `npm pack`。
+
+| 约束 | 做法 |
+|---|---|
+| 12.9MB 不能预加载 | 折叠态只有一行按钮，**点开才加载** |
+| 同一页面内重复运行 | 运行时是模块级单例，解释器不重建 |
+| 跨页面复用 | 页面内 `fetch` 拦截 + Cache API |
+| `static/pyodide/` 12.9MB | gitignore，`deploy.yml` 构建时下载 |
+
+**为什么缓存用 fetch 拦截而不是 Service Worker（两条路都走过）：**
+
+先看实测的缓存头 —— GitHub Pages 对静态资源发的是
+`cache-control: private, no-cache, no-store, max-age=0`，即**完全不缓存**。
+不做这层缓存，12.9MB 每次冷启动都要重下一遍。
+
+1. `plugin-pwa` 的 `swCustom` —— SW 的 webpack 构建要 babel-loader，
+   而 pnpm 下它没被 hoist 到根 node_modules，构建直接失败。
+2. 自己注册作用域 `/pyodide/` 的 SW —— **概念错误**：SW 只能拦截
+   「它所控制的客户端」的请求，而 plugin-pwa 的 SW 已用作用域 `/` claim 了
+   页面；作用域不包含页面 URL 的 SW 永远收不到 fetch 事件。
+
+**样例抽取**（`plugins/py-samples`）：构建期从题解里抽 ```python 代码块 +
+`Solution` 类的入口方法签名 + `## 示例` 的输入输出。178 篇有代码，
+54 篇能抽到样例；其余的示例是散文/表格写法，**不硬猜**，UI 退化成手动填参数。
+抽取的参数的顺序按函数签名对齐，参数个数与签名不符的样例会被丢弃
+（顺序错了结果就没意义）。
+
+期望值比较不能直接字符串相等 —— 题解里混着 `[0,1]` vs `json.dumps` 的
+`[0, 1]`、力扣的浮点格式 `2.00000` vs Python 的 `2.0`。
+所以按「结构化 JSON 比较 → 去引号比较 → 数值容差 → 字符串」的顺序逐级降级。
 
 ### 牛客同步 (`scripts/sync-nowcoder.js`)
 

@@ -1,0 +1,316 @@
+.wrapper {
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 12px;
+  background: var(--ifm-color-emphasis-100);
+}
+
+.collapsed {
+  margin-top: 1.5rem;
+}
+
+.openButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.9rem 1.25rem;
+  font: inherit;
+  color: var(--ifm-font-color-base);
+  text-align: left;
+  cursor: pointer;
+  border: 1px dashed var(--ifm-color-emphasis-300);
+  border-radius: 12px;
+  background: var(--ifm-color-emphasis-100);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.openButton:hover {
+  border-style: solid;
+  border-color: var(--ifm-color-primary);
+  background: var(--ifm-color-emphasis-200);
+}
+
+.badge {
+  flex: 0 0 auto;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  background: #2f855a;
+  border-radius: 999px;
+}
+
+.head {
+  margin-bottom: 0.75rem;
+}
+
+.title {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.meta code {
+  font-size: 0.9em;
+}
+
+.hint {
+  margin-bottom: 0.75rem;
+  font-size: 0.88rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.hint code {
+  padding: 0.05rem 0.3rem;
+  font-size: 0.85em;
+  background: var(--ifm-color-emphasis-200);
+  border-radius: 4px;
+}
+
+/* ---------- 加载中 ---------- */
+.loadingBox {
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 10px;
+  background: var(--ifm-background-color);
+}
+
+.loadingBox p {
+  margin: 0.4rem 0;
+  font-size: 0.9rem;
+}
+
+.spinner {
+  width: 26px;
+  height: 26px;
+  margin: 0 auto;
+  border: 3px solid var(--ifm-color-emphasis-300);
+  border-top-color: var(--ifm-color-primary);
+  border-radius: 50%;
+  animation: pyr-spin 0.8s linear infinite;
+}
+
+@keyframes pyr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+/* ---------- 控件 ---------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.primaryButton,
+.secondaryButton {
+  padding: 0.45rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  background: #2f855a;
+  transition: filter 0.15s;
+}
+
+.secondaryButton {
+  color: var(--ifm-font-color-base);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  background: var(--ifm-background-color);
+}
+
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.linkButton {
+  padding: 0.35rem 0.2rem;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--ifm-color-primary);
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  margin-bottom: 0.75rem;
+  font: inherit;
+  color: var(--ifm-font-color-base);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  background: var(--ifm-background-color);
+}
+
+.editor {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--ifm-font-color-base);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  background: var(--ifm-background-color);
+  resize: vertical;
+}
+
+/* ---------- 结果 ---------- */
+.results {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 10px;
+  background: var(--ifm-background-color);
+}
+
+.summary {
+  margin: 0 0 0.6rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.sampleList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sampleItem {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.sampleItem:first-child {
+  border-top: none;
+}
+
+.verdict {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 50%;
+}
+
+.pass {
+  background: #2f855a;
+}
+
+.fail {
+  background: #c53030;
+}
+
+.sampleBody {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sampleArgs {
+  font-size: 0.85rem;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.diff {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: baseline;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.diffLabel {
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.diff code {
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+}
+
+.ok {
+  color: #2f855a;
+  background: color-mix(in srgb, #2f855a 12%, transparent);
+}
+
+.bad {
+  color: #c53030;
+  background: color-mix(in srgb, #c53030 12%, transparent);
+}
+
+.reason {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.output {
+  padding: 0.7rem 0.85rem;
+  margin: 0.5rem 0 0;
+  overflow-x: auto;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  border-radius: 8px;
+  background: var(--ifm-color-emphasis-200);
+}
+
+/* ---------- 错误 ---------- */
+.errorBox {
+  padding: 0.85rem 1rem;
+  margin-top: 0.75rem;
+  border-left: 3px solid #c53030;
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, #c53030 8%, transparent);
+}
+
+.errorBox p {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.errorBox strong {
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+@media (max-width: 576px) {
+  .wrapper {
+    padding: 1rem;
+  }
+
+  .diff {
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+}

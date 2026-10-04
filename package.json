@@ -14,7 +14,13 @@
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc",
     "sync": "ts-node scripts/sync-notes.ts",
-    "sync:ml": "ts-node scripts/sync-machine-learning.ts"
+    "sync:ml": "ts-node scripts/sync-machine-learning.ts",
+    "sync:pyodide": "node scripts/fetch-pyodide.js",
+    "quiz:gen": "ts-node scripts/gen-quiz.ts",
+    "quiz:merge": "ts-node scripts/merge-quiz.ts",
+    "quiz:validate": "ts-node scripts/validate-bank.ts",
+    "test:tracers": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-tracers.ts",
+    "test:srs": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-srs.ts"
   },
   "dependencies": {
     "@docusaurus/core": "3.9.2",
@@ -51,6 +57,7 @@
     "fs-extra": "^11.3.4",
     "glob": "^13.0.6",
     "gray-matter": "^4.0.3",
+    "pyodide": "314.0.7",
     "ts-node": "^10.9.2",
     "typescript": "~5.6.2"
   },

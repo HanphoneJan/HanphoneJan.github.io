@@ -2,8 +2,25 @@
  * HanphoneJan 技术文档 - 主题样式
  */
 
-body {
-  font-family: "Noto Sans SC", -apple-system, sans-serif;
+/**
+ * 字体栈：全部用系统自带字体，不加载任何 Web Font。
+ *
+ * 原来这里 @import 了 Google Fonts 的 Noto Sans SC —— 该域名在国内被墙，
+ * 表现为首屏字体闪一下再回落（FOUT），而且每次访问都要等一次失败请求。
+ *
+ * 改成系统字体后：中文由系统 CJK 字体渲染（macOS 苹方 / Windows 雅黑 /
+ * Linux Noto Sans CJK），西文由 system-ui 渲染 —— 都是本地字体，
+ * 零网络请求、零 FOUT。
+ *
+ * 代价：系统字体通常只有 regular/bold 两档字重，500/600 会由浏览器
+ * 合成，观感比真正的多字重 Web Font 略"平"。对技术文档来说可以接受，
+ * 换来的是国内访问不再有阻塞请求。
+ */
+:root {
+  --ifm-font-family-base: system-ui, -apple-system, "Segoe UI", Roboto,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC",
+    "Source Han Sans SC", sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol";
 }
 
 .markdown {

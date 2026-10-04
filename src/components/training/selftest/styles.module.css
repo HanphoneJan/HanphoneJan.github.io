@@ -1,0 +1,292 @@
+.wrapper {
+  margin-top: 2.5rem;
+  padding: 1.25rem 1.5rem 1.5rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 12px;
+  background: var(--ifm-color-emphasis-100);
+}
+
+.collapsed {
+  margin-top: 2.5rem;
+}
+
+.openButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.9rem 1.25rem;
+  font: inherit;
+  color: var(--ifm-font-color-base);
+  text-align: left;
+  cursor: pointer;
+  border: 1px dashed var(--ifm-color-emphasis-300);
+  border-radius: 12px;
+  background: var(--ifm-color-emphasis-100);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.openButton:hover {
+  border-style: solid;
+  border-color: var(--ifm-color-primary);
+  background: var(--ifm-color-emphasis-200);
+}
+
+.badge {
+  flex: 0 0 auto;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--ifm-color-primary);
+  border-radius: 999px;
+}
+
+.title {
+  margin-bottom: 0.35rem !important;
+}
+
+.hint {
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.progressText {
+  flex: 0 0 auto;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.progressBar {
+  flex: 1 1 auto;
+  height: 4px;
+  overflow: hidden;
+  background: var(--ifm-color-emphasis-300);
+  border-radius: 999px;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--ifm-color-primary);
+  transition: width 0.3s;
+}
+
+.stem {
+  margin-bottom: 1rem;
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.answerArea {
+  margin-bottom: 1rem;
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.judgeRow {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  font: inherit;
+  color: var(--ifm-font-color-base);
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  background: var(--ifm-background-color);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.option:hover:not(:disabled) {
+  border-color: var(--ifm-color-primary);
+}
+
+.option:disabled {
+  cursor: default;
+}
+
+.optionSelected {
+  border-color: var(--ifm-color-primary);
+  background: color-mix(in srgb, var(--ifm-color-primary) 10%, transparent);
+}
+
+.optionKey {
+  flex: 0 0 auto;
+  min-width: 1.2em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.judgeRow .option {
+  justify-content: center;
+  width: auto;
+  min-width: 6rem;
+}
+
+.blankInput {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  font: inherit;
+  color: var(--ifm-font-color-base);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  background: var(--ifm-background-color);
+}
+
+.blankInput:focus {
+  border-color: var(--ifm-color-primary);
+  outline: none;
+}
+
+.rightMark {
+  flex: 0 0 auto;
+  padding: 0.05rem 0.45rem;
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  background: #2f855a;
+  border-radius: 999px;
+}
+
+.correct {
+  border-color: #2f855a;
+  background: color-mix(in srgb, #2f855a 12%, transparent);
+}
+
+.wrong {
+  border-color: #c53030;
+  background: color-mix(in srgb, #c53030 12%, transparent);
+}
+
+.feedback {
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  border-left: 3px solid;
+  border-radius: 0 8px 8px 0;
+}
+
+.feedbackRight {
+  border-color: #2f855a;
+  background: color-mix(in srgb, #2f855a 8%, transparent);
+}
+
+.feedbackWrong {
+  border-color: #c53030;
+  background: color-mix(in srgb, #c53030 8%, transparent);
+}
+
+/* 深色模式下把浅色答案底色压暗一点，避免文字对比度不足 */
+:global(html[data-theme='dark']) .correct {
+  background: color-mix(in srgb, #2f855a 22%, transparent);
+}
+
+:global(html[data-theme='dark']) .wrong {
+  background: color-mix(in srgb, #c53030 22%, transparent);
+}
+
+:global(html[data-theme='dark']) .feedbackRight {
+  background: color-mix(in srgb, #2f855a 16%, transparent);
+}
+
+:global(html[data-theme='dark']) .feedbackWrong {
+  background: color-mix(in srgb, #c53030 16%, transparent);
+}
+
+.explain {
+  margin: 0.4rem 0 0;
+  font-size: 0.94rem;
+  line-height: 1.65;
+}
+
+.source {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.primaryButton {
+  padding: 0.5rem 1.1rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  background: var(--ifm-color-primary);
+  transition: filter 0.15s;
+}
+
+.primaryButton:hover {
+  filter: brightness(1.1);
+}
+
+.linkButton {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.summary {
+  padding: 1.25rem;
+  text-align: center;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 10px;
+  background: var(--ifm-background-color);
+}
+
+.summaryScore {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+@media (max-width: 576px) {
+  .wrapper {
+    padding: 1rem 1rem 1.25rem;
+  }
+
+  .judgeRow .option {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}

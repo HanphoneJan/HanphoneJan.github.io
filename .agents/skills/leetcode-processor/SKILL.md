@@ -119,12 +119,11 @@ difficulty: [Easy/Medium/Hard]
 id: [Problem Number]
 url: https://leetcode.cn/problems/[problem-slug]/
 tags:
-  - [Tag1]
-  - [Tag2]
-topics:
-  - ../../topics/[topic].md
+  - [归一化后的 Tag1]
+  - [归一化后的 Tag2]
 patterns:
-  - ../../patterns/[pattern].md
+  - ../../patterns/[pattern-slug].md
+topics: []
 date_added: [YYYY-MM-DD]
 date_reviewed: []
 ---
@@ -204,6 +203,66 @@ date_reviewed: []
 - [Problem Name](URL)
 
 ```
+
+## Frontmatter 规范
+
+### tags：必须使用归一化词表
+
+`tags` 会被复习系统的「薄弱标签」面板统计，**同义分裂会让同一个知识点被拆成多行，导致统计失效**。写入前先按下表归一化：
+
+| 禁止使用 | 必须写成 | 说明 |
+|---|---|---|
+| `BFS` | `广度优先搜索` | |
+| `DFS` | `深度优先搜索` | |
+| `堆（优先队列）` | `堆` | 全角/半角括号不统一 |
+| `哈希查找` / `HashMap` | `哈希表` | |
+| `dp` / `DP` | `动态规划` | |
+| `双指针法` | `双指针` | |
+| `滑动窗` | `滑动窗口` | |
+
+**标签词表（完整、闭合，优先复用而非新造）**
+
+```
+数组 字符串 链表 栈 队列 堆 哈希表 树 二叉树 二叉搜索树 图 矩阵
+双指针 滑动窗口 前缀和 单调栈 单调队列 并查集 字典树
+动态规划 记忆化搜索 0/1背包 完全背包 区间DP 树形DP
+二分查找 排序 归并排序 桶排序 快速选择 回溯 分治 递归 迭代
+广度优先搜索 深度优先搜索 拓扑排序
+贪心 数学 位运算 设计 模拟 计数 找规律 原地算法
+```
+
+无法归入上表的新标签，允许新增，但**必须同时确认现有标签里没有同义项**。
+
+### patterns：指向真实存在的文件
+
+`patterns` 的每个值必须是 `../../patterns/<slug>.md`，且该文件**必须真实存在**。
+
+> ⚠️ 历史坑：旧模板写的是 `topics: ../../topics/xxx.md`，但 `code-training/docs/topics/` 目录**不存在**，导致该字段长期为空。不要再使用 `topics` 填路径，语义上它应指「知识点主题」，目前留空 `[]`。
+
+**tag → patterns 映射表**（`code-training/docs/patterns/` 下共 11 个文件）
+
+| patterns slug | 对应 tag |
+|---|---|
+| `two_pointers` | 双指针 |
+| `sliding_window` | 滑动窗口 |
+| `hash_map` | 哈希表 原地哈希 |
+| `dynamic_programming` | 动态规划 0/1背包 完全背包 区间DP 树形DP 记忆化搜索 背包问题 |
+| `backtracking` | 回溯 组合 |
+| `bfs` | 广度优先搜索 矩阵 图 拓扑排序 |
+| `dfs` | 深度优先搜索 |
+| `greedy` | 贪心 Boyer-Moore 投票算法 |
+| `search` | 二分查找 快速选择 |
+| `sorting` | 排序 归并排序 桶排序 链表 |
+| `recursion` | 递归 迭代 分治 记忆化搜索 |
+
+**无对应 pattern 文件的 tag**（字典树、单调栈、单调队列、前缀和、位运算、数学、设计、模拟、并查集、回文等）**不要硬塞**，`patterns` 留空即可，或只填真正匹配的项。一题可以映射到多个 pattern。
+
+**批量补全 `patterns` 的流程**（用于历史题解）
+
+1. 按上表从 `tags` 推断候选 pattern
+2. **打开题解正文确认**：主体解法才是 pattern，`tags` 里顺带提到的标签不算
+3. 无法确定的**留空，不要猜**——空数组是合法状态，错误的映射会污染知识图谱
+4. 写回后跑校验：`node -e` 遍历所有 md，确认每个 `patterns` 路径 `fs.existsSync` 为真
 
 ## Key Principles
 
@@ -350,4 +409,28 @@ if __name__ == "__main__":
 - [ ] No "thinking traces" in final content
 - [ ] Code is runnable with `python filename.py`
 - [ ] Progressive approach (naive → optimal) is shown
-```
+
+### Frontmatter 完整性
+
+- [ ] `tags` 已按上方**归一化词表**处理（无 `BFS`/`DFS`/`堆（优先队列）`等同义分裂）
+- [ ] `patterns` 每一项都是 `../../patterns/<真实存在>.md`
+- [ ] `patterns` 与正文主体解法一致（不是 tags 里顺带提到的）
+- [ ] 无法确定的 pattern **留空**，没有猜测
+- [ ] `topics: []`（该字段目前无语义，不要填路径）
+
+### 题库同步
+
+写完或改动题解后，若该题在 `static/quiz/bank.json` 里已有题目：
+
+- [ ] 复杂度变了 → 同步改 `static/quiz/bank.generated.json`（或直接改 bank.json 的人工题）并跑 `pnpm quiz:merge`
+- [ ] 易错点变了 → 同步更新对应的 judge/single 题
+- [ ] 跑了 `pnpm quiz:validate` 且 0 error
+
+详见 `.agents/skills/quiz-bank-processor/SKILL.md`。
+
+### 增量维护既有题解
+
+批量补 `patterns` 时：
+
+- [ ] 按 tag → pattern 映射表推断后，**打开正文确认主体解法**
+- [ ] 映射不确定的**留空** —— 错误的映射会污染知识图谱，而知识图谱是「薄弱标签」统计的依据
