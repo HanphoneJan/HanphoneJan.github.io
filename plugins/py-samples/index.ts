@@ -308,9 +308,11 @@ export function extractSamples(
   while ((im = inputRe.exec(sampleText)) !== null) {
     // 「输入：X」与「输出：Y」可能写在同一行（用 → 或全角逗号分隔），
     // 也可能各占一行。所以输入值不能一路吃到行尾 —— 要在下一个「输出」前停。
-    const rawInput = readValue(sampleText, im.index + im[0].length, {
-      stopAtOutput: true,
-    });
+    const rawInput =
+      readFencedValue(sampleText, im.index + im[0].length) ??
+      readValue(sampleText, im.index + im[0].length, {
+        stopAtOutput: true,
+      });
     // 纯强调符号说明这里不是「输入：值」这种写法。
     // 牛客题的 `**输入：**` 后面跟的是围栏块（真正的样例由 extractStdinSamples 取），
     // 而正则从「输」字开始匹配，剩下的正好是收尾的 `**` ——
@@ -355,7 +357,9 @@ export function extractSamples(
     if (!om || om.index < index) {
       continue;
     }
-    const expected = readValue(sampleText, om.index + om[0].length);
+    const expected =
+      readFencedValue(sampleText, om.index + om[0].length) ??
+      readValue(sampleText, om.index + om[0].length);
     // 期望值里的省略号会让相等判断失效，直接丢掉这种样例
     if (
       !expected ||
@@ -516,6 +520,72 @@ export function extractDocStdinSamples(md: string): StdinSample[] {
  * 只在全角标点与括号上停，**不碰半角逗号**：期望值 `[[-1,-1,2],[-1,0,1]]`
  * 里全是半角逗号，切一刀就废了。
  */
+/**
+ * `输入：` / `输出：` 后面**跟一个围栏块**时，取围栏里的正文。
+ *
+ * ## 为什么必须单独处理
+ *
+ * 牛客题与一部分 shoppee 题的样例是这个写法：
+ *
+ * ```
+ * **输入：**
+ * ```
+ * HelloNowcoder
+ * ```
+ *
+ * **输出：**
+ * ```
+ * 5
+ * ```
+ * ```
+ *
+ * `readValue` 只吃第一行的非空内容，遇到围栏只会读到三个反引号，
+ * 于是 `extractSamples` 的 `/^[*\s]+$/` 守卫把它丢掉 ——
+ * 守卫本身是对的（那是「**输入：** 后面其实没有调用样例」的情况），
+ * 但这里是真的有值，只是不在第一行。
+ *
+ * 早先的结果是 6 篇（HJ1 / HJ11 / HJ85 / shoppee×3）**一条样例都抽不到**，
+ * 页面上只能手动输参数，而代码是对的、样例也是现成的。
+ *
+ * 换行折成空格：多行的 `grid = [[1,0,1],[0,0,0],[1,0,1]]` 折成一行
+ * 仍然是合法字面量，而一行更容易显示成调用形式。
+ */
+function readFencedValue(text: string, from: number): string | null {
+  const rest = text.slice(from);
+  /**
+   * `from` 指向的是 `输入：` 匹配结束的位置，而原文往往是 `**输入：**` ——
+   * 收尾的 `**` 落在 `from` 之后。所以字符类里必须能吃星号。
+   */
+  const open = /^[\s*]*```[^\n]*\n/.exec(rest);
+  if (!open) {
+    return null;
+  }
+  const bodyStart = from + open[0].length;
+  const closeIdx = text.indexOf('```', bodyStart);
+  if (closeIdx === -1) {
+    return null;
+  }
+  const body = text.slice(bodyStart, closeIdx).trim();
+  if (!body) {
+    return null;
+  }
+  /**
+   * 多行且**没有 `k =` 形式**的围栏不当成实参。
+   *
+   * 那种围栏装的是多行 stdin（ACM 题的 `n` + 一行数组、
+   * 牛客的多行输入），整段塞给单参入口必然是错的 ——
+   * 它们走 `extractDocStdinSamples` 的 stdin 通道。
+   *
+   * 单行围栏（`HelloNowcoder`）与 `k = v` 形式的围栏
+   * （shoppee 的多行 `grid = [[1,0,1], ...]`）才是真的调用实参。
+   */
+  const isKeyed = /^[A-Za-z_]\w*\s*=/.test(body);
+  if (!isKeyed && /[\r\n]/.test(body)) {
+    return null;
+  }
+  return body.replace(/\s*\n\s*/g, ' ');
+}
+
 function readValue(
   text: string,
   from: number,
