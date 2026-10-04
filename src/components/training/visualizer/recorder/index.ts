@@ -252,7 +252,33 @@ function pickSamples(
 }> {
   const usable = usableSamples(samples);
   if (usable.length === 0) {
-    return [];
+    /**
+     * 期望值是散文时也别整组丢掉 —— `judge` 对散文本来就放行
+     * （「判不了就放行」，见函数头的注释），而在抽取这层就丢掉的话
+     * 0095 唯一二叉搜索树（「`5 棵不同的 BST`」）、0142 环形链表 II
+     * （「`指数为 1 的节点`」）连录的机会都没有。
+     *
+     * 代价是「期望值判不了」这层保护也没了，所以**实参必须是真字面量**：
+     * 散文实参（`（空）`、`` 用例 1 ``）一律不放行 —— 否则会录出一份
+     * 由胡编的输入跑出来的轨迹，而 judge 又不会拦它。
+     */
+    const literal = samples.filter(
+      (s) =>
+        s.args.length > 0 &&
+        s.args.every((a) => {
+          try {
+            JSON.parse(toPythonLiteral(a));
+            return true;
+          } catch {
+            return false;
+          }
+        }),
+    );
+    return literal.slice(0, 1).map((s) => ({
+      args: s.args,
+      expected: s.expected,
+      score: 0,
+    }));
   }
 
   /**
@@ -856,7 +882,12 @@ function stdinArgs(
       const rows = lines.slice(1).map((l) => l.match(/-?\d+(?:\.\d+)?/g) ?? []);
       if (rows.every((r) => r.length === n)) {
         return {
-          args: [`[[${rows.map((r) => r.join(', ')).join(', ')}]]`],
+          // 每行各自加一层方括号 —— 只在最外层加的话出来的是
+          // `[[0, 1, 1, 0, 1, 0, 0, 0, ...]]`：**一行** 16 个数字。
+          // 代码里 `len(generated_map)` 于是等于 1，BFS 只看得到起点，
+          // `n * n - reachable` = 0，与题面期望的 15 判不上，
+          // 而报错写的是「实录 0」，完全指不到「形状错了」。
+          args: [`[${rows.map((r) => `[${r.join(', ')}]`).join(', ')}]`],
           expected: samples[0].expected,
         };
       }
