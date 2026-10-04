@@ -62,6 +62,17 @@ const MAIN_NAMES = ['solve', 'main', 'run'];
 export function entryCandidates(
   code: string,
   preferred?: string | null,
+  /**
+   * 题面入口名的提示，通常由「文件名去编号后的 snake_case 转 camelCase」得到
+   * （`0148_sort_list` -> `sortList`）。
+   *
+   * 为什么需要它：`analyzeSnippet` 在类里挑「第一个带 self 的方法」，
+   * 而题解经常把辅助函数写在前面 —— 0148 排序链表是
+   * `getListLength` / `splitList` / `mergeTwoLists` / `sortList`，
+   * 于是挑中 `getListLength`，而题面要的是 `sortList` 的返回值。
+   * 表现是 `result-mismatch`：期望 `[-1,0,3,4,5]`、实录 `5`。
+   */
+  nameHint?: string,
 ): {candidates: EntryCandidate[]; analysisReason: string} {
   const analysis = analyzeSnippet(code, preferred ?? undefined);
   const out: EntryCandidate[] = [];
@@ -75,6 +86,22 @@ export function entryCandidates(
     seen.add(key(c));
     out.push(c);
   };
+
+  // 0. 文件名对得上的方法最优先（见 nameHint 的说明）
+  if (nameHint) {
+    for (const m of solutionMethods(code)) {
+      if (m.name === nameHint) {
+        add({
+          name: m.name,
+          className: 'Solution',
+          paramNames: m.paramNames,
+          annotations: m.annotations,
+          requiredCount: m.requiredCount,
+          stdin: m.paramNames.length === 0,
+        });
+      }
+    }
+  }
 
   // 1. py-samples 文档入口优先。它通常是解题方法本身（力扣题就是它）。
   if (analysis.entry) {
