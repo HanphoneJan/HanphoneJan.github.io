@@ -278,9 +278,23 @@ function pickEntry<
   if (candidates.length === 1) {
     return candidates[0];
   }
-  return (
-    candidates.find((c) => !looksLikeRangeParam(c.info.names)) ?? candidates[0]
-  );
+  /**
+   * **下划线开头的是私有辅助函数**，不是题目入口。
+   *
+   * shoppee 合并降序链表写的是 `MergeList(l1, l2)` 与 `_reverse(head)`，
+   * 候选里 `_reverse` 也在，而它是**最后一个**被定义的 ——
+   * `pickEntry` 的兜底是 `candidates[0]`（第一个），可
+   * `analyzeSnippet` 的调用方给的 `docEntryName` 有时命中不到，
+   * 于是 `_reverse` 成了入口：录制时喂两个链表参数进去报
+   * `missing 1 required positional argument`，
+   * 页面上「跑样例」也是同一个错。
+   *
+   * 判据用单下划线（Python 的「非公开」约定）而不是双下划线 ——
+   * dunder 已经在 `isDunder` 里滤掉了。
+   */
+  const publicOnes = candidates.filter((c) => !c.name.startsWith('_'));
+  const pool = publicOnes.length > 0 ? publicOnes : candidates;
+  return pool.find((c) => !looksLikeRangeParam(c.info.names)) ?? pool[0];
 }
 
 /**

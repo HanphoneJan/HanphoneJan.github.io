@@ -415,6 +415,25 @@ export function asCallArgument(text: string, annotation?: string): string {
     }
   }
 
+  const t = text.trim();
+
+  /**
+   * 「箭头串」也是数组：shoppee 的链表题样例写成 `5 -> 3 -> 1`。
+   *
+   * 不认的话它既不是字面量也不是空格分隔的数字，会被加上引号变成
+   * 字符串 `"5 -> 3 -> 1"`，入口拿到之后 `.val` 直接 AttributeError ——
+   * 而题面给的明明是一条链表。
+   *
+   * **必须排在类型标注的判断之前**：签名是 `Optional[ListNode]`，
+   * `/^\w+\[/` 会命中并「样例本身就是字面量，别动」直接原样返回，
+   * 于是这段转换永远轮不到（实测 `asCallArgument('5 -> 3 -> 1',
+   * 'Optional[ListNode]')` 原样返回，literal_eval 报
+   * `SyntaxError: invalid syntax`）。结构上的重写不该由类型决定。
+   */
+  if (isArrowList(t)) {
+    return `[${t.split(/\s*->\s*/).join(', ')}]`;
+  }
+
   const ann = (annotation ?? '').trim().toLowerCase();
   if (ann) {
     if (/\bstr\b/.test(ann)) {
@@ -428,7 +447,6 @@ export function asCallArgument(text: string, annotation?: string): string {
       return text.trim();
     }
   }
-  const t = text.trim();
 
   // 「空格分隔的一串数字」是数组参数，不是字符串。
   //
@@ -480,7 +498,25 @@ function isPythonLiteral(t: string): boolean {
 
 /** 只保留期望值可判定的样例；省略号的样例（「[0,1,2,...]」）没法比 */
 export function usableSamples(samples: PySample[]): PySample[] {
-  return samples.filter((s) => isUsableExpected(s.expected) && s.args.length > 0);
+  return samples.filter(
+    (s) =>
+      (isUsableExpected(s.expected) || isArrowList(s.expected)) &&
+      s.args.length > 0,
+  );
+}
+
+/**
+ * 「箭头串」也是可判定的期望值。
+ *
+ * shoppee 的链表题把答案写成 `1 -> 2 -> 3 -> 4 -> 5`（输入侧同样是
+ * `l1: 5 -> 3 -> 1`）。`isUsableExpected` 只认字面量，于是这几条样例
+ * 被判「不可用」整组丢掉 —— 页面退化成手动输参数，录制直接 no-sample。
+ *
+ * 判成可用的依据是 `asCallArgument` 能把它还原成列表，
+ * 所以这里用同一条正则，两边不会分叉。
+ */
+export function isArrowList(t: string): boolean {
+  return /^-?\d+(?:\.\d+)?(?:\s*->\s*-?\d+(?:\.\d+)?)+$/.test(t.trim());
 }
 
 /**
