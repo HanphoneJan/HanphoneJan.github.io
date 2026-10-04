@@ -38,6 +38,16 @@ export interface PySample {
   args: string[];
   /** 期望输出（原始文本，可能含省略号等） */
   expected: string;
+  /**
+   * 期望值是不是「程序打印出来的文本」而不是「返回值的 JSON 表示」。
+   *
+   * 力扣题的 `输出：[0,1]` 是返回值本身，所以用 JSON 序列化后比较。
+   * 而从 stdin 样例推出来的调用样例（牛客/ACM 题）期望的是 stdout：
+   * 同一个 `0`，函数返回的是字符串 "0"、程序打印出来是 `0`。
+   * 按 JSON 比会判成不一致 —— 代码其实是对的。
+   * 这种样例改用 str() 序列化，和程序真正会打印的东西对齐。
+   */
+  textCompare?: boolean;
 }
 
 export interface StdinSample {
@@ -110,12 +120,21 @@ export function extractSignature(
   code: string,
 ): {method: string | null; paramNames: string[]; requiredCount: number} {
   const methodRe = /^[ \t]+def\s+(\w+)\s*\(\s*self\s*(?:,\s*([^)]*))?\s*\)/gm;
+  const candidates: Array<{method: string; paramNames: string[]; requiredCount: number}> = [];
   let m: RegExpExecArray | null;
   while ((m = methodRe.exec(code)) !== null) {
     if (m[1].startsWith('__') && m[1].endsWith('__')) {
       continue;
     }
-    return {method: m[1], ...parseParams(m[2] ?? '')};
+    candidates.push({method: m[1], ...parseParams(m[2] ?? '')});
+  }
+  if (candidates.length > 0) {
+    const picked = pickPublicEntry(candidates);
+    return {
+      method: picked.method,
+      paramNames: picked.paramNames,
+      requiredCount: picked.requiredCount,
+    };
   }
 
   const funcRe = /^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)/gm;
@@ -127,6 +146,37 @@ export function extractSignature(
   }
 
   return {method: null, paramNames: [], requiredCount: 0};
+}
+
+/**
+ * 一对同时出现的下界/上界参数名 —— 类内辅助方法的标志。
+ *
+ * 0215 的完整代码里 `partition(self, nums, left, right)` 排在第一个，
+ * 照「取第一个方法」会让样例去匹配 partition 的三个参数，
+ * 结果永远匹配不上（题面只给 nums 和 k）。
+ *
+ * 只认「成对出现」：0062 的 `uniquePaths(m, n)` 是正常入参，不能误伤。
+ * 与 `src/components/training/pyrunner/snippet.ts` 里的同名规则保持一致 ——
+ * 两边必须挑同一个方法，否则构建期抽的样例和运行期调用的入口会对不上。
+ */
+const RANGE_PAIRS: Array<[string, string]> = [
+  ['left', 'right'],
+  ['lo', 'hi'],
+  ['low', 'high'],
+  ['l', 'r'],
+  ['start', 'end'],
+  ['begin', 'end'],
+];
+
+function pickPublicEntry<
+  T extends {method: string; paramNames: string[]; requiredCount: number},
+>(candidates: T[]): T {
+  if (candidates.length === 1) {
+    return candidates[0];
+  }
+  const isRange = (p: string[]): boolean =>
+    RANGE_PAIRS.some(([a, b]) => p.includes(a) && p.includes(b));
+  return candidates.find((c) => !isRange(c.paramNames)) ?? candidates[0];
 }
 
 /**
@@ -163,7 +213,14 @@ function parseParams(raw: string): {paramNames: string[]; requiredCount: number}
   return {paramNames, requiredCount};
 }
 
-/** 按顶层逗号切开（不能切括号/引号里的逗号） */
+/**
+ * 按顶层逗号切开（不能切括号/引号里的逗号）。
+ *
+ * **全角逗号也算分隔符**：题解里的 `输入：s = "aa"，p = "a"` 用的是全角，
+ * 只认半角就整段变成一个键，样例直接丢掉（0010 就是这么没的）。
+ * 引号里的全角逗号不受影响 —— 上面有引号状态跟踪，
+ * 所以 `s = "你好，世界"` 不会被切开。
+ */
 function splitTopLevel(s: string): string[] {
   const parts: string[] = [];
   let depth = 0;
@@ -187,7 +244,7 @@ function splitTopLevel(s: string): string[] {
     } else if (')]}'.includes(ch)) {
       depth--;
     }
-    if (ch === ',' && depth === 0) {
+    if ((ch === ',' || ch === '，') && depth === 0) {
       parts.push(cur);
       cur = '';
       continue;
@@ -224,17 +281,33 @@ export function extractSamples(
 
   // 星号用 (?:**)? 而不是 **? —— 后者是「至少一个星号」，
   // 写成 **? 会让纯「输入：」的写法一条都匹配不到（踩过：0 篇抽到样例）。
-  const inputRe = /输入(?:\*\*)?[：:]\s*`?([^`\n]+?)`?\s*$/gm;
-  const outputRe = /输出(?:\*\*)?[：:]\s*`?([^`\n]+?)`?\s*$/gm;
+  const inputRe = /输入(?:\*\*)?[：:]/g;
+  const outputRe = /输出(?:\*\*)?[：:]/g;
 
   const inputs: Array<{args: string[]; index: number}> = [];
   let im: RegExpExecArray | null;
   while ((im = inputRe.exec(sampleText)) !== null) {
-    const kwargs = splitTopLevel(im[1]);
+    // 「输入：X」与「输出：Y」可能写在同一行（用 → 或全角逗号分隔），
+    // 也可能各占一行。所以输入值不能一路吃到行尾 —— 要在下一个「输出」前停。
+    const rawInput = readValue(sampleText, im.index + im[0].length, {
+      stopAtOutput: true,
+    });
+    // 纯强调符号说明这里不是「输入：值」这种写法。
+    // 牛客题的 `**输入：**` 后面跟的是围栏块（真正的样例由 extractStdinSamples 取），
+    // 而正则从「输」字开始匹配，剩下的正好是收尾的 `**` ——
+    // 不挡掉就会造出 `{args:['**'], expected:'**'}` 这种垃圾样例，
+    // 页面上出现一个必然失败的「跑样例」，比不给还糟。
+    if (!rawInput || /^[*\s]+$/.test(rawInput)) {
+      continue;
+    }
+    const kwargs = splitTopLevel(rawInput);
     const map = new Map<string, string>();
+    /** 没有 `k =` 形式的部分就是位置参数，如 `输入: [1,2,3,1]` */
+    const positional: string[] = [];
     for (const kw of kwargs) {
       const eq = kw.indexOf('=');
       if (eq === -1) {
+        positional.push(kw);
         continue;
       }
       const key = kw.slice(0, eq).trim();
@@ -251,18 +324,8 @@ export function extractSamples(
     if (map.size > paramNames.length) {
       continue;
     }
-    // 按函数签名顺序取值 —— 位置参数顺序错了结果就没意义
-    const args: string[] = [];
-    let ok = true;
-    for (const p of needed) {
-      const v = map.get(p);
-      if (v === undefined) {
-        ok = false;
-        break;
-      }
-      args.push(v);
-    }
-    if (ok && args.length > 0) {
+    const args = bindArgs(needed, map, positional);
+    if (args) {
       inputs.push({args, index: im.index});
     }
   }
@@ -270,12 +333,17 @@ export function extractSamples(
   for (const {args, index} of inputs) {
     outputRe.lastIndex = index;
     const om = outputRe.exec(sampleText);
-    if (!om) {
+    if (!om || om.index < index) {
       continue;
     }
+    const expected = readValue(sampleText, om.index + om[0].length);
     // 期望值里的省略号会让相等判断失效，直接丢掉这种样例
-    const expected = om[1].trim();
-    if (!expected || expected.includes('...') || expected.includes('…')) {
+    if (
+      !expected ||
+      /^[*\s]+$/.test(expected) ||
+      expected.includes('...') ||
+      expected.includes('…')
+    ) {
       continue;
     }
     out.push({args, expected});
@@ -283,6 +351,151 @@ export function extractSamples(
 
   // 最多保留 3 个样例，跑太多没意义
   return out.slice(0, 3);
+}
+
+/**
+ * 把一组「键值 + 位置值」对到入口签名的形参上。
+ *
+ * 两种写法混着出现的场合很常见：
+ *
+ *     输入: [3,2,1,5,6,4], k = 2      # 数组给位置，k 按名字给
+ *
+ * 处理顺序：先按名字填（名字对得上最可靠），再把剩下的位置值按签名顺序
+ * 填进**还没被占用的**形参。
+ *
+ * 个数必须正好对上：多一个少一个都判失败。宁可整组丢掉，也不能让参数错位 ——
+ * 错位不会报错，只会得到一个看起来很合理的错误结果。
+ *
+ * 返回 null 表示这组样例搭不出来。
+ */
+function bindArgs(
+  needed: string[],
+  byName: Map<string, string>,
+  positional: string[],
+): string[] | null {
+  const args: Array<string | null> = needed.map(() => null);
+  for (let i = 0; i < needed.length; i++) {
+    const v = byName.get(needed[i]);
+    if (v !== undefined) {
+      args[i] = v;
+    }
+  }
+  let next = 0;
+  for (const p of positional) {
+    while (next < args.length && args[next] !== null) {
+      next++;
+    }
+    if (next >= args.length) {
+      return null; // 位置值比形参还多
+    }
+    args[next] = p;
+    next++;
+  }
+  if (args.some((a) => a === null)) {
+    return null; // 有形参没值
+  }
+  return args as string[];
+}
+
+/**
+ * 从整篇题解里取「直接调函数」的样例。
+ *
+ * ## 为什么要看多个小节
+ *
+ * 样例并不总在一个叫「示例」的小节里。实测 126 篇力扣题解：
+ *
+ * | 样例所在位置 | 篇数 |
+ * |---|---|
+ * | `## 示例` | 68 |
+ * | `## 题目描述`（示例直接跟在描述后面） | 32 |
+ * | 两者都没有 | 26 |
+ *
+ * 只认 `## 示例` 的话，那 32 篇就只能手动输参。
+ *
+ * 顺序有讲究：`## 示例` 优先，因为它最可能是「结构化」的样例；
+ * 两边都抽，取**结果更多**的那份，不做拼接（拼接会出现同一组样例重复）。
+ */
+export function extractDocSamples(
+  md: string,
+  paramNames: string[],
+  requiredCount: number,
+): PySample[] {
+  const fromExample = extractSamples(
+    section(md, '示例'),
+    paramNames,
+    requiredCount,
+  );
+  if (fromExample.length > 0) {
+    return fromExample;
+  }
+  return extractSamples(section(md, '题目描述'), paramNames, requiredCount);
+}
+
+/** 同上，stdin 形式 */
+export function extractDocStdinSamples(md: string): StdinSample[] {
+  const fromExample = extractStdinSamples(section(md, '示例'));
+  if (fromExample.length > 0) {
+    return fromExample;
+  }
+  return extractStdinSamples(section(md, '题目描述'));
+}
+
+/**
+ * 从 `输入：`/`输出：` 后面读出值。
+ *
+ * 题解里这个值有三种写法：
+ *   1. 反引号包起来：输入：`nums = [1,2], k = 3`
+ *   2. 独占一行后面全是它：输入：nums = [1,2], k = 3
+ *   3. 后面还跟着解释：输出：`true`（"a" 无法匹配整个 "aa"）
+ *
+ * 反引号优先（最明确）；否则一路读到行尾，但：
+ * - `stopAtOutput` 时遇到「输出」就停 —— 否则同一行的 `输入：A，输出：B`
+ *   会把 `A，输出：B` 整段当成输入
+ * - 遇到全角逗号、右括号、→、句号这些「明显不是值」的符号就停
+ *
+ * 只在全角标点与括号上停，**不碰半角逗号**：期望值 `[[-1,-1,2],[-1,0,1]]`
+ * 里全是半角逗号，切一刀就废了。
+ */
+function readValue(
+  text: string,
+  from: number,
+  opts: {stopAtOutput?: boolean} = {},
+): string {
+  const rest = text.slice(from);
+  let end = rest.length;
+
+  if (opts.stopAtOutput) {
+    const m = /输出(?:\*\*)?[：:]/.exec(rest);
+    if (m && m.index >= 0) {
+      end = m.index;
+    }
+  }
+  const line = rest.slice(0, end);
+  const newline = line.indexOf('\n');
+  if (newline !== -1) {
+    end = newline;
+  }
+  let value = rest.slice(0, end);
+
+  // 反引号优先
+  const tick = value.indexOf('`');
+  if (tick !== -1) {
+    const close = value.indexOf('`', tick + 1);
+    if (close !== -1) {
+      return value.slice(tick + 1, close).trim();
+    }
+  }
+
+  // 截断在明显不是值的地方。
+  // **不要把全角逗号 `，` 放进这个字符类** —— 它是顶层分隔符，
+  // 放进来会把 `输入：s = "aa"，p = "a"` 砍成只剩 `s = "aa"`（踩过：0010 抽不到）。
+  const stop = /[（(→。；;]|\s{2,}/.exec(value);
+  if (stop) {
+    value = value.slice(0, stop.index);
+  }
+  // 结尾的分隔符（`→`、全角逗号）
+  value = value.replace(/[\s]*[→，,、]+\s*$/, '');
+  return value.trim();
 }
 
 /**
@@ -369,14 +582,13 @@ export default function pySamplesPlugin(
             continue;
           }
           const {method, paramNames, requiredCount} = extractSignature(code);
-          const sampleText = section(md, '示例');
           entries[rel] = {
             code,
             method,
             paramNames,
             requiredCount,
-            samples: extractSamples(sampleText, paramNames, requiredCount),
-            stdinSamples: extractStdinSamples(sampleText),
+            samples: extractDocSamples(md, paramNames, requiredCount),
+            stdinSamples: extractDocStdinSamples(md),
           };
         }
       }

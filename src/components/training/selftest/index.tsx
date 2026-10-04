@@ -8,8 +8,9 @@ import React, {
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import {useDoc} from '@docusaurus/plugin-content-docs/client';
-import Heading from '@theme/Heading';
+import {SELF_TEST_ANCHOR, SELF_TEST_TITLE} from './toc';
 import styles from './styles.module.css';
+import Heading from '@theme/Heading';
 import {isCorrect, type Question} from './types';
 
 interface Props {
@@ -179,13 +180,15 @@ export default function SelfTest({docId}: Props): React.ReactElement {
   // ---------- 折叠态：还没点开 ----------
   if (!open) {
     return (
-      <section className={styles.collapsed}>
+      <section className={styles.wrapper}>
+        <Heading as="h2" id={SELF_TEST_ANCHOR} className={styles.title}>
+          {SELF_TEST_TITLE}
+        </Heading>
         <button
           type="button"
           className={styles.openButton}
           onClick={() => setOpen(true)}
           aria-expanded={false}>
-          <span className={styles.badge}>自测</span>
           <span>检验一下是否真的掌握了 —— 主动回忆题</span>
         </button>
       </section>
@@ -196,8 +199,8 @@ export default function SelfTest({docId}: Props): React.ReactElement {
   if (load.status === 'loading' || load.status === 'idle') {
     return (
       <section className={styles.wrapper}>
-        <Heading as="h2" className={styles.title}>
-          自测 · 主动回忆
+        <Heading as="h2" id={SELF_TEST_ANCHOR} className={styles.title}>
+          {SELF_TEST_TITLE}
         </Heading>
         <p className={styles.hint}>正在加载题目…</p>
       </section>
@@ -207,8 +210,8 @@ export default function SelfTest({docId}: Props): React.ReactElement {
   if (load.status === 'error') {
     return (
       <section className={styles.wrapper}>
-        <Heading as="h2" className={styles.title}>
-          自测 · 主动回忆
+        <Heading as="h2" id={SELF_TEST_ANCHOR} className={styles.title}>
+          {SELF_TEST_TITLE}
         </Heading>
         <p className={styles.hint}>题目加载失败（{load.message}）</p>
         <div className={styles.actions}>
@@ -227,8 +230,8 @@ export default function SelfTest({docId}: Props): React.ReactElement {
   if (questions.length === 0) {
     return (
       <section className={styles.wrapper}>
-        <Heading as="h2" className={styles.title}>
-          自测 · 主动回忆
+        <Heading as="h2" id={SELF_TEST_ANCHOR} className={styles.title}>
+          {SELF_TEST_TITLE}
         </Heading>
         <p className={styles.hint}>这篇暂时还没有自测题。</p>
       </section>
@@ -239,9 +242,6 @@ export default function SelfTest({docId}: Props): React.ReactElement {
   if (finished) {
     return (
       <section className={styles.wrapper}>
-        <Heading as="h2" className={styles.title}>
-          自测 · 主动回忆
-        </Heading>
         <div className={styles.summary}>
           <p className={styles.summaryScore}>
             本轮 {summary.right} / {questions.length} 正确
@@ -267,8 +267,8 @@ export default function SelfTest({docId}: Props): React.ReactElement {
   // ---------- 答题页 ----------
   return (
     <section className={styles.wrapper}>
-      <Heading as="h2" className={styles.title}>
-        自测 · 主动回忆
+      <Heading as="h2" id={SELF_TEST_ANCHOR} className={styles.title}>
+        {SELF_TEST_TITLE}
       </Heading>
       <p className={styles.hint}>
         先自己作答再看解析。答错不扣分，错了才是这次复习的价值所在。
