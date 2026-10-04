@@ -205,19 +205,19 @@ function judge(
  * 22 篇 `result-mismatch` 里有 18 篇是这个 bug。挑样例与取期望必须是
  * 同一个动作，不然自检就是拿 A 的输入去对 B 的答案。
  */
-function pickSample(
+function pickSamples(
   samples: ReturnType<typeof extractDocSamples>,
   paramNames: string[],
-): {
+): Array<{
   args: string[];
   expected: string;
   /** 题面自己写明的比较宽松规则，由 py-samples 按题面文本算好 */
   orderAgnostic?: boolean;
   multiAnswer?: boolean;
-} | null {
+}> {
   const usable = usableSamples(samples);
   if (usable.length === 0) {
-    return null;
+    return [];
   }
 
   /**
@@ -286,11 +286,11 @@ function pickSample(
 
   if (scored.length > 0) {
     scored.sort((a, b) => b.score - a.score);
-    return scored[0];
+    return scored.map(({score: _score, ...rest}) => rest);
   }
 
   /**
-   * 兜底：没有「好看」的序列样例时，用第一条能用的样例。
+   * 兜底：没有「好看」的序列样例时，用能用的样例（按题面顺序）。
    *
    * 这一步救回来的题不少：HJ1 字符串最后一个单词的长度（入参就是一行
    * 字符串，长度可能不足 3）、HJ11 数字颠倒、HJ85 最长回文子串、
@@ -299,8 +299,10 @@ function pickSample(
    *
    * 早先没有这个兜底，这几篇被判 `no-sample`，而报错信息是
    * 「候选入口都匹配不上样例」，完全指不到「其实有样例，只是我挑得不对」。
+   *
+   * 兜底时**全都返回**：有的样例会走不进主循环（见 main 里「样例不够好就换一组」）。
    */
-  return withFlags(usable[0], 0);
+  return usable.map((s) => withFlags(s, 0)).map(({score: _score, ...rest}) => rest);
 }
 
 /** 递归收集题解 md */
@@ -457,15 +459,19 @@ export async function recordTraces(
     // 先按候选顺序各自备好实参
     for (const c of candidates) {
       const samples = extractDocSamples(md, c.paramNames, c.requiredCount);
-      const picked = pickSample(samples, c.paramNames);
-      if (picked && !c.stdin) {
-        attempts.push({
-          candidate: c,
-          args: picked.args,
-          expected: picked.expected,
-          orderAgnostic: picked.orderAgnostic,
-          multiAnswer: picked.multiAnswer,
-        });
+      const picks = pickSamples(samples, c.paramNames);
+      if (picks.length > 0 && !c.stdin) {
+        // 每个入口最多备 3 组样例：够覆盖「第一组走不进主循环」的情况，
+        // 又不至于让录制时间翻三倍（见下面的 MIN_USEFUL_EVENTS）
+        for (const picked of picks.slice(0, 3)) {
+          attempts.push({
+            candidate: c,
+            args: picked.args,
+            expected: picked.expected,
+            orderAgnostic: picked.orderAgnostic,
+            multiAnswer: picked.multiAnswer,
+          });
+        }
         continue;
       }
       // 读 stdin 的入口：喂第一组 stdin 样例，期望值按文本比
@@ -501,7 +507,23 @@ export async function recordTraces(
     let winner: (typeof attempts)[number] | null = null;
     const triedErrors: string[] = [];
 
-    for (const attempt of attempts.slice(0, 8)) {
+    /**
+     * 样例「跑得对但没过程」时，换下一组样例再试。
+     *
+     * 0416 分割等和子集是唯一的实例，而它的失败方式非常隐蔽：
+     * 题面第一组样例 `nums = [1,2,3,5]` 的总和是 **11（奇数）**，
+     * 代码第三行 `if total % 2 != 0: return False` 就返回了 ——
+     * 轨迹 3 个事件，judge 也判「结果一致」（确实是 False），
+     * 两道关卡全过，录制**成功**了，可这段轨迹里没有一行循环。
+     *
+     * 也就是说：不能只看「录成功没有」，还要看「录出来的东西有没有过程」。
+     * 判据就是事件数 —— 少于 MIN_USEFUL_EVENTS 个事件的轨迹画出来
+     * 只会是一张静止的画面。
+     *
+     * 取「事件最多的那一份」而不是「第一个事件够多的」：多试几组成本很低
+     * （每个入口最多 3 组），换来的是尽可能丰富的轨迹。
+     */
+    for (const attempt of attempts.slice(0, 10)) {
       const c = attempt.candidate;
       const pyArgs = attempt.args.map(toPythonLiteral);
       const realKinds = needsNodes
@@ -540,9 +562,14 @@ export async function recordTraces(
         triedErrors.push(`${c.name}: ${verdict.reason}`);
         continue;
       }
-      payload = out;
-      winner = attempt;
-      break;
+      if (payload === null || out.events.length > payload.events.length) {
+        payload = out;
+        winner = attempt;
+      }
+      // 事件够多了就不必再换样例（绝大多数题在这里就停，行为与从前一致）
+      if (out.events.length >= 12) {
+        break;
+      }
     }
 
     if (!payload || !winner) {

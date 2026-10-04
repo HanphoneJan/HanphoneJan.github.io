@@ -273,6 +273,73 @@ for (const file of files) {
     check(`${label}：栈深有变化`, depths.size >= 2, [...depths]);
   }
 
+  if (adapterId === 'string') {
+    const arrays = frames.map(asArray);
+    check(`${label}：每帧都是数组帧`, arrays.every((a) => a !== null));
+    const n = arrays[0]?.array.length ?? 0;
+    check(`${label}：主行是字符串的字符`, n > 0);
+    /**
+     * 字符串题的「推进」有三种，**至少要真的发生一种**。
+     *
+     * 只看「主行内容不变」会放过两类假动画：
+     * - 光标在主串上移动（HJ21 简单密码逐字符改写）
+     * - 中间结果 aux 行在变长（HJ96 表示数字每遇到数字插一个 `*`）
+     * - 光标落在 aux 的某一格上（HJ90 合法 IP 四个段依次被校验）
+     */
+    const pointers = frames.flatMap((f) => Object.values(asArray(f)?.pointers ?? {}));
+    check(
+      `${label}：光标不越界`,
+      pointers.every((v) => v >= 0 && v < n),
+      [...new Set(pointers)],
+    );
+    const auxLens = frames.map(
+      (f) => (asArray(f)?.aux ?? []).map((a) => a.values.length).join(','),
+    );
+    const cursorMoved = new Set(
+      frames.flatMap((f) => Object.values(asArray(f)?.pointers ?? {})),
+    ).size;
+    const auxGrew = new Set(auxLens).size;
+    check(
+      `${label}：真的有过程（光标移动过或中间结果变过）`,
+      cursorMoved >= 2 || auxGrew >= 2,
+      {cursorMoved, auxGrew},
+    );
+    check(
+      `${label}：aux 行的 states 与行等长`,
+      frames.every((f) =>
+        (asArray(f)?.aux ?? []).every(
+          (a) => !a.states || a.states.length === a.values.length,
+        ),
+      ),
+    );
+  }
+
+  if (adapterId === 'aux-table') {
+    const arrays = frames.map(asArray);
+    check(`${label}：每帧都是数组帧`, arrays.every((a) => a !== null));
+    /**
+     * 字典/集合是这类题的主角，所以**必须**真的在变。
+     * 静止的字典画出来就是一张表，读者学不到任何东西
+     * （0560 前缀和计数这一类题的要点全在「哪个前缀和第一次出现」）。
+     */
+    const keyCounts = frames.map(
+      (f) => (asArray(f)?.aux ?? []).map((a) => a.values.length).join(','),
+    );
+    check(
+      `${label}：字典行数在变`,
+      new Set(keyCounts).size >= 2,
+      [...new Set(keyCounts)].slice(0, 6),
+    );
+    check(
+      `${label}：aux 行的 states 与行等长`,
+      frames.every((f) =>
+        (asArray(f)?.aux ?? []).every(
+          (a) => !a.states || a.states.length === a.values.length,
+        ),
+      ),
+    );
+  }
+
   if (adapterId === 'dp-counter') {
     const arrays = frames.map(asArray);
     check(`${label}：每帧都是数组帧`, arrays.every((a) => a !== null));
@@ -298,6 +365,26 @@ for (const file of files) {
     check(
       `${label}：states 与数组等长`,
       arrays.every((a) => !a?.states || a.states.length === n),
+    );
+    /**
+     * 指针不许越界。合成格子条（0070 爬楼梯、0007 整数反转）上
+     * 「还剩几位」是可以等于格子数的（0007 最后一位被取走时 ci = 0，
+     * 而 ci 也可能是 n 表示「全被取走」）—— 所以上界是**闭区间**。
+     */
+    const badPointer = frames
+      .flatMap((f) => Object.entries(asArray(f)?.pointers ?? {}))
+      .find(([, v]) => v < 0 || v > n);
+    check(`${label}：渲染出的指针不越界`, badPointer === undefined, badPointer);
+    /**
+     * 「在长大」的数组（0338 的 `bits`、HJ150 的 `path`）必须**每帧都在**，
+     * 短了用空格补齐。早先 dpCounter 直接 `raw.length !== n` 就跳过该帧，
+     * 于是 0338 只剩 10 帧里的一小半，而且 `bits` 只有一格的那几帧被丢掉
+     * —— 恰好是「表刚开始被填」的那几帧。
+     */
+    check(
+      `${label}：每帧数组长度一致（短的补空格）`,
+      arrays.every((a) => a?.array.length === n),
+      [...new Set(arrays.map((a) => a?.array.length))],
     );
   }
 }
