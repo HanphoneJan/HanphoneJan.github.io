@@ -42,6 +42,21 @@ export interface VisTraceEntry {
 
 export interface VisTracesData {
   entries: VisTraceEntry[];
+  /**
+   * 录到了轨迹、但没有任何 adapter 认识的题解。
+   *
+   * 这几篇页面上只显示一行「本题无可视化步骤」。**不显示等于撒谎** ——
+   * 读者会以为这个功能是按题目难度/类型挑的，而实际上是
+   * 「算法形态不在已实现的八种之内」：HJ31 单词倒排、HJ33 整数与 IP 转换、
+   * HJ96 表示数字、KY4 反序输出都是一行正则替换或一行切片，
+   * 局部变量里根本没有逐步推进的痕迹，硬画只会是一张静止的画面。
+   *
+   * 只收「有轨迹但没认领」的：**录制就失败**的 32 篇（class-API 设计题、
+   * 依赖 numpy 的 ML 题、题面没有 python 块的 SQL 题）不在这里 ——
+   * 它们连轨迹都没有，在页面上声明「无可视化」等于把录制失败
+   * 说成是算法本身画不出来。
+   */
+  noVisual: string[];
 }
 
 export default function visTracesPlugin(context: LoadContext): Plugin<VisTracesData> {
@@ -49,6 +64,8 @@ export default function visTracesPlugin(context: LoadContext): Plugin<VisTracesD
   const tracesDir = path.join(context.siteDir, 'static/traces');
 
   const entries: VisTraceEntry[] = [];
+  /** 有轨迹但没人认领的题解（见 VisTracesData.noVisual） */
+  const noVisual: string[] = [];
 
   if (fs.existsSync(tracesDir)) {
     for (const file of fs.readdirSync(tracesDir).sort()) {
@@ -70,15 +87,15 @@ export default function visTracesPlugin(context: LoadContext): Plugin<VisTracesD
       }
 
       const adapted = adapt(trace);
-      if (!adapted) {
-        // 录制成功但没有 adapter 认识它（算法形态不在 array-scan 覆盖范围内）。
-        // 留文件是对的 —— 后续补了 adapter 就能自动生效，不用重录。
-        continue;
-      }
-
       const md = findDoc(docsRoot, name);
       if (!md) {
         console.warn(`[vis-traces] 找不到 ${name} 对应的题解 md，跳过`);
+        continue;
+      }
+      if (!adapted) {
+        // 录制成功但没有 adapter 认识它。留文件是对的 ——
+        // 后续补了 adapter 就能自动生效，不用重录。
+        noVisual.push(md);
         continue;
       }
 
@@ -97,7 +114,7 @@ export default function visTracesPlugin(context: LoadContext): Plugin<VisTracesD
     name: 'vis-traces',
 
     async loadContent(): Promise<VisTracesData> {
-      return {entries};
+      return {entries, noVisual};
     },
 
     async contentLoaded({content, actions}): Promise<void> {
@@ -108,6 +125,12 @@ export default function visTracesPlugin(context: LoadContext): Plugin<VisTracesD
             ? ''
             : `（其中 ${content.entries.length - twoPointer.length} 篇用了其它 adapter）`),
       );
+      if (content.noVisual.length > 0) {
+        console.log(
+          `[vis-traces] ${content.noVisual.length} 篇有轨迹但无可视化步骤：` +
+            content.noVisual.map((d) => d.split('/').pop()).join('、'),
+        );
+      }
       actions.setGlobalData(content);
     },
   };
