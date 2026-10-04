@@ -23,6 +23,8 @@ export interface MethodEntry {
   kind: 'method';
   /** 方法名，如 twoSum */
   name: string;
+  /** 所在类名，如 Solution（0297 的序列化题写的是 Codec） */
+  className: string;
   /** 位置参数名（不含 self），按签名顺序 */
   paramNames: string[];
   /** 各参数的类型标注原文（小写），用来判断哪些参数要构造成链表/树 */
@@ -46,6 +48,20 @@ export interface SnippetAnalysis {
   /** 有没有可调用入口 */
   runnable: boolean;
   entry: SnippetEntry | null;
+  /**
+   * 这个块里的入口是不是**这道题的入口**。
+   *
+   * 不知道文档入口名（没传 docEntryName）时恒为 true。
+   *
+   * 为何需要它：一篇题解里常有几个「别的函数」。0300 的「如何输出具体的
+   * LIS？」小节里是 `lengthOfLIS_with_path(nums)` —— 收同一个参数，但返回的是
+   * 那条递增子序列本身 `[2,3,7,101]`，而题面的期望值是长度 `4`。
+   * 拿题面的样例去调它，9 组全判失败，而代码一个字都没错。
+   * 读者看到的是「这篇题解写错了」，实际上是我们调错了函数。
+   *
+   * 所以样例只在名字对得上时给；对不上就只留「自己输参数」。
+   */
+  matchesDocEntry: boolean;
   /**
    * 这个块本身是不是「程序」—— 也就是带 `if __name__ == "__main__":` 入口。
    *
@@ -256,9 +272,9 @@ function looksLikeRangeParam(names: string[]): boolean {
  * 只有一个方法时没什么可选的；有多个时优先选不带区间参数的 ——
  * 那样读者至少知道自己该填什么。
  */
-function pickEntry(
-  candidates: Array<{name: string; info: ParamInfo}>,
-): {name: string; info: ParamInfo} {
+function pickEntry<
+  T extends {name: string; info: ParamInfo},
+>(candidates: T[]): T {
   if (candidates.length === 1) {
     return candidates[0];
   }
@@ -267,10 +283,146 @@ function pickEntry(
   );
 }
 
-export function analyzeSnippet(rawCode: string): SnippetAnalysis {
+/**
+ * 某个方法所在的类名。
+ *
+ * 绝大多数题解写的是 `class Solution`，但不是全部：0297 的序列化题写的是
+ * `class Codec`（力扣那边的类名就叫 Codec）。驱动里写死 `Solution()` 的话，
+ * `__sol__ = Solution()` 直接 NameError，两组样例全判失败。
+ *
+ * 办法是找**位置在它前面的最后一个 class** —— Python 的方法体缩进在类里，
+ * 不用真做语法分析。
+ */
+function classNameAt(code: string, methodIndex: number): string {
+  const classRe = /^[ \t]*class\s+(\w+)/gm;
+  let name = 'Solution';
+  let m: RegExpExecArray | null;
+  while ((m = classRe.exec(code)) !== null) {
+    if (m.index > methodIndex) {
+      break;
+    }
+    name = m[1];
+  }
+  return name;
+}
+
+/**
+ * 「同一道题的另一种写法」允许带变体后缀。
+ *
+ * 题解里讲多种解法时习惯性地在入口名后面挂一个后缀：
+ * `moveZeroes_brute` / `moveZeroes_two_pass` / `maxSlidingWindow_heap` /
+ * `rotate_left` / `numSquares_bfs`。它们算的仍然是那道题，题面的样例照样适用，
+ * 不该因为多一个后缀就失去「跑样例」按钮（实测这样会误伤 12 个块）。
+ *
+ * ## 但「换了要返回什么」的不算
+ *
+ * `lengthOfLIS_with_path` 也在解 0300，可它返回的是那条递增子序列本身
+ * （`[2,3,7,101]`），题面的期望值是长度 `4`。这后缀表示「输出换了形态」，
+ * 拿 4 去比一个列表，判出来的 ✗ 与代码对错无关。
+ *
+ * 只有这几个后缀是这种含义 —— 宁可漏判（多给一次手动输入）也不误判
+ * （谎报代码写错了）。
+ */
+const DIFFERENT_OUTPUT_SUFFIXES = [
+  'with_path',
+  'with_index',
+  'with_detail',
+  'with_trace',
+  'trace',
+  // 换了**方向**也是另一道题：0189 的「扩展思考」里给了个 rotate_left，
+  // 它问的是向左轮转，而题面要的是向右 —— 左轮 3 位和右轮 3 位的结果不同，
+  // 题面的样例对它天然不适用。
+  'left',
+  'right',
+  'reverse',
+];
+
+/**
+ * 「同一道题的另一种写法」的解法名后缀。
+ *
+ * 题解讲多种解法时习惯性地挂一个后缀：`moveZeroes_brute` / `rotate_by_three` /
+ * `searchMatrix_binary_search`。去掉它之后剩下的 stem 就是题目的名字。
+ */
+const VARIANT_SUFFIXES = [
+  'brute',
+  'brute_force',
+  'naive',
+  'heap',
+  'stack',
+  'dfs',
+  'bfs',
+  'memo',
+  'memoized',
+  'greedy',
+  'dp',
+  'two_pass',
+  'one_pass',
+  'iterative',
+  'recursive',
+  'binary_search',
+  'bisect',
+  'counting',
+  'hash',
+  'fast',
+  'slow',
+  'opt',
+  'optimized',
+  'alt',
+  'v2',
+];
+
+/**
+ * 剥掉结尾的解法变体后缀，拿到「题目本身」的名字。
+ *
+ * 用 endsWith 而不是「按最后一个下划线切」：`binary_search` 里还有一个
+ * 下划线，按最后一段切出来的是 `search`，认不出来。
+ */
+function stem(name: string): string {
+  for (const suf of VARIANT_SUFFIXES) {
+    if (name.length > suf.length + 1 && name.endsWith('_' + suf)) {
+      return name.slice(0, -(suf.length + 1));
+    }
+  }
+  return name;
+}
+
+/** 后缀是不是「换了要返回什么 / 换了方向」 */
+function hasDifferentOutputSuffix(name: string): boolean {
+  return DIFFERENT_OUTPUT_SUFFIXES.some(
+    (suf) => name.length > suf.length + 1 && name.endsWith('_' + suf),
+  );
+}
+
+/**
+ * 这个块里的函数算不算「这道题的解法」。
+ *
+ * 认三种：名字一致；候选名带一个解法变体后缀（`moveZeroes_brute` 对
+ * `moveZeroes`）；或者文档入口名自己带变体后缀而候选是那个 stem
+ * （0240 的完整代码里是 `searchMatrix_binary_search`，思路小节里写的是
+ * `searchMatrix_brute`）。
+ *
+ * 只要**任何一边**挂着「换了要返回什么」的后缀就否掉 ——
+ * `lengthOfLIS_with_path` 的 stem 恰好是 `lengthOfLIS`，
+ * 光比 stem 会把它放行，而它返回的是那条子序列本身。
+ */
+export function isDocEntryOf(name: string, docEntryName: string): boolean {
+  if (name === docEntryName) {
+    return true;
+  }
+  if (hasDifferentOutputSuffix(name) || hasDifferentOutputSuffix(docEntryName)) {
+    return false;
+  }
+  return stem(name) === stem(docEntryName);
+}
+
+export function analyzeSnippet(
+  rawCode: string,
+  docEntryName?: string | null,
+): SnippetAnalysis {
   const not = (reason: string): SnippetAnalysis => ({
     runnable: false,
     entry: null,
+    matchesDocEntry: true,
     isProgram: false,
     reason,
   });
@@ -305,7 +457,7 @@ export function analyzeSnippet(rawCode: string): SnippetAnalysis {
   // 这种块在 Python 里是 IndentationError（unexpected indent），
   // 给它挂按钮只会让读者每组样例都看到一个 IndentationError。
   const hasClass = /^[ \t]*class\s+\w+/m.test(code);
-  const candidates: Array<{name: string; info: ParamInfo}> = [];
+  const candidates: Array<{name: string; info: ParamInfo; className: string}> = [];
   let m: RegExpExecArray | null;
   while ((m = methodRe.exec(code)) !== null) {
     if (isDunder(m[1])) {
@@ -314,19 +466,28 @@ export function analyzeSnippet(rawCode: string): SnippetAnalysis {
     if (!hasClass) {
       return not('只有方法体、缺 class 声明');
     }
-    candidates.push({name: m[1], info: parseParamInfo(m[2] ?? '')});
+    candidates.push({
+      name: m[1],
+      info: parseParamInfo(m[2] ?? ''),
+      className: classNameAt(code, m.index),
+    });
   }
   if (candidates.length > 0) {
-    const picked = pickEntry(candidates);
+    const match = docEntryName
+      ? candidates.find((c) => isDocEntryOf(c.name, docEntryName))
+      : undefined;
+    const picked = match ?? pickEntry(candidates);
     return {
       runnable: true,
       entry: {
         kind: 'method',
         name: picked.name,
+        className: picked.className,
         paramNames: picked.info.names,
         annotations: picked.info.annotations,
         requiredCount: picked.info.requiredCount,
       },
+      matchesDocEntry: !docEntryName || match !== undefined,
       isProgram,
       reason: '',
     };
@@ -334,6 +495,7 @@ export function analyzeSnippet(rawCode: string): SnippetAnalysis {
 
   // 2) 顶层 def（牛客题、脚本）。列 0 匹配，天然排除类里的方法。
   const funcRe = /^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)/gm;
+  const funcs: Array<{name: string; info: ParamInfo}> = [];
   while ((m = funcRe.exec(code)) !== null) {
     if (isDunder(m[1])) {
       continue;
@@ -344,16 +506,26 @@ export function analyzeSnippet(rawCode: string): SnippetAnalysis {
     if (/^\s*self\b/.test(m[2])) {
       return not('只有方法体、缺 class 声明');
     }
-    const info = parseParamInfo(m[2]);
+    funcs.push({name: m[1], info: parseParamInfo(m[2])});
+  }
+  if (funcs.length > 0) {
+    const match = docEntryName
+      ? funcs.find((f) => isDocEntryOf(f.name, docEntryName))
+      : undefined;
+    // 顶层函数沿用「取第一个」的旧规则（牛客题一篇里通常只有一个函数）；
+    // 但文档入口名能对上时就用那个 —— 0300 的最后一节里
+    // `lengthOfLIS_with_path` 前面还杵着别的辅助函数。
+    const picked = match ?? funcs[0];
     return {
       runnable: true,
       entry: {
         kind: 'function',
-        name: m[1],
-        paramNames: info.names,
-        annotations: info.annotations,
-        requiredCount: info.requiredCount,
+        name: picked.name,
+        paramNames: picked.info.names,
+        annotations: picked.info.annotations,
+        requiredCount: picked.info.requiredCount,
       },
+      matchesDocEntry: !docEntryName || match !== undefined,
       isProgram,
       reason: '',
     };
@@ -362,8 +534,14 @@ export function analyzeSnippet(rawCode: string): SnippetAnalysis {
   return not('没有可调用入口（只有片段）');
 }
 
-/** 参数要还原成哪种节点结构 */
-export type NodeKind = 'none' | 'list' | 'tree';
+/**
+ * 参数要还原成哪种节点结构。
+ *
+ * `byval` 是 0236 那种：签名写着 `p: 'TreeNode'`，可题面给的样例是 `p = 5`
+ * —— 一个**节点值**，不是节点对象。力扣的评测驱动就是照着这个值到树里
+ * 找对应节点的，我们也照做（见 driver.ts 的 `__find__`）。
+ */
+export type NodeKind = 'none' | 'list' | 'tree' | 'randlist' | 'byval';
 
 /**
  * 每个参数要不要从「数组字面量」构造成链表/树。
@@ -389,28 +567,24 @@ export type NodeKind = 'none' | 'list' | 'tree';
  * `l1.next` 只能是链表。这比「看数组长度」可靠 ——
  * 树的层序格式和递归格式在字面量上都是长度 3 的数组，光看数据分不出来。
  *
- * ## 为什么还要求代码里出现过节点类的名字
+ * 属性访问本身也足以说明「这个块在跟节点打交道」，不必非得出现
+ * `ListNode` 这个词：0025 的辅助函数 `def reverseKGroup(head, k)` 通篇只用
+ * `curr.next`，一个字都没提节点类。
  *
- * 属性推断单独用是不够的：`nums.reverse()` 里的 `.reverse` 不算，但要防的是
- * 另一种误判 —— 大量题解的代码里根本没有 `ListNode` 这个词，
- * 而入口签名也没标注。这时把样例数组硬构造成节点，等于凭空造对象：
- * 判出来的 ✗ 与代码对错无关，只会误导读者。
+ * ## 为什么不要求「块内没自己定义节点类」
  *
- * 现在的规则是三者同时成立才认：出现了节点类名、块内没自己定义（说明是依赖
- * 平台预置）、参数没标注。实测语料里 0002 的第一个代码块就属于这一类 ——
- * 它在真平台跑得通，只是 md 里没带上 ListNode 的定义。
+ * 早先要求过（怕把普通数组参数改坏），但它会误伤一类很常见的写法：
+ * 0297 的 `def serialize(self, root)` 就在定义了 TreeNode 的块里，
+ * 不带标注，参数只能是靠属性访问推出来的树。
  *
- * 为什么还要求「块内没自己定义」：有 4 篇题解是「自己定义了 ListNode，
- * 签名又不带标注」，那种情况下把所有数组都当节点会把普通数组参数改坏，
- * 判出来的 ✗ 更具误导性。
+ * 真正的安全网在别处：`__mk__` 只在值**确实是标量数组**时才建节点
+ * （`[[1,2],[3]]` 这种嵌套的、带 None 的都原样传），所以
+ * 「普通数组参数」不会被误认 —— 0002 的 `carry` 就是这么安全的。
  */
 export function nodeParams(
   entry: SnippetEntry,
   code: string,
 ): NodeKind[] {
-  const usesNode = /\b(ListNode|TreeNode)\b/.test(code);
-  const definesNode = /^[ \t]*class\s+(ListNode|TreeNode)\b/m.test(code);
-
   // 代码动了哪些属性 —— 比「猜它是链表还是树」可靠得多。
   // 0104 的 `root.left` / `root.right` 只能是树；
   // 0002 的 `l1.next` 只能是链表。
@@ -418,22 +592,61 @@ export function nodeParams(
   // 用链表去建一定建错，用树去建顶多多余几个字段。
   const touchesTree = /\.\s*(left|right)\b/.test(code);
   const touchesList = /\.\s*next\b/.test(code);
+  const touchesVal = /\.\s*val\b/.test(code);
   const inferred: NodeKind = touchesTree ? 'tree' : 'list';
 
-  // 用了节点类但块内没定义 = 依赖平台预置。这时未标注的参数可以合理地
-  // 按代码实际怎么用他来推断。块内自己定义了就只信标注 —— 有 4 篇题解是
-  // 「自己定义了 ListNode 但签名不带标注」，此时把所有数组都当节点会把
-  // 普通数组参数改坏，判出来的 ✗ 更具误导性。
-  const assumeUnannotated = usesNode && !definesNode;
+  // 「这个块在跟节点打交道」的信号：类型名，或者干脆就是属性访问。
+  //
+  // 只认 ListNode/TreeNode 这两个词是不够的：0025 的辅助函数
+  // `def reverseKGroup(head, k)` 全程只用 `curr.next`，一个字都没提 ListNode，
+  // 于是参数被当成普通数组传进去，第一行就 AttributeError。
+  const usesNode =
+    /\b(ListNode|TreeNode)\b/.test(code) ||
+    touchesTree ||
+    touchesList ||
+    touchesVal;
 
-  return entry.annotations.map((a) => {
+  // 块里的节点类自己声明了 random 字段（0138 的 `self.random = None`）
+  const definesRandom = /self\s*\.\s*random\s*=/.test(code);
+
+  return entry.annotations.map((a, idx) => {
+    // 0138 的节点类自己带 random 字段，样例 [[7,null],[13,0],...] 是
+    // 「值 + random 指向的值」，必须按这种形态还原，指针才接得上。
+    // 优先于下面所有判断：块里的类长什么样，入参就该长什么样。
+    if (definesRandom) {
+      return 'randlist';
+    }
+    // 0236：签名写的是 `root: 'TreeNode', p: 'TreeNode', q: 'TreeNode'`
+    // （加引号的前向引用），题面给的样例却是 `p = 5` —— 一个节点**值**。
+    // 力扣的评测驱动就是照这个值到树里找对应节点的，我们也照做。
+    //
+    // 判据是「标注里带引号」：这是前向引用的写法，全语料只有 0236 一篇。
+    // 写成 `Optional[TreeNode]` 的那些（0160 的 headA/headB）传进来的
+    // 确实是数组，不能一起当成值来查找。
+    if (
+      idx > 0 &&
+      (a === "'treenode'" || a === "'listnode'" || a === "'node'")
+    ) {
+      return 'byval';
+    }
     if (/treenode/.test(a)) {
       return 'tree';
     }
     if (/listnode/.test(a)) {
       return 'list';
     }
-    if (a === '' && assumeUnannotated) {
+    // 0138 的 `Optional[Node]`：力扣用 Node 这个名字表示过两种结构 ——
+    // 带 random 的链表节点（0138）和二叉树节点（0116/0117）。
+    // 靠代码实际访问了哪个字段区分。
+    if (/(^|[^a-z])node([^a-z]|$)/.test(a)) {
+      if (touchesTree) {
+        return 'tree';
+      }
+      if (touchesList || touchesVal) {
+        return 'list';
+      }
+    }
+    if (a === '' && usesNode) {
       return inferred;
     }
     return 'none';
@@ -465,16 +678,16 @@ export function samplesFit(
 export function callTarget(entry: SnippetEntry): {
   /** Python 表达式，例如 `__sol__.twoSum` 或 `reverse_number` */
   expr: string;
+  /** 给 Python 源码用的实例化语句，例如 `__sol__ = Solution()` */
+  instantiate: string | null;
   /** 给人看的调用名，例如 `Solution().twoSum` */
   display: string;
-  /** 执行前要不要先 `__sol__ = Solution()` */
-  needsInstance: boolean;
 } {
   return entry.kind === 'method'
     ? {
         expr: `__sol__.${entry.name}`,
-        display: `Solution().${entry.name}`,
-        needsInstance: true,
+        instantiate: `__sol__ = ${entry.className}()`,
+        display: `${entry.className}().${entry.name}`,
       }
-    : {expr: entry.name, display: entry.name, needsInstance: false};
+    : {expr: entry.name, instantiate: null, display: entry.name};
 }

@@ -337,6 +337,9 @@ def change(amount: int, coins: List[int]) -> int:
 使用回溯记录路径：
 
 ```python
+from math import inf
+
+
 def coinChange_with_path(coins, amount):
     f = [0] + [inf] * amount
     parent = [-1] * (amount + 1)  # 记录用了哪个硬币

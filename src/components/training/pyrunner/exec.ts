@@ -161,6 +161,22 @@ export async function execPython(
       result.error = message;
       result.errorLines = errorLinesOf(message, filename);
       return result;
+    } finally {
+      // 收尾必须补一个换行。
+      //
+      // 题解常把最后一行写成不带换行的（`sys.stdout.write(' '.join(...))`），
+      // 而 Pyodide 的 batched 回调**只在遇到换行时才吐出内容**：
+      // `write('AAA'); write('\n'); write('BBB')` 实测只能收到 `AAA`。
+      // 不管的话那最后一行页面上根本看不到 —— lstm-temperature 那题就只
+      // 显示第一行，期望值两行，判成失败。
+      //
+      // 补的换行随后被 `trimEnd()` 去掉，不会污染判定；
+      // `write('\n')` 对本来就以换行结尾的输出是空操作。
+      try {
+        await py.runPythonAsync("__sys__.stdout.write('\\n')", {globals});
+      } catch {
+        /* 收尾失败不影响已拿到的输出 */
+      }
     }
 
     if (driver) {
@@ -175,6 +191,14 @@ export async function execPython(
         result.driverError = message;
         result.driverErrorLines = errorLinesOf(message, driverFilename);
       }
+    }
+
+    // 驱动跑完同样补一个换行：调用入口的过程中也可能有 print（题解里的调试
+    // 输出、递归里的日志），末尾那行同样可能不带换行。
+    try {
+      await py.runPythonAsync("__sys__.stdout.write('\\n')", {globals});
+    } catch {
+      /* 同上 */
     }
   } finally {
     globals.destroy?.();

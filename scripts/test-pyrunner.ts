@@ -24,12 +24,14 @@ import {buildCallDriver, buildPrelude} from '../src/components/training/pyrunner
 import {compare, isUsableExpected} from '../src/components/training/pyrunner/compare';
 import {errorLinesOf} from '../src/components/training/pyrunner/exec';
 import {
+  crossCheckEntryName,
   extractSamples,
   extractSignature,
   extractStdinSamples,
 } from '../plugins/py-samples';
 import {
   asCallArgument,
+  manualCase,
   quoteIfStr,
   toPythonLiteral,
 } from '../src/components/training/pyrunner/runner';
@@ -233,6 +235,79 @@ def kmeans(x, k):
 }
 
 {
+  // 0300：同一篇里出现了「返回形态不同」的另一个函数。
+  // lengthOfLIS_with_path 收同样的参数，返回的是那条递增子序列本身，
+  // 而题面的期望值是长度 —— 拿题面样例去调它必然全判失败。
+  const withPath = `def lengthOfLIS_with_path(nums):
+    return [nums[0]]
+`;
+  const a = analyzeSnippet(withPath, 'lengthOfLIS');
+  check('0300 的 lengthOfLIS_with_path 仍可运行（能给手动输入）', a.runnable);
+  check('但不算这道题的入口', !a.matchesDocEntry);
+  check(
+    '没传入口名时一律算命中（老行为不变）',
+    analyzeSnippet(withPath).matchesDocEntry,
+  );
+}
+
+{
+  // 名字一致 -> 命中
+  const same = `def reverse_number(num_str):
+    return num_str[::-1]
+`;
+  check('名字一致算命中', analyzeSnippet(same, 'reverse_number').matchesDocEntry);
+}
+
+{
+  // 解法变体后缀仍然算这道题：moveZeroes_brute / rotate_left 算的还是那道题
+  const variants = [
+    ['def moveZeroes_brute(nums):\n    return nums\n', 'moveZeroes'],
+    ['def maxSlidingWindow_heap(nums, k):\n    return []\n', 'maxSlidingWindow'],
+    ['def searchMatrix_brute(matrix, target):\n    return False\n', 'searchMatrix_binary_search'],
+    ['def numSquares_bfs(n):\n    return 0\n', 'numSquares'],
+  ] as const;
+  for (const [code, doc] of variants) {
+    check(
+      `解法变体 ${code.match(/def (\w+)/)![1]} 算命中`,
+      analyzeSnippet(code, doc).matchesDocEntry,
+    );
+  }
+}
+
+{
+  // 别的函数一律不算命中，否则会拿题面样例去调它并谎报失败
+  for (const [name, doc] of [
+    ['dfs', 'minDistance'],
+    ['getRow', 'generate'],
+    ['parse_expr', 'evaluate'],
+    ['_read_input', 'min_refuel_stops'],
+    ['moveNegatives', 'moveZeroes'],
+    ['rotate_left', 'rotate'],
+    ['coinChange_with_path', 'coinChange_memo'],
+  ] as const) {
+    check(
+      `别的函数 ${name} 不算命中`,
+      !analyzeSnippet(`def ${name}(x):\n    return x\n`, doc).matchesDocEntry,
+    );
+  }
+}
+
+{
+  // 类里的多个方法：文档入口名要能选中正确的那个，
+  // 哪怕它不是第一个（0215 的 partition 排在前面）。
+  const multi = `class Solution:
+    def helper(self, nums, left, right):
+        return left
+
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        return nums[k]
+`;
+  const a = analyzeSnippet(multi, 'findKthLargest');
+  check('类里按文档入口名选中方法', a.entry?.name === 'findKthLargest', a.entry?.name);
+  check('命中时 matchesDocEntry 为真', a.matchesDocEntry);
+}
+
+{
   // __init__ 是唯一方法时不该被当成入口（没有参数）
   const onlyInit = `class Solution:
     def __init__(self):
@@ -247,6 +322,7 @@ def kmeans(x, k):
   const entry = {
     kind: 'method' as const,
     name: 'twoSum',
+    className: 'Solution',
     paramNames: ['nums', 'target'],
     annotations: ['list[int]', 'int'],
     requiredCount: 2,
@@ -278,7 +354,7 @@ def kmeans(x, k):
 {
   const driver = buildCallDriver([['[2,7,11,15]', '9']], {
     expr: '__sol__.twoSum',
-    needsInstance: true,
+    instantiate: '__sol__ = Solution()',
   });
   check('驱动实例化 Solution', driver.includes('__sol__ = Solution()'));
   check('驱动用 literal_eval 还原参数', driver.includes('__ast__.literal_eval(x)'));
@@ -295,7 +371,7 @@ def kmeans(x, k):
 {
   const driver = buildCallDriver([['"abcabcbb"']], {
     expr: 'longest_substring',
-    needsInstance: false,
+    instantiate: null,
   });
   check('函数入口不实例化', !driver.includes('Solution()'));
   check('函数入口直接调用', driver.includes('longest_substring(*__p__)'));
@@ -343,6 +419,148 @@ check('前导零的字符串不会被当成数字', compare('"0006151"', '000615
 check('前导零真的不等时仍然判失败', !compare('"0007151"', '0006151').ok);
 check('真的不同要判失败', !compare('[0, 2]', '[0, 1]').ok);
 check('失败时给出原因', Boolean(compare('[0, 2]', '[0, 1]').reason));
+
+{
+  // 0049：题面写了「可以按任意顺序返回」，元素集合一样就该算通过。
+  const expected = '[["bat"],["nat","tan"],["ate","eat","tea"]]';
+  const actual = '[["eat", "tea", "ate"], ["tan", "nat"], ["bat"]]';
+  check(
+    '任意顺序：分组顺序不同也算通过',
+    compare(actual, expected, {orderAgnostic: true}).ok,
+  );
+  check(
+    '默认仍然按序比（区间有序的题不能放宽）',
+    !compare(actual, expected).ok,
+  );
+  check(
+    '放宽了顺序也不放过「元素真的不同」',
+    !compare('[["bat"],["nat","tan"],["ate","eat","XXX"]]', expected, {
+      orderAgnostic: true,
+    }).ok,
+  );
+  check(
+    '0347 这种一维的也能按集合比',
+    compare('[2, 1]', '[1, 2]', {orderAgnostic: true}).ok,
+  );
+}
+
+{
+  // ACM 文本模式下 Python 的 str(True) 是 `True`，题面写的是 `true`
+  check('Python 的 True 与题面的 true 视为一致', compare('True', 'true').ok);
+  check('False 同理', compare('False', 'false').ok);
+  check('真的不一样仍然判失败', !compare('True', 'false').ok);
+  check('数字不受这条影响', !compare('True', '1').ok);
+}
+
+{
+  // 0297：期望值是层序，代码吐的是前序 + 末尾多几个 null。
+  // 两边描述的是同一棵树，力扣的评测也是先反序列化再比的。
+  check(
+    '前序序列与层序期望值描述同一棵树时算通过',
+    compare('"[1,2,null,null,3,4,null,null,5]"', '[1,2,3,null,null,4,5]').ok,
+  );
+  check(
+    '带方括号/不带方括号都认',
+    compare('"1,2,null,null,3,4,null,null,5"', '"[1,2,3,null,null,4,5]"').ok,
+  );
+  check(
+    '真的是另一棵树时仍然判失败',
+    !compare('"[1,2,null,null,3,4,null,null,9]"', '[1,2,3,null,null,4,5]').ok,
+  );
+  check('非树序列不走这条路', !compare('"[1,2]"', '[3,4]').ok);
+  check(
+    '0108：题面承认答案不唯一时只比节点值集合',
+    compare('[0,-10,5,null,-3,null,9]', '[0,-3,9,-10,null,5]', {
+      multiAnswer: true,
+    }).ok,
+  );
+  check(
+    '没开 multiAnswer 时形状不同就是失败',
+    !compare('[0,-10,5,null,-3,null,9]', '[0,-3,9,-10,null,5]').ok,
+  );
+  check(
+    '值集合真的不同仍然判失败',
+    !compare('[0,1,2]', '[0,3,9]', {multiAnswer: true}).ok,
+  );
+}
+
+{
+  // 散文期望值（0095 的「5 棵不同的 BST」）不能参与判定
+  check('散文期望值不可用', !isUsableExpected('5 棵不同的 BST'));
+  check('省略号期望值不可用', !isUsableExpected('[0,1,2,...]'));
+  check('正常字面量可用', isUsableExpected('[0,1]'));
+  check('带 null 的数组可用', isUsableExpected('[1,2,null]'));
+  check('字符串可用', isUsableExpected('"abc"'));
+  check('true 可用', isUsableExpected('true'));
+  check('负数可用', isUsableExpected('-42'));
+  check('括号题的多层数组可用', isUsableExpected('["((()))","(()())"]'));
+  check('空串不可用', !isUsableExpected('  '));
+}
+
+{
+  // 0301 / 0022 的值里有括号，早先被 readValue 的截断规则砍掉过
+  const s0301 = [
+    '输入：s = ")("',
+    '输出：[""]',
+  ].join('\n');
+  const got = extractSamples(s0301, ['s'], 1);
+  eq('引号里的括号不会被当成散文', got[0]?.args[0], '")("');
+  eq('方括号里的引号也不会', got[0]?.expected, '[""]');
+
+  const s0022 = [
+    '输入：n = 3',
+    '输出：["((()))","(()())","(())()"]',
+  ].join('\n');
+  eq(
+    '期望值里的括号与引号都保住',
+    extractSamples(s0022, ['n'], 1)[0]?.expected,
+    '["((()))","(()())","(())()"]',
+  );
+
+  const sProse = ['输入：n = 3', '输出：5 棵不同的 BST'].join('\n');
+  const prose = extractSamples(sProse, ['n'], 1)[0];
+  // **不能**把散文截成 `5`：0095 的 generateTrees(3) 返回的是 5 棵树而不是数字 5，
+  // 截了就得到一个必然失败的样例。整段留着、判定阶段当散文丢掉才对。
+  eq('散文期望值原样抽出（不被截成 5）', prose?.expected, '5 棵不同的 BST');
+  check('并被判为不可用', !isUsableExpected(prose?.expected ?? ''));
+}
+
+{
+  // 0148：入口是整篇的属性，不能只看「完整代码实现」里第一个方法
+  const md0148 = [
+    '## 完整代码实现',
+    '',
+    '```python',
+    'class Solution:',
+    '    def getListLength(self, head):',
+    '        return 0',
+    '',
+    '    def sortList(self, head):',
+    '        return head',
+    '```',
+    '',
+    '## 暴力解法',
+    '',
+    '```python',
+    'def sortList(head):',
+    '    return head',
+    '```',
+  ].join('\n');
+  eq(
+    '别的块用顶层函数写过同一个名字 -> 那才是入口',
+    crossCheckEntryName(
+      md0148,
+      'class Solution:\n    def getListLength(self, head):\n        return 0\n\n    def sortList(self, head):\n        return head',
+      'getListLength',
+    ),
+    'sortList',
+  );
+  eq(
+    '别处没提过就保持原样',
+    crossCheckEntryName('## 其它\n\n无代码\n', 'class Solution:\n    def f(self, a):\n        return a', 'f'),
+    null,
+  );
+}
 check('省略号的期望值不可用', !isUsableExpected('[0, 1, 2, ...]'));
 check('省略号（中文）也不可用', !isUsableExpected('前 3 个是 [0, 1, 2]…'));
 check('正常期望值可用', isUsableExpected('[0, 1]'));
@@ -360,6 +578,71 @@ check('正常期望值可用', isUsableExpected('[0, 1]'));
   eq('复合字面量不动（用户显然在写表达式）', quoteIfStr('[1, 2]', 'str'), '[1, 2]');
   eq('optional[str] 也算 str', quoteIfStr('abc', 'optional[str]'), '"abc"');
   eq('引号内的双引号被转义', quoteIfStr('a"b', 'str'), '"a\\"b"');
+}
+
+{
+  // 自己输入的一行 -> 一组实参。
+  // 「能自己输参数跑」是运行条的基本功能，两种平台的输入框都走这里。
+  const entry = analyzeSnippet(
+    `class Solution:
+    def maxDepth(self, root: Optional[TreeNode]) -> int:
+        return 0
+`,
+  ).entry!;
+  eq(
+    '树题的层序格式（力扣题面原样）能直接跑',
+    manualCase('[3,9,20,null,null,15,7]', entry).join('|'),
+    '[3,9,20,None,None,15,7]',
+  );
+
+  const strEntry = analyzeSnippet(
+    `def reverse_number(num_str: str):
+    return num_str[::-1]
+`,
+  ).entry!;
+  eq(
+    'str 参数敲裸数字自动加引号',
+    manualCase('1516000', strEntry).join('|'),
+    '"1516000"',
+  );
+
+  const noAnn = analyzeSnippet(
+    `def last_word(line):
+    return line
+`,
+  ).entry!;
+  eq(
+    '没标注时裸词按字符串处理（与 stdin 派生样例同一套判断）',
+    manualCase('HelloNowcoder', noAnn).join('|'),
+    '"HelloNowcoder"',
+  );
+  eq(
+    '没标注时字面量不动',
+    manualCase('[1,2,3]', noAnn).join('|'),
+    '[1,2,3]',
+  );
+
+  const two = analyzeSnippet(
+    `def two_sum(nums, target):
+    return []
+`,
+  ).entry!;
+  eq(
+    '多参数按顶层逗号切，数组里的逗号不算',
+    manualCase('[2,7,11,15], 9', two).join('|'),
+    '[2,7,11,15]|9',
+  );
+
+  const strAnn = analyzeSnippet(
+    `def f(a: str):
+    return a
+`,
+  ).entry!;
+  eq(
+    'str 参数上的 null 是字符串 "null" 而不是 None',
+    manualCase('null', strAnn).join('|'),
+    '"null"',
+  );
 }
 
 /* ---------------- 5c. stdin 样例 -> 调用实参 ---------------- */

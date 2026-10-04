@@ -31,7 +31,9 @@ import React, {
   Suspense,
   lazy,
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -59,6 +61,15 @@ interface Props {
   code: string;
   samples: PySample[];
   stdinSamples: StdinSample[];
+  /**
+   * 这篇题解的入口方法名（取自「完整代码实现」小节）。
+   *
+   * 一篇里常有几个「别的函数」—— 0300 的 lengthOfLIS_with_path 收同样的参数，
+   * 返回的却是那条递增子序列本身而不是长度。题面的样例只在调用的是
+   * 这道题的入口时才成立，所以要把名字传进来对照，见 snippet.ts 的
+   * `matchesDocEntry`。
+   */
+  entryName: string | null;
 }
 
 type Phase = 'idle' | 'loading' | 'running';
@@ -67,6 +78,7 @@ export default function SnippetBar({
   code,
   samples,
   stdinSamples,
+  entryName,
 }: Props): ReactNode {
   const indexUrl = useBaseUrl(INDEX_URL_PATH);
   const [phase, setPhase] = useState<Phase>('idle');
@@ -74,9 +86,16 @@ export default function SnippetBar({
   /** 用户改过的代码；null 表示「没改过，跑的就是页面上的源码」 */
   const [edited, setEdited] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
-  const [argsText, setArgsText] = useState('');
+  /**
+   * 输入框初值：程序块给第一组样例的 stdin，其余给第一组样例的参数。
+   * 只在首次挂载时填（下面的 useEffect），读者改过之后不要覆盖回去。
+   */
+  const [customText, setCustomText] = useState('');
 
-  const analysis = useMemo(() => analyzeSnippet(code), [code]);
+  const analysis = useMemo(
+    () => analyzeSnippet(code, entryName),
+    [code, entryName],
+  );
   const entry = analysis.entry;
 
   // 位置参数的样例（`输入: [1,2,3,1]` 而不是 `nums = [1,2,3,1]`）
@@ -147,16 +166,29 @@ export default function SnippetBar({
 
   // 参数个数对不上就别跑样例 —— 顺序错会得到一个看起来很合理的错误答案，
   // 那比不给按钮有害得多。
-  const canRunSamples = entry
-    ? samplesFit(entry, derivedCallSamples.map((s) => s.args))
-    : false;
+  //
+  // `matchesDocEntry` 是另一道闸：这个块里的函数根本不是这道题的解法时，
+  // 样例的期望值对不上它返回的东西（0300 的 lengthOfLIS_with_path 返回
+  // 子序列本身，题面要的是长度）。
+  const canRunSamples =
+    entry && analysis.matchesDocEntry
+      ? samplesFit(entry, derivedCallSamples.map((s) => s.args))
+      : false;
 
   // 只有「程序」（带 __main__ 的块）才能用 stdin 模式。解题思路里那些
   // 同名函数的纯定义块喂 stdin 的话输出恒为空 —— 点了跟没点一样。
   const canRunStdin = analysis.isProgram && usableStdin.length > 0;
 
-  // 交互形态：优先直接调函数的样例，其次 stdin，最后手动参数。
-  const baseMode: RunMode | null = useMemo(() => {
+  /**
+   * 「跑自带样例」与「自己输参数」是**两个独立动作**，不是同一个按钮的两种状态。
+   *
+   * 之前只有 samples / stdin / manual 三选一，结果抽到样例的页面**完全没有输入框** ——
+   * 想试个自己的输入都试不了。那是设计缺陷：读者看题解时最常做的事就是
+   * 「拿自己的例子试一下」，它不该被「已有样例」顶掉。
+   *
+   * 对应力扣自己的 Run / Submit：跑样例是「验证」，自己输是「探索」。
+   */
+  const sampleMode: RunMode | null = useMemo(() => {
     if (!entry) {
       return null;
     }
@@ -174,14 +206,47 @@ export default function SnippetBar({
         expected: usableStdin[0].expected,
       };
     }
-    return {type: 'manual', argsText};
-  }, [entry, canRunSamples, derivedCallSamples, canRunStdin, usableStdin, argsText]);
+    return null;
+  }, [entry, canRunSamples, derivedCallSamples, canRunStdin, usableStdin]);
+
+  /**
+   * 输入框里那行文本对应的运行方式。
+   *
+   * 程序块（带 __main__）收的是 stdin 文本，其余是调用参数 ——
+   * 由读者填的内容决定，不猜。
+   */
+  const customMode: RunMode = useMemo(
+    () =>
+      canRunStdin
+        ? {type: 'stdin', stdin: customText, expected: ''}
+        : {type: 'manual', argsText: customText},
+    [canRunStdin, customText],
+  );
+
+  /**
+   * 输入框预填第一组样例 —— 让读者一进来就看到「这个框该填什么」，
+   * 而不是面对一个空框猜格式。填过之后不再覆盖（用 ref 记住是否动过）。
+   */
+  const touchedRef = useRef(false);
+  const prefill = useMemo(() => {
+    // 只有「这篇真的提供 stdin 样例」才按 stdin 处理。
+    // 有些力扣题解的完整代码也带 `if __name__ == "__main__":` 自测块，
+    // 仅凭 isProgram 就走 stdin 会得到一个空的输入框。
+    if (canRunStdin) {
+      return usableStdin[0]?.stdin ?? '';
+    }
+    const first = derivedCallSamples[0];
+    return first ? first.args.join(', ') : '';
+  }, [canRunStdin, usableStdin, derivedCallSamples]);
+  useEffect(() => {
+    if (!touchedRef.current && prefill !== '') {
+      setCustomText(prefill);
+    }
+  }, [prefill]);
 
   const runLabel = canRunSamples
     ? `▶ 跑样例（${derivedCallSamples.length}）`
-    : baseMode?.type === 'stdin'
-      ? '▶ 跑样例'
-      : '▶ 运行';
+    : '▶ 跑样例';
 
   const doRun = useCallback(
     async (runMode: RunMode) => {
@@ -204,60 +269,39 @@ export default function SnippetBar({
   );
 
   // 不可运行的片段：什么都不渲染
-  if (!analysis.runnable || !entry || !baseMode) {
+  if (!analysis.runnable || !entry) {
     return null;
   }
 
   const busy = phase !== 'idle';
   const modified = edited !== null && edited !== code;
+  // 这两个依赖 entry，必须放在上面的守卫之后 —— 片段的 entry 是 null
+  const showCustomInput = entry.paramNames.length > 0 || canRunStdin;
+  /**
+   * 自己输入时空着就别让读者点出一个
+   * `missing 1 required positional argument` 的 traceback —— 那看着像代码写错了。
+   * 零参数函数（HJ150 的 `def backtrack():`）本来就不需要填，按钮必须可点。
+   */
+  const needCustom =
+    customMode.type === 'manual' &&
+    entry.requiredCount > 0 &&
+    !customText.trim();
   const showOutput =
     result !== null && result.rows.length === 0 && Boolean(result.output);
-
-  // 手动模式没填参数就别让读者点出一个 `missing 1 required positional argument`
-  // 的 Python traceback —— 那看着像代码写错了，其实只是没填输入框。
-  //
-  // 注意要排除「没有必填参数」的情况（HJ150 的 `def backtrack():`）：
-  // 那种块本来就不需要填任何东西，按钮必须可点，否则永远跑不了。
-  const needArgs =
-    baseMode.type === 'manual' &&
-    entry.requiredCount > 0 &&
-    argsText.trim() === '';
 
   return (
     <div className={styles.bar} data-testid="snippet-bar">
       <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.runButton}
-          onClick={() => void doRun(baseMode)}
-          disabled={busy || needArgs}
-          title={needArgs ? '先填参数' : undefined}
-          data-testid="run">
-          {busy ? (phase === 'loading' ? '加载中…' : '运行中…') : runLabel}
-        </button>
-
-        {/* 71 篇力扣题解抽不到样例，给个参数输入框，否则这部分读者完全用不上 */}
-        {baseMode.type === 'manual' && entry.requiredCount > 0 && (
-          <input
-            type="text"
-            className={styles.args}
-            value={argsText}
-            placeholder={
-              entry.paramNames.length === 1
-                ? `${entry.paramNames[0]}，如 "abcabcbb"`
-                : `依次填 ${entry.paramNames.join(', ')}`
-            }
-            onChange={(e) => setArgsText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                void doRun(baseMode);
-              }
-            }}
-            aria-label="调用参数"
-          />
+        {sampleMode && (
+          <button
+            type="button"
+            className={styles.runButton}
+            onClick={() => void doRun(sampleMode)}
+            disabled={busy}
+            data-testid="run">
+            {busy ? (phase === 'loading' ? '加载中…' : '运行中…') : runLabel}
+          </button>
         )}
-
-        <span className={styles.spacer} />
 
         <button
           type="button"
@@ -274,7 +318,68 @@ export default function SnippetBar({
             还原
           </button>
         )}
+
       </div>
+
+      {/* 自己输一行参数/输入跑一下 —— 与「跑样例」并存，不互相顶替 */}
+      {showCustomInput && (
+        <div className={styles.custom}>
+          {/*
+            多行输入要用 textarea。
+
+            HJ24 的 stdin 样例是
+                8
+                186 186 150 200 160 130 197 200
+            —— `<input type="text">` 装不下换行，值会变成
+            `8186 186 150 ...`（第一行的 8 和第二行首尾粘在一起），
+            于是 `int(data[0])` 读到 8186，程序直接炸。
+          */}
+          {canRunStdin ? (
+            <textarea
+              className={styles.stdin}
+              value={customText}
+              rows={Math.min(4, customText.split('\n').length || 1)}
+              placeholder={'stdin 内容，如 1516000\n（可多行）'}
+              spellCheck={false}
+              onChange={(e) => {
+                touchedRef.current = true;
+                setCustomText(e.target.value);
+              }}
+              aria-label="标准输入"
+            />
+          ) : (
+            <input
+              type="text"
+              className={styles.args}
+              value={customText}
+              placeholder={
+                entry.paramNames.length === 1
+                  ? `${entry.paramNames[0]}，如 "abcabcbb"`
+                  : `依次填 ${entry.paramNames.join(', ')}`
+              }
+              onChange={(e) => {
+                touchedRef.current = true;
+                setCustomText(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !needCustom) {
+                  void doRun(customMode);
+                }
+              }}
+              aria-label="调用参数"
+            />
+          )}
+          <button
+            type="button"
+            className={styles.customRun}
+            onClick={() => void doRun(customMode)}
+            disabled={busy || needCustom}
+            title={needCustom ? '先填内容' : undefined}
+            data-testid="run-custom">
+            {busy ? '运行中…' : '▶ 运行'}
+          </button>
+        </div>
+      )}
 
       {editing && (
         <Suspense fallback={<p className={styles.loading}>正在加载编辑器…</p>}>
@@ -282,7 +387,16 @@ export default function SnippetBar({
             value={edited ?? code}
             errorLines={result?.errorLines ?? []}
             onChange={setEdited}
-            onRun={needArgs ? undefined : () => void doRun(baseMode)}
+            // 编辑器里的 Cmd+Enter 跑「跑样例」；没有样例时退到自定义输入
+            onRun={
+              busy
+                ? undefined
+                : sampleMode
+                  ? () => void doRun(sampleMode)
+                  : needCustom
+                    ? undefined
+                    : () => void doRun(customMode)
+            }
           />
         </Suspense>
       )}
@@ -303,6 +417,7 @@ export default function SnippetBar({
                 </span>
                 <div className={styles.rowBody}>
                   <code className={styles.call}>{row.call}</code>
+                  {row.note && <div className={styles.note}>{row.note}</div>}
                   {row.verdict !== 'pass' && row.expected !== '' && (
                     <div className={styles.diff}>
                       <span className={styles.diffLabel}>期望</span>

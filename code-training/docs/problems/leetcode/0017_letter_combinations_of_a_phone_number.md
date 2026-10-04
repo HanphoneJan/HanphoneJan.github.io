@@ -60,9 +60,12 @@ date_added: 2026-03-25
 
 ### 第二步：暴力解法
 
-**思路**：用多重循环枚举所有组合。
+**思路**：按位枚举每一位的字母，再把所有组合拼起来。
 
 ```python
+from itertools import product
+
+
 class Solution:
     def letterCombinations(self, digits: str) -> List[str]:
         if not digits:
@@ -70,15 +73,12 @@ class Solution:
 
         mapping = ["", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"]
 
-        # 只能处理固定长度的情况
-        result = []
-        for c1 in mapping[int(digits[0])]:
-            for c2 in mapping[int(digits[1])]:
-                result.append(c1 + c2)
-        return result
+        # 第 i 位有 len(mapping[int(digits[i])]) 种选择，逐位做笛卡尔积
+        choices = [mapping[int(d)] for d in digits]
+        return [''.join(combo) for combo in product(*choices)]
 ```
 
-**缺点**：只能处理固定长度的输入，无法通用。
+**缺点**：组合数是各位字母数之积（`2^n` 起步），位数一多就爆炸，而且每一位都要重新拼一遍字符串。
 
 ### 第三步：最优解法 —— 回溯
 

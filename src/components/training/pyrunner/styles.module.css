@@ -69,16 +69,71 @@
   flex: 1 1 auto;
 }
 
+/* ---------- 自己输一行跑一下 ---------- */
+.custom {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0 var(--ifm-pre-padding) 0.5rem;
+  direction: ltr;
+}
+
+.customRun {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.7rem;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--prism-color);
+  cursor: pointer;
+  border: 1px solid var(--ifm-color-emphasis-500);
+  border-radius: var(--ifm-global-radius);
+  background: transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.customRun:hover:not(:disabled) {
+  border-color: var(--ifm-color-primary);
+  background: color-mix(in srgb, var(--ifm-color-primary) 15%, transparent);
+}
+
+.customRun:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .args {
   flex: 1 1 12rem;
   min-width: 8rem;
-  max-width: 28rem;
+  max-width: 34rem;
   padding: 0.3rem 0.6rem;
   font: inherit;
   color: var(--prism-color);
   border: 1px solid var(--ifm-color-emphasis-500);
   border-radius: var(--ifm-global-radius);
   background: color-mix(in srgb, var(--prism-color) 6%, transparent);
+}
+
+/* stdin 可能是多行（HJ24：先一个 n，再一行数组），必须能装下换行 */
+.stdin {
+  flex: 1 1 16rem;
+  min-width: 8rem;
+  max-width: 34rem;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  /* 保留作者手写的换行与缩进，别让 textarea 把它折成一行 */
+  white-space: pre;
+  overflow: auto;
+  resize: vertical;
+  color: var(--prism-color);
+  border: 1px solid var(--ifm-color-emphasis-500);
+  border-radius: var(--ifm-global-radius);
+  background: color-mix(in srgb, var(--prism-color) 6%, transparent);
+}
+
+.stdin:focus {
+  outline: none;
+  border-color: var(--ifm-color-primary);
 }
 
 .args:focus {
@@ -146,6 +201,12 @@
 .call {
   font-size: 0.95em;
   word-break: break-all;
+}
+
+.note {
+  margin-top: 0.2rem;
+  font-size: 0.85em;
+  color: var(--ifm-color-emphasis-600);
 }
 
 .diff {
