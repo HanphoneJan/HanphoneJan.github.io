@@ -622,9 +622,48 @@ function readValue(
   // 只在**括号还没配平**时继续（引号不配平不继续：那说明是笔误，
   // 硬读会把整篇文档吞进来），最多 20 行兜底。
   let extraLines = 0;
-  while (openDepth(value) > 0 && extraLines < 20) {
-    const nl = rest.indexOf('\n', end);
+  while (extraLines < 20) {
+    /**
+     * 两种「还没读完」的信号，缺一不可：
+     *
+     * 1. **括号没配平** —— 0200 的网格样例（`[["1","1",…],` 换行续写）。
+     * 2. **这一行以逗号结尾**，而下一行是 `名字 = 值` 的形状 ——
+     *    0399 口袋算式的样例就是这么排的：
+     *
+     *    ```
+     *    输入：equations = [["a","b"],["b","c"]], values = [2.0,3.0],
+     *          queries = [["a","c"],["b","a"],["a","e"]]
+     *    输出：[6.0, 0.5, -1.0, 1.0, -1.0]
+     *    ```
+     *
+     *    只读第一行的话 `queries` 整个丢了，而 `calcEquation` 要三个参数，
+     *    于是这条样例被判「参数个数对不上」丢掉 —— 报的错完全指不到
+     *    「值其实写在了下一行」。
+     *
+     * 第 2 条必须同时看下一行的形状，否则一段散文（行尾恰好有逗号）
+     * 会被一路吞进来。
+     */
+    const unbalanced = openDepth(value) > 0;
+    const commaTail = /[,，、]\s*$/.test(value);
+    if (!unbalanced && !commaTail) {
+      break;
+    }
+    /**
+     * `end` 指向**已读部分的末尾**（通常是那一行的换行符），
+     * 所以下一行从 `end + 1` 开始、到它的换行符 `nl` 结束。
+     *
+     * 从 `end + 1` 起找是关键：`indexOf('\n', end)` 在 `end` 本身就是
+     * 换行符时会返回 `end`，于是 `nl === end`、`nextLine` 变成空串 ——
+     * 0399 那条「第二行续写」的样例在第一轮就 break 掉了，
+     * 整条规则等于没生效（早先那版写的是 `rest.slice(nl + 1)`，
+     * 看到的是再往后一行，同样错，只是错法不一样）。
+     */
+    const nl = rest.indexOf('\n', end + 1);
     if (nl === -1) {
+      break;
+    }
+    const nextLine = rest.slice(end + 1, nl);
+    if (commaTail && !unbalanced && !/^[ \t]*[A-Za-z_]\w*\s*=/.test(nextLine)) {
       break;
     }
     end = nl + 1;
