@@ -30,7 +30,7 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 - **NowCoder progress sync** (`scripts/sync-nowcoder.js`): Pulls accepted NowCoder submissions using `NOWCODER_COOKIE` + `NOWCODER_UID` secrets, diffs against local `code-training/nowcoder/`, and generates new code files + `docs/problems/nowcoder/*.md`. Runs every 2 days via `sync-nowcoder.yml`; commits only when new problems exist.
 - **自测题库** (`static/quiz/bank.json`): 主动回忆题，加在题解正文末尾。`plugins/self-test/index.ts` 只把「哪些题解有题」的清单放进 globalData，`src/theme/DocItem/Layout/index.tsx`（已 swizzle）在正文末尾渲染 `<SelfTest>`，题目数据由组件在用户点开时 fetch。**题解 md 一行都不用改** —— 题库是唯一事实来源。详见「自测题库」小节。
 - **间隔重复复习** (`/code-training/review`): `plugins/srs-cards/index.ts` 构建期把 182 篇题解解析成复习卡片（题号/难度/标签/首解日期），进度存浏览器 localStorage。调度器是 SM-2 lite 三档（忘了/记得/秒答）。
-- **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量 + 递归深度落成 `static/traces/*.json`（进 git）；`plugins/vis-traces` 在构建期把轨迹过一遍六个 adapter（`visualizer/adapters/`：list/tree/stack/grid/array-scan/dp-counter）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `DocItem/Layout` 渲染 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`），展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 182 篇题解里 150 篇录制成功、116 篇有可视化。详见「算法可视化」小节。
+- **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量 + 递归深度落成 `static/traces/*.json`（进 git）；`plugins/vis-traces` 在构建期把轨迹过一遍八个 adapter（`visualizer/adapters/`：list/tree/stack/grid/array-scan/aux-table/string/dp-counter）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `DocItem/Layout` 渲染 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`），展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 182 篇题解里 150 篇录制成功、146 篇有可视化（录制产物的 97%），剩下 4 篇在页面上显式写「本题无可视化步骤」。详见「算法可视化」小节。
 - **算法可视化（独立页，手写）** (`/code-training/visualizer`): `src/components/training/visualizer/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。
 - **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测、复习队列、手写 tracer 三处都用它跳转（录制式可视化不跳转，它就长在那篇题解里）。
 
@@ -190,10 +190,10 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 |---|---|---|
 | 入口 | `code-training/docs/problems/**/*.md` | `/code-training/visualizer` |
 | 代码 | `visualizer/recorder/` + `visualizer/adapters/` | `visualizer/tracers/` |
-| 覆盖 | 每道能录制的题（**150/182 录制成功，116 篇适配 = 64%**） | 10 个算法模式 |
+| 覆盖 | 每道能录制的题（**150/182 录制成功，146 篇适配 = 80%**） | 10 个算法模式 |
 | 产出 | 逐题，零手写 | 每个算法手写 30~60 行 |
-| 视图 | 数组/链表/树/网格/栈/DP 六种 | 数组 / 网格 BFS / DP 表格 |
-| 单测 | `pnpm test:adapters`（1735 项） | `pnpm test:tracers`（90 项） |
+| 视图 | 数组/链表/树/网格/栈/DP/字符/字典八种 | 数组 / 网格 BFS / DP 表格 |
+| 单测 | `pnpm test:adapters`（2053 项） | `pnpm test:tracers`（90 项） |
 
 **为什么要有录制这条路**：手写 tracer 覆盖不了 126 篇题解，而且手写的帧
 **会骗人** —— 算法写错了动画照样流畅跑完，读者反而更确信自己错了。
@@ -202,17 +202,29 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 ```bash
 pnpm trace:record          # 构建期跑 Pyodide 采执行轨迹 -> static/traces/*.json
 pnpm trace:record 0001 0034  # 只录这几篇
-pnpm test:adapters         # 1735 项断言，跑在真实录制产物上
+pnpm test:adapters         # 2053 项断言，跑在真实录制产物上
 pnpm trace:probe           # 逐题报告哪个 adapter 认出来了（补覆盖率用）
-node scripts/check-vis.js  # 无头 Chrome 点真实按钮，六类视图各验一题
+node scripts/check-vis.js  # 无头 Chrome 点真实按钮，八类视图各验一题
 ```
 
 `trace:record` 需要先 `pnpm sync:pyodide`（12.9MB，已 gitignore）；
 没下运行时脚本会打印提示后以 0 退出，**不影响 `pnpm build`**。
 
-#### 六个 adapter 与它们的顺序
+#### 八个 adapter 与它们的顺序
 
-顺序**不是**随便排的，判据是「特异性从高到低」+「宽的必须排在窄的后面」：
+顺序判据不是「特异性从高到低」，而是**「谁的画面才是这题的教学内容，谁先上」**。
+这两件事不一样，混起来会犯两种相反的错：
+
+- **更严的未必该先**：`aux-table` 的判据是「有字典」、`string` 是「有字符串」，
+  都很宽。但 0003 无重复子串、0076 最小覆盖子串、0001 两数之和里也有
+  `cnt_s` / `hash_dict`，auxTable 一旦排在前面就会把它们全抢走 ——
+  画面上「两根指针夹出的窗口」变成了一行字典，而这题的全部教学内容
+  恰恰是那个窗口。
+- **更宽的确实该后**：`stack` 与 `string` 画面几乎一样，但 stack 要求
+  「有个列表的长度在变」。0020 有效括号被 string 先认走时会把 `stack`
+  当成普通的「结果累加器」，而 stack 会把栈顶标成 active。
+
+所以顺序是：**结构 > 形状 > 指针 > 辅助 > 兜底**。
 
 | adapter | 覆盖 | 判据 |
 |---|---|---|
@@ -220,16 +232,18 @@ node scripts/check-vis.js  # 无头 Chrome 点真实按钮，六类视图各验�
 | `tree` | 11 | 有 `{"$":"tree"}` 标记，或有递归深度 |
 | `stack` | 11 | 某个列表的**长度会变**（栈自己长大） |
 | `grid` | 24 | 二维数组 + 形状只增不减 + 被下标读过 |
-| `array-scan` | 52 | 一维序列 + 一到三根会动的下标 |
-| `dp-counter` | 8 | 一维序列 + 若干滚动标量（**没有指针**） |
+| `array-scan` | 53 | 一维序列 + 一到三根会动的下标 |
+| `aux-table` | 7 | 一维序列 + 字典/集合（键渲染成 aux 行） |
+| `string` | 14 | 有被逐字符消费的字符串 + 字符值光标 |
+| `dp-counter` | 18 | 一维序列 + 滚动标量 / 合成格子条 / 逐位消费 |
 
 **最容易搞反的一处是 `dp-counter` 必须排在 `array-scan` 后面。**
 dpCounter 的判据比 arrayScan **宽**（它不要求指针是数组下标），所以一旦排在
 前面就会把双指针题全抢走 —— 实测 0011 盛水容器、0015 三数之和、0016、0034 二分
 全被判成 dp-counter，画面上两根指针的「区间收缩」不见了，只剩几个计数器，
 恰好把这类题最该讲的东西丢了。放在后面就对了：arrayScan 先拿走所有
-「有指针」的题，dpCounter 只接手**没有指针**的纯 DP（0198 打家劫舍、
-0070 爬楼梯、0152、0309、0621），那些题 arrayScan 本来也拒。
+「有指针」的题，dpCounter 只接手 arrayScan 拒掉的（0198 打家劫舍、
+0070 爬楼梯、0152、0309、0338、0494、0621、0279、HJ150、0007）。
 
 `grid` 排 `array-scan` 前面也有讲究：网格题里常有另一个一维数组（0073 的
 `positions`），排前面能保证网格题一定走网格视图。
@@ -256,6 +270,15 @@ dpCounter 的判据比 arrayScan **宽**（它不要求指针是数组下标）�
   于是 22 篇 `result-mismatch` 里有 18 篇是拿 A 的输入对 B 的答案：
   0005 录的是 `"cbbd"` 却拿 `"babad"` 的 `"bab"` 去比、0013 录的是
   `"MCMXCIV"`（实录 1994）却拿 `"III"` 的 3 去比。
+- **「跑通且结果对」还不够，还得有过程 —— 样例要走不进主循环就换下一组。**
+  0416 分割等和子集是唯一的实例，失败方式极其隐蔽：题面第一组样例
+  `nums = [1,2,3,5]` 总和是 **11（奇数）**，代码第三行
+  `if total % 2 != 0: return False` 就返回了 —— 轨迹 3 个事件，
+  judge 也判「结果一致」（确实是 False），两道关卡全过，**录制成功了**，
+  可这段轨迹里一行循环都没有。换成第二组样例（`[1,5,11,5]`，28 个事件）
+  立刻变成记忆化搜索的完整过程。
+  所以 `pickSamples` 返回**全部**候选（每个入口最多试 3 组），
+  取事件最多的那一份；一旦某份事件数 ≥12 就停，绝大多数题行为与从前一致。
 - **`json.dumps` 产的不是合法 JSON。** Python 默认 `allow_nan=True`，
   把无穷写成裸的 `Infinity` / `NaN`，`JSON.parse` 直接报
   `SyntaxError: No number after minus sign at position 142` ——
@@ -355,6 +378,66 @@ dpCounter 的判据比 arrayScan **宽**（它不要求指针是数组下标）�
   形式上一样匹配。0207 课程表则是 DFS 染色，两根指针都在范围内也都会动，
   但拿双指针的尺子去量它是量错了东西
 
+#### 字符串 / 字典 / 合成格子条：这三类的坑位
+
+新增 `string` / `aux-table` 两个 adapter 时踩的坑，每一条都对应一批题。
+它们共同的根因是：**局部变量不是「一帧一幅完整的画面」**。
+
+- **`sys.settrace` 记的是「这一行所属那个栈帧的局部变量」。**
+  字符串题的数据因此天然分散在好几个栈帧里。HJ29 字符串加解密的
+  `''.join(encrypt(c) for c in plain)`：`plain` 在 solve 的帧上、
+  当前字符 `ch` 在 encrypt 的帧上、推导式 `.0` 又有自己的帧 ——
+  **三者从不出现在同一帧里**。按「本帧有没有这个变量」取值的话，
+  带 `plain` 的帧没有 `ch`（光标恒 undefined），带 `ch` 的帧没有 `plain`
+  （整帧被跳过），60 多个事件最后只剩 3 帧静止画面。
+  正确做法是**把各帧的局部变量合并成一个持续存在的环境**，每一帧读合并后的值。
+- **`str(v)` 兜底产出的摘要串不是数据。** `<str_ascii_iterator>`、
+  `<function>`、`<deque>`，推导式内部的 `.0` / `.1` 也是。
+  不挡掉的话 HJ29 的主串会被选中成 `<str_ascii_iterator>`（20 字符
+  比 `plain` 的 8 字符还长，而主串正是按「出现帧数 × 长度」打分的），
+  画面上是一排英文字母。
+- **stdin 题的第一帧局部变量是空的。** `solve()` 第一行还没执行
+  `s = sys.stdin.readline()`。主串只扫第一帧的话，
+  HJ21/HJ31/HJ90/KY4 一篇都找不到主串 —— 必须扫**全部**帧。
+- **光标按字符值反查会撞上巧合。** HJ21 简单密码 `for ch in pwd` 的光标是
+  主串第 5 个字符，而 aux 行 `res` 里恰好也有一格是 `'z'`。
+  先查 aux 就会把光标标到「输出里那个 z」上。所以顺序是
+  **单字符先查主串，查不到才退 aux**（HJ90 的 `part` 是 `"10"/"137"`，
+  主串里根本没有这种多字符片段，那时才轮到 aux）。
+- **字典的键没有插入顺序信息。** 「这一帧新加了哪个键」只能靠
+  **相邻两帧的键集合求差**，那是唯一可靠的「刚刚发生了什么」。
+- **集合（`set()`）不能标 active。** 录成 `{}` 且键恒定，
+  分不清「刚加的」与「早就有的」—— 指着一个早就存在的键说「刚加的」比不标更糟。
+- **合成格子条上光标必须走一段连续整数。** 0198 打家劫舍的代码是
+  `for num in nums:`，没有下标变量，只有元素值 `num`（取值 2,7,9,3,1，
+  全落在 [0,5)）。只按「取值在范围内」挑，会把 `num=2` 标在**第 2 格**
+  （那一格是 9）—— 纯属巧合的高亮。真正的下标逐格走完，
+  「distinct 个值恰好铺满 [min,max]」把两类分得干干净净。
+- **名字像 DP 状态的一律不当光标。** 0070 爬楼梯踩过：`f1` 取过 1 和 2 而
+  格子条正好 3 格，于是 `f1` 被当成推进下标，结果它被排除出状态量
+  （那才是这题的主角），画面上只剩一个没有意义的「f1 指向第 1 格」。
+- **越界过一次就整个否掉。** 0279 的 `for j in range(i*i, n+1, j)` 里
+  j 会取到 n，而格子条只有 0..n-1。只丢掉越界的那几帧的话，
+  前 8 帧指针全落在格子条外面 —— 要么空指针要么满屏高亮。
+- **「签名变了」不等于「有过程」。** HJ33 的 `num` 恰好被状态量正则
+  `n\w*` 命中，它**第一次出现**就让签名变了，于是判成「有过程」，
+  画出来是三帧完全一样的画面。判据必须是「光标到过 ≥2 个位置 /
+  aux 内容变过 / 某个状态量**改过值**」，第一次出现不算「改」。
+- **光标指到哪张表，哪张表就是主画面。** 0494 目标和的 `nums`（输入，5 格
+  从头到尾不变）与 `f`（背包表，每帧被改）：按「入参优先」挑会选中 `nums`，
+  画面是一排不动的 1。而源码里 `f[c] += f[c-x]` 说明光标 `c` 在 `f` 上，
+  主画面就该是 `f` —— 看到 c 从 m 一路退到 x，「内层为什么必须倒序」
+  这条规则自己就显出来了。
+- **「在长大」的数组要补空格而不是缩画面。** 0338 的 `bits` 一开始只有
+  一格。早先 `raw.length !== n` 就跳过该帧，丢掉的恰好是「表刚开始被填」
+  的那几帧。固定长度 + 空格子（`idle` = 还没算到）才对。
+- **每一行源码都产生一个事件帧，动画会卡住。** 0007 整数反转 21 个事件
+  只对应 4 张不同的画面。按「画面签名」（数组内容 + 光标 + 状态量）去重，
+  留每段静止期的第一帧。
+- **`bytes` / `bytearray` 必须解码成字符串。** ACM 题常写
+  `sys.stdin.buffer.read()`，录出来是 `"<bytes>"`，画面上什么也画不出来
+  —— HJ81 字符串字符匹配的两个入参**全是** bytes，整题因此无从下手。
+
 #### 视图侧踩过的坑
 
 - **树按层画，不摊平成网格。** 摊平后 `[1,2,3,null,5]` 里 5 会紧贴 3，
@@ -429,34 +512,33 @@ pnpm test:tracers   # 90 项断言：算法结果与参考实现逐一对拍
 
 #### 当前覆盖与缺口
 
-182 篇题解里 **150 篇录制成功、116 篇有可视化（64%）**。录制的 32 篇失败：
+182 篇题解里 **150 篇录制成功、146 篇有可视化（80%）**。
 
-- **`no-sample=17`**：题面样例的**参数个数与入口签名对不上**。
+**录制失败的 32 篇**：
+
+- **`no-sample=18`**：题面样例的**参数个数与入口签名对不上**。
   多数是 class-API 设计题（0146 LRU 缓存、0155 最小栈、0208 前缀树、
   0295 数据流中位数、0399 表达式求值）—— 它们的样例是一串「操作指令」
   （`["LRUCache","put","put","get",...]`），根本没有「一次调用」。
+  另有几篇是「只采到 1~2 个事件」：样例直接走了早退分支
+  （0062 唯一路径的 `if m == 1 or n == 1`、0461 汉明距离的单次循环、
+  0297 的序列化入口）。
 - **`exec-error=8`**：入口签名与样例不匹配（HJ1/HJ11/HJ85 拿到的实参个数不对）、
   依赖 numpy（ML23，录制器**故意不装包**，见 Pyodide 那节）
-- **`no-code=4`**：`## 完整代码实现` 里没有可运行代码
-- **`result-mismatch=3`**：0148 排序链表（题解返回长度而非链表）、
-  0236/0297 的返回值序列化约定与题面不同
+- **`no-code=4`**：`## 完整代码实现` 里没有可运行代码（4 篇 SQL 题）
+- **`result-mismatch=2`**：0148 排序链表（题解返回长度而非链表）、
+  0236 的返回值序列化约定与题面不同
 
-录到了但 adapter 还没认出来的 **34 篇**，分三类：
+**录到了但没有 adapter 认领的 4 篇**，全是一行正则替换 / 一次切片：
+HJ31 单词倒排（`re.findall` 一次成型）、HJ33 整数与 IP 转换
+（`a,b,c,d = map(int, split('.'))`）、HJ96 表示数字（`re.sub`）、
+KY4 反序输出（每行 `s[::-1]`）。它们的局部变量里**没有逐步推进的痕迹** ——
+硬画出来是两三帧静止画面。这 4 篇在页面上显式写一行「本题无可视化步骤」
+（`VisTracesData.noVisual`），而不是什么都不显示：不写等于让读者以为
+「这个功能是按题目难度挑的」。
 
-- **纯标量题**（0007 整数反转、0008 字符串转整数、0009 回文数、
-  0136 异或、0169 多数元素）：入参是一个整数，画面上没有序列可画。
-  这类题硬做出来是「一个数字在变」，没有教学价值 —— 建议就诚实标成
-  「本题无可视化步骤」。
-- **字符串逐字符处理**（HJ17/HJ20/HJ21/HJ29/HJ30/HJ31/HJ33/HJ36/HJ59/
-  HJ67/HJ80/HJ81/HJ90/HJ92/HJ96/KY4）：需要一个「字符 + 位置 + 若干标记位」
-  的视图（HJ90 合法 IP 要标 4 段的合法性，HJ80 要看合并进度）。
-- **多数组 / 集合 / 回溯**（0004 两个数组的中位数、0006 Z 字形变换、
-  0049 字母分组、0279 完全平方数、0416 分割等和子集、0494 目标和、
-  0338 比特位计数、sf_tiling 铺砖、adamw、text_cleaner）：
-  需要 aux 视图（字典/集合/多数组同时显示）或递归搜索树视图。
-
-也就是说**下一步要写的是 `stringScan`（字符视图）与 `auxTable`（字典/多数组）**
-两个 adapter，以及给纯标量题一个明确的「无可视化」说明。
+也就是说 **146/150 = 97% 的录制产物都有可视化**，剩下 4 篇是算法本身
+没有中间过程，不是覆盖率不足。
 
 ### 浏览器内跑代码（Pyodide）
 
