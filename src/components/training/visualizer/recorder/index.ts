@@ -33,7 +33,7 @@ import {
   extractDocStdinSamples,
   extractSignature,
 } from '../../../../../plugins/py-samples';
-import {toPythonLiteral, usableSamples} from '../../pyrunner/runner';
+import {asCallArgument, toPythonLiteral, usableSamples} from '../../pyrunner/runner';
 import {nodeParams} from '../../pyrunner/snippet';
 import {BUILDER_PY, STDIN_SHIM_PY} from '../../pyrunner/driver';
 import {compare} from '../../pyrunner/compare';
@@ -307,6 +307,21 @@ function pickSamples(
   return usable.map((s) => withFlags(s, 0)).map(({score: _score, ...rest}) => rest);
 }
 
+/**
+ * 样例实参 -> Python 字面量。**必须走 `asCallArgument`**，与页面上
+ * 「跑样例」那条路（runner.ts 的第 143 行）完全一致。
+ *
+ * 两处口径不一致的后果是「页面上样例全过，但录制说跑不对」这种自相矛盾：
+ * - `reverse_number(num_str: str)` 拿到样例 `1516000`，直接 `toPythonLiteral`
+ *   会把它变成**整数** 1516000，于是 `'int' object is not subscriptable` ——
+ *   而运行条那边按 `str` 标注补了引号，跑得好好的（HJ11 数字颠倒）。
+ * - shoppee 的围栏样例写的是 `grid = [[0,0,0]]`，不剥掉 `grid = `
+ *   就是 SyntaxError（`asCallArgument` 的加强版专门处理这个形态）。
+ */
+function pyArg(raw: string, annotation?: string): string {
+  return toPythonLiteral(asCallArgument(raw, annotation));
+}
+
 /** 递归收集题解 md */
 function collectDocs(root: string): string[] {
   const out: string[] = [];
@@ -479,13 +494,42 @@ export async function recordTraces(
         continue;
       }
       // 读 stdin 的入口：喂第一组 stdin 样例，期望值按文本比
-      if (stdinSamples.length > 0) {
+      //
+      // **只给真的读 stdin 的入口用**（牛客/ACM 题的 `solve`/`main`）。
+      // 早先不分青红皂白都给，于是「需要 1 个位置参数」的入口拿到
+      // 「空参数 + 一段 stdin」—— 驱动里报的是
+      // `missing 1 required positional argument: 'grid'`，
+      // 而真正的问题是样例形态对不上（shoppee_maze 一次性三篇）。
+      if (c.stdin && stdinSamples.length > 0) {
         attempts.push({
           candidate: c,
           args: [],
           expected: stdinSamples[0].expected,
           stdinText: stdinSamples[0].stdin,
         });
+      }
+    }
+
+    if (attempts.length === 0) {
+      /**
+       * 单参入口 + stdin 形态的样例：从 stdin 文本反推出一个列表/网格实参。
+       *
+       * shoppee_maze_unreachable_count 的围栏样例是「4 + 4×4 的 0/1 矩阵」，
+       * 而入口要 `List[List[int]]` —— 抽取器正确地拒绝了它（多行且无
+       * `k =` 形式），但值就在那儿，按网格规则还原即可。
+       */
+      for (const c of candidates) {
+        if (c.stdin || c.requiredCount !== 1 || attempts.length >= 3) {
+          continue;
+        }
+        const guess = stdinArgs(c.paramNames, stdinSamples);
+        if (guess) {
+          attempts.push({
+            candidate: c,
+            args: guess.args,
+            expected: guess.expected,
+          });
+        }
       }
     }
 
@@ -553,7 +597,7 @@ export async function recordTraces(
      */
     for (const attempt of attempts.slice(0, 10)) {
       const c = attempt.candidate;
-      const pyArgs = attempt.args.map(toPythonLiteral);
+      const pyArgs = attempt.args.map((a, i) => pyArg(a, c.annotations[i]));
       const realKinds = needsNodes
         ? nodeParams(asSnippetEntry(c), code)
         : undefined;
@@ -633,7 +677,7 @@ export async function recordTraces(
       method: winner.candidate.name,
       paramNames: winner.candidate.paramNames,
       argKinds: realKinds,
-      args: winner.args.map(toPythonLiteral),
+      args: winner.args.map((a, i) => pyArg(a, winner.candidate.annotations[i])),
       stdin: winner.stdinText,
       expected: winner.expected,
       result: payload.result,
@@ -689,6 +733,42 @@ function stdinArgs(
   if (samples.length === 0 || paramNames.length === 0) {
     return null;
   }
+  /**
+   * 「首行 n + 后面 n 行、每行 n 个数字」是网格输入的标准写法，
+   * 还原成二维列表 —— shoppee_maze_unreachable_count 的围栏样例就是这个形态：
+   *
+   * ```
+   * 4
+   * 0 1 1 0
+   * 1 0 0 0
+   * 0 1 0 1
+   * 0 1 1 0
+   * ```
+   *
+   * 而入口是 `apply(generated_map: List[List[int]])`。
+   * 不还原的话把 17 个数字拍平成一维数组，代码第一行就越界 ——
+   * 报错还指不到「样例形状不对」这件事。
+   *
+   * 判据很紧：首行是整数 n（2~30），后面**恰好** n 行、每行**恰好** n 个数字。
+   * 「恰好」是这个规则敢不敢用的全部理由：差一点就退回拍平。
+   */
+  const lines = samples[0].stdin
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  if (lines.length >= 2) {
+    const n = Number(lines[0]);
+    if (Number.isInteger(n) && n >= 2 && n <= 30 && lines.length - 1 === n) {
+      const rows = lines.slice(1).map((l) => l.match(/-?\d+(?:\.\d+)?/g) ?? []);
+      if (rows.every((r) => r.length === n)) {
+        return {
+          args: [`[[${rows.map((r) => r.join(', ')).join(', ')}]]`],
+          expected: samples[0].expected,
+        };
+      }
+    }
+  }
+
   const nums = samples[0].stdin.match(/-?\d+(?:\.\d+)?/g);
   if (!nums || nums.length < 3) {
     return null;
