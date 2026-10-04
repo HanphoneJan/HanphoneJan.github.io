@@ -16,8 +16,8 @@ export default function Home() {
             <Link href="/docs/intro" className={styles.heroButton}>
               开始阅读
             </Link>
-            <Link href="/blog" className={styles.heroButtonSecondary}>
-              浏览博客
+            <Link href="/code-training/visualizer" className={styles.heroButtonSecondary}>
+              算法可视化
             </Link>
           </div>
         </div>
