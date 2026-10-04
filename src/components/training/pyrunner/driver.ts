@@ -133,18 +133,18 @@ def __dump_text__(v):
  * **必须走类自己的构造函数**：不能手搓一个只带 val/next 的对象 ——
  * 有些题解给 ListNode 加了额外字段（比如 tag），手搓的对象会缺字段。
  */
-const BUILDER = `def __mk__(v, __k__):
+const BUILDER = `def __mk__(v, __k__, pos=None):
     if __k__ == 'list':
         if isinstance(v, list) and not v:
             # 空数组原样传：0023 的 mergeKLists([]) 里 lists 就是个空列表，
             # 建成 None 的话 enumerate(None) 直接 TypeError
             return v
         if isinstance(v, list) and all(x is None or isinstance(x, (int, float, str, bool)) for x in v):
-            return __mk_list__(v)
+            return __mk_list__(v, pos)
         # 链表**数组**：0023 的签名是 List[ListNode]，样例给的是 [[1,4,5],[1,3,4]]
         # 逐个建链表。不处理的话元素还是 list，代码里 l1.val 立刻 AttributeError。
         if isinstance(v, list) and all(isinstance(x, list) for x in v):
-            return [__mk_list__(x) for x in v]
+            return [__mk_list__(x, pos if i == 0 else None) for i, x in enumerate(v)]
         return v
     if __k__ == 'randlist':
         # 0138 的样例 [[7,null],[13,0],[11,4],...]：每项是「值 + random 指向的
@@ -301,18 +301,25 @@ if 'Node' not in __ns__:
         def __repr__(self):
             return f'Node({self.val})'
 
-def __mk_list__(values):
+def __mk_list__(values, pos=None):
     __cls__ = globals()['ListNode']
     __head__ = None
+    __tail__ = None
+    __nodes__ = []
     for __v__ in values:
         __n__ = __cls__(__v__)
+        __nodes__.append(__n__)
         if __head__ is None:
             __head__ = __n__
         else:
-            __cur__ = __head__
-            while __cur__.next is not None:
-                __cur__ = __cur__.next
-            __cur__.next = __n__
+            __tail__.next = __n__
+        __tail__ = __n__
+    # 力扣的「环形链表」约定：样例是 head = [3,2,0,-4], pos = 1，
+    # 意思是把尾部接到第 pos 个节点上（0 起）。0141/0142 的样例都这么写，
+    # 而题解的入口只收 head —— 不接环的话 hasCycle 返回 False，
+    # 与题面期望的 True 判不上，录制直接判 result-mismatch 丢掉。
+    if pos is not None and __tail__ is not None and 0 <= pos < len(__nodes__):
+        __tail__.next = __nodes__[pos]
     return __head__
 
 def __mk_tree__(v):
