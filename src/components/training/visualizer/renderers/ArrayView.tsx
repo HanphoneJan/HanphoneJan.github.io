@@ -28,7 +28,9 @@ export function ArrayView({frame, display}: Props): React.ReactElement {
   const {array, states, pointers, aux} = frame;
   // 柱高按全数组最大值归一化。取绝对值是因为二分查找这类输入可能有负数，
   // 而柱状图表达的是「量级」，负数往下画反而更难读。
-  const maxAbs = Math.max(1, ...array.map((v) => Math.abs(v)));
+  // 字符串元素（字符类题目）不参与 maxAbs，也不走 bars。
+  const nums = array.filter((v): v is number => typeof v === 'number');
+  const maxAbs = Math.max(1, ...nums.map((v) => Math.abs(v)));
 
   return (
     <div className={styles.arrayWrap}>
@@ -58,7 +60,12 @@ export function ArrayView({frame, display}: Props): React.ReactElement {
                 value={v}
                 state={a.states?.[i]}
                 display="boxes"
-                maxAbs={Math.max(1, ...a.values.map((x) => Math.abs(x)))}
+                maxAbs={Math.max(
+                  1,
+                  ...a.values
+                    .filter((x): x is number => typeof x === 'number')
+                    .map((x) => Math.abs(x)),
+                )}
                 index={i}
                 showIndex
                 pointerLabels={[]}
@@ -83,7 +90,7 @@ function Cell({
   showIndex,
   pointerLabels,
 }: {
-  value: number;
+  value: number | string;
   state?: CellState;
   display: 'bars' | 'boxes';
   maxAbs: number;
@@ -91,6 +98,9 @@ function Cell({
   showIndex: boolean;
   pointerLabels: Array<{text: string; color: string}>;
 }): React.ReactElement {
+  // 字符串格子没有高度可言（bars 是给数字大小关系用的），
+  // 字符串题一律走 boxes，所以这里把数值宽度当成 0 高度由 CSS 兜底。
+  const numeric = typeof value === 'number' ? value : null;
   return (
     <div className={styles.cellCol} data-testid="cell">
       {pointerLabels.length > 0 && (
@@ -109,9 +119,9 @@ function Cell({
           styles[`state-${state}`],
         )}
         style={
-          display === 'bars'
+          display === 'bars' && numeric !== null
             ? ({
-                height: `${Math.max(8, (Math.abs(value) / maxAbs) * 100)}%`,
+                height: `${Math.max(8, (Math.abs(numeric) / maxAbs) * 100)}%`,
               } as React.CSSProperties)
             : undefined
         }

@@ -20,8 +20,14 @@ import {
   SELF_TEST_TITLE,
 } from '@site/src/components/training/selftest/toc';
 import {PyRunnerScopeProvider} from '@site/src/components/training/pyrunner/scope';
+import InlineVisualizer from '@site/src/components/training/visualizer/InlineVisualizer';
+import {
+  VIS_ANCHOR,
+  VIS_TITLE,
+} from '@site/src/components/training/visualizer/InlineVisualizer';
 import type {SelfTestData} from '@site/plugins/self-test';
 import type {PySamplesData} from '@site/plugins/py-samples';
+import type {VisTracesData} from '@site/plugins/vis-traces';
 
 export interface Props {
   readonly children: ReactNode;
@@ -91,12 +97,21 @@ export default function DocItemLayout({children}: Props): ReactNode {
   )?.entries;
   const inPyRunnerScope = Boolean(selfTestKeyValue && pyEntries?.[selfTestKeyValue]);
 
-  // 「自测」渲染在正文之外（</DocItemContent> 之后），构建期的 TOC 抓不到它。
-  // 这里显式补一条，桌面侧边栏与移动端折叠菜单都会出现。
+  // 录制式可视化：清单在 globalData，帧数据在 static/traces/<name>.json，
+  // 由 InlineVisualizer 在读者点开时才 fetch（见 vis-traces 插件的文件头）。
+  const visTrace = selfTestKeyValue
+    ? (usePluginData('vis-traces') as unknown as VisTracesData | undefined)?.entries.find(
+        (e) => e.docId === selfTestKeyValue,
+      )
+    : undefined;
+
+  // 「自测」与「可视化」都渲染在正文之外（</DocItemContent> 之后），
+  // 构建期的 TOC 抓不到它们。这里显式补，桌面侧边栏与移动端折叠菜单都会出现。
   // Provider 必须包住**整个 row** —— 桌面侧边栏是 docItemContainer 的兄弟节点。
-  const extraToc = hasSelfTest
-    ? [{id: SELF_TEST_ANCHOR, value: SELF_TEST_TITLE, level: 2}]
-    : [];
+  const extraToc = [
+    ...(visTrace ? [{id: VIS_ANCHOR, value: VIS_TITLE, level: 2}] : []),
+    ...(hasSelfTest ? [{id: SELF_TEST_ANCHOR, value: SELF_TEST_TITLE, level: 2}] : []),
+  ];
 
   return (
     <ExtraTocProvider entries={extraToc}>
@@ -115,6 +130,9 @@ export default function DocItemLayout({children}: Props): ReactNode {
               </PyRunnerScopeProvider>
             ) : (
               <DocItemContent>{children}</DocItemContent>
+            )}
+            {visTrace && (
+              <InlineVisualizer entry={visTrace} />
             )}
             {hasSelfTest && selfTestKeyValue && (
               <SelfTest docId={selfTestKeyValue} />

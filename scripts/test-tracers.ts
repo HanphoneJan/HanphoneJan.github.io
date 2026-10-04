@@ -40,8 +40,13 @@ function check(name: string, cond: boolean, detail?: unknown): void {
   }
 }
 
-/** 取最后一帧的数组（数组类 tracer 才有） */
-function lastArray(frames: Frame[]): number[] | undefined {
+/**
+ * 取最后一帧的数组（数组类 tracer 才有）。
+ *
+ * 返回 `Array<number | string>`：录制式 adapter 也会产出字符串帧
+ * （0003 那类字符滑窗），这里跟着 `ArrayFrame.array` 的类型走。
+ */
+function lastArray(frames: Frame[]): Array<number | string> | undefined {
   const last = frames[frames.length - 1];
   return last && 'array' in last ? last.array : undefined;
 }
