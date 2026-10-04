@@ -55,10 +55,22 @@ function lineText(code: string, line: number): string {
   return (code.split('\n')[line - 1] ?? '').replace(/#.*$/, '').trim();
 }
 
+/**
+ * 摘要串不是序列：`str(v)` 兜底会把对象记成 `"<Node>"` / `"<TrieNode>"`。
+ *
+ * 0146 LRU 缓存的 `self.dummy` 就是这样一个链表头节点。把它当主数组的话，
+ * 画面上是一行「< N o d e >」，而真正该看的（`self.key_to_node` 的键）
+ * 被挤到 aux 行里当配角。
+ */
+const SUMMARY_RE = /^[<{].*[>}]$/;
+
 /** 一个「可当格子画的序列」：数字或字符串的一维数组，或一个字符串 */
 function asSequence(v: unknown): Array<number | string> | null {
   if (typeof v === 'string') {
-    return v.length >= 2 && v.length <= 32 ? [...v] : null;
+    if (v.length < 2 || v.length > 32 || SUMMARY_RE.test(v)) {
+      return null;
+    }
+    return [...v];
   }
   if (
     Array.isArray(v) &&
@@ -84,8 +96,13 @@ function asDict(v: unknown): Record<string, Json> | null {
 }
 
 interface Pick {
-  arrayVar: string;
+  /** 主数组变量名；没有可画序列时为 undefined（主画面改画字典的键） */
+  arrayVar?: string;
+  /** 「只有字典」模式下被当成主画面的那个字典 */
+  dictVar?: string;
   values: Array<number | string>;
+  /** 主画面的格子数（只有字典模式下才有意义：键的最大个数） */
+  maxKeys?: number;
   /** 字典类变量的名字，按「出现的帧数」排序 */
   dictVars: string[];
   /** 光标变量名（会移动的标量） */
@@ -129,13 +146,10 @@ function pickShapes(
     const p = (params.has(b[0]) ? 1 : 0) - (params.has(a[0]) ? 1 : 0);
     return p !== 0 ? p : b[1] - a[1];
   });
-  if (arrays.length === 0) {
-    return null;
-  }
-  const [arrayVar] = arrays[0];
-  const seq = events
-    .map((e) => e.locals[arrayVar])
-    .find((v) => asSequence(v) !== null);
+  const arrayVar = arrays.length > 0 ? arrays[0][0] : undefined;
+  const seq = arrayVar
+    ? events.map((e) => e.locals[arrayVar]).find((v) => asSequence(v) !== null)
+    : undefined;
   const values = asSequence(seq) ?? [];
 
   const dictVars = [...dictCount.entries()]
@@ -145,6 +159,38 @@ function pickShapes(
 
   if (dictVars.length === 0) {
     return null;
+  }
+  /**
+   * **没有主序列时，主画面直接画字典的键。**
+   *
+   * 0146 LRU 缓存的局部变量里没有可画的序列：`self.dummy` 是链表头节点
+   * （记成 `"<Node>"`），其余是标量。唯一在变的东西是 `self.key_to_node`
+   * 的键集合 —— 「缓存里现在有哪几个 key」，而那正是这题的全部教学内容。
+   *
+   * 画成 aux 行会把真正的主角降级成配角（而且 `<Node>` 那行还在占版面），
+   * 所以「只有字典」时键就是主数组。
+   */
+  if (!arrayVar) {
+    const dictVar = dictVars[0];
+    let maxKeys = 0;
+    for (const e of events) {
+      const d = asDict(e.locals[dictVar]);
+      if (d) {
+        maxKeys = Math.max(maxKeys, Object.keys(d).length);
+      }
+    }
+    if (maxKeys < 2) {
+      return null;
+    }
+    return {
+      arrayVar: undefined,
+      dictVar,
+      values: [],
+      maxKeys,
+      dictVars: [dictVar],
+      cursorVar: undefined,
+      stateVars: [],
+    };
   }
 
   // 光标：在「动过的整数」里，且值落在主数组范围内
@@ -175,7 +221,7 @@ export function adaptAuxTable(trace: RawTrace): AdapterResult | null {
   if (!pick) {
     return null;
   }
-  const n = pick.values.length;
+  const n = pick.arrayVar ? pick.values.length : (pick.maxKeys ?? 0);
   const b = new TraceBuilder();
   let declared = false;
   let progressed = false;
@@ -183,10 +229,10 @@ export function adaptAuxTable(trace: RawTrace): AdapterResult | null {
   let prevKeys: string[] = [];
 
   for (const e of trace.events) {
-    // 字典：取第一个可用的
+    // 字典：取第一个可用的。「只有字典」模式下锁死那一个
     let dict: Record<string, Json> | undefined;
     let dictName = '';
-    for (const name of pick.dictVars) {
+    for (const name of pick.arrayVar ? pick.dictVars : [pick.dictVar!]) {
       const d = asDict(e.locals[name]);
       if (d) {
         dict = d;
@@ -217,12 +263,14 @@ export function adaptAuxTable(trace: RawTrace): AdapterResult | null {
 
     if (!declared) {
       b.push({
-        note: `输入 ${pick.arrayVar} = ${
-          typeof pick.values[0] === 'number'
-            ? `[${pick.values.join(', ')}]`
-            : pick.values.join('')
-        }；中间表：${pick.dictVars.join(' / ')}`,
-        array: [...pick.values],
+        note: pick.arrayVar
+          ? `输入 ${pick.arrayVar} = ${
+              typeof pick.values[0] === 'number'
+                ? `[${pick.values.join(', ')}]`
+                : pick.values.join('')
+            }；中间表：${pick.dictVars.join(' / ')}`
+          : `${dictName} 的键就是全部状态（题目里的输入是一串操作，没有入参数组）`,
+        array: pick.arrayVar ? [...pick.values] : new Array(n).fill('') as Array<number | string>,
       });
       declared = true;
     }
@@ -251,21 +299,42 @@ export function adaptAuxTable(trace: RawTrace): AdapterResult | null {
         states[i] = 'done';
       }
     }
+    /**
+     * 「只有字典」模式：主画面就是键本身（短了补空格 = 还没放进来）。
+     * 不这么做的话 ArrayView 会渲染一条空行，主角还在 aux 行里当配角。
+     */
+    const shownKeys = keys.map((k) => (k.length > 8 ? `${k.slice(0, 7)}…` : k));
+    const mainRow: Array<number | string> = pick.arrayVar
+      ? [...pick.values]
+      : [
+          ...shownKeys,
+          ...new Array(Math.max(0, n - shownKeys.length)).fill(
+            '' as number | string,
+          ),
+        ];
+    if (!pick.arrayVar) {
+      const active = added.length > 0 ? keys.indexOf(added[added.length - 1]) : -1;
+      for (let i = 0; i < keys.length; i++) {
+        states[i] = i === active ? 'active' : 'done';
+      }
+    }
 
     b.push({
       note: `${
         added.length > 0
-          ? `${dictName} 新增 ${added.map((k) => (k.length > 12 ? `${k.slice(0, 11)}…` : k)).join('、')}`
+          ? `${dictName} ${
+              pick.arrayVar ? '新增' : '现有'
+            } ${added.map((k) => (k.length > 12 ? `${k.slice(0, 11)}…` : k)).join('、')}`
           : ''
       }${added.length > 0 && cursorIdx !== undefined ? '；' : ''}${
         cursorIdx !== undefined ? `第 ${cursorIdx} 个元素` : ''
       }${
         Object.keys(stateNow).length ? ` ${JSON.stringify(stateNow)}` : ''
       }：${lineText(trace.code, e.line) || `第 ${e.line} 行`}`.replace(/^：/, ''),
-      array: [...pick.values],
+      array: mainRow,
       states,
       pointers: cursorIdx !== undefined ? {[pick.cursorVar!]: cursorIdx} : undefined,
-      aux: [auxRow],
+      aux: pick.arrayVar ? [auxRow] : undefined,
       counters: Object.keys(stateNow).length > 0 ? stateNow : undefined,
       line: e.line,
     });

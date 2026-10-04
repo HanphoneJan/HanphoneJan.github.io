@@ -39,6 +39,27 @@ const PAGES = [
     view: 'digit',
     ptr: true,
   },
+  // class-API 设计题：录的是「构造一次 + 挨个调方法」的脚本，
+  // 内部状态（LRU 的 key 表 / 最小栈的辅助栈）全在 self.* 上。
+  // 这三题没有入参数组可画，少验一个就等于「脚本模式能不能上页面」没验证过。
+  {
+    path: '/code-training/problems/leetcode/146',
+    name: 'LRU 缓存（脚本模式：字典键就是主画面）',
+    view: 'keys',
+    ptr: false,
+  },
+  {
+    path: '/code-training/problems/leetcode/155',
+    name: '最小栈（脚本模式：双栈）',
+    view: 'aux',
+    ptr: false,
+  },
+  {
+    path: '/code-training/problems/leetcode/208',
+    name: '前缀树（脚本模式：逐字符下行）',
+    view: 'string',
+    ptr: true,
+  },
 ];
 
 const {spawn} = require('child_process');
@@ -237,6 +258,9 @@ async function main() {
         aux: counts.cells > 0 && counts.auxRows > 0,
         // 逐位消费：格子条是整数的各位数字 + 一个指针
         digit: counts.cells > 0 && counts.pointers.length > 0,
+        // 「只有字典」模式：字典的键**就是主画面**（0146 LRU 没有入参数组，
+        // 「缓存里现在有哪几个 key」是全部状态）。这时没有 aux 行可查。
+        keys: counts.cells > 0,
       }[page.view];
       if (viewOk) pass++;
       else fails.push(`${page.name}: ${page.view} 视图没渲染出格子`);
@@ -269,6 +293,7 @@ async function main() {
         string: counts.pointers.length > 0,
         aux: counts.pointers.length > 0 || counts.auxRows > 0,
         digit: counts.pointers.length > 0,
+        keys: true,
       }[page.view];
       if (page.ptr) {
         if (hasFocus) pass++;

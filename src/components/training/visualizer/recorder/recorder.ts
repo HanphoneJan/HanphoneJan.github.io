@@ -112,15 +112,44 @@ def _tjsonable(v, depth=0, nmap=None, nroot=None):
         return None
 
 
-def _tbuild_nmap(locals_dict):
+def _tself_attrs(v):
+    """实例的属性字典。没有 __dict__（__slots__ 类）就返回空。"""
+    try:
+        d = getattr(v, "__dict__", None)
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def _tscan_items(locals_dict, capture_self):
+    """(名字, 值) 迭代；capture_self 时带上 self.<attr>。"""
+    for k, v in locals_dict.items():
+        yield k, v
+        if capture_self and k == "self":
+            for ak, av in list(_tself_attrs(v).items())[:12]:
+                yield "self." + str(ak), av
+
+
+def _tscan_values(locals_dict, capture_self):
+    for _k, v in _tscan_items(locals_dict, capture_self):
+        yield v
+
+
+def _tbuild_nmap(locals_dict, capture_self=False):
     """挑一个「根」节点局部变量，建 id -> 下标 的映射。
 
     优先用入口参数名（root / head / l1 ...），它们就是题面描述的对象；
     找不到再按「谁的值最大」猜一个（根节点的子树通常最全）。
+
+    capture_self 为真时也看 self.<attr> —— class-API 设计题的数据全在
+    实例属性上（0146 的 self.key_to_node 与 self.dummy），
+    不把它们纳入候选的话整题只剩几个标量参数，画面上什么也没有。
+
+    （注意：这个字符串是 JS 模板字面量的一部分，里面**不能出现反引号**。）
     """
     best = None
     best_key = None
-    for k, v in locals_dict.items():
+    for k, v in _tscan_items(locals_dict, capture_self):
         if k == "self" or not hasattr(v, "val"):
             continue
         is_tree = hasattr(v, "left") or hasattr(v, "right")
@@ -148,7 +177,7 @@ def _tbuild_nmap(locals_dict):
     # 指向反转后的另一条链。不把这些节点也编上号，它们就只剩
     # "<ListNode>"，adapter 一个光标都认不出来（实测 0206/0025 全军覆没）。
     # 所以按锚点链的坐标把它们**追加**在后面；越界的下标在渲染时被丢掉。
-    for v in locals_dict.values():
+    for v in _tscan_values(locals_dict, capture_self):
         if v is None or v is best or not hasattr(v, "val"):
             continue
         if (hasattr(v, "left") or hasattr(v, "right")) != is_tree:
@@ -245,7 +274,7 @@ def _tscalar(v):
     return v if isinstance(v, (bool, int, float, str)) or v is None else str(v)[:40]
 
 
-def _tinstall(target_filename, events, limit):
+def _tinstall(target_filename, events, limit, capture_self=False):
     __depth__ = [0]
 
     def tracer(frame, event, arg):
@@ -261,10 +290,18 @@ def _tinstall(target_filename, events, limit):
             if event == "line":
                 if len(events) >= limit:
                     return None
-                nmap = _tbuild_nmap(frame.f_locals)
+                nmap = _tbuild_nmap(frame.f_locals, capture_self)
                 loc = {}
                 for k, v in frame.f_locals.items():
                     if k == "self":
+                        if not capture_self:
+                            continue
+                        # class-API 设计题（0146 LRU / 0155 最小栈）的数据
+                        # 全在实例属性上。把它们摊平成 self.<attr> 记进来，
+                        # adapter 才看得见那个链表 / 那张哈希表。
+                        # 用 self. 前缀命名，避免与同名局部变量撞车。
+                        for ak, av in list(_tself_attrs(v).items())[:12]:
+                            loc["self." + str(ak)] = _tjsonable(av, 0, nmap, None)
                         continue
                     loc[k] = _tjsonable(v, 0, nmap, None)
                 events.append({
@@ -314,6 +351,22 @@ export function buildRecordDriver(opts: {
    * （Pyodide 运行条踩过同一个坑，见 pyrunner/driver.ts 的 STDIN_SHIM。）
    */
   stdin?: string;
+  /**
+   * 「操作脚本」模式：class-API 设计题（0146 LRU / 0155 最小栈 / 0208 前缀树）
+   * 的样例不是一次调用，而是「构造一次 + 挨个调方法」的序列。
+   *
+   * 给定之后**优先于** `method` / `args`：在同一个实例上按顺序调，
+   * 把每次调用的返回值收成列表（构造器那一步记一个 null，
+   * 与题面期望值等长 —— 力扣的期望值第一项就对应构造器）。
+   *
+   * 实参用 `json.loads` 还原而不是拼 Python 字面量：JSON 的 null
+   * 直接就是 Python 的 None，省掉一层翻译，也不会拼出非法字面量。
+   */
+  script?: {
+    className: string;
+    ctorArgs: unknown[];
+    steps: Array<{method: string; args: unknown[]}>;
+  };
   /** 只采这么多条，防止死循环题把构建拖垮 */
   eventLimit: number;
   /** 源码行数，用来把事件行号限制在文件范围内 */
@@ -321,6 +374,33 @@ export function buildRecordDriver(opts: {
 }): string {
   const {code, method, className, args, eventLimit, lineCount} = opts;
   const kinds = JSON.stringify(opts.kinds ?? args.map(() => 'none'));
+  /**
+   * 脚本模式的执行体。与调用模式互斥（下面 if/else 二选一）。
+   *
+   * 同一行 `sys.settrace` 一直开着，所以整个操作序列都在采集范围内 ——
+   * 这正是这类题要的：内部状态（LRU 的链表、最小栈的辅助栈、
+   * 前缀树的子节点 dict）一步步在变。
+   */
+  const scriptBody = opts.script
+    ? `            _cls = ns.get(${JSON.stringify(opts.script.className)})
+            if _cls is None:
+                __ERR__ = "class not found: " + ${JSON.stringify(opts.script.className)}
+            else:
+                _obj = _cls(*json.loads(${JSON.stringify(JSON.stringify(opts.script.ctorArgs))}))
+                # 构造器那一步记 null：题面期望值的第一项就是它
+                __RESULT__ = [None]
+                for _step in json.loads(${JSON.stringify(
+                  JSON.stringify(
+                    opts.script.steps.map((s) => [s.method, s.args]),
+                  ),
+                )}):
+                    _m = getattr(_obj, _step[0], None)
+                    if _m is None:
+                        __ERR__ = "method not found: " + _step[0]
+                        break
+                    __RESULT__.append(__enc__(_m(*_step[1])))
+                __MUTATED__ = []`
+    : '';
   return `
 import sys, json, ast, traceback, io
 
@@ -336,13 +416,16 @@ except Exception:
     __ERR__ = "definition: " + traceback.format_exc()
 
 if __ERR__ is None:
-    _tinstall("traced.py", __EVENTS__, ${eventLimit})
+    _tinstall("traced.py", __EVENTS__, ${eventLimit}, ${opts.script ? 'True' : 'False'})
     try:
         __kinds__ = ${kinds}
         __MUTATED__ = []
 ${
   opts.stdin === undefined
-    ? `        _args = ast.literal_eval("(" + ${JSON.stringify(args.join(', '))} + ",)")
+    ? args.length === 0
+      ? `        # 脚本模式下没有「一次调用」的实参；单参为空的入口也走这里
+        _args = []`
+      : `        _args = ast.literal_eval("(" + ${JSON.stringify(args.join(', '))} + ",)")
         _args = [__mk__(v, k) for v, k in zip(_args, __kinds__)]`
     : `        # stdin 模式：ACM 题的 solve() 自己读 stdin、print 到 stdout。
         # 没有「调用入口」这一步，录的是整个程序的一次执行，
@@ -359,7 +442,10 @@ ${
         __buf__ = io.StringIO()
         sys.stdout = __buf__
         try:
-            _cls = ns.get(${JSON.stringify(className ?? 'Solution')})
+${
+  opts.script
+    ? scriptBody
+    : `            _cls = ns.get(${JSON.stringify(className ?? 'Solution')})
             if _cls is not None and ${className ? 'True' : 'False'}:
                 _fn = getattr(_cls(), ${JSON.stringify(method)}, None)
             else:
@@ -370,7 +456,8 @@ ${
                 __RESULT__ = __enc__(_fn(*_args))
                 # 原地修改类题目（返回 None）把改完的入参留下来：
                 # 题面的「输出」说的就是改完之后的东西（0075/0189/0283）
-                __MUTATED__ = [__enc__(a) for a in _args]
+                __MUTATED__ = [__enc__(a) for a in _args]`
+}
         finally:
             __STDOUT__ = __buf__.getvalue()
             sys.stdout = __saved_stdout__

@@ -30,7 +30,7 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 - **NowCoder progress sync** (`scripts/sync-nowcoder.js`): Pulls accepted NowCoder submissions using `NOWCODER_COOKIE` + `NOWCODER_UID` secrets, diffs against local `code-training/nowcoder/`, and generates new code files + `docs/problems/nowcoder/*.md`. Runs every 2 days via `sync-nowcoder.yml`; commits only when new problems exist.
 - **自测题库** (`static/quiz/bank.json`): 主动回忆题，加在题解正文末尾。`plugins/self-test/index.ts` 只把「哪些题解有题」的清单放进 globalData，`src/theme/DocItem/Layout/index.tsx`（已 swizzle）在正文末尾渲染 `<SelfTest>`，题目数据由组件在用户点开时 fetch。**题解 md 一行都不用改** —— 题库是唯一事实来源。详见「自测题库」小节。
 - **间隔重复复习** (`/code-training/review`): `plugins/srs-cards/index.ts` 构建期把 182 篇题解解析成复习卡片（题号/难度/标签/首解日期），进度存浏览器 localStorage。调度器是 SM-2 lite 三档（忘了/记得/秒答）。
-- **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量 + 递归深度落成 `static/traces/*.json`（进 git）；`plugins/vis-traces` 在构建期把轨迹过一遍八个 adapter（`visualizer/adapters/`：list/tree/stack/grid/array-scan/aux-table/string/dp-counter）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `DocItem/Layout` 渲染 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`），展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 182 篇题解里 150 篇录制成功、146 篇有可视化（录制产物的 97%），剩下 4 篇在页面上显式写「本题无可视化步骤」。详见「算法可视化」小节。
+- **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量 + 递归深度落成 `static/traces/*.json`（进 git）；`plugins/vis-traces` 在构建期把轨迹过一遍八个 adapter（`visualizer/adapters/`：list/tree/stack/grid/array-scan/aux-table/string/dp-counter）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `DocItem/Layout` 渲染 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`），展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 182 篇题解里 154 篇录制成功、150 篇有可视化（录制产物的 97%），剩下 4 篇在页面上显式写「本题无可视化步骤」。详见「算法可视化」小节。
 - **算法可视化（独立页，手写）** (`/code-training/visualizer`): `src/components/training/visualizer/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。
 - **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测、复习队列、手写 tracer 三处都用它跳转（录制式可视化不跳转，它就长在那篇题解里）。
 
@@ -190,10 +190,10 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 |---|---|---|
 | 入口 | `code-training/docs/problems/**/*.md` | `/code-training/visualizer` |
 | 代码 | `visualizer/recorder/` + `visualizer/adapters/` | `visualizer/tracers/` |
-| 覆盖 | 每道能录制的题（**150/182 录制成功，146 篇适配 = 80%**） | 10 个算法模式 |
+| 覆盖 | 每道能录制的题（**154/182 录制成功，150 篇适配 = 82%**） | 10 个算法模式 |
 | 产出 | 逐题，零手写 | 每个算法手写 30~60 行 |
 | 视图 | 数组/链表/树/网格/栈/DP/字符/字典八种 | 数组 / 网格 BFS / DP 表格 |
-| 单测 | `pnpm test:adapters`（2053 项） | `pnpm test:tracers`（90 项） |
+| 单测 | `pnpm test:adapters`（2097 项） | `pnpm test:tracers`（90 项） |
 
 **为什么要有录制这条路**：手写 tracer 覆盖不了 126 篇题解，而且手写的帧
 **会骗人** —— 算法写错了动画照样流畅跑完，读者反而更确信自己错了。
@@ -202,9 +202,9 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 ```bash
 pnpm trace:record          # 构建期跑 Pyodide 采执行轨迹 -> static/traces/*.json
 pnpm trace:record 0001 0034  # 只录这几篇
-pnpm test:adapters         # 2053 项断言，跑在真实录制产物上
+pnpm test:adapters         # 2097 项断言，跑在真实录制产物上
 pnpm trace:probe           # 逐题报告哪个 adapter 认出来了（补覆盖率用）
-node scripts/check-vis.js  # 无头 Chrome 点真实按钮，八类视图各验一题
+node scripts/check-vis.js  # 无头 Chrome 点真实按钮，十类视图各验一题
 ```
 
 `trace:record` 需要先 `pnpm sync:pyodide`（12.9MB，已 gitignore）；
@@ -233,9 +233,9 @@ node scripts/check-vis.js  # 无头 Chrome 点真实按钮，八类视图各验�
 | `stack` | 11 | 某个列表的**长度会变**（栈自己长大） |
 | `grid` | 24 | 二维数组 + 形状只增不减 + 被下标读过 |
 | `array-scan` | 53 | 一维序列 + 一到三根会动的下标 |
-| `aux-table` | 7 | 一维序列 + 字典/集合（键渲染成 aux 行） |
-| `string` | 14 | 有被逐字符消费的字符串 + 字符值光标 |
-| `dp-counter` | 18 | 一维序列 + 滚动标量 / 合成格子条 / 逐位消费 |
+| `aux-table` | 8 | 字典/集合（键渲染成 aux 行；没有入参数组时键就是主画面） |
+| `string` | 13 | 有被逐字符消费的字符串 + 字符值光标（0208 前缀树也走这条） |
+| `dp-counter` | 20 | 一维序列 + 滚动标量 / 合成格子条 / 逐位消费 |
 
 **最容易搞反的一处是 `dp-counter` 必须排在 `array-scan` 后面。**
 dpCounter 的判据比 arrayScan **宽**（它不要求指针是数组下标），所以一旦排在
@@ -438,6 +438,41 @@ dpCounter 的判据比 arrayScan **宽**（它不要求指针是数组下标）�
   `sys.stdin.buffer.read()`，录出来是 `"<bytes>"`，画面上什么也画不出来
   —— HJ81 字符串字符匹配的两个入参**全是** bytes，整题因此无从下手。
 
+#### 「操作脚本」样例：class-API 设计题（0146 LRU / 0155 最小栈 / 0208 前缀树 / 0295 中位数）
+
+这几类题的样例**不是一次调用**，而是「构造一次 + 挨个调方法」的序列：
+
+```
+输入
+["LRUCache", "put", "put", "get", "put", "get", "put", "get", "get", "get"]
+[[2], [1, 1], [2, 2], [1], [3, 3], [2], [4, 4], [1], [3], [4]]
+输出
+[null, null, null, 1, null, -1, null, -1, 3, 4]
+```
+
+`extractDocSamples` 按「实参个数 == 入口签名」过滤，这种样例一个都匹配不上 ——
+`no-sample` 报的还是「候选入口都匹配不上样例」，完全指不到真正的原因。
+`recorder/script.ts` 专门补这一形态：**只在常规路径一条样例都抽不到时**启用。
+
+踩过的坑：
+
+- **类名要按样例核对，不能取代码里的第一个 `class`。**
+  0146 的第一个 class 是 `Node`（双向链表节点），0208 的是 `TrieNode`；
+  被测的那个是样例第一项里的 `LRUCache` / `Trie`。
+- **构造器那一步也要占一个返回值位置**（记 null）——
+  力扣的期望值第一项就对应构造器，少一个就整体对不上。
+- **实参用 `json.loads` 还原，不要拼 Python 字面量**：
+  JSON 的 null 直接就是 Python 的 None，也拼不出非法字面量。
+- **这一类题的数据全在 `self.*` 上，而采集器一直跳过 `self`。**
+  不摊平的话 0146 的局部变量里只剩 `capacity` / `key` / `value` 三个标量，
+  画面上什么也没有。摊平成 `self.<attr>` 之后 `self.key_to_node` 的键开始增减
+  （LRU 的核心），`self.stack` / `self.min_stack` 开始长高又变矮（最小栈的核心）。
+  **只在脚本模式开这个开关** —— 一旦全局打开，所有题解的轨迹都会多出
+  `self.*`，adapter 的选型（哪个变量是主数组）会跟着变。
+- **TRACER_PY 里不能出现反引号**（又一次）。Python docstring 里写
+  `` `capture_self` `` 会当场截断 JS 模板字面量，报的却是 Python 的
+  `IndentationError`，指不到真正的行。
+
 #### 视图侧踩过的坑
 
 - **树按层画，不摊平成网格。** 摊平后 `[1,2,3,null,5]` 里 5 会紧贴 3，
@@ -512,15 +547,14 @@ pnpm test:tracers   # 90 项断言：算法结果与参考实现逐一对拍
 
 #### 当前覆盖与缺口
 
-182 篇题解里 **150 篇录制成功、146 篇有可视化（80%）**。
+182 篇题解里 **154 篇录制成功、150 篇有可视化（82%）**。
 
-**录制失败的 32 篇**：
+**录制失败的 28 篇**：
 
-- **`no-sample=18`**：题面样例的**参数个数与入口签名对不上**。
-  多数是 class-API 设计题（0146 LRU 缓存、0155 最小栈、0208 前缀树、
-  0295 数据流中位数、0399 表达式求值）—— 它们的样例是一串「操作指令」
-  （`["LRUCache","put","put","get",...]`），根本没有「一次调用」。
-  另有几篇是「只采到 1~2 个事件」：样例直接走了早退分支
+- **`no-sample=14`**：题面样例的**参数个数与入口签名对不上**。
+  剩下的多是 0031/0085/0761/1480 这类「题面样例的写法与入口签名对不上」
+  （0085 给的是矩阵而入口要一维 heights），以及「只采到 1~2 个事件」的
+  样例直接走早退分支
   （0062 唯一路径的 `if m == 1 or n == 1`、0461 汉明距离的单次循环、
   0297 的序列化入口）。
 - **`exec-error=8`**：入口签名与样例不匹配（HJ1/HJ11/HJ85 拿到的实参个数不对）、
@@ -537,7 +571,7 @@ KY4 反序输出（每行 `s[::-1]`）。它们的局部变量里**没有逐步�
 （`VisTracesData.noVisual`），而不是什么都不显示：不写等于让读者以为
 「这个功能是按题目难度挑的」。
 
-也就是说 **146/150 = 97% 的录制产物都有可视化**，剩下 4 篇是算法本身
+也就是说 **150/154 = 97% 的录制产物都有可视化**，剩下 4 篇是算法本身
 没有中间过程，不是覆盖率不足。
 
 ### 浏览器内跑代码（Pyodide）

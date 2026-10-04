@@ -38,6 +38,8 @@ import {nodeParams} from '../../pyrunner/snippet';
 import {BUILDER_PY, STDIN_SHIM_PY} from '../../pyrunner/driver';
 import {compare} from '../../pyrunner/compare';
 import {asSnippetEntry, entryCandidates} from './entries';
+import {classNames, parseScriptSample} from './script';
+import type {ScriptSample} from './script';
 import {buildRecordDriver, TRACER_PY} from './recorder';
 import type {Json, RawTrace, RecordSkipReason, TraceEvent} from './types';
 
@@ -454,6 +456,8 @@ export async function recordTraces(
       stdinText?: string;
       orderAgnostic?: boolean;
       multiAnswer?: boolean;
+      /** 操作脚本模式（class-API 设计题） */
+      script?: ScriptSample;
     }> = [];
 
     // 先按候选顺序各自备好实参
@@ -486,15 +490,39 @@ export async function recordTraces(
     }
 
     if (attempts.length === 0) {
-      skip(
-        'no-sample',
-        doc,
-        `候选入口 ${candidates
-          .slice(0, 3)
-          .map((c) => `${c.name}(${c.paramNames.join(',')})`)
-          .join(' / ')} 都匹配不上样例；stdin 样例 ${stdinSamples.length} 个`,
-      );
-      continue;
+      /**
+       * 常规路径（一次调用）一条样例都抽不到时，再试「操作脚本」。
+       *
+       * class-API 设计题（0146 LRU / 0155 最小栈 / 0208 前缀树）的样例
+       * 是「构造一次 + 挨个调方法」的序列，**根本没有一次调用**，
+       * `extractDocSamples` 按实参个数匹配必然落空。详见 recorder/script.ts。
+       */
+      const script = parseScriptSample(md, classNames(code));
+      if (script) {
+        attempts.push({
+          candidate: {
+            name: script.steps[0]?.method ?? '',
+            className: script.className,
+            paramNames: [],
+            annotations: [],
+            requiredCount: 0,
+            stdin: false,
+          },
+          args: [],
+          expected: script.expected,
+          script,
+        });
+      } else {
+        skip(
+          'no-sample',
+          doc,
+          `候选入口 ${candidates
+            .slice(0, 3)
+            .map((c) => `${c.name}(${c.paramNames.join(',')})`)
+            .join(' / ')} 都匹配不上样例；stdin 样例 ${stdinSamples.length} 个`,
+        );
+        continue;
+      }
     }
 
     let payload: {
@@ -539,6 +567,13 @@ export async function recordTraces(
             args: pyArgs,
             kinds: realKinds,
             stdin: attempt.stdinText,
+            script: attempt.script
+              ? {
+                  className: attempt.script.className,
+                  ctorArgs: attempt.script.ctorArgs,
+                  steps: attempt.script.steps,
+                }
+              : undefined,
             eventLimit: EVENT_LIMIT,
             lineCount,
           }),
