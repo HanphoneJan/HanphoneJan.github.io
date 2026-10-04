@@ -122,12 +122,13 @@ def _tself_attrs(v):
 
 
 def _tscan_items(locals_dict, capture_self):
-    """(名字, 值) 迭代；capture_self 时带上 self.<attr>。"""
+    """(名字, 值) 迭代；带上实例上的容器属性（口径见 _tinstall）。"""
     for k, v in locals_dict.items():
         yield k, v
-        if capture_self and k == "self":
+        if k == "self":
             for ak, av in list(_tself_attrs(v).items())[:12]:
-                yield "self." + str(ak), av
+                if capture_self or isinstance(av, (list, tuple, dict, set)):
+                    yield "self." + str(ak), av
 
 
 def _tscan_values(locals_dict, capture_self):
@@ -294,14 +295,24 @@ def _tinstall(target_filename, events, limit, capture_self=False):
                 loc = {}
                 for k, v in frame.f_locals.items():
                     if k == "self":
-                        if not capture_self:
-                            continue
                         # class-API 设计题（0146 LRU / 0155 最小栈）的数据
-                        # 全在实例属性上。把它们摊平成 self.<attr> 记进来，
-                        # adapter 才看得见那个链表 / 那张哈希表。
-                        # 用 self. 前缀命名，避免与同名局部变量撞车。
+                        # 全在实例属性上；0399 口袋算式的 uf.parent
+                        # （带权并查集）也是 —— 不摊平的话它只录得到
+                        # 几个标量参数，画面上什么也没有。
+                        #
+                        # 摊平的对象**分两种口径**：
+                        # - 脚本模式（class-API）：全都要，标量也记
+                        #   （self.capacity 是 LRU 淘汰的判据）
+                        # - 普通模式：只要**容器**（list/dict）。
+                        #   标量属性（计数、容量、开关）在普通题里到处都是，
+                        #   记进来会让 adapter 的选型（哪个变量是主数组、
+                        #   哪个是光标）整体漂移；而 Solution 的方法
+                        #   大多无状态，真正有实例容器的题不多 ——
+                        #   实测只有 0399 与几个 shoppee 题。
                         for ak, av in list(_tself_attrs(v).items())[:12]:
-                            loc["self." + str(ak)] = _tjsonable(av, 0, nmap, None)
+                            if capture_self or isinstance(av, (list, tuple, dict, set)):
+                                # 用 self. 前缀命名，避免与同名局部变量撞车
+                                loc["self." + str(ak)] = _tjsonable(av, 0, nmap, None)
                         continue
                     loc[k] = _tjsonable(v, 0, nmap, None)
                 events.append({
