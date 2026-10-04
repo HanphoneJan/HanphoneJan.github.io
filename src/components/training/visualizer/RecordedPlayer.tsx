@@ -22,9 +22,15 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {ArrayView} from './renderers/ArrayView';
 import {GridView} from './renderers/GridView';
 import {TableView} from './renderers/TableView';
+import {TreeView} from './renderers/TreeView';
 import {adapt} from './adapters';
 import type {RawTrace} from './recorder/types';
-import type {Frame, GridFrameWrapper, TableFrameWrapper} from './types';
+import {
+  isGridFrame,
+  isTableFrame,
+  isTreeFrame,
+  type Frame,
+} from './types';
 import styles from './styles.module.css';
 import type {VisTraceEntry} from '@site/plugins/vis-traces';
 
@@ -275,17 +281,8 @@ function Player({
 }
 
 /**
- * Frame 是 union，但另外两个分支里 `grid`/`table` 声明成了 `?: never`，
- * TS 的 `in`/真值收窄不生效，所以手写类型守卫（与 tracer 版一致）。
+ * Frame 是 union，类型守卫在 types.ts 里（与 tracer 版共用同一份）。
  */
-function isGridFrame(f: Frame): f is GridFrameWrapper {
-  return f.grid !== undefined;
-}
-
-function isTableFrame(f: Frame): f is TableFrameWrapper {
-  return f.table !== undefined;
-}
-
 function FrameView({frame}: {frame: Frame}): React.ReactElement {
   if (isGridFrame(frame)) {
     return <GridView frame={frame.grid} />;
@@ -293,8 +290,10 @@ function FrameView({frame}: {frame: Frame}): React.ReactElement {
   if (isTableFrame(frame)) {
     return <TableView frame={frame.table} />;
   }
-  // 录制路径目前只产出数组帧，且一律 boxes：
-  // 指针类算法要看的是「指针停在哪」而不是「值的大小关系」
+  if (isTreeFrame(frame)) {
+    return <TreeView frame={frame} />;
+  }
+  // 数组帧一律 boxes：指针类算法要看的是「指针停在哪」而不是「值的大小关系」
   return <ArrayView frame={frame} display="boxes" />;
 }
 

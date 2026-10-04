@@ -24,7 +24,10 @@
     "test:pyrunner": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-pyrunner.ts",
     "test:pyodide": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-pyodide.ts",
     "trace:record": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/record-traces.ts",
-    "test:adapters": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-adapters.ts"
+    "test:adapters": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-adapters.ts",
+    "trace:probe": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/probe-adapters.ts",
+    "trace:diagnose": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/diagnose-record.ts",
+    "check:vis": "node scripts/check-vis.js"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
