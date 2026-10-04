@@ -8,7 +8,12 @@ tags:
   - 字符串
   - 滑动窗口
   - 哈希表
+patterns:
+  - ../../patterns/sliding_window.md
+  - ../../patterns/hash_map.md
+topics: []
 date_added: 2026-03-25
+date_reviewed: []
 ---
 
 # 3. 无重复字符的最长子串

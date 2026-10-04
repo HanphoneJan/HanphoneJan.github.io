@@ -1,0 +1,83 @@
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.note {
+  padding: 0.6rem 0.85rem;
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ifm-color-emphasis-700);
+  border-left: 3px solid var(--ifm-color-primary);
+  border-radius: 0 6px 6px 0;
+  background: color-mix(in srgb, var(--ifm-color-primary) 8%, transparent);
+}
+
+.note kbd {
+  padding: 0.05rem 0.35rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--ifm-background-color);
+}
+
+/* ---------- 算法切换 ---------- */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.tab,
+.tabActive {
+  padding: 0.35rem 0.75rem;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--ifm-color-emphasis-700);
+  cursor: pointer;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 999px;
+  background: var(--ifm-background-color);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.tab:hover {
+  border-color: var(--ifm-color-primary);
+}
+
+.tabActive {
+  font-weight: 600;
+  color: #fff;
+  border-color: var(--ifm-color-primary);
+  background: var(--ifm-color-primary);
+}
+
+/* ---------- 相关题解 ---------- */
+.relate {
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.relateLink {
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px dashed currentColor;
+}
+
+.relateMissing {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.relateMissing code {
+  font-size: 0.85em;
+}

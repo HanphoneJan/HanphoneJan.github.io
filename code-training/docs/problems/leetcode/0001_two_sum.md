@@ -7,7 +7,11 @@ url: https://leetcode.cn/problems/two-sum/
 tags:
   - 数组
   - 哈希表
+patterns:
+  - ../../patterns/hash_map.md
+topics: []
 date_added: 2026-03-25
+date_reviewed: []
 ---
 
 # 1. 两数之和
