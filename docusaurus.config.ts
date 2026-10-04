@@ -1,3 +1,4 @@
+import path from 'path';
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
@@ -128,7 +129,6 @@ const config: Config = {
           },
           theme: {
             customCss: [
-              "./src/css/fonts.css",
               "./src/css/custom.css",
               require.resolve("katex/dist/katex.min.css"),
             ],
@@ -138,6 +138,14 @@ const config: Config = {
     ],
 
     plugins: [
+      // 把「哪些题解有自测题」这份清单注入 globalData（只发键，不发题目正文）
+      path.join(__dirname, 'plugins/self-test/index.ts'),
+      // 复习卡片的元数据（题号/难度/标签/首解日期），进度存在浏览器 localStorage
+      path.join(__dirname, 'plugins/srs-cards/index.ts'),
+      // code-training 文档的 md 相对路径 -> 真实 permalink 映射
+      path.join(__dirname, 'plugins/doc-permalinks/index.ts'),
+      // 题解里的可运行代码与测试样例，供浏览器内 Pyodide 使用
+      path.join(__dirname, 'plugins/py-samples/index.ts'),
       [
         '@docusaurus/plugin-content-docs',
         {
@@ -242,6 +250,8 @@ const config: Config = {
               {to: '/code-training/category/数据结构', label: '数据结构'},
               {to: '/code-training/category/算法模式', label: '算法模式'},
               {to: '/code-training/category/代码模板', label: '代码模板'},
+              {to: '/code-training/review', label: '复习队列'},
+              {to: '/code-training/visualizer', label: '算法可视化'},
               {to: '/code-training/category/复习系统', label: '总结盘点'},
             ],
           },

@@ -44,6 +44,11 @@ jobs:
           node scripts/fetch-stars.js
           node scripts/fetch-projects.js
 
+      - name: Fetch Pyodide runtime
+        # static/pyodide/ 有 12.9MB 且已 gitignore，必须在构建时下载。
+        # 浏览器内跑代码功能依赖它 —— 缺了页面仍能构建，只是按钮会报加载失败。
+        run: node scripts/fetch-pyodide.js
+
       - name: Build website
         run: pnpm run build
 
