@@ -47,6 +47,10 @@ jobs:
       - name: Fetch Pyodide runtime
         # static/pyodide/ 有 12.9MB 且已 gitignore，必须在构建时下载。
         # 浏览器内跑代码功能依赖它 —— 缺了页面仍能构建，只是按钮会报加载失败。
+        #
+        # 算法可视化的**录制**（pnpm trace:record）也依赖它，但轨迹已经
+        # 录好进 git（static/traces/*.json），构建期不需要再跑一遍 ——
+        # plugins/vis-traces 只读文件。所以这一步只为浏览器运行条而存在。
         run: node scripts/fetch-pyodide.js
 
       - name: Build website
