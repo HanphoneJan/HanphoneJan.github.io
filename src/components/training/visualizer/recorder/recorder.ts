@@ -66,6 +66,15 @@ def _tjsonable(v, depth=0, nmap=None, nroot=None):
         return None
     if v is None or isinstance(v, (bool, int, float, str)):
         return v
+    # bytes / bytearray 来自 sys.stdin.buffer.read()（ACM 题的常见写法）。
+    # 不处理的话它们记成 "<bytes>"，画面上什么也画不出来 ——
+    # HJ81 字符串字符匹配的两个入参全是 bytes，整题因此无从下手。
+    # 解不出 utf-8 就用 replace 兜住，绝不让采集器因为一个坏字节崩掉。
+    if isinstance(v, (bytes, bytearray)):
+        try:
+            return bytes(v).decode("utf-8")
+        except Exception:
+            return bytes(v).decode("utf-8", "replace")
     if nmap is not None and nmap.get("id") == id(v):
         # 这个对象就是本帧的「根」，按整棵结构编码（层序 / 数组）。
         # 比较用 == 不是 is：id() 返回的是普通 int 对象，
@@ -228,6 +237,11 @@ def _tchain(root):
 
 
 def _tscalar(v):
+    if isinstance(v, (bytes, bytearray)):
+        try:
+            return bytes(v).decode("utf-8")
+        except Exception:
+            return bytes(v).decode("utf-8", "replace")
     return v if isinstance(v, (bool, int, float, str)) or v is None else str(v)[:40]
 
 

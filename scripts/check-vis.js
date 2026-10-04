@@ -19,6 +19,26 @@ const PAGES = [
   {path: '/code-training/problems/leetcode/20', name: '有效括号', view: 'stack', ptr: false},
   {path: '/code-training/problems/leetcode/198', name: '打家劫舍', view: 'dp', ptr: true},
   {path: '/code-training/problems/leetcode/21', name: '合并两个有序链表', view: 'array', ptr: true},
+  // 三种新形态，各挑一题。少一个就等于没验证 —— 新写的 adapter 最容易
+  // 「构建期跑得好好的、页面上一个格子都不画」，而那种问题肉眼看不出来。
+  {
+    path: '/code-training/problems/nowcoder/华为机试/HJ21',
+    name: '简单密码（string：字符光标 + 中间结果行）',
+    view: 'string',
+    ptr: true,
+  },
+  {
+    path: '/code-training/problems/leetcode/560',
+    name: '和为 K 的子数组（aux-table：字典键当格子）',
+    view: 'aux',
+    ptr: true,
+  },
+  {
+    path: '/code-training/problems/leetcode/7',
+    name: '整数反转（dp-counter：逐位消费）',
+    view: 'digit',
+    ptr: true,
+  },
 ];
 
 const {spawn} = require('child_process');
@@ -209,6 +229,14 @@ async function main() {
         tree: counts.treeNodes > 0,
         grid: counts.gridCells > 0,
         stack: counts.cells > 0 && counts.auxRows > 0,
+        // 字符串题：主行是字符格，且**必须有指针标签**——
+        // 光标是这个 adapter 的全部教学内容（「现在在改写第几个字符」）
+        string: counts.cells > 0 && counts.pointers.length > 0,
+        // 字典题：字典的键渲染成 aux 行，而键数必须**在变**
+        // （静止的字典画出来就是一张表，读者学不到任何东西）
+        aux: counts.cells > 0 && counts.auxRows > 0,
+        // 逐位消费：格子条是整数的各位数字 + 一个指针
+        digit: counts.cells > 0 && counts.pointers.length > 0,
       }[page.view];
       if (viewOk) pass++;
       else fails.push(`${page.name}: ${page.view} 视图没渲染出格子`);
@@ -238,6 +266,9 @@ async function main() {
         grid: true,
         stack: true,
         dp: counts.counters.length > 0,
+        string: counts.pointers.length > 0,
+        aux: counts.pointers.length > 0 || counts.auxRows > 0,
+        digit: counts.pointers.length > 0,
       }[page.view];
       if (page.ptr) {
         if (hasFocus) pass++;

@@ -104,6 +104,13 @@ export default function DocItemLayout({children}: Props): ReactNode {
         (e) => e.docId === selfTestKeyValue,
       )
     : undefined;
+  // 录到了轨迹、但没有 adapter 认识的题解：显式说明，别让读者以为
+  // 「这道题没有可视化步骤」是因为它不值得。理由见插件里的 VisTracesData。
+  const visNoSteps = selfTestKeyValue
+    ? (usePluginData('vis-traces') as unknown as VisTracesData | undefined)?.noVisual.includes(
+        selfTestKeyValue,
+      )
+    : false;
 
   // 「自测」与「可视化」都渲染在正文之外（</DocItemContent> 之后），
   // 构建期的 TOC 抓不到它们。这里显式补，桌面侧边栏与移动端折叠菜单都会出现。
@@ -133,6 +140,22 @@ export default function DocItemLayout({children}: Props): ReactNode {
             )}
             {visTrace && (
               <InlineVisualizer entry={visTrace} />
+            )}
+            {visNoSteps && (
+              <p
+                style={{
+                  marginTop: '1.5rem',
+                  padding: '0.75rem 1rem',
+                  borderLeft: '3px solid var(--ifm-color-emphasis-300)',
+                  background: 'var(--ifm-color-emphasis-100)',
+                  borderRadius: '4px',
+                  color: 'var(--ifm-color-emphasis-800)',
+                  fontSize: '0.9rem',
+                }}
+              >
+                本题无可视化步骤：代码里没有可逐帧展示的过程（执行轨迹已经录下来，
+                但局部变量里找不到推进中的中间状态 —— 比如全篇就是一次正则替换或一次切片）。
+              </p>
             )}
             {hasSelfTest && selfTestKeyValue && (
               <SelfTest docId={selfTestKeyValue} />
