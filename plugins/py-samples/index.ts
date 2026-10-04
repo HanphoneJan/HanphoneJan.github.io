@@ -195,7 +195,17 @@ function pickPublicEntry<
   }
   const isRange = (p: string[]): boolean =>
     RANGE_PAIRS.some(([a, b]) => p.includes(a) && p.includes(b));
-  return candidates.find((c) => !isRange(c.paramNames)) ?? candidates[0];
+  /**
+   * **下划线开头的是私有辅助函数**，不是题目入口。
+   *
+   * shoppee 合并降序链表写的是 `MergeList(l1, l2)` 与 `_reverse(head)`，
+   * 挑中 `_reverse` 之后：录制时喂两个链表参数报
+   * `missing 1 required positional argument`，页面上「跑样例」也是同一个错 ——
+   * 两边都错，因为它们用的是同一份判据。与 `snippet.ts` 的 `pickEntry` 同步。
+   */
+  const publicOnes = candidates.filter((c) => !c.method.startsWith('_'));
+  const pool = publicOnes.length > 0 ? publicOnes : candidates;
+  return pool.find((c) => !isRange(c.paramNames)) ?? pool[0];
 }
 
 /**
@@ -326,15 +336,29 @@ export function extractSamples(
     /** 没有 `k =` 形式的部分就是位置参数，如 `输入: [1,2,3,1]` */
     const positional: string[] = [];
     for (const kw of kwargs) {
+      /**
+       * 形如 `l1: 5 -> 3 -> 1` 的**冒号**写法也是命名实参。
+       *
+       * shoppee 的题解用 `:` 而不是 `=`（`l1: 5 -> 3 -> 1` / `l2: 4 -> 2`）。
+       * 不认的话整段被当成位置参数，`literal_eval("l1: 5 -> 3 -> 1")` 直接
+       * SyntaxError，而报错是在「跑样例」时才出现的。
+       *
+       * 只在**没有 `=`、且冒号左边是合法标识符**时才这么切 ——
+       * 否则 `[1, 2]`（无冒号）、`{"a": 1}`（冒号左边不是标识符）会被切坏。
+       */
       const eq = kw.indexOf('=');
-      if (eq === -1) {
+      const colon = eq === -1 ? kw.indexOf(':') : -1;
+      const cut = eq !== -1 ? eq : colon;
+      if (cut === -1) {
         positional.push(kw);
         continue;
       }
-      const key = kw.slice(0, eq).trim();
-      const value = kw.slice(eq + 1).trim();
-      if (key) {
+      const key = kw.slice(0, cut).trim();
+      const value = kw.slice(cut + 1).trim();
+      if (key && /^[A-Za-z_]\w*$/.test(key)) {
         map.set(key, value);
+      } else {
+        positional.push(kw);
       }
     }
     // 输入里的键比签名参数还多，说明多出来的那些不是实参，
@@ -570,18 +594,42 @@ function readFencedValue(text: string, from: number): string | null {
     return null;
   }
   /**
-   * 多行且**没有 `k =` 形式**的围栏不当成实参。
+   * 多行且**没有 `k =` / `k:` 形式**的围栏不当成实参。
    *
    * 那种围栏装的是多行 stdin（ACM 题的 `n` + 一行数组、
    * 牛客的多行输入），整段塞给单参入口必然是错的 ——
    * 它们走 `extractDocStdinSamples` 的 stdin 通道。
    *
-   * 单行围栏（`HelloNowcoder`）与 `k = v` 形式的围栏
-   * （shoppee 的多行 `grid = [[1,0,1], ...]`）才是真的调用实参。
+   * 单行围栏（`HelloNowcoder`）、`k = v` 围栏（shoppee 的多行网格）与
+   * `k: v` 围栏（shoppee 链表题的 `l1: 5 -> 3 -> 1`）才是真的调用实参。
    */
-  const isKeyed = /^[A-Za-z_]\w*\s*=/.test(body);
+  const isKeyed = /^[A-Za-z_]\w*\s*[:=]/.test(body);
   if (!isKeyed && /[\r\n]/.test(body)) {
     return null;
+  }
+  const lines = body
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  /**
+   * 多行的命名实参按行拆成多个 `k = v`（每行一个）。
+   *
+   * shoppee 合并链表的围栏是：
+   *
+   * ```
+   * l1: 5 -> 3 -> 1
+   * l2: 4 -> 2
+   * ```
+   *
+   * 直接把换行折成空格会得到 `l1: 5 -> 3 -> 1 l2: 4 -> 2` ——
+   * 一整个片段，`splitTopLevel` 切不开，两个形参都绑不上。
+   *
+   * 但**不能无脑按行 join(', ')**：多行数组（`grid = [` 换行续写）
+   * 每一行的括号都不配平，join 之后会插进 `,` 把字面量切碎。
+   * 所以只在「每一行的括号都配平」时才按行拆。
+   */
+  if (isKeyed && lines.length > 1 && lines.every((l) => openDepth(l) === 0)) {
+    return lines.join(', ');
   }
   return body.replace(/\s*\n\s*/g, ' ');
 }
