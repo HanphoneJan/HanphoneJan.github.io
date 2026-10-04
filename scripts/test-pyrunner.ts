@@ -29,6 +29,7 @@ import {
   extractStdinSamples,
 } from '../plugins/py-samples';
 import {
+  asCallArgument,
   quoteIfStr,
   toPythonLiteral,
 } from '../src/components/training/pyrunner/runner';
@@ -308,7 +309,13 @@ def kmeans(x, k):
   });
   check('prelude 登记 linecache', prelude.includes('__lc__.cache['));
   check('prelude 用真实文件名', prelude.includes('"snippet-1.py"'));
-  check('prelude 接管 stdin', prelude.includes('StringIO'));
+  check(
+    'prelude 接管 stdin',
+    prelude.includes('__Stdin__(') && prelude.includes('class __Stdin__'),
+  );
+  // 文本视图与字节视图共用游标：ACM 题解里 `sys.stdin.buffer.read()` 很常见，
+  // 而原生 StringIO 连属性都加不上
+  check('stdin 带 buffer 能力', prelude.includes('self.buffer = __StdinBuf__(self)'));
   // 源码里的换行必须以 \n 字面量形式进 linecache，否则行号会错位
   check('prelude 逐行存源码', prelude.includes('"a = 1\\n"'), prelude);
 }
@@ -353,6 +360,21 @@ check('正常期望值可用', isUsableExpected('[0, 1]'));
   eq('复合字面量不动（用户显然在写表达式）', quoteIfStr('[1, 2]', 'str'), '[1, 2]');
   eq('optional[str] 也算 str', quoteIfStr('abc', 'optional[str]'), '"abc"');
   eq('引号内的双引号被转义', quoteIfStr('a"b', 'str'), '"a\\"b"');
+}
+
+/* ---------------- 5c. stdin 样例 -> 调用实参 ---------------- */
+
+{
+  eq('str 标注的文本加引号', asCallArgument('HelloNowcoder', 'str'), '"HelloNowcoder"');
+  eq('list 标注原样传', asCallArgument('1 2 3', 'list[int]'), '1 2 3');
+  eq('int 标注原样传', asCallArgument('5', 'int'), '5');
+  // 解题思路里的纯函数大多没有标注，靠「能不能当字面量解析」来判断
+  eq('无标注的裸词当文本', asCallArgument('HelloNowcoder'), '"HelloNowcoder"');
+  eq('无标注的数字当数字', asCallArgument('5'), '5');
+  eq('无标注的数组原样传', asCallArgument('[1,2,3]'), '[1,2,3]');
+  eq('无标注的带空格文本加引号', asCallArgument('   fly me   to   the moon'), '"   fly me   to   the moon"');
+  eq('已经带引号的不重复加', asCallArgument('"abc"', 'str'), '"abc"');
+  eq('无标注的 None 原样传', asCallArgument('None'), 'None');
 }
 
 /* ---------------- 6. stdin 样例抽取（真实语料） ---------------- */
@@ -414,6 +436,94 @@ check('正常期望值可用', isUsableExpected('[0, 1]'));
     '```',
   ].join('\n');
   eq('含省略号的 stdin 样例丢掉', extractStdinSamples(md), []);
+}
+
+/* ---------------- 6b. 样例的各种写法（真实语料回归） ---------------- */
+
+{
+  // 全角逗号当分隔符：只认半角的话 0010 整篇抽不到样例。
+  // 注意引号里的全角逗号不能被切开。
+  const md = [
+    '**示例：**',
+    '- 输入：s = "你好，世界"，p = "a"，输出：true',
+    '- 输入：nums = [1,2,3]，target = 6，输出：[1,2]',
+  ].join('\n');
+  eq(
+    '全角逗号也当分隔符',
+    extractSamples(md, ['s', 'p'], 2),
+    [{args: ['"你好，世界"', '"a"'], expected: 'true'}],
+  );
+}
+
+{
+  // 输入输出写在同一行，用 → 分隔
+  const md = ['- 输入：`nums = [-1,0,1,2,-1,-4]` → 输出：`[[-1,-1,2],[-1,0,1]]`'].join(
+    '\n',
+  );
+  eq(
+    '同一行的「输入 → 输出」',
+    extractSamples(md, ['nums'], 1),
+    [
+      {
+        args: ['[-1,0,1,2,-1,-4]'],
+        expected: '[[-1,-1,2],[-1,0,1]]',
+      },
+    ],
+  );
+}
+
+{
+  // 位置参数写法（没有 k = v）
+  const md = ['输入: [1,2,3,1]', '输出: 4'].join('\n');
+  eq(
+    '位置参数按签名顺序对上',
+    extractSamples(md, ['nums'], 1),
+    [{args: ['[1,2,3,1]'], expected: '4'}],
+  );
+}
+
+{
+  // 数组给位置、k 按名字给（0215 的写法）
+  const md = ['输入: [3,2,1,5,6,4], k = 2', '输出: 5'].join('\n');
+  eq(
+    '位置值与命名值混用',
+    extractSamples(md, ['nums', 'k'], 2),
+    [{args: ['[3,2,1,5,6,4]', '2'], expected: '5'}],
+  );
+}
+
+{
+  // `**输入：**` 后面跟的是围栏块 —— 那是 stdin 样例，不是调用样例。
+  // 不挡掉的话会造出 {args:['**']} 这种必然失败的垃圾样例（踩过：牛客题全中）。
+  const md = [
+    '**输入：**',
+    '```',
+    '1516000',
+    '```',
+    '',
+    '**输出：**',
+    '```',
+    '0006151',
+    '```',
+  ].join('\n');
+  eq('围栏形式的输入不产生调用样例', extractSamples(md, ['num_str'], 1), []);
+  eq(
+    '同一样例走 stdin 通道',
+    extractStdinSamples(md),
+    [{stdin: '1516000', expected: '0006151'}],
+  );
+}
+
+{
+  // 输出后面跟着解释时要截断
+  const md = ['输入：s = "aa"，p = "a*"', '输出：true（"a*" 可以匹配零个或多个）'].join(
+    '\n',
+  );
+  eq(
+    '输出后面的括号解释被截掉',
+    extractSamples(md, ['s', 'p'], 2),
+    [{args: ['"aa"', '"a*"'], expected: 'true'}],
+  );
 }
 
 /* ---------------- 7. 入口签名（插件侧） ---------------- */

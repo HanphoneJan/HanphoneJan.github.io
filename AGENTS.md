@@ -144,6 +144,20 @@ pnpm quiz:validate  # 校验；有 error 退出非 0
 - **不要 `import` 整份题库**：几百道题会被打进每一个题解页面的 JS bundle。
   题库放 `static/`，运行时 fetch。
 
+### 自测小节在右侧 TOC 里（别再用 remark 插件做这件事）
+
+TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之后的组件
+天然进不去。做法是 swizzle `DocItem/TOC/{Desktop,Mobile}`（各 20 行），
+由 `DocItem/Layout` 通过 `selftest/toc.tsx` 的 Context 追加一条，
+标题用**显式 id**（`SELF_TEST_ANCHOR`）而不是猜 slug。
+
+**别再尝试用 remark 插件在正文末尾补一个 `## 标题` 节点**（那样 TOC 与锚点
+本来都是白送的，方向更优雅）。实测 Docusaurus 3.9 下自定义 remark 插件
+**根本没被调用** —— 模块顶层、工厂函数、transformer 三层的
+`console.log` 一次都不打印；同时 230 个页面的 SSG 挂在 `useDocTOC`
+（`toc` 读到 `undefined`）。两种 import 写法（本仓库其它插件用的
+`path.join(__dirname, '...index.ts')`）都试过，一样。
+
 ### 间隔重复复习 (`/code-training/review`)
 
 - **卡片数据**：`plugins/srs-cards/index.ts` 构建期用 gray-matter 解析
@@ -213,6 +227,13 @@ pnpm sync:pyodide    # 下载 12.9MB 运行时到 static/pyodide/
 - **样例参数要 `ast.literal_eval`**：cases 经 JSON 传来，元素是字符串，直接 splat 会让 `target - n` 抛 TypeError。
 - **题面是 JavaScript 记法**：`null` 要翻成 `None`（`toPythonLiteral`），否则 `literal_eval` 直接 ValueError，树题全判失败。
 - **树是层序格式**（`[3,9,20,null,null,15,7]`），不是力扣内部比对的递归 `[left,val,right]`；入参构造和返回值序列化都要按层序来。
+- **stdin 是自己实现的类**，不是 `io.StringIO`：ACM 题解常写 `sys.stdin.buffer.read()`，而原生 StringIO 连属性都加不上。文本视图与字节视图**共用一个游标**（跟真实终端一致）。
+
+**样例抽取的三个来源与两种语义**（`plugins/py-samples`）：
+- 来源优先级 `## 示例` → `## 题目描述`（126 篇力扣里 32 篇的示例写在描述里，没有独立的示例小节）。
+- 全角逗号 `，` 也是分隔符（`输入：s = "aa"，p = "a"`）；引号里的不算。
+- `**输入：**` 后面跟围栏块时**不能**当成调用样例 —— 正则从「输」字匹配后剩下的是收尾的 `**`，不挡掉会造出 `{args:['**']}` 这种必然失败的垃圾样例。
+- 力扣题的 `输出：[0,1]` 是**返回值**，按 JSON 比；从 stdin 推出的调用样例（牛客/ACM）期望的是 **stdout 文本**，要按 `textCompare` 用 str() 序列化 —— 函数返回 `"0"`、程序打印 `0`，按 JSON 比会误判。
 
 **已知限制**：没有超时保护。Python 死循环会卡死标签页（Pyodide 的
 `setInterruptBuffer` 需要 COOP/COEP 头，GitHub Pages 不发）。要解决只能把运行时

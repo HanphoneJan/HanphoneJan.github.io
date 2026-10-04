@@ -393,6 +393,50 @@ class Solution:
     check('与题解期望值一致', compare(got, '0006151').ok);
   }
 
+  /* ---- 7b. stdout 文本 vs 返回值 JSON（ACM 题） ---- */
+  {
+    // 牛客题「输入 0 / 输出 0」：函数返回字符串 "0"、程序打印 0。
+    // 按 JSON 比会判成不一致，而代码其实是对的。
+    const code = codeBlockOf('nowcoder/华为机试/HJ11.数字颠倒.md', 2);
+    const entry = analyzeSnippet(code).entry!;
+    const target = callTarget(entry);
+
+    const asJson = await run(code, {
+      driver: buildCallDriver([['"0"']], target, nodeParams(entry, code)),
+    });
+    const jsonRow = JSON.parse(String(asJson.value))[0] as {v: string};
+    eq('默认按 JSON 序列化', jsonRow.v, '"0"');
+
+    const asText = await run(code, {
+      driver: buildCallDriver(
+        [['"0"']],
+        target,
+        nodeParams(entry, code),
+        true,
+      ),
+    });
+    const textRow = JSON.parse(String(asText.value))[0] as {v: string};
+    eq('textCompare 按程序打印的样子', textRow.v, '0');
+    check('与题面写的期望值一致', compare(textRow.v, '0').ok);
+  }
+
+  {
+    // 列表返回时也不能变成 JSON 那种写法
+    const code = 'def f(x):\n    return [len(x), x]\n';
+    const entry = analyzeSnippet(code).entry!;
+    const res = await run(code, {
+      driver: buildCallDriver(
+        [['"abc"']],
+        callTarget(entry),
+        nodeParams(entry, code),
+        true,
+      ),
+    });
+    const row = JSON.parse(String(res.value))[0] as {v: string};
+    eq('文本模式下列表用 Python 字面量写法', row.v, '[3, abc]');
+  }
+
+
   /* ---- 7. stdin 模式（牛客题形态） ---- */
   {
     // block 2 是 HJ11 的「完整代码实现」，也是唯一带 __main__ 的块
@@ -438,6 +482,32 @@ if __name__ == "__main__":
     const res = await run(code, {asMain: true});
     check('没有输入时正常结束', !res.error, res.error);
     eq('没有输入时没有输出', res.stdout.trim(), '');
+
+  {
+    // HJ24 直接用 sys.stdin.buffer.read() —— 原生 StringIO 没有 buffer
+    const code = codeBlockOf('nowcoder/华为机试/HJ24.合唱队.md', 1);
+    const res = await run(code, {
+      stdin: '8\n186 186 150 200 160 130 197 200',
+      asMain: true,
+    });
+    check('stdin.buffer 可用（StringIO 子类带 buffer）', !res.error, res.error);
+    check('多行 stdin 的程序跑出结果', res.stdout.trim().length > 0, res.stdout);
+  }
+
+  {
+    // 直接验证 shim 的三个能力：文本读、字节读、input()
+    const res = await run(
+      'import sys\nprint(sys.stdin.read().strip())\nprint(repr(sys.stdin.buffer.read()))\n',
+      {stdin: 'a\nb', asMain: true},
+    );
+    eq(
+      'stdin 的文本与字节共用游标',
+      res.stdout.trim().split('\n').map((l) => l.trim()),
+      // 文本读和字节读共用游标：先 read() 读光了，buffer.read() 只能拿到空
+      ['a', 'b', "b''"],
+    );
+  }
+
   }
 
   /* ---- 9. 语法错误的提示要指向用户自己的代码 ---- */

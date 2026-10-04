@@ -14,6 +14,11 @@ import DocBreadcrumbs from '@theme/DocBreadcrumbs';
 import ContentVisibility from '@theme/ContentVisibility';
 import GiscusComments from '@site/src/components/GiscusComments';
 import SelfTest from '@site/src/components/training/selftest';
+import {
+  ExtraTocProvider,
+  SELF_TEST_ANCHOR,
+  SELF_TEST_TITLE,
+} from '@site/src/components/training/selftest/toc';
 import {PyRunnerScopeProvider} from '@site/src/components/training/pyrunner/scope';
 import type {SelfTestData} from '@site/plugins/self-test';
 import type {PySamplesData} from '@site/plugins/py-samples';
@@ -86,7 +91,15 @@ export default function DocItemLayout({children}: Props): ReactNode {
   )?.entries;
   const inPyRunnerScope = Boolean(selfTestKeyValue && pyEntries?.[selfTestKeyValue]);
 
+  // 「自测」渲染在正文之外（</DocItemContent> 之后），构建期的 TOC 抓不到它。
+  // 这里显式补一条，桌面侧边栏与移动端折叠菜单都会出现。
+  // Provider 必须包住**整个 row** —— 桌面侧边栏是 docItemContainer 的兄弟节点。
+  const extraToc = hasSelfTest
+    ? [{id: SELF_TEST_ANCHOR, value: SELF_TEST_TITLE, level: 2}]
+    : [];
+
   return (
+    <ExtraTocProvider entries={extraToc}>
     <div className="row">
       <div className={clsx('col', !docTOC.hidden && styles.docItemCol)}>
         <ContentVisibility metadata={metadata} />
@@ -118,5 +131,6 @@ export default function DocItemLayout({children}: Props): ReactNode {
       </div>
       {docTOC.desktop && <div className="col col--3">{docTOC.desktop}</div>}
     </div>
+    </ExtraTocProvider>
   );
 }
