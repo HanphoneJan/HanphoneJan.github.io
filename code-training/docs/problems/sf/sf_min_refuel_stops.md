@@ -235,6 +235,8 @@ if __name__ == "__main__":
 用 `read()` 一次读完再按 token 取用：速度快、不关心输入分布在几行。
 `StringIO` 没有 `.buffer`，本地测试需用 `sys.stdin.read().encode()` 兜底。
 
+（`min_refuel_stops` 与写法一完全相同，这里再写一遍是为了让这段能独立运行。）
+
 ```python
 import sys
 import heapq
@@ -245,6 +247,27 @@ def _read_input():
         return sys.stdin.buffer.read()
     except AttributeError:
         return sys.stdin.read().encode()
+
+def min_refuel_stops(L, n, startFuel, stations):
+    stations.sort()                    # 加油站按位置排序
+    stations.append((L, 0))            # 终点当作虚拟加油站（油量 0）
+
+    fuel = startFuel                   # 当前油量（等价于还能跑的公里数）
+    prev = 0                           # 上一个站点的位置
+    ans = 0                            # 加油次数
+    pq = []                            # 大根堆：路过但未加油的油量（存负数）
+
+    for pos, f in stations:
+        fuel -= (pos - prev)           # 消耗油量，尝试开到当前站点
+        while fuel < 0 and pq:         # 油不够，就"反悔"补加之前油最多的站
+            fuel -= heapq.heappop(pq)
+            ans += 1
+        if fuel < 0:                   # 堆空了仍不够，无法到达
+            return -1
+        heapq.heappush(pq, -f)         # 当前站点油量入堆
+        prev = pos
+
+    return ans
 
 def solve():
     data = _read_input().split()

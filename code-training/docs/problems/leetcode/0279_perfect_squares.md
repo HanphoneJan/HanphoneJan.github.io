@@ -182,6 +182,9 @@ class Solution:
 **完全背包递推版本：**
 
 ```python
+from math import inf, isqrt
+
+
 class Solution:
     def numSquares(self, n: int) -> int:
         """完全背包 DP 解法"""
@@ -309,6 +312,8 @@ for i in range(1, isqrt(n) + 1):      # 完全平方数
 如果多次查询，可以预处理所有答案：
 
 ```python
+from math import inf, isqrt
+
 N = 10000
 f = [0] + [inf] * N
 for i in range(1, isqrt(N) + 1):

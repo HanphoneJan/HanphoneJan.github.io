@@ -30,6 +30,7 @@ import {compare} from '../src/components/training/pyrunner/compare';
 import {
   quoteIfStr,
   toPythonLiteral,
+  usesDummyHead,
 } from '../src/components/training/pyrunner/runner';
 
 let pass = 0;
@@ -202,7 +203,11 @@ if __name__ == "__main__":
     eq(
       '类型标注里的 ListNode 被认出来',
       nodeParams(entry, code),
-      ['list', 'list', 'none'],
+      // 第三个参数 carry 没标注，会被属性推断顺手标成 list ——
+      // 这不碍事：__mk__ 只在值确实是标量数组时才建节点，
+      // carry 传的是整数 0，原样进去。下面那条「返回值被还原成数组」
+      // 的运行断言才是真正兜底的那道。
+      ['list', 'list', 'list'],
     );
 
     const res = await run(code, {
@@ -391,6 +396,201 @@ class Solution:
     const got = JSON.parse(String(res.value))[0].v as string;
     eq('str 参数的裸输入自动补引号后跑通', got, '"0006151"');
     check('与题解期望值一致', compare(got, '0006151').ok);
+  }
+
+  /* ---- 7a. 原地修改：返回值是 None，判定要看改完之后的入参 ---- */
+  {
+    // 0283 moveZeroes：题目要求原地改，函数 `-> None` 什么都不返回。
+    // 题面写的「输出：[1,3,12,0,0]」指的是改完之后的 nums。
+    const code = `class Solution:
+    def moveZeroes(self, nums):
+        j = 0
+        for i in range(len(nums)):
+            if nums[i] != 0:
+                nums[j], nums[i] = nums[i], nums[j]
+                j += 1
+`;
+    const entry = analyzeSnippet(code).entry!;
+    const res = await run(code, {
+      driver: buildCallDriver(
+        [
+          ['[0,1,0,3,12]'],
+          ['[0]'],
+        ],
+        callTarget(entry),
+        nodeParams(entry, code),
+      ),
+    });
+    check('原地修改的题能跑起来', !res.error, res.error);
+    const rows = JSON.parse(String(res.value)) as Array<{
+      v?: string;
+      e?: string;
+      m?: boolean;
+    }>;
+    eq('拿改完之后的入参当结果', rows[0]?.v, '[1, 3, 12, 0, 0]');
+    check('与题面期望值一致', compare(rows[0]?.v ?? '', '[1,3,12,0,0]').ok);
+    check('并标记出这是「原地修改」判定', rows[0]?.m === true);
+    eq('只有一个 0 时也认得出来', rows[1]?.v, '[0]');
+  }
+
+  /* ---- 7a2. 返回链表时 None 就是空链表，序列化成 [] ---- */
+  {
+    // 0021：两个空链表合并返回 None，而题面期望值写的是 []。
+    const code = `class Solution:
+    def mergeTwoLists(self, list1, list2):
+        dummy = ListNode(0)
+        cur = dummy
+        while list1 and list2:
+            if list1.val <= list2.val:
+                cur.next = list1
+                list1 = list1.next
+            else:
+                cur.next = list2
+                list2 = list2.next
+            cur = cur.next
+        cur.next = list1 or list2
+        return dummy.next
+`;
+    const entry = analyzeSnippet(code).entry!;
+    const res = await run(code, {
+      driver: buildCallDriver(
+        [
+          ['[1,2,4]', '[1,3,4]'],
+          ['[]', '[]'],
+        ],
+        callTarget(entry),
+        nodeParams(entry, code),
+      ),
+    });
+    const rows = JSON.parse(String(res.value)) as Array<{v?: string; m?: boolean}>;
+    eq('非空的两条链表合并正确', rows[0]?.v, '[1, 1, 2, 3, 4, 4]');
+    eq('空链表合并返回 None 时按 [] 比', rows[1]?.v, '[]');
+    check('空链表这组也通过', compare(rows[1]?.v ?? '', '[]').ok);
+  }
+
+  /* ---- 7a2b. 哑节点原地删链表：返回 None 就是「链表空了」（0019） ---- */
+  {
+    // `[1]` 删第 1 个节点返回 None。此时 head 这个对象**没被改动**
+    // （只是没人引用了），按「拿入参当结果」会还原出原链表 [1]。
+    const code = `class Solution:
+    def removeNthFromEnd(self, head, n):
+        length = 0
+        cur = head
+        while cur:
+            length += 1
+            cur = cur.next
+        dummy = ListNode(0, head)
+        cur = dummy
+        for _ in range(length - n):
+            cur = cur.next
+        cur.next = cur.next.next
+        return dummy.next
+`;
+    const entry = analyzeSnippet(code).entry!;
+    check('认出哑节点写法', usesDummyHead(code));
+    const res = await run(code, {
+      driver: buildCallDriver(
+        [
+          ['[1,2,3,4,5]', '2'],
+          ['[1]', '1'],
+          ['[1,2]', '1'],
+        ],
+        callTarget(entry),
+        nodeParams(entry, code),
+        false,
+        usesDummyHead(code),
+      ),
+    });
+    const rows = JSON.parse(String(res.value)) as Array<{v?: string; m?: boolean}>;
+    eq('删中间节点', rows[0]?.v, '[1, 2, 3, 5]');
+    eq('删到只剩空链表时按 [] 比', rows[1]?.v, '[]');
+    // [1,2] 删倒数第 1 个 -> 剩 [1]（我一开始写成 [2]，是期望值自己写错了）
+    eq('删最后一个', rows[2]?.v, '[1]');
+    check('空链表这组也通过', compare(rows[1]?.v ?? '', '[]').ok);
+  }
+
+  /* ---- 7a3. 原地修改矩阵（0048）：入参是 list of list ---- */
+  {
+    const code = `class Solution:
+    def rotate(self, matrix):
+        n = len(matrix)
+        for i in range(n):
+            for j in range(i + 1, n):
+                matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
+        for row in matrix:
+            row.reverse()
+`;
+    const entry = analyzeSnippet(code).entry!;
+    const res = await run(code, {
+      driver: buildCallDriver(
+        // 外层的 [ ] 不能省：literal_eval 会把 "[1,2],[3,4]" 当成元组求值
+        [['[[1,2,3],[4,5,6],[7,8,9]]']],
+        callTarget(entry),
+        nodeParams(entry, code),
+      ),
+    });
+    const rows = JSON.parse(String(res.value)) as Array<{v?: string; m?: boolean}>;
+    eq(
+      '矩阵原地旋转后与期望一致',
+      rows[0]?.v,
+      '[[7, 4, 1], [8, 5, 2], [9, 6, 3]]',
+    );
+    check('标记为原地修改', rows[0]?.m === true);
+  }
+
+  /* ---- 7a4. 0236：p / q 给的是节点值，要到树里找节点对象 ---- */
+  {
+    // 「完整代码实现」那一块（第 1 个块是只有方法体、没有 class 的骨架）
+    const code = codeBlockOf(
+      'leetcode/0236_lowest_common_ancestor_of_a_binary_tree.md',
+      1,
+    );
+    const entry = analyzeSnippet(code).entry!;
+    eq('0236 的入口', entry.name, 'lowestCommonAncestor');
+    eq(
+      '前向引用标注的非首节点参数认成 byval',
+      nodeParams(entry, code),
+      ['tree', 'byval', 'byval'],
+    );
+    const res = await run(code, {
+      driver: buildCallDriver(
+        [
+          ['[3,5,1,6,2,0,8,None,None,7,4]', '5', '1'],
+          ['[3,5,1,6,2,0,8,None,None,7,4]', '5', '4'],
+        ],
+        callTarget(entry),
+        nodeParams(entry, code),
+      ),
+    });
+    const rows = JSON.parse(String(res.value)) as Array<{
+      v?: string;
+      e?: string;
+    }>;
+    check('按节点值找到 p / q 之后能跑通', !rows[0]?.e, rows[0]?.e);
+    // p / q 按值给，说明题面要的是「那个节点」的值（输出: 3）
+    eq('示例 1 的最近公共祖先', rows[0]?.v, '3');
+    eq('示例 2 的最近公共祖先', rows[1]?.v, '5');
+    check('与题面期望值一致', compare(rows[0]?.v ?? '', '3').ok);
+  }
+
+  /* ---- 7a5. 末尾不带换行的输出不能丢（stdout 块缓冲） ---- */
+  {
+    const code = `import sys
+
+data = sys.stdin.read().split()
+a, b = data[0], data[1]
+sys.stdout.write('第一行 ' + a)
+sys.stdout.write('\\n')
+sys.stdout.write('第二行 ' + b)
+`;
+    const res = await run(code, {stdin: 'x y', asMain: true});
+    check('程序本身跑通了', !res.error, res.error);
+    eq(
+      '末尾没有换行的那一行也在',
+      res.stdout,
+      '第一行 x\n第二行 y',
+    );
+    check('与期望值比较通过', compare(res.stdout, '第一行 x\n第二行 y').ok);
   }
 
   /* ---- 7b. stdout 文本 vs 返回值 JSON（ACM 题） ---- */

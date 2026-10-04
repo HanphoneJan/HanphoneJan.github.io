@@ -1,3 +1,5 @@
+import type {NodeKind} from './snippet';
+
 /**
  * 生成 Python 驱动代码。纯字符串拼接，无 React / 无 DOM，所以能被单测直接断言。
  *
@@ -31,19 +33,46 @@ const ENCODER = `def __enc__(v, __d__=0):
         return [__enc__(x, __d__ + 1) for x in v]
     if isinstance(v, dict):
         return {str(k): __enc__(x, __d__ + 1) for k, x in v.items()}
+    # **先判树再判链表**。
+    #
+    # 0114 把二叉树展开成「只有右孩子的链表」，返回的是 TreeNode，
+    # 它既有 next 也有 left。判成链表会输出 [1,2,3,4,5,6]，
+    # 而题面的期望值是树形态的 [1,null,2,null,3,null,4,null,5,null,6] ——
+    # 判成树就正好对上。纯链表（0002/0019/0023）没有 left 属性，
+    # 仍然走链表分支，不受影响。
+    if hasattr(v, 'val') and hasattr(v, 'left'):
+        return __enc_tree__(v)
     if hasattr(v, 'val') and hasattr(v, 'next'):
+        if hasattr(v, 'random'):
+            return __enc_rand__(v)
         __r__, __seen__ = [], set()
         while v is not None and id(v) not in __seen__:
             __seen__.add(id(v))
             __r__.append(__enc__(v.val, __d__ + 1))
             v = v.next
         return __r__
-    if hasattr(v, 'val') and hasattr(v, 'left'):
-        return __enc_tree__(v)
     return str(v)
 
-def __enc_tree__(root):
-    # **层序**输出，和题解里的期望值一致。
+def __enc_rand__(head):
+    # 0138 的题面把 random 指针写成**下标**：[[7,null],[13,0],[11,4],...]
+    # 里的 0 是「指向第 0 个节点」，不是「指向值为 0 的节点」（链表里没有 0）。
+    # 示例 2 的 [[1,1],[2,1]] 也是下标：第 2 个节点的 random 指向下标 1。
+    # 入参按这个约定还原、返回值也按同一个约定输出，两边才凑得齐。
+    __idx__ = {}
+    __n__, __i__ = head, 0
+    while __n__ is not None and id(__n__) not in __idx__:
+        __idx__[id(__n__)] = __i__
+        __n__ = __n__.next
+        __i__ += 1
+    __out__ = []
+    __n__ = head
+    while __n__ is not None:
+        __r__ = getattr(__n__, 'random', None)
+        __out__.append([__enc__(__n__.val), None if __r__ is None else __idx__.get(id(__r__))])
+        __n__ = __n__.next
+    return __out__
+
+def __enc_tree__(root):    # **层序**输出，和题解里的期望值一致。
     # 力扣题面的示例（也就是题解抄下来的那些）一律是层序：
     #   输入 [4,7,2,9,6,3,1] -> 输出 [1,2,4,7,3,6,9,5]
     # 而不是力扣内部用于比对的递归 [left, val, right]。
@@ -106,14 +135,58 @@ def __dump_text__(v):
  */
 const BUILDER = `def __mk__(v, __k__):
     if __k__ == 'list':
+        if isinstance(v, list) and not v:
+            # 空数组原样传：0023 的 mergeKLists([]) 里 lists 就是个空列表，
+            # 建成 None 的话 enumerate(None) 直接 TypeError
+            return v
         if isinstance(v, list) and all(x is None or isinstance(x, (int, float, str, bool)) for x in v):
             return __mk_list__(v)
+        # 链表**数组**：0023 的签名是 List[ListNode]，样例给的是 [[1,4,5],[1,3,4]]
+        # 逐个建链表。不处理的话元素还是 list，代码里 l1.val 立刻 AttributeError。
+        if isinstance(v, list) and all(isinstance(x, list) for x in v):
+            return [__mk_list__(x) for x in v]
         return v
+    if __k__ == 'randlist':
+        # 0138 的样例 [[7,null],[13,0],[11,4],...]：每项是「值 + random 指向的
+        # **下标**」。先按值建出整条链，再按下标把 random 指针接上
+        # （力扣的评测驱动就是这么构造输入的）。
+        if isinstance(v, list) and v and all(isinstance(x, list) and len(x) == 2 for x in v):
+            __head__ = __mk_list__([x[0] for x in v])
+            __nodes__ = []
+            __cur__ = __head__
+            while __cur__ is not None:
+                __nodes__.append(__cur__)
+                __cur__ = __cur__.next
+            __cur__ = __head__
+            for __pair__ in v:
+                __t__ = __pair__[1]
+                __cur__.random = None if __t__ is None or not isinstance(__t__, int) or __t__ >= len(__nodes__) else __nodes__[__t__]
+                __cur__ = __cur__.next
+            return __head__
+        return __mk__(v, 'list')
     if __k__ == 'tree':
         if isinstance(v, list) and v:
             return __mk_tree__(v)
         return v
-    return v`;
+    return v
+
+
+def __find__(root, val):
+    # 0236：题面给的 p / q 是**节点值**（p = 5），而签名要的是 TreeNode 对象。
+    # 力扣的评测驱动就是到树里按值找节点，这里照做。
+    if root is None:
+        return None
+    if hasattr(root, 'val') and root.val == val:
+        return root
+    for slot in ('left', 'right'):
+        __c__ = getattr(root, slot, None)
+        if __c__ is not None:
+            __hit__ = __find__(__c__, val)
+            if __hit__ is not None:
+                return __hit__
+    if hasattr(root, 'next'):
+        return __find__(root.next, val)
+    return None`;
 
 /**
  * 力扣平台预置的链表/树节点类。
@@ -324,6 +397,50 @@ export function buildPrelude(opts: {
 }
 
 /**
+ * 返回值是 None 时，题面的「输出」到底是什么。
+ *
+ * 力扣有一批题**要求原地修改入参、函数本身不返回任何东西**：
+ * 0283 moveZeroes、0048 rotate、0073 setZeroes、0075 sortColors、0114 flatten、
+ * 0089、0348… 题面写的「输出：[1,3,12,0,0]」指的是**改完之后的东西**，
+ * 而代码 `def moveZeroes(nums) -> None` 什么也不返回。
+ *
+ * 早先直接把 None 序列化成 `null` 去比，每一组都判失败，读者看到的却是
+ * 「这篇题解写错了」—— 它没写错，是这道题本来就不要求返回。
+ *
+ * 三种还原方式，按「入参里还剩什么」决定（必须唯一，多了就说明猜不出来）：
+ *
+ * 1. 恰好一个**数组**参数（元素是标量，或者像矩阵那样是数组） ->
+ *    那是被原地改过的数组（moveZeroes / rotate 的 matrix）
+ * 2. 恰好一个**节点对象**参数 -> 那是棵被改过的树/链表（0114 flatten、
+ *    0024 swapPairs 这种）。序列化出来正好是题面那个形态。
+ * 3. 别的情形 -> 空列表。返回链表/树的题里 None 就是空链表，
+ *    而力扣题面写的是 `[]`（0021 `mergeTwoLists([], [])` 期望 `[]`）
+ *
+ * 第 1 条特意不收「装着节点的数组」：0023 的 `mergeKLists([[]])` 参数是
+ * `[None]`（一个装空链表的数组），它不是被改过的数组，按第 2 条也找不到节点，
+ * 于是落到第 3 条得到 `[]` —— 正好是期望值。
+ *
+ * 语料里没有任何一篇的期望值是 `null`（查过），所以这三种还原都不会
+ * 把「本来就该返回 None」的题判错。
+ */
+const NONE_RETURN = `        if __v__ is None:
+            if __dummy_head__:
+                # 用哑节点做原地删除（0019）：返回 None 就是「整个链表没了」。
+                # 头节点对象本身还在（只是不再被引用），序列化它会得到原链表。
+                __v__ = []
+            else:
+                __lst__ = [x for x in __p__ if isinstance(x, list) and all(isinstance(y, (int, float, str, bool, list)) for y in x)]
+                __nd__ = [x for x in __p__ if hasattr(x, 'val')]
+                if len(__lst__) == 1:
+                    __v__ = __lst__[0]
+                    __mut__ = True
+                elif len(__nd__) == 1:
+                    __v__ = __nd__[0]
+                    __mut__ = True
+                else:
+                    __v__ = []`;
+
+/**
  * 调用入口并逐条收集结果。
  *
  * ## 结尾必须是裸表达式，不能 print
@@ -342,18 +459,32 @@ export function buildPrelude(opts: {
  */
 export function buildCallDriver(
   cases: string[][],
-  target: {expr: string; needsInstance: boolean},
+  target: {expr: string; instantiate: string | null},
   /**
-   * 每个参数要还原成哪种结构（'none' / 'list' / 'tree'）。
+   * 每个参数要还原成哪种结构（'none' / 'list' / 'tree' / 'randlist'）。
    * 由 snippet.ts 依据类型标注算出 —— 不能在 Python 侧靠数组长度猜，
    * 三个元素的链表和二叉树的 [left,val,right] 在字面量上无法区分。
    */
-  nodeKinds: Array<'none' | 'list' | 'tree'> = [],
+  nodeKinds: Array<NodeKind> = [],
   /**
    * 用 str() 而不是 json 序列化返回值。
    * 期望值是「程序打印的文本」时必须这样 —— 见 PySample.textCompare。
    */
   textCompare = false,
+  /**
+   * 入口是不是「用哑节点原地删除链表」那种写法（0019：`dummy = ListNode(0, head)`
+   * + `return dummy.next`）。这种写法返回 None 时，含义是「整个链表被删空了」，
+   * 而不是「入参没被动过」—— 头节点对象还在，只是没人引用它了。
+   */
+  dummyHead = false,
+  /**
+   * args 里要不要先把 JS 记法翻成 Python（`null` -> `None`）。
+   *
+   * 题面抄来的样例是 **JavaScript** 记法：`root = [3,5,1,null,null,7,4]`。
+   * `literal_eval` 不认 `null`，直接 `ValueError: malformed node`。
+   * 样例模式由 runner 先翻译好（见 toPythonLiteral），手动输入走这条。
+   */
+  translateJs = false,
 ): string {
   const kinds = (cases[0] ?? []).map((_, i) => nodeKinds[i] ?? 'none');
   const dump = textCompare ? '__dump_text__' : '__j__';
@@ -363,17 +494,37 @@ export function buildCallDriver(
     'import traceback as __tb__',
     'import ast as __ast__',
     // ENCODER / BUILDER / __re__ 已在 prelude 里执行过，这里不重复定义
-    target.needsInstance ? '__sol__ = Solution()' : '',
+    target.instantiate ?? '',
     // 按位置决定要不要把数组字面量还原成链表/树
     `__kinds__ = ${JSON.stringify(kinds)}`,
+    `__dummy_head__ = ${dummyHead ? 'True' : 'False'}`,
     '__r__ = []',
     `for __a__ in ${JSON.stringify(cases)}:`,
     '    try:',
     // 必须 literal_eval：cases 通过 JSON 传进来，元素是**字符串**。
     // 直接 splat 过去，入口拿到的是 "9" 而不是 9，`target - n` 立刻 TypeError。
     // （literal_eval 只认字面量、不执行代码，对用户粘贴的样例是安全的）
-    '        __p__ = [__mk__(__ast__.literal_eval(x), __k__) for x, __k__ in zip(__a__, __kinds__)]',
-    `        __r__.append({"v": ${dump}(__enc__(${target.expr}(*__p__)))})`,
+    // manual 模式的 args 是读者敲的，可能照抄了题面的 null。
+    // 样例模式已经在 JS 侧翻过，这里不再重复（免得把字符串里的 "null" 也换掉）。
+    translateJs
+      ? '        __vals__ = [__ast__.literal_eval(x.replace("null", "None")) for x in __a__]'
+      : '        __vals__ = [__ast__.literal_eval(x) for x in __a__]',
+    '        __p__ = [__mk__(v, __k__) for v, __k__ in zip(__vals__, __kinds__)]',
+    // 0236：p / q 给的是节点值，要到 root 这棵树里找对应的节点对象
+    '        for __i__, (__v__, __k__) in enumerate(zip(__vals__, __kinds__)):',
+    "            if __k__ == 'byval':",
+    '                __t__ = next((t for t in __p__[:__i__] if hasattr(t, "val")), None)',
+    '                __p__[__i__] = __find__(__t__, __v__) if __t__ is not None else __v__',
+    '        __mut__ = False',
+    `        __v__ = ${target.expr}(*__p__)`,
+    NONE_RETURN,
+    // 0236：p / q 是按值给的，说明题面要的答案是「那个节点」。
+    // 题面写的是节点值（`输出: 3`），而编码器会把节点序列化成整棵子树的
+    // 层序（`[5,6,2,null,null,7,4]`）—— 对不上。这里取根节点的值。
+    kinds.includes('byval')
+      ? '        if hasattr(__v__, "val"):\n            __v__ = __v__.val'
+      : '',
+    `        __r__.append({"v": ${dump}(__enc__(__v__)), "m": __mut__})`,
     '    except Exception:',
     '        __r__.append({"e": __tb__.format_exc()})',
     '__json__.dumps(__r__, ensure_ascii=False)',

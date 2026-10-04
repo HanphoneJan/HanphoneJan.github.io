@@ -34,6 +34,10 @@ export interface PySample {
   expected: string;
   /** 期望值是「程序打印的文本」而非返回值 JSON，见插件侧同名注释 */
   textCompare?: boolean;
+  /** 题面明说「可以按任意顺序返回」，比较时按多重集，见插件侧同名注释 */
+  orderAgnostic?: boolean;
+  /** 题面承认「答案不唯一」，比较时只看节点值集合，见插件侧同名注释 */
+  multiAnswer?: boolean;
 }
 
 export interface StdinSample {
@@ -55,6 +59,14 @@ export interface SampleRow {
   actual: string;
   verdict: 'pass' | 'fail' | 'error';
   reason?: string;
+  /**
+   * 判定依据不是返回值，而是**被原地改过的入参**。
+   *
+   * 力扣有一批题要求原地修改、函数返回 None（0283 moveZeroes 等），
+   * 题面的「输出」说的就是改完之后的数组。这种判定要讲清楚，
+   * 否则读者会以为我们读错了返回值。
+   */
+  note?: string;
 }
 
 export interface RunOutcome {
@@ -101,15 +113,60 @@ function emptyOutcome(): RunOutcome {
   };
 }
 
+/**
+ * 把输入框里那一行变成一组实参。
+ *
+ * 顺序有讲究：**先补引号，再翻译 JS 记法**。
+ *
+ * ## 为什么先补引号
+ *
+ * 入口签名写着 `num_str: str`，读者却在输入框里敲 `1516000`，
+ * `literal_eval` 把它变成整数，`num_str[::-1]` 当场 TypeError。报错还指向
+ * 读者没改过的那一行，看起来像是「我的解法写错了」—— 其实代码没错，
+ * 是输入框没标住类型。
+ *
+ * 补引号用 `asCallArgument` 而不是 `quoteIfStr`：前者是它的加强版（标注没
+ * 写 str、但这段文本根本不是字面量时也补），并且和同一块代码的 stdin 派生
+ * 样例用的是同一套判断 —— 读者在框里敲和样例里写同样的话，不该得到不一样的
+ * 解释。
+ *
+ * ## 为什么后翻译
+ *
+ * 读者是照着题面敲的，而力扣题面写的就是 `[3,9,20,null,null,15,7]`。
+ * `literal_eval` 不认 `null`，直接 ValueError。
+ *
+ * 反过来先翻译的话，str 参数上的 `null` 会变成 `None` 而不是字符串
+ * `"null"` —— 标注说了算，不猜长相。
+ */
+export function manualCase(argsText: string, entry: SnippetEntry): string[] {
+  return splitTopLevel(argsText).map((a, i) =>
+    toPythonLiteral(asCallArgument(a, entry.annotations[i])),
+  );
+}
+
+/**
+ * 是不是「哑节点 + 原地删链表」的写法。
+ *
+ * 0019 的标准解法是 `dummy = ListNode(0, head)` 起步、最后 `return dummy.next`。
+ * 输入 `[1]`、删第 1 个节点时它返回 None —— 意思是「链表空了」，
+ * 而 head 这个对象本身没被改动（只是没人引用了）。
+ * 不区分的话会把删空的结果还原成原链表 `[1]`，判出一个与代码对错无关的 ✗。
+ */
+export function usesDummyHead(code: string): boolean {
+  return (
+    /\bdummy\b\s*=/.test(code) && /return\s+[\w.]*\.next\b/.test(code)
+  );
+}
+
 /** 驱动返回的每一项：要么有值 v，要么有 traceback e */
-function parseDriverRows(value: unknown): Array<{v?: string; e?: string}> {
+function parseDriverRows(value: unknown): Array<{v?: string; e?: string; m?: boolean}> {
   if (typeof value !== 'string') {
     return [];
   }
   try {
     const parsed: unknown = JSON.parse(value);
     return Array.isArray(parsed)
-      ? (parsed as Array<{v?: string; e?: string}>)
+      ? (parsed as Array<{v?: string; e?: string; m?: boolean}>)
       : [];
   } catch {
     return [];
@@ -143,11 +200,7 @@ export async function runSnippet(opts: {
         // 样例抄自力扣题面，是 JavaScript 记法（null / [1,2]），要先翻译
         cases = mode.samples.map((s) => s.args.map(toPythonLiteral));
       } else if (mode.type === 'manual' && target) {
-        // 按类型标注补引号：入口签名写着 num_str: str，读者却在输入框里敲
-        // 1516000，literal_eval 会把它变成整数，`num_str[::-1]` 当场 TypeError。
-        // 报错信息指向读者改的那一行，看起来像是「我的代码错了」——
-        // 实际上代码没错，是输入框没标住类型。
-        cases = [splitTopLevel(mode.argsText).map((a, i) => quoteIfStr(a, entry!.annotations[i]))];
+        cases = [manualCase(mode.argsText, entry!)];
       } else if (mode.type === 'stdin') {
         stdin = mode.stdin;
       }
@@ -159,6 +212,8 @@ export async function runSnippet(opts: {
               target,
               nodeParams(entry!, code),
               mode.type === 'samples' ? mode.textCompare : false,
+              usesDummyHead(code),
+              mode.type === 'manual',
             )
           : undefined;
       const result = await execPython(py, {
@@ -182,7 +237,10 @@ export async function runSnippet(opts: {
 
       if (mode.type === 'stdin') {
         const actual = result.stdout.trim();
-        const ok = compare(actual, mode.expected);
+        // 自己填的输入没有期望值可比 —— 此时**不能**把空串交给 compare：
+        // Number('') 是 0，`compare('51', '')` 会给出「数值不符：期望 0」。
+        // 那是纯粹由「空期望值」造出来的假失败。
+        const ok = mode.expected ? compare(actual, mode.expected) : {ok: true};
         outcome.rows = [
           {
             call: '（喂给 stdin 的输入）',
@@ -195,6 +253,7 @@ export async function runSnippet(opts: {
         outcome.output = result.stdout;
       } else if (cases && target) {
         const parsed = parseDriverRows(result.value);
+        const samples = mode.type === 'samples' ? mode.samples : [];
         outcome.rows = cases.map((args, i) => {
           const call = `${target.display}(${args.join(', ')})`;
           const expected =
@@ -219,6 +278,9 @@ export async function runSnippet(opts: {
               reason: item.e.trim(),
             };
           }
+          const note = item.m
+            ? '函数返回 None，这道题要求原地修改入参 —— 下面是改完之后的入参'
+            : undefined;
           // 手动模式没有期望值可判，只把输出摆出来
           if (mode.type === 'manual') {
             return {
@@ -226,15 +288,20 @@ export async function runSnippet(opts: {
               expected: '',
               actual: item.v ?? '（没有返回值）',
               verdict: 'pass' as const,
+              note,
             };
           }
-          const ok = compare(item.v ?? '', expected);
+          const ok = compare(item.v ?? '', expected, {
+            orderAgnostic: mode.type === 'samples' && samples[i]?.orderAgnostic,
+            multiAnswer: mode.type === 'samples' && samples[i]?.multiAnswer,
+          });
           return {
             call,
             expected,
             actual: item.v ?? '（没有返回值）',
             verdict: (ok.ok ? 'pass' : 'fail') as 'pass' | 'fail',
             reason: ok.reason,
+            note,
           };
         });
       } else if (mode.type === 'plain') {
@@ -333,6 +400,21 @@ function fixNull(arg: string): string {
  * —— 一个与代码对错无关的红字。
  */
 export function asCallArgument(text: string, annotation?: string): string {
+  // 「命名实参」形态：shoppee 的 `**输入：**` 围栏块里写的是
+  // `grid = [[0, 0, 0], [0, 0, 0]]` —— 那是**调用**的样子，不是真的 stdin。
+  // 不去掉 `grid = ` 的话 literal_eval 直接 SyntaxError。
+  //
+  // 只在「去掉之后整个文本就是一个值」时才剥：像 `a, b = 1, 2` 这种
+  // 真的多变量赋值剥掉就毁了，宁可原样传（顶多判个失败，也不会算错）。
+  const eq = text.indexOf('=');
+  if (eq > 0 && !/[=!<>+\-*/%&|^]/.test(text[eq - 1] ?? '')) {
+    const key = text.slice(0, eq).trim();
+    const rest = text.slice(eq + 1).trim();
+    if (/^[A-Za-z_]\w*$/.test(key) && rest && !rest.includes('\n')) {
+      text = rest;
+    }
+  }
+
   const ann = (annotation ?? '').trim().toLowerCase();
   if (ann) {
     if (/\bstr\b/.test(ann)) {
@@ -347,6 +429,20 @@ export function asCallArgument(text: string, annotation?: string): string {
     }
   }
   const t = text.trim();
+
+  // 「空格分隔的一串数字」是数组参数，不是字符串。
+  //
+  // ACM 题的样例天然是 stdin 形态：`7 2 1 10`。而入口签名常常不带标注
+  // （`def can_reach_24(nums)`），按「不是字面量就加引号」的旧规则会得到
+  // `"7 2 1 10"` —— 于是 `nums[i] - nums[j]` 变成字符串减法，TypeError。
+  //
+  // 判据收紧到「每一段都是数字」：`Hello World`、`a b c` 不受影响，
+  // 而 `1 2 3` 这种网格/矩阵的单行写法也能正确还原成数组。
+  if (/^-?\d+(?:\.\d+)?(?:[ \t]+-?\d+(?:\.\d+)?)*$/.test(t)) {
+    const items = t.split(/[ \t]+/);
+    return items.length === 1 ? items[0] : `[${items.join(', ')}]`;
+  }
+
   // 已经是字面量（数字 / 数组 / 字典 / None / True）或带引号的，就原样传
   if (isPythonLiteral(t)) {
     return t;

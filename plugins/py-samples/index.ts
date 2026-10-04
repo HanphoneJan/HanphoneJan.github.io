@@ -48,6 +48,25 @@ export interface PySample {
    * 这种样例改用 str() 序列化，和程序真正会打印的东西对齐。
    */
   textCompare?: boolean;
+  /**
+   * 题面明说「可以按任意顺序返回」，比较时按多重集而不是按序。
+   *
+   * 0049 的期望值 `[["bat"],["nat","tan"],["ate","eat","tea"]]` 与
+   * 按字典序分组的实现给出的顺序不同，但元素集合一模一样 ——
+   * 力扣的评测也是按「集合相同」算过的。只在题面写了这句话时才放宽，
+   * 否则 0056 那种「区间必须有序」的题会漏判。
+   */
+  orderAgnostic?: boolean;
+  /**
+   * 题面/示例承认「答案不唯一」，比较时只看**节点值的集合**。
+   *
+   * 0108 的示例写着「[0,-10,5,null,-3,null,9] 也将被视为正确答案」，
+   * 而按中序建出来的树几乎必然与示例那棵形状不同。按形状比必然判失败，
+   * 判出来的 ✗ 与代码对错无关。
+   *
+   * 代价是比形状松：值集合相同但形状不对也算过。只在题面自己这么说了的时候用。
+   */
+  multiAnswer?: boolean;
 }
 
 export interface StdinSample {
@@ -425,10 +444,51 @@ export function extractDocSamples(
     paramNames,
     requiredCount,
   );
-  if (fromExample.length > 0) {
-    return fromExample;
+  const picked =
+    fromExample.length > 0
+      ? fromExample
+      : extractSamples(section(md, '题目描述'), paramNames, requiredCount);
+  if (picked.length === 0) {
+    return picked;
   }
-  return extractSamples(section(md, '题目描述'), paramNames, requiredCount);
+  // 题面写了「可以按任意顺序返回」就放宽顺序比较（0049 / 0347）
+  if (mentionsAnyOrder(section(md, '题目描述'))) {
+    return picked.map((s) => ({...s, orderAgnostic: true}));
+  }
+  // 题面/示例自己承认「答案不唯一」时，按节点值的集合比（0108）
+  if (mentionsMultiAnswer(md)) {
+    return picked.map((s) => ({...s, multiAnswer: true}));
+  }
+  return picked;
+}
+
+/**
+ * 题面是否明说「顺序无所谓」。
+ *
+ * 只认这句明确的话，不去猜「这题的答案是不是集合」——
+ * 猜错会把 0056「区间必须有序」那种题也放宽，漏判就再也发现不了了。
+ */
+function mentionsAnyOrder(text: string | undefined): boolean {
+  if (!text) {
+    return false;
+  }
+  // 「任意顺序」「顺序任意」「任意次序」，以及「返回任意一种顺序」这种说法
+  return /任意[^。\n]{0,6}顺序|顺序任意|任意次序|次序任意|顺序不限/.test(text);
+}
+
+/**
+ * 题面是否明说「答案不唯一」。
+ *
+ * 0108 的示例里直接写着「解释：[0,-10,5,null,-3,null,9] 也将被视为正确答案」——
+ * 题面自己承认另一棵同样合法的树。而按中序建出来的树几乎必然与示例那棵不同，
+ * 按序比就会判出一个与代码对错无关的 ✗。
+ */
+function mentionsMultiAnswer(md: string): boolean {
+  return (
+    /也被视为正确答案|也将被视为正确答案|视为正确|多种(?:合法)?(?:答案|解法)|答案不唯一|不唯一的答案/.test(
+      md,
+    )
+  );
 }
 
 /** 同上，stdin 形式 */
@@ -477,6 +537,33 @@ function readValue(
   }
   let value = rest.slice(0, end);
 
+  // 值跨行时接着往下读。
+  //
+  // 0200 的网格样例就是这么写的：
+  //
+  //     输入：grid = [["1","1","1","1","0"],
+  //                  ["1","1","0","1","0"],
+  //                  ["0","0","0","0","0"]]
+  //     输出：1
+  //
+  // 只读到第一行的话留下一个没闭合的 `[`，literal_eval 立刻
+  // `SyntaxError: '[' was never closed`，两组样例全判失败。
+  //
+  // 只在**括号还没配平**时继续（引号不配平不继续：那说明是笔误，
+  // 硬读会把整篇文档吞进来），最多 20 行兜底。
+  let extraLines = 0;
+  while (openDepth(value) > 0 && extraLines < 20) {
+    const nl = rest.indexOf('\n', end);
+    if (nl === -1) {
+      break;
+    }
+    end = nl + 1;
+    value = rest.slice(0, end);
+    extraLines++;
+  }
+  // 括号里的换行没有意义，折成空格 —— 页面上要显示成一行调用
+  value = value.replace(/\s*\n\s*/g, ' ');
+
   // 反引号优先
   const tick = value.indexOf('`');
   if (tick !== -1) {
@@ -487,15 +574,98 @@ function readValue(
   }
 
   // 截断在明显不是值的地方。
-  // **不要把全角逗号 `，` 放进这个字符类** —— 它是顶层分隔符，
+  //
+  // **必须带引号/括号感知**：0301 的 `输入：s = ")("` 里那个 `(` 在引号内，
+  // 早先用 `/[（(→。；;]/` 无脑截断，把值砍成 `s = ")"` ——
+  // 一个未闭合的字符串字面量，于是每组样例都是 SyntaxError，
+  // 而代码一个字都没错（0301 / 0032 / 0008 全是这样丢的）。
+  // 0022 的 `输出：["((()))","(()())",...]` 同理被砍成 `["`。
+  //
+  // 半角括号 `(` `)` 干脆不进字符类：它们是合法字面量字符
+  // （括号题、字符串含括号的题都靠它），只有**全角** `（` 才是散文信号。
+  //
+  // **也不要把全角逗号 `，` 放进字符类** —— 它是顶层分隔符，
   // 放进来会把 `输入：s = "aa"，p = "a"` 砍成只剩 `s = "aa"`（踩过：0010 抽不到）。
-  const stop = /[（(→。；;]|\s{2,}/.exec(value);
-  if (stop) {
-    value = value.slice(0, stop.index);
-  }
+  value = cutAtProse(value).trim();
+
   // 结尾的分隔符（`→`、全角逗号）
   value = value.replace(/[\s]*[→，,、]+\s*$/, '');
   return value.trim();
+}
+
+/**
+ * 引号外面还没闭合的括号层数。
+ *
+ * 0 表示配平（或者根本没有括号）。用来判断「值是不是被行尾截断了」——
+ * 见 readValue 里跨行续读的逻辑。
+ */
+function openDepth(text: string): number {
+  let quote: string | null = null;
+  let depth = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (quote) {
+      if (ch === '\\') {
+        i++;
+      } else if (ch === quote) {
+        quote = null;
+      }
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+    } else if ('([{'.includes(ch)) {
+      depth++;
+    } else if (')]}'.includes(ch)) {
+      depth--;
+    }
+  }
+  return depth;
+}
+
+/**
+ * 在「明显是散文」的地方截断，但看不见引号和括号里的内容。
+ *
+ * 只认三种信号：全角括号、全角标点、连续两个以上空格。
+ * 连续的空格是散文里最稳的信号 —— 题解里的值从不用空格分隔，
+ * 而解释文字会写成 `输出：5 棵不同的 BST`。
+ */
+function cutAtProse(value: string): string {
+  let quote: string | null = null;
+  let depth = 0;
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i];
+    if (quote) {
+      if (ch === '\\') {
+        i++;
+      } else if (ch === quote) {
+        quote = null;
+      }
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+    if ('([{'.includes(ch)) {
+      depth++;
+      continue;
+    }
+    if (')]}'.includes(ch)) {
+      depth--;
+      continue;
+    }
+    if (depth > 0) {
+      continue;
+    }
+    if ('（→。；;！？'.includes(ch)) {
+      return value.slice(0, i);
+    }
+    if (/\s/.test(ch) && /\s/.test(value[i + 1] ?? '')) {
+      return value.slice(0, i);
+    }
+  }
+  return value;
 }
 
 /**
@@ -557,6 +727,64 @@ export function extractStdinSamples(
   return out.slice(0, 3);
 }
 
+/**
+ * 「入口方法名」是**整篇**的属性，不能只看「完整代码实现」那一块。
+ *
+ * 0148 的完整代码里排了四个方法：
+ *
+ *     def getListLength(self, head) -> int      # 辅助
+ *     def splitList(self, head, size)           # 辅助
+ *     def mergeTwoLists(self, l1, l2)           # 辅助
+ *     def sortList(self, head)                  # ← 这才是 148 的入口
+ *
+ * 「取第一个非辅助方法」挑中了 `getListLength`，于是样例去调它，
+ * 期望 `[1,2,3,4]` 实际拿到长度 `4` —— 报的是「代码写错了」。
+ *
+ * ## 判据：别的块里有没有以顶层函数的名义写过同一个名字
+ *
+ * 题解的「暴力解法」「思路」小节常把题目要你实现的那个函数单独写成
+ * `def sortList(head)`；辅助函数不会享受这个待遇。而易错点小节里那些
+ * `def insert(self, word)` 是签名片段，出现在完整代码**之后** ——
+ * 所以只认文档里最早出现的那个匹配（实测全语料只有 0148 命中）。
+ *
+ * 找不到就保持原来的启发式结果，不猜。
+ */
+export function crossCheckEntryName(
+  md: string,
+  canonCode: string,
+  canonMethod: string | null,
+): string | null {
+  if (!canonMethod) {
+    return null;
+  }
+  const canonNames = new Set<string>();
+  const methodRe = /^[ \t]+def\s+(\w+)\s*\(\s*self/gm;
+  let m: RegExpExecArray | null;
+  while ((m = methodRe.exec(canonCode)) !== null) {
+    canonNames.add(m[1]);
+  }
+  if (!canonNames.has(canonMethod)) {
+    return null;
+  }
+
+  const blockRe = /```python\s*\n([\s\S]*?)```/g;
+  const funcRe = /^(?:async\s+)?def\s+(\w+)/gm;
+  while ((m = blockRe.exec(md)) !== null) {
+    const block = m[1].trim();
+    if (block === canonCode.trim()) {
+      continue;
+    }
+    funcRe.lastIndex = 0;
+    let f: RegExpExecArray | null;
+    while ((f = funcRe.exec(block)) !== null) {
+      if (canonNames.has(f[1])) {
+        return f[1];
+      }
+    }
+  }
+  return null;
+}
+
 export default function pySamplesPlugin(
   context: LoadContext,
 ): Plugin<PySamplesData> {
@@ -582,9 +810,13 @@ export default function pySamplesPlugin(
             continue;
           }
           const {method, paramNames, requiredCount} = extractSignature(code);
+          // 入口名可能不是「完整代码实现」里第一个方法（0148 就是），
+          // 拿整篇的其它块对照一下再定。
+          const entryName =
+            crossCheckEntryName(md, code, method) ?? method;
           entries[rel] = {
             code,
-            method,
+            method: entryName,
             paramNames,
             requiredCount,
             samples: extractDocSamples(md, paramNames, requiredCount),

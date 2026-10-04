@@ -123,7 +123,6 @@ def wordBreak(s, wordDict):
 
 ```python
 from typing import List
-from collections import Counter
 from functools import lru_cache
 
 class Solution:
@@ -139,14 +138,16 @@ class Solution:
     """
 
     def wordBreak(self, s: str, wordDict: List[str]) -> bool:
-        # 字符频率剪枝
-        s_counter = Counter(s)
-        dict_counter = Counter()
+        # 字符剪枝：s 里出现过的字符，字典里至少得有一个单词含它。
+        #
+        # 只能比**集合**，不能比次数 —— 单词可以重复使用，
+        # "applepenapple" 用 apple + pen + apple 拆得开，
+        # 而 apple + pen 里只有 1 个 a，比次数会把它误判成无解。
+        dict_chars = set()
         for word in wordDict:
-            dict_counter.update(word)
-        for ch, cnt in s_counter.items():
-            if cnt > dict_counter.get(ch, 0):
-                return False
+            dict_chars.update(word)
+        if set(s) - dict_chars:
+            return False
 
         m = len(s)
         word_set = set(wordDict)
@@ -212,9 +213,15 @@ class Solution:
 
 ## 易错点总结
 
-### 1. 字符频率剪枝
+### 1. 字符剪枝只能比集合，不能比次数
 
-当字典很大时，先进行字符频率剪枝可以快速排除一些无解情况。
+直觉上会想「s 里字符的出现次数超过字典里能凑出的次数就无解」——
+但字典里的单词**可以重复使用**，这个推断不成立。
+
+`"applepenapple"` 用 `apple + pen + apple` 拆得开，而 `apple + pen` 里只有 1 个 `a`；
+按次数剪枝会提前 `return False`，把有解的输入判成无解（题面示例 2 就是这种）。
+
+要剪就只能比集合：`set(s) - 所有单词用到的字符集合`，非空才无解。
 
 ### 2. lru_cache 的清零
 
