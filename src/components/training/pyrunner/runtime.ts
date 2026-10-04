@@ -1,5 +1,5 @@
 /**
- * Pyodide 运行时加载器。
+ * Pyodide 运行时加载器与执行器。
  *
  * ## 为什么运行时才加载
  *
@@ -38,9 +38,22 @@
  * 见 `scripts/fetch-pyodide.js`。
  */
 
+/** PyProxy 只需要这两个能力 */
+interface PyProxy {
+  destroy?: () => void;
+}
+
 /** 运行时类型（只用到这几个方法） */
 export interface PyodideRuntime {
-  runPythonAsync(code: string): Promise<unknown>;
+  runPythonAsync(
+    code: string,
+    options?: {
+      globals?: PyProxy;
+      filename?: string;
+      /** Pyodide 默认 true，会对代码做 textutil.dedent —— 显式关掉，免得用户贴进来一段带统一缩进的代码被改写 */
+      dedent?: boolean;
+    },
+  ): Promise<unknown>;
   setStdout(options: {
     batched?: (msg: string) => void;
     raw?: (msg: string) => void;
@@ -49,11 +62,6 @@ export interface PyodideRuntime {
     batched?: (msg: string) => void;
     raw?: (msg: string) => void;
   }): void;
-  globals: {
-    set(name: string, value: unknown): void;
-    get(name: string): unknown;
-    delete(name: string): void;
-  };
 }
 
 /**
@@ -65,8 +73,6 @@ let runtimePromise: Promise<PyodideRuntime> | undefined;
 export interface LoadOptions {
   /** indexURL，例如 '/pyodide/' */
   indexUrl: string;
-  /** 加载过程中的进度回调，用于给用户反馈（13MB 不给进度会很像卡死） */
-  onProgress?: (message: string) => void;
 }
 
 /**
@@ -161,43 +167,27 @@ function installFetchShim(indexUrl: string): void {
  * 预热：把 5 个运行时文件过一遍 fetch 拦截，全部落进 Cache。
  * 之后 `loadPyodide` 发起的请求就直接命中缓存。
  *
- * 逐个串行并汇报进度 —— 13MB 的等待必须有可见反馈，否则用户以为页面卡死。
+ * 逐个并发抓取即可 —— 进度提示是刻意不做的：按钮上给一个转圈就够了，
+ * 「13MB」「需要等一会儿」这类文案只会让人以为点错了。
  */
-async function prewarmRuntime(
-  indexUrl: string,
-  onProgress?: (m: string) => void,
-): Promise<void> {
+async function prewarmRuntime(indexUrl: string): Promise<void> {
   if (typeof window === 'undefined' || !('caches' in window)) {
     return;
   }
   const cache = await caches.open(CACHE_NAME);
-  let done = 0;
-  let bytes = 0;
   await Promise.all(
     RUNTIME_FILES.map(async (name) => {
       const url = `${indexUrl}${name}`;
       try {
-        const existing = await cache.match(url);
-        if (existing) {
-          done++;
+        if (await cache.match(url)) {
           return;
         }
         const res = await fetch(url);
         if (res.ok) {
-          const buf = await res.clone().arrayBuffer();
-          bytes += buf.byteLength;
           await cache.put(url, res).catch(() => undefined);
         }
       } catch {
         // 单个文件失败不阻塞：loadPyodide 自己还会再请求一次
-      } finally {
-        done++;
-        onProgress?.(
-          `正在下载 Python 运行时 ${done}/${RUNTIME_FILES.length}` +
-            (bytes > 0
-              ? `（${(bytes / 1024 / 1024).toFixed(1)}MB）`
-              : '（已有缓存）'),
-        );
       }
     }),
   );
@@ -205,7 +195,6 @@ async function prewarmRuntime(
 
 export async function loadPyodideRuntime({
   indexUrl,
-  onProgress,
 }: LoadOptions): Promise<PyodideRuntime> {
   // 单例：同一页面第二次调用直接复用，不重新下载也不重新初始化解释器
   if (runtimePromise) {
@@ -215,7 +204,7 @@ export async function loadPyodideRuntime({
   runtimePromise = (async () => {
     // 必须在第一次请求之前装好，否则首个请求不会被缓存
     installFetchShim(indexUrl);
-    await prewarmRuntime(indexUrl, onProgress);
+    await prewarmRuntime(indexUrl);
 
     // webpackIgnore: 让 webpack 别去打包这个 URL，它在 static/ 下由我们自己提供。
     // 必须是绝对路径，写成相对路径会被 webpack 当成本地模块去解析。
@@ -225,15 +214,12 @@ export async function loadPyodideRuntime({
       /* webpackIgnore: true */ `${indexUrl}pyodide.mjs`
     )) as {loadPyodide: (config: unknown) => Promise<PyodideRuntime>};
 
-    onProgress?.('正在初始化 Python 解释器…');
-
     const py = await mod.loadPyodide({
       indexURL: indexUrl,
       // 关键：不设 packageBaseUrl，也绝不调 loadPackagesFromImports，
       // 这样整个运行期不会有任何请求发往境外 CDN
     });
 
-    onProgress?.('就绪');
     return py;
   })().catch((e) => {
     // 失败后清掉单例，否则用户点了重试还是拿到同一个 rejected promise
@@ -242,62 +228,4 @@ export async function loadPyodideRuntime({
   });
 
   return runtimePromise;
-}
-
-/** 预取提示信息：告诉用户这东西有多大、要等多久 */
-export const PYODIDE_SIZE_HINT = '约 13MB';
-
-/**
- * 把 Python 代码跑起来，收集 stdout/stderr 与异常。
- *
- * 不用 `runPython`（同步版）而是 `runPythonAsync`：内部会 await，
- * 异步代码（比如用户自己写的 async def）才能正确收敛。
- */
-export async function runCode(
-  py: PyodideRuntime,
-  code: string,
-): Promise<{stdout: string; stderr: string; error: string}> {
-  let stdout = '';
-  let stderr = '';
-
-  py.setStdout({
-    batched: (msg: string) => {
-      stdout += msg;
-      stdout += '\n';
-    },
-  });
-  py.setStderr({
-    batched: (msg: string) => {
-      stderr += msg;
-      stderr += '\n';
-    },
-  });
-
-  let error = '';
-  try {
-    await py.runPythonAsync(code);
-  } catch (e) {
-    error = String((e as Error)?.message ?? e);
-  }
-
-  return {
-    stdout: stdout.trimEnd(),
-    stderr: stderr.trimEnd(),
-    error,
-  };
-}
-
-/**
- * 从题解 md 里抽取可运行代码 + 测试用例。
- *
- * ## 为什么在客户端做而不在构建期做
- *
- * 题目数据在 `static/quiz/` 类似的静态 JSON 里，运行时 fetch 最省事；
- * 而 md 正文是编译进 HTML 的，拿不到原始 markdown 字符串。
- * 所以本题解器只支持「用户在框里粘贴代码」，不从 md 抽 ——
- * 见 `samples.ts` 里对 md 结构的解析说明。
- */
-export function normalizeCode(raw: string): string {
-  // 去掉 Pyodide 控制台常见的交互式 REPL 残留
-  return raw.replace(/\r\n/g, '\n').replace(/^\s*>>>\s?/gm, '').trimEnd();
 }

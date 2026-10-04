@@ -20,9 +20,17 @@
     "quiz:merge": "ts-node scripts/merge-quiz.ts",
     "quiz:validate": "ts-node scripts/validate-bank.ts",
     "test:tracers": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-tracers.ts",
-    "test:srs": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-srs.ts"
+    "test:srs": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-srs.ts",
+    "test:pyrunner": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-pyrunner.ts",
+    "test:pyodide": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-pyodide.ts"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.13",
     "@docusaurus/core": "3.9.2",
     "@docusaurus/plugin-content-blog": "^3.9.2",
     "@docusaurus/plugin-content-docs": "^3.9.2",
