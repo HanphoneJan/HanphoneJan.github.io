@@ -11,11 +11,13 @@ import styles from '../styles.module.css';
 import {ArrayView} from '../renderers/ArrayView';
 import {GridView} from '../renderers/GridView';
 import {TableView} from '../renderers/TableView';
+import {TreeView} from '../renderers/TreeView';
 import {
   MAX_FRAMES,
+  isGridFrame,
+  isTableFrame,
+  isTreeFrame,
   type Frame,
-  type GridFrameWrapper,
-  type TableFrameWrapper,
   type Tracer,
 } from '../types';
 
@@ -291,17 +293,9 @@ export default function AlgoPlayer({
 }
 
 /**
- * Frame 是 union，但另外两个分支里 `grid`/`table` 声明成了 `?: never`，
- * TS 的 `in`/真值收窄不生效，所以手写类型守卫。
+ * Frame 是 union，类型守卫在 types.ts 里（两个播放器共用，
+ * 见 isGridFrame 处的注释：optional + never 的组合不会自动收窄）。
  */
-function isGridFrame(f: Frame): f is GridFrameWrapper {
-  return f.grid !== undefined;
-}
-
-function isTableFrame(f: Frame): f is TableFrameWrapper {
-  return f.table !== undefined;
-}
-
 function FrameView({
   frame,
   display,
@@ -314,6 +308,9 @@ function FrameView({
   }
   if (isTableFrame(frame)) {
     return <TableView frame={frame.table} />;
+  }
+  if (isTreeFrame(frame)) {
+    return <TreeView frame={frame} />;
   }
   return <ArrayView frame={frame} display={display} />;
 }

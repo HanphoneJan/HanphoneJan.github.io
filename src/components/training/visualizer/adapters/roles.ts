@@ -116,6 +116,79 @@ export function isScalar(v: unknown): v is CellValue {
 }
 
 /**
+ * 能不能当**一格**画出来。
+ *
+ * 与 `isScalar` 的区别是允许多字符字符串。0014 最长公共前缀的入参是
+ * `strs = ["flower","flow","flight"]`，0013/0038 这类题面给的也是整词 ——
+ * 按单字符判据会被拒掉，而这一类题**恰恰有指针**（`i` 逐字符下标
+ * `strs[0]`），是很好的可视化素材。
+ *
+ * 代价是要防住「字符串数组其实是算法的中间产物」的情况
+ * （0049 字母分组词组的 `res`、0038 的 `words`）——
+ * 靠 `pickArray` 里「入参优先」那条规则挡。
+ */
+export function isCellValue(v: unknown): v is CellValue {
+  return (
+    typeof v === 'number' ||
+    (typeof v === 'string' && v.length > 0 && v.length <= 24)
+  );
+}
+
+/**
+ * 节点标记对象。录制器把 ListNode/TreeNode 编成这个形状。
+ *
+ * ```
+ * {"$": "tree", "v": [1, 2, 3, null, 5]}  层序展开（与力扣题面一致）
+ * {"$": "list", "v": [1, 2, 3]}          沿 next 走出来的链表
+ * {"$": "n", "i": 2, "v": 3}             某个节点：我在第 i 格
+ * ```
+ *
+ * 「$」而不是 `__type__` 这种长键，是为了轨迹 JSON 里**肉眼可辨** ——
+ * diff 时一眼能看出是节点标记而不是普通数据。
+ */
+export interface NodeMark {
+  $: 'tree' | 'list' | 'n';
+  /** tree/list：整条结构的值；n：单个值 */
+  v?: unknown;
+  /** n：层序/链表下标 */
+  i?: number;
+}
+
+/** 这个 Json 是不是节点标记对象 */
+export function isNodeMark(v: unknown): v is NodeMark {
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    !Array.isArray(v) &&
+    typeof (v as { $?: unknown }).$ === 'string'
+  );
+}
+
+/**
+ * 整棵结构 / 整条链的值。
+ *
+ * 只对 `$: 'tree' | 'list'` 成立。`$: 'n'` 是单个节点，
+ * 画面上的「数组」要靠 `$: 'tree'|'list'` 那个提供 ——
+ * 树题里局部变量有 `root`/`node`/`left`/`cur` 四个，全是单个节点。
+ */
+export function nodeSequence(v: unknown): unknown[] | null {
+  if (!isNodeMark(v) || v.$ === 'n' || !Array.isArray(v.v)) {
+    return null;
+  }
+  return v.v;
+}
+
+/** 节点在结构里的下标；不是节点或没记录下标时返回 undefined */
+export function nodeIndex(v: unknown): number | undefined {
+  return isNodeMark(v) && v.$ === 'n' && typeof v.i === 'number' ? v.i : undefined;
+}
+
+/** 结构类型：树还是链表 */
+export function nodeKindOf(v: unknown): 'tree' | 'list' | null {
+  return isNodeMark(v) && (v.$ === 'tree' || v.$ === 'list') ? v.$ : null;
+}
+
+/**
  * 序列判定。
  *
  * 数字 list 与**字符串**都算序列：0003 无重复子串这类题吃的就是一个 str，
@@ -129,7 +202,7 @@ function asSequence(v: unknown): CellValue[] | null {
   if (!Array.isArray(v) || v.length === 0) {
     return null;
   }
-  if (!v.every(isScalar)) {
+  if (!v.every(isCellValue)) {
     return null;
   }
   return v as CellValue[];

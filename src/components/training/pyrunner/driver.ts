@@ -550,3 +550,33 @@ export function buildCallDriver(
 export function globalsInit(asMain: boolean): string {
   return `{'__name__': ${asMain ? "'__main__'" : "'__snippet__'"}}`;
 }
+
+/**
+ * 平台预置类 + 入参还原器 + 值编码器，一整块给**录制器**复用。
+ *
+ * `AttributeError: 'list' object has no attribute 'val'` 正是「样例给的是
+ * 数组、代码要的是 ListNode」造成的（0002/0019/0021/0024/0025/0148/0206/
+ * 0234/0328 等 13 篇一次性全挂）。录制器要的是同一套还原逻辑 ——
+ * 写第二份必然漂移（入参约定一变两边就对不上账），所以直接复用。
+ *
+ * 放在文件末尾是因为它引用了上面三个 const，而 const 有 TDZ：
+ * 声明在使用点之前执行会拿到 `undefined`，Python 侧直接报 NameError。
+ *
+ * 顺序也有讲究：`__mk__` 用到 `__mk_list__` / `__mk_tree__`，
+ * 所以 LEETCODE_TYPES 必须排在 BUILDER 前面。
+ */
+export const BUILDER_PY = `${LEETCODE_TYPES}\n${BUILDER}\n${ENCODER}`;
+
+/**
+ * stdin 垫片（`__Stdin__` + `__StdinBuf__`）。
+ *
+ * 单独导出是因为**录制器也需要它**，而原因很具体：
+ * ACM 题的完整代码里写的是 `sys.stdin.buffer.read()`
+ * （HJ16/HJ68/HJ69/HJ80/HJ81/HJ171/HJ176/HJ178 等 9 篇），
+ * 而 `io.StringIO` 压根没有 `.buffer` 属性 ——
+ * `AttributeError: '_io.StringIO' object has no attribute 'buffer'`。
+ *
+ * 原始 stdin 的字节读与文本读**共用一个游标**（`__StdinBuf__` 只借用
+ * owner 的 `__take__`），跟真实终端一致。
+ */
+export const STDIN_SHIM_PY = STDIN_SHIM;
