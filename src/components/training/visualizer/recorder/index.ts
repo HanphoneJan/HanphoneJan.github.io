@@ -145,6 +145,15 @@ function judge(
   if (!want) {
     return {ok: true, reason: '没有期望值'};
   }
+  /**
+   * 「箭头串」期望值归一化成列表。
+   *
+   * shoppee 的链表题把答案写成 `1 -> 2 -> 3 -> 4 -> 5`，而代码返回的是
+   * `[1, 2, 3, 4, 5]`。不归一化的话两边永远对不上，
+   * 报出来的却是「期望 1 -> 2 -> 3 / 实录 [2,4,2,1,3,5,1]」这种没法看的信息。
+   */
+  const arrow = /^-?\d+(?:\.\d+)?(?:\s*->\s*-?\d+(?:\.\d+)?)+$/.test(want);
+  const normalizedWant = arrow ? `[${want.split(/\s*->\s*/).join(', ')}]` : want;
   // 期望值是散文（「`5 棵不同的 BST`」「返回空列表」），判不了就放行 ——
   // 这一层只是防「代码根本跑不对」，判题是运行条的事
   if (/…|\.\.\.|。|，|[\u4e00-\u9fa5]/.test(want)) {
@@ -166,7 +175,7 @@ function judge(
 
   const got =
     typeof actual === 'string' ? actual : JSON.stringify(actual ?? null);
-  const result = compare(got, want, {
+  let result = compare(got, normalizedWant, {
     // 顺序/多解这两个标记**来自题面文本**，不是来自期望值本身。
     // py-samples 插件已经按「题目描述」小节算好并挂到每条样例上：
     // 0108 的示例里写着「`[0,-10,5,null,-3,null,9]` 也将被视为正确答案」，
@@ -175,6 +184,30 @@ function judge(
     orderAgnostic: opts.orderAgnostic,
     multiAnswer: opts.multiAnswer,
   });
+  /**
+   * 返回值是**节点**、题面期望的是节点的**值**时，按值比。
+   *
+   * 0236 二叉树的最近公共祖先：`lowestCommonAncestor` 返回一个 TreeNode，
+   * 编码成层序是 `[3,5,1,6,2,0,8,null,null,7,4]`（以最近公共祖先为根的那棵子树），
+   * 而题面要的是 `3` —— 那个节点的值。
+   *
+   * 只在「期望是标量 + 实录是数组 + 首元素正好是这个标量」时放行，
+   * 三条同时成立才认，判错的概率基本为零。
+   */
+  if (!result.ok && /^[\w."'-]+$/.test(normalizedWant)) {
+    let rootValue: Json | undefined;
+    try {
+      const parsed = JSON.parse(got);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        rootValue = parsed[0];
+      }
+    } catch {
+      rootValue = undefined;
+    }
+    if (rootValue !== undefined && JSON.stringify(rootValue) === JSON.stringify(JSON.parse(normalizedWant.replace(/^["']|["']$/g, '')))) {
+      return {ok: true, reason: '返回值是节点，按节点的值比一致'};
+    }
+  }
   if (result.ok) {
     return {ok: true, reason: '一致'};
   }
@@ -453,7 +486,23 @@ export async function recordTraces(
     }
 
     const sig = extractSignature(code);
-    const {candidates, analysisReason} = entryCandidates(code, sig.method);
+    /**
+     * 文件名去编号后的 snake_case 转 camelCase，作为「题面入口名」的提示。
+     * `0148_sort_list` -> `sortList`：题解里辅助函数写在主入口前面时
+     * （0148 是 `getListLength` / `splitList` / `mergeTwoLists` / `sortList`），
+     * 「第一个带 self 的方法」挑中的不是题目要的那个。
+     * 其它命名（HJ17 坐标移动、牛客题）转出来对不上，不匹配就当没给。
+     */
+    const nameHint = traceName(file)
+      .split('_')
+      .slice(1)
+      .join('_')
+      .replace(/(^|_)([a-z])/g, (_m, _p, c: string) => c.toUpperCase());
+    const {candidates, analysisReason} = entryCandidates(
+      code,
+      sig.method,
+      nameHint || undefined,
+    );
     if (candidates.length === 0) {
       const defs = [...code.matchAll(/^\s*def\s+(\w+)/gm)].map((m) => m[1]);
       skip('no-entry', doc, `${analysisReason || '没有可调用入口'}；def: ${defs.join(', ') || '(无)'}`);
