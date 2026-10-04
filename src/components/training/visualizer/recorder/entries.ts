@@ -165,10 +165,28 @@ function topLevelFuncs(code: string): Map<string, ParamInfoLite> {
   return out;
 }
 
-/** `Solution` 类里所有带 self 的方法 */
+/**
+ * `Solution` 类里所有带 self 的方法
+ *
+ * ## 这里有个坑：`\Z` 在 JavaScript 里不是「字符串结尾」
+ *
+ * JS 的锚点只有 `^` 和 `$`；`\Z` 是**Annex B 的 identity escape**，
+ * 它匹配的是字面量字符 `Z`。而 Python 的 `re` 里 `\Z` 才是结尾 ——
+ * 照着 Python 的习惯写过来，这个正则**永远匹配不上**：
+ * `(?=^class\s|\Z)` 的第二个分支要求下一个字符是 `Z`。
+ *
+ * 后果不是「少一个候选」那么简单：`classRe` 一条都不匹配，
+ * 于是 `Solution` 的所有方法（除了恰好被 `analyzeSnippet` 挑中的那个）
+ * **从来就没进过候选表**。0085 最大矩形（入口 `maximalRectangle(matrix)`，
+ * 而挑中的是辅助函数 `largestRectangleArea(heights)`）与
+ * 0399 口袋算式的 `calcEquation` 都是这么丢的，报错还写着
+ * 「候选入口 largestRectangleArea(heights) 都匹配不上样例」。
+ *
+ * JS 里「字符串结尾」要写成 `$(?![\s\S])`。
+ */
 function solutionMethods(code: string): ParamInfoLite[] {
   const out: ParamInfoLite[] = [];
-  const classRe = /^class\s+(\w+)[^\n]*:\n([\s\S]*?)(?=^class\s|\Z)/gm;
+  const classRe = /^class\s+(\w+)[^\n]*:\n([\s\S]*?)(?=^class\s|$(?![\s\S]))/gm;
   let cm: RegExpExecArray | null;
   while ((cm = classRe.exec(code)) !== null) {
     if (cm[1] !== 'Solution') {
