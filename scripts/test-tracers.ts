@@ -15,7 +15,10 @@
  * 跑法：pnpm test:tracers
  */
 
+import fs from 'fs';
+import path from 'path';
 import {TRACERS} from '../src/components/training/visualizer/tracers/index';
+import {INLINE_TRACER_PLACEMENT} from '../src/components/training/visualizer/inlinePlacement';
 import type {
   ArrayFrame,
   Frame,
@@ -369,6 +372,70 @@ for (const t of TRACERS) {
     error: parsed.ok === false ? parsed.error : undefined,
   });
   check(`${t.id}: formatInput 产出非空字符串`, text.trim().length > 0, text);
+}
+
+// ============================================================
+// 放置表：每个 tracer 都必须落在某篇文档里
+//
+// ## 为什么这条断言不可省
+//
+// 手写 tracer 已经从独立页 `/code-training/visualizer` 搬到各篇文档里
+// （那个页面删掉了）。于是「读者还能不能看到某个算法的动画」这件事
+// 变成了**两张表的交集**：`TRACERS`（注册了什么）与 `INLINE_TRACER_PLACEMENT`
+// （放到了哪篇文档）。
+//
+// 少写一行放置表，`test:tracers` 与 `test:adapters` 全都绿，
+// 而那个算法从此在任何页面上都不出现 —— **没有任何单测会失败**。
+// 唯一能守住的就是这条：注册表里有的，放置表里必须也有。
+// ============================================================
+
+{
+  const placed = new Set(
+    Object.values(INLINE_TRACER_PLACEMENT).flatMap((list) =>
+      list.map((p) => p.tracerId),
+    ),
+  );
+  for (const t of TRACERS) {
+    check(`${t.id}: 已放到某篇文档（${docOf(t.id) ?? '未知'}）`, placed.has(t.id));
+  }
+  for (const id of placed) {
+    check(`${id}: 放置表里的 id 都注册过`, TRACERS.some((t) => t.id === id));
+  }
+
+  // 放置表的键必须真的是存在的文档（写错路径的表现是播放器永不出现）
+  const docsRoot = path.join(process.cwd(), 'code-training', 'docs');
+  for (const [docId, list] of Object.entries(INLINE_TRACER_PLACEMENT)) {
+    const md = path.join(docsRoot, docId);
+    check(
+      `${docId}: 文件存在`,
+      fs.existsSync(md),
+      fs.existsSync(md) ? undefined : md,
+    );
+    // 播放器渲染在正文末尾，所以 md 里必须有个 `## 算法可视化` 小节当入口
+    // （否则右侧 TOC 里没有条目，读者滚到底也不知道有动画）
+    if (fs.existsSync(md)) {
+      check(
+        `${docId}: 有「## 算法可视化」小节`,
+        /^##\s+算法可视化\s*$/m.test(fs.readFileSync(md, 'utf8')),
+      );
+    }
+    check(`${docId}: 至少放了一个播放器`, list.length > 0);
+    const titles = list.map((p) => p.title ?? '');
+    check(
+      `${docId}: 每条都写了可读标题（折叠壳是同步渲染的，拿不到 tracer.title）`,
+      titles.every((t) => t.trim().length > 0),
+    );
+  }
+}
+
+/** tracer id -> 它被放在哪篇文档里（失败时打印用） */
+function docOf(tracerId: string): string | undefined {
+  for (const [docId, list] of Object.entries(INLINE_TRACER_PLACEMENT)) {
+    if (list.some((p) => p.tracerId === tracerId)) {
+      return docId;
+    }
+  }
+  return undefined;
 }
 
 console.log('');

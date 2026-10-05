@@ -67,6 +67,24 @@ const config: Config = {
 
     onBrokenLinks: 'throw',
     onDuplicateRoutes: 'warn',
+    /**
+     * 保持默认的 `warn`，**不要**改成 `'ignore'`。
+     *
+     * 构建时每篇题解页都会报一条
+     * 「Broken anchor … -> #visualizer」，模式/模板页报 `#vis-<tracerId>`。
+     * 那是**误报**：这两个小节渲染在 `</DocItemContent>` 之后
+     * （`src/theme/DocItem/Layout/index.tsx`），`id` 与右侧 TOC 里指向它的
+     * `<a href>` 都是 React 写上去的，而 Docusaurus 的锚点检查只知道
+     * **构建期从 markdown 解析出来**的锚点 —— 两头都没有就报 broken。
+     * 实测构建产物里两者都真实存在：
+     * `grep -o 'id="visualizer"' build/…/11.html` 有一处，
+     * `grep -o 'id="vis-grid-bfs"' build/code-training/patterns/bfs.html` 也有。
+     *
+     * 本仓库的 Docusaurus 3.9 只接受枚举值（`ignore|log|warn|throw`），
+     * **不支持**按链接内容返回结果的函数形式（3.10+ 才有），
+     * 所以没法只放过这几个。要消掉噪声只能整体 `ignore`，
+     * 那会把真的写错的锚点一起吞掉 —— 不划算。
+     */
 
 
     // Even if you don't use internationalization, you can use this field to set
@@ -241,7 +259,6 @@ const config: Config = {
               {to: '/code-training/category/算法模式', label: '算法模式'},
               {to: '/code-training/category/代码模板', label: '代码模板'},
               {to: '/code-training/review', label: '复习队列'},
-              {to: '/code-training/visualizer', label: '算法可视化'},
               {to: '/code-training/category/复习系统', label: '总结盘点'},
             ],
           },
