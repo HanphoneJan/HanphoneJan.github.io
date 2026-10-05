@@ -25,6 +25,10 @@ import {
   VIS_ANCHOR,
   VIS_TITLE,
 } from '@site/src/components/training/visualizer/InlineVisualizer';
+import InlineTracerSection, {
+  tracerAnchorId,
+} from '@site/src/components/training/visualizer/InlineTracerVisualizer';
+import {placementsOf} from '@site/src/components/training/visualizer/inlinePlacement';
 import type {SelfTestData} from '@site/plugins/self-test';
 import type {PySamplesData} from '@site/plugins/py-samples';
 import type {VisTracesData} from '@site/plugins/vis-traces';
@@ -104,6 +108,13 @@ export default function DocItemLayout({children}: Props): ReactNode {
         (e) => e.docId === selfTestKeyValue,
       )
     : undefined;
+  // 模式 / 模板 / 数据结构这些**非题解**文档内嵌手写 tracer。
+  //
+  // 与录制式是两条完全不同的路：这些文档没有「一道题 + 一组样例」，
+  // 录不了；而它们讲的正是滑动窗口、二分、排序这些**模式本身** ——
+  // 手写 tracer 演示的就是模式。放置表见 inlinePlacement.ts。
+  const tracerPlacements = placementsOf(selfTestKeyValue);
+
   // 录到了轨迹、但没有 adapter 认识的题解：显式说明，别让读者以为
   // 「这道题没有可视化步骤」是因为它不值得。理由见插件里的 VisTracesData。
   const visNoSteps = selfTestKeyValue
@@ -117,6 +128,17 @@ export default function DocItemLayout({children}: Props): ReactNode {
   // Provider 必须包住**整个 row** —— 桌面侧边栏是 docItemContainer 的兄弟节点。
   const extraToc = [
     ...(visTrace ? [{id: VIS_ANCHOR, value: VIS_TITLE, level: 2}] : []),
+    // 多个播放器时只给第一个进 TOC：十个小节会把侧边栏撑爆，
+    // 而 md 里那个 `## 算法可视化` 标题已经在 TOC 里了（那才是入口）
+    ...(tracerPlacements.length > 0
+      ? [
+          {
+            id: tracerAnchorId(tracerPlacements[0].tracerId),
+            value: '算法可视化',
+            level: 2,
+          },
+        ]
+      : []),
     ...(hasSelfTest ? [{id: SELF_TEST_ANCHOR, value: SELF_TEST_TITLE, level: 2}] : []),
   ];
 
@@ -140,6 +162,9 @@ export default function DocItemLayout({children}: Props): ReactNode {
             )}
             {visTrace && (
               <InlineVisualizer entry={visTrace} />
+            )}
+            {tracerPlacements.length > 0 && (
+              <InlineTracerSection placements={tracerPlacements} />
             )}
             {visNoSteps && (
               <p
