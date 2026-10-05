@@ -31,7 +31,7 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 - **自测题库** (`static/quiz/bank.json`): 主动回忆题，加在题解正文末尾。`plugins/self-test/index.ts` 只把「哪些题解有题」的清单放进 globalData，`src/theme/DocItem/Layout/index.tsx`（已 swizzle）在正文末尾渲染 `<SelfTest>`，题目数据由组件在用户点开时 fetch。**题解 md 一行都不用改** —— 题库是唯一事实来源。详见「自测题库」小节。
 - **间隔重复复习** (`/code-training/review`): `plugins/srs-cards/index.ts` 构建期把 182 篇题解解析成复习卡片（题号/难度/标签/首解日期），进度存浏览器 localStorage。调度器是 SM-2 lite 三档（忘了/记得/秒答）。
 - **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量 + 递归深度落成 `static/traces/*.json`（进 git）；`plugins/vis-traces` 在构建期把轨迹过一遍八个 adapter（`visualizer/adapters/`：list/tree/stack/grid/array-scan/aux-table/string/dp-counter）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `DocItem/Layout` 渲染 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`），展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 182 篇题解里 170 篇录制成功、166 篇有可视化（录制产物的 98%），剩下 4 篇在页面上显式写「本题无可视化步骤」。详见「算法可视化」小节。
-- **算法可视化（独立页，手写）** (`/code-training/visualizer`): `src/components/training/visualizer/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。
+- **算法可视化（手写 tracer，内嵌模式/模板文档）**: `src/components/training/visualizer/tracers/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。放置表在 `visualizer/inlinePlacement.ts`，**独立页已删除**（10 个 tracer 全部搬进讲它们的文档）。
 - **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测、复习队列、手写 tracer 三处都用它跳转（录制式可视化不跳转，它就长在那篇题解里）。
 
 ### Dual-plugin docs setup
@@ -186,9 +186,9 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 
 可视化有两套实现，**互不替代**：
 
-| | 录制式（题解内嵌） | 手写 tracer（独立页） |
+| | 录制式（题解内嵌） | 手写 tracer（模式/模板内嵌） |
 |---|---|---|
-| 入口 | `code-training/docs/problems/**/*.md` | `/code-training/visualizer` |
+| 入口 | `code-training/docs/problems/**/*.md` | `patterns/*.md`、`templates/*.md`（放置表 `visualizer/inlinePlacement.ts`） |
 | 代码 | `visualizer/recorder/` + `visualizer/adapters/` | `visualizer/tracers/` |
 | 覆盖 | 每道能录制的题（**170/182 录制成功，166 篇适配 = 91%**） | 10 个算法模式 |
 | 产出 | 逐题，零手写 | 每个算法手写 30~60 行 |
@@ -700,20 +700,66 @@ JS 里「字符串结尾」要写 `$(?![\s\S])`。凡是照着 Python 正则搬�
     并且监听 Chrome 的 `exit`：真起不来时报的是「多半是端口被占」。
   - 就绪探测不能复用取 JSON 的那个函数（它对响应体 `JSON.parse`，
     页面是 HTML）—— 于是「等服务器起来」这个逻辑自己先崩了。
+  - **必须把视口固定成桌面宽度**（`Emulation.setDeviceMetricsOverride` 1280×900）。
+    无头 Chrome 默认窗口 800×600 → `useWindowSize()` 判成 mobile，
+    `DocItemLayout` 只渲染 `DocItemTOCMobile`，而那个下拉**默认收起**、
+    条目不在 DOM 里 —— 于是「TOC 里没有条目」会**每页都失败**，
+    而页面上明明有条目。是尺子错了，不是页面错了。
+    （顺带记一条：Docusaurus 3.9 的 `onBrokenAnchors` 只接受枚举值，
+    **不支持**按链接内容返回结果的函数形式（3.10+ 才有），
+    所以 `#visualizer` / `#vis-*` / `#selftest` 这几个 React 生成的锚点
+    没法单独放过。实测它们在产物里都真实存在，警告保持默认的 `warn`。）
 
-#### 手写 tracer（`/code-training/visualizer`）
+**`--tracers` 模式**验的是内嵌手写 tracer 的那 7 篇文档（40 项）：折叠壳数量对不对、
+懒加载的 chunk 到没到（放置表 id 拼错时页面上一片空白）、画面画出了东西、
+单步有效。CSS module 的类名是哈希过的，所以格子一律按 `data-testid` 查：
+`cell` / `grid > *` / `tree-node` / `aux-array > *` / `dp-table td` ——
+漏掉 `dp-table td` 时两个 DP 播放器会被误报成「画面是空的」。
+
+#### 手写 tracer（内嵌在模式/模板文档里）
 
 覆盖数组扫描之外的三类形态：排序（柱状图）、网格 BFS、DP 表格。
 录制式管线目前只出一维数组 + 指针，所以这三类还得靠手写。
-`patterns/sorting.md` 三个算法、`templates/binary_search_template.md` 两个
-都是纯手写的。
+
+**独立页 `/code-training/visualizer` 已删除**，十个 tracer 全部搬进讲它们的那篇文档
+（放置表 `visualizer/inlinePlacement.ts`）：
+
+| 文档 | 内嵌 |
+|---|---|
+| `patterns/two_pointers.md` | 两数之和 |
+| `patterns/sliding_window.md` | 滑动窗口 |
+| `patterns/sorting.md` | 冒泡 / 归并 / 快排 |
+| `patterns/dynamic_programming.md` | 爬楼梯 / 0-1 背包 |
+| `patterns/bfs.md`、`templates/bfs_template.md` | 网格 BFS |
+| `templates/binary_search_template.md` | 二分 / lower_bound |
+
+**为什么放文档里而不是留一个独立页**：读者在「滑动窗口」这一页读到窗口怎么收缩时，
+顺手就该能把输入调大重跑，而不是跳去另一个页面从头找。独立页的算法与文档一一对应，
+拆开只有两个好处（不用滚动、可以并排对比），代价是**每个算法都得有地方放**。
+
+**放置表必须与注册表同步**，所以那条断言在 `pnpm test:tracers` 里：
+
+- `TRACERS` 里有的 tracer，放置表里必须也有；
+- 放置表里的 id 必须都注册过（否则 `findTracer` 返回 undefined，页面上一片空白）；
+- 放置表的键要是**真实存在的 md**，且那个 md 里有 `## 算法可视化` 小节
+  （播放器渲染在正文末尾，那个标题是它在 TOC 里的入口）。
+
+少写一行放置表，`test:tracers` 与 `test:adapters` 全都绿，而那个算法从此
+在任何页面上都不出现 —— 没有别的单测会失败。
+
+**md 里加的是普通 Markdown 标题，不是 JSX 组件。** 这批文档走
+`markdown.format: 'detect'`，实测**被当作 CommonMark 解析**：`<ProbeMarker />`
+被小写成 `<probemarker>`，加一行 `import` 也一样。换成 `format: 'mdx'` 能用
+JSX，但那是 220 多篇文档的解析方式，里面还有大段含 `{` 与 `<` 的散文 ——
+为了摆播放器去改它不划算。自定义 remark 插件在这套配置下压根不会被调用。
 
 核心是 `types.ts` 里的 tracer 契约：
 **tracer 只产出「状态帧」，播放器负责全部交互**。新增算法 = 写 30~60 行
 trace 函数，白送一整套播放/暂停/单步/回退/调速/换输入/源码高亮。
 
 ```bash
-pnpm test:tracers   # 90 项断言：算法结果与参考实现逐一对拍
+pnpm test:tracers          # 138 项：算法结果与参考实现对拍 + 放置表完整性
+node scripts/check-vis.js --tracers   # 40 项：7 篇文档的播放器在浏览器里真能跑
 ```
 
 **这个单测不是可选项。** tracer 的 `run()` 有两类高危 bug：
@@ -734,6 +780,11 @@ pnpm test:tracers   # 90 项断言：算法结果与参考实现逐一对拍
 - **网格类 tracer 找到答案后不要再补「不可达」的尾帧**，画面会自相矛盾。
 - 帧数上限 1500（`MAX_FRAMES`），超限截断并插入提示帧。快排在 50 个元素上
   就可能几百帧，动画太慢也看不清。
+- **折叠壳上显示的标题要写在放置表里**，不能用 tracer 的 `title` ——
+  壳是同步渲染的（SSR 里就要出现），而 `tracers/index.ts` 只能懒加载。
+- **`AlgoPlayer` 的 note 用 `[data-testid="note"]`**，不是 `[data-testid="vis-note"]`
+  （那是 `RecordedPlayer` 的）。CSS module 的类名是哈希过的
+  （形如 `_gridCell_x1y2z`），按类名查网格一个都查不到 —— 一律用 data-testid。
 
 #### 当前覆盖与缺口
 

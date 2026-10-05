@@ -38,11 +38,46 @@
 const PORT = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : '3100';
 const BASE = `http://localhost:${PORT}`;
 const ALL = process.argv.includes('--all');
+/** `--tracers`：只查内嵌手写 tracer 的文档（模式 / 模板页） */
+const TRACERS_ONLY = process.argv.includes('--tracers');
 const LIMIT = (() => {
   const i = process.argv.indexOf('--all');
   const n = i >= 0 ? Number(process.argv[i + 1]) : NaN;
   return Number.isFinite(n) && n > 0 ? n : Infinity;
 })();
+
+/**
+ * 内嵌手写 tracer 的文档：模式 6 篇 + 模板 2 篇（与 `inlinePlacement.ts` 同步）。
+ *
+ * 这批要验的东西与录制式不同：那边验的是「轨迹 fetch 回来、adapter 在浏览器里
+ * 跑通」，这边验的是「懒加载的 `tracers/index.ts` 真的到了、播放器挂上了、
+ * 点播放后画面动起来」。
+ */
+const TRACER_PAGES = [
+  {
+    path: '/code-training/patterns/sorting',
+    name: '排序模式（三个播放器）',
+    count: 3,
+  },
+  {
+    path: '/code-training/patterns/sliding_window',
+    name: '滑动窗口',
+    count: 1,
+  },
+  {path: '/code-training/patterns/two_pointers', name: '双指针', count: 1},
+  {
+    path: '/code-training/patterns/dynamic_programming',
+    name: '动态规划（爬楼梯 + 0-1 背包）',
+    count: 2,
+  },
+  {path: '/code-training/patterns/bfs', name: 'BFS', count: 1},
+  {
+    path: '/code-training/templates/binary_search_template',
+    name: '二分模板（二分 + lower_bound）',
+    count: 2,
+  },
+  {path: '/code-training/templates/bfs_template', name: 'BFS 模板', count: 1},
+];
 
 /** 每类 adapter 一题（与 probe-adapters 的输出对应） */
 const PAGES = [
@@ -197,12 +232,16 @@ async function main() {
     console.error('先跑 pnpm build（--all 模式从 build 产物里找页面）');
     process.exit(1);
   }
-  const pages = ALL ? discoverPages() : PAGES;
+  const pages = ALL ? discoverPages() : TRACERS_ONLY ? TRACER_PAGES : PAGES;
   if (pages.length === 0) {
     console.error('一个页面都没找到');
     process.exit(1);
   }
-  console.log(`检查 ${pages.length} 个页面（${ALL ? '全站' : '抽样'}）\n`);
+  console.log(
+    `检查 ${pages.length} 个页面（${
+      ALL ? '全站题解' : TRACERS_ONLY ? '内嵌 tracer' : '抽样'
+    }）\n`,
+  );
 
   /**
    * 用 `docusaurus serve` 而不是 `python3 -m http.server`。
@@ -334,6 +373,24 @@ async function main() {
       const sid = att.sessionId;
       await send('Runtime.enable', {}, sid);
       await send('Page.enable', {}, sid);
+      /**
+       * 把视口**固定成桌面宽度**再验。
+       *
+       * 无头 Chrome 默认窗口 800×600 → `useWindowSize()` 判成 mobile，
+       * `DocItemLayout` 就只渲染 `DocItemTOCMobile` —— 而那个下拉**默认收起**，
+       * 条目不在 DOM 里（实测 `.menu a` 里最后十条全是导航与页脚，
+       * 本页 TOC 一条都没有）。
+       *
+       * 于是「TOC 里没有条目」会每页都失败，而页面上明明有条目。
+       * `Emulation.setDeviceMetricsOverride` 是正解：桌面侧边栏真的渲染出来，
+       * 验的也就是读者在桌面浏览器上看到的那份 TOC。
+       */
+      await send('Emulation.setDeviceMetricsOverride', {
+        width: 1280,
+        height: 900,
+        deviceScaleFactor: 1,
+        mobile: false,
+      }, sid);
 
       const loaded = new Promise((resolve) => {
         const h = (ev) => {
@@ -363,6 +420,93 @@ async function main() {
         await send('Target.closeTarget', {targetId: created.targetId});
       };
 
+      /**
+       * 内嵌手写 tracer 的文档走**另一条**验证路径。
+       *
+       * 与录制式不同的是：
+       * - 折叠壳的 id 是 `vis-<tracerId>`，而不是 `visualizer`；
+       * - 没有 `fetch('/traces/x.json')`，要验的是**懒加载的 chunk**
+       *   （`tracers/index.ts` + `AlgoPlayer`）真的到了 —— 这是这一路独有的风险：
+       *   放置表里的 id 拼错、`findTracer` 返回 undefined，页面上一片空白；
+       * - 一个页面可能有多个播放器，必须**逐个**打开。
+       */
+      if (TRACERS_ONLY) {
+        const boxes = await evalJs(
+          `Array.from(document.querySelectorAll('details[id^="vis-"]')).map(d => d.id)`,
+        );
+        if (!Array.isArray(boxes) || boxes.length !== page.count) {
+          await bail(
+            `折叠壳数量不对：期望 ${page.count}，实际 ${(boxes || []).length}`,
+          );
+          continue;
+        }
+        pass++;
+        console.log(`✓ ${page.name}：${page.count} 个折叠壳`);
+
+        for (const id of boxes) {
+          await evalJs(
+            `document.getElementById(${JSON.stringify(id)}).open = true;
+             document.getElementById(${JSON.stringify(id)})
+               .dispatchEvent(new Event('toggle'))`,
+          );
+          let mounted = false;
+          for (let i = 0; i < 60; i++) {
+            mounted = await evalJs(
+              `!!Array.from(document.querySelectorAll('input[type="range"]'))
+                 .some(r => Number(r.max) > 1)`,
+            );
+            if (mounted) break;
+            await sleep(250);
+          }
+          if (!mounted) {
+            await bail(`${id}：播放器没挂上（懒加载的 chunk 没到？）`);
+            break;
+          }
+          pass++;
+          const drew = await evalJs(
+            `(() => {
+              const root = document.getElementById(${JSON.stringify(id)});
+              // CSS module 的类名是哈希过的（形如 _gridCell_x1y2z），
+              // 所以按类名查网格会一个都查不到 —— 一律用 data-testid。
+              return (
+                root.querySelectorAll(
+                  '[data-testid="cell"], [data-testid="grid"] > *, [data-testid="tree-node"], [data-testid="aux-array"] > *, [data-testid="dp-table"] td',
+                ).length
+              );
+            })()`,
+          );
+          if (drew > 0) pass++;
+          else {
+            fails.push(`${page.name} / ${id}：画面是空的`);
+            console.log(`✗ ${page.name} / ${id}：画面是空的`);
+          }
+          // 点「下一步」看动画真的在动
+          const before = await evalJs(
+            `document.getElementById(${JSON.stringify(id)}).querySelector('[data-testid="note"]')?.textContent || ''`,
+          );
+          await evalJs(
+            `(() => {
+              const root = document.getElementById(${JSON.stringify(id)});
+              const btn = root.querySelector('button[aria-label="下一步"]');
+              if (btn) btn.click();
+            })()`,
+          );
+          await sleep(350);
+          const after = await evalJs(
+            `document.getElementById(${JSON.stringify(id)}).querySelector('[data-testid="note"]')?.textContent || ''`,
+          );
+          if (before !== after) {
+            pass++;
+          } else {
+            fails.push(`${page.name} / ${id}：单步没反应`);
+            console.log(`✗ ${page.name} / ${id}：单步没反应`);
+          }
+        }
+        await send('Target.closeTarget', {targetId: created.targetId});
+        console.log('');
+        continue;
+      }
+
       const hasBox = await evalJs(`!!document.getElementById('visualizer')`);
       if (!hasBox) {
         await bail('页面上没有 #visualizer');
@@ -371,8 +515,19 @@ async function main() {
       pass++;
       if (!page.all) console.log(`✓ ${page.name}：折叠块在页面上`);
 
+      /**
+       * 查侧边栏里的条目，但**不能只查 `nav a` / `.table-of-contents a`**。
+       *
+       * 无头 Chrome 默认窗口 800×600 → `useWindowSize()` 判成 mobile，
+       * 于是 `DocItem/Layout` 只渲染 `DocItemTOCMobile`，**桌面侧边栏
+       * 根本不进 DOM**。实测那个宽度下 `.table-of-contents a` 一条都没有，
+       * 条目全在 `.menu` 里（20 条）。
+       *
+       * 只查桌面那两个选择器的话，「TOC 里没有条目」会**每一页都失败**，
+       * 而页面上明明有条目 —— 是尺子错了，不是页面错了。
+       */
       const inToc = await evalJs(
-        `!!Array.from(document.querySelectorAll('nav a, .table-of-contents a'))
+        `!!Array.from(document.querySelectorAll('.menu a, .table-of-contents a'))
            .find(a => a.textContent.trim() === '算法可视化')`,
       );
       if (inToc) pass++;
