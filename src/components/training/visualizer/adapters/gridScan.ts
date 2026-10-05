@@ -25,7 +25,7 @@
  * - 边界/不可达 → `excluded`
  */
 
-import type {CellState, Frame, GridCell, GridFrame} from '../types';
+import type {AuxArray, CellState, Frame, GridCell, GridFrame} from '../types';
 import {MAX_FRAMES} from '../types';
 import type {Json, RawTrace} from '../recorder/types';
 import type {AdapterResult} from './types';
@@ -235,22 +235,82 @@ function doneCells(
   return out;
 }
 
+/**
+ * 「参差的列表」当累加结果：0056 的 `merged`、0406 的 `ans`。
+ *
+ * 网格画面只有一张主网格，而这两题的输入网格排完序之后一个格子都不再变 ——
+ * 真正在动的是这个**在长大**的列表。它塞不进网格（每个元素两个数、
+ * 各行长度还不一样），所以单独渲染成一行 aux。
+ *
+ * 判据四条，缺一不可：
+ * 1. 不是网格自己
+ * 2. 是个列表，元素都是**同样长度的小列表**（两个数的区间 / 两个人）
+ * 3. **长度在变**（只在长大的列表才是累加结果）
+ * 4. 只出现一个候选 —— 有两个都在长的列表就当没给（0108 那种
+ *    `left`/`right` 两个都长，挑哪个都不对）
+ */
+function pickAccumulator(
+  events: RawTrace['events'],
+  gridName: string,
+): {name: string; format: (v: Json[]) => string} | null {
+  const lens = new Map<string, Set<number>>();
+  const shape = new Map<string, number>();
+  for (const e of events) {
+    for (const [name, v] of Object.entries(e.locals)) {
+      if (name === gridName || !Array.isArray(v) || v.length === 0 || v.length > 40) {
+        continue;
+      }
+      const items = v as Json[][];
+      const inner = items.filter((x) => Array.isArray(x));
+      if (inner.length !== items.length || items.length < 2) {
+        continue;
+      }
+      const w = items[0].length;
+      if (w < 1 || w > 3 || !items.every((x) => Array.isArray(x) && x.length === w)) {
+        continue;
+      }
+      if (
+        !items.every((x) =>
+          x.every((y) => typeof y === 'number' || typeof y === 'string'),
+        )
+      ) {
+        continue;
+      }
+      if (!lens.has(name)) {
+        lens.set(name, new Set());
+        shape.set(name, w);
+      }
+      lens.get(name)!.add(v.length);
+    }
+  }
+  const cands = [...lens.entries()].filter(([, s]) => s.size >= 2);
+  if (cands.length !== 1) {
+    return null;
+  }
+  const [name, w] = [cands[0][0], shape.get(cands[0][0]) ?? 2];
+  return {
+    name,
+    format: (v) => (w === 1 ? String(v[0]) : `[${v.join(',')}]`),
+  };
+}
+
 export function adaptGrid(trace: RawTrace): AdapterResult | null {
   const gridName = pickGrid(trace.events, trace.paramNames, trace.code);
   if (!gridName) {
     return null;
   }
+  const accumulator = pickAccumulator(trace.events, gridName);
   const frames: Frame[] = [];
   let declared = false;
   /**
-   * 网格**自己有没有变过，或者有没有光标**。
+   * 网格**自己有没有变过，或者有没有光标，或者有没有累加结果**。
    *
    * 「是二维数组」不等于「是网格题」。0399 口袋算式的 `equations` 是
    * `[["a","b"],["b","c"]]` —— 形状不变、内容不变、也没有光标，
    * 画出来是一张 38 帧都不变的字母表，而这题真正在动的是带权并查集的
    * `parent` / `weight` 两个一维数组（路径压缩时它们一格一格改）。
    *
-   * 两条里满足一条就行：
+   * 三条里满足一条就行：
    *
    * - **格子变过** —— 置零、填岛、旋转、螺旋、铺砖、杨辉三角
    *   （逐行新建，形状在长），没有一条网格题是静止的。
@@ -258,9 +318,12 @@ export function adaptGrid(trace: RawTrace): AdapterResult | null {
    *   （真正在变的是滚动数组 `dp`），但光标沿着矩阵走，
    *   「算的是哪一格」正是这题要讲的，硬说它「没过程」就错了。
    *   0207 课程表同理：邻接表长成什么样不是重点，DFS 染色走到哪一格才是。
+   * - **有累加结果** —— 0056 的输入网格排完序就静止了，
+   *   全靠 `merged` 在长才构成「过程」。
    */
   const shapes = new Set<string>();
   let sawCursor = false;
+  let sawAccumulator = false;
 
   const lastCursor = new Map<string, string>();
 
@@ -272,10 +335,38 @@ export function adaptGrid(trace: RawTrace): AdapterResult | null {
     const {r, c} = pickCursor(e.locals, grid.rows, grid.cols);
     const src = lineText(trace.code, e.line);
 
+    /**
+     * 这一帧的累加结果。
+     *
+     * 键参与去重：`merged.append(curr)` 前后 aux 行会变，
+     * 而网格那一步一个格子都没动 —— 不把 aux 算进去重键，
+     * 这些帧会被判成「重复」全被跳过，画面上最后只剩网格排序那一跳。
+     */
+    let auxRows: AuxArray[] | undefined;
+    if (accumulator) {
+      const raw = e.locals[accumulator.name];
+      if (Array.isArray(raw) && raw.length > 0) {
+        const values = (raw as Json[][]).map((v) => accumulator.format(v));
+        auxRows = [
+          {
+            label: `${accumulator.name}（${values.length} 项）`,
+            values,
+            // 最后一项是刚加进来的
+            states: values.map((_, i) =>
+              i === values.length - 1 ? 'active' : 'done',
+            ) as CellState[],
+          },
+        ];
+        sawAccumulator = true;
+      }
+    }
+
     // 光标不动、状态也不动的帧跳过：内层循环里同一行反复执行，
     // 每一次都成帧会让动画变成几十帧静止画面
     const done = doneCells(e.locals, gridName, grid.rows, grid.cols);
-    const key = `${e.line}|${r},${c}|${done.map((d) => (d ? 1 : 0)).join('')}`;
+    const key = `${e.line}|${r},${c}|${done.map((d) => (d ? 1 : 0)).join('')}|${auxRows
+      ?.map((a) => a.values.join(','))
+      .join(';') ?? ''}`;
     if (lastCursor.get('k') === key) {
       continue;
     }
@@ -316,6 +407,7 @@ export function adaptGrid(trace: RawTrace): AdapterResult | null {
         ? `${gridName}[${cursorPos[0]}][${cursorPos[1]}]：${src || `第 ${e.line} 行`}`
         : src || `第 ${e.line} 行`,
       grid: {rows: grid.rows, cols: grid.cols, cells, cursor: cursorPos},
+      aux: auxRows,
       line: e.line,
     });
     if (frames.length >= MAX_FRAMES) {
@@ -323,7 +415,7 @@ export function adaptGrid(trace: RawTrace): AdapterResult | null {
     }
   }
 
-  if (frames.length < 3 || (shapes.size < 2 && !sawCursor)) {
+  if (frames.length < 3 || (shapes.size < 2 && !sawCursor && !sawAccumulator)) {
     return null;
   }
   return {frames, display: 'boxes'};
