@@ -211,10 +211,22 @@ for (const file of files) {
       return c !== undefined && (c < 0 || c >= t!.tree.cells.length);
     });
     check(`${label}：光标在层序范围内`, badCursor === undefined, badCursor?.tree.cursor);
-    // 至少有一帧有光标，否则画面只是一棵静止的树
+    /**
+     * 至少有一帧有光标，否则画面只是一棵静止的树。
+     *
+     * 例外是**自底向上造树**的题（0108 有序数组转换二叉搜索树）：
+     * `root = TreeNode(nums[mid])` 造出来的节点不在入参那棵树里，
+     * 坐标越界所以一个光标都给不出。它的教学内容是**造树的次序**，
+     * 而次序只能靠 note 里的「递归深度 N」表达 ——
+     * 硬造一个光标只会恒定指着第 0 格，与 note 直接矛盾
+     * （「我一直在根节点」而深度写着 5）。
+     *
+     * 指着一个明知不对的位置，比不指更糟，所以这里是真例外。
+     */
+    const buildsTree = /0108/.test(label);
     check(
       `${label}：至少有一帧有光标`,
-      trees.some((t) => t?.tree.cursor !== undefined),
+      buildsTree || trees.some((t) => t?.tree.cursor !== undefined),
     );
   }
 

@@ -115,6 +115,14 @@ export interface ArrayFrame extends BaseFrame {
 
 export interface GridFrameWrapper extends BaseFrame {
   grid: GridFrame;
+  /**
+   * 网格之外的**累加结果**。
+   *
+   * 0056 合并区间、0406 按身高重建队列：输入那张网格排完序之后一个格子都不再变，
+   * 而真正在动的是 `merged` / `ans` —— 参差的列表塞不进网格，
+   * 于是「结果」在画面上完全缺席（题解教的就是 append 那一步）。
+   */
+  aux?: AuxArray[];
   array?: never;
   table?: never;
   tree?: never;
