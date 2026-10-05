@@ -430,14 +430,42 @@ export function extractSamples(
   const inputRe = /输入(?:\*\*)?[：:]/g;
   const outputRe = /输出(?:\*\*)?[：:]/g;
 
+  /**
+   * 跳过标签之后残留的强调星号与空白。
+   *
+   * ## 这是什么坑
+   *
+   * 题面里最常见的写法是 `**输入：** nums = [1,2,3]` ——
+   * 星号包住**标签**，所以正则 `输入(?:\*\*)?[：:]` 在「：` 处就匹配完了，
+   * 冒号后面还剩一个收尾的 `**`。值于是读成 `** nums = [1,2,3]`：
+   * `splitTopLevel` 按顶层逗号切（逗号都在方括号里，切不开），
+   * 于是这一整段变成**位置实参**，形参名匹配不上；
+   * 期望值同样变成 `** 6`，`isUsableExpected` 判不可用。
+   *
+   * 结果是**样例一条都抽不出来**，而页面上不报错、只退化成「手动填参数」。
+   *
+   * 之所以一直没被发现：现有 182 篇题解恰好都用不带星号的写法
+   * （或 `**输入：**` 后面跟围栏块 —— 那是 `readFencedValue` 另一条路径）。
+   * 而 `leetcode-processor` 的规范里明确要求写 `输入：`/`输出：`，
+   * 新 agent 照着写成加粗的就会踩。
+   */
+  const afterLabel = (text: string, at: number): number => {
+    let i = at;
+    while (i < text.length && /[\s*]/.test(text[i])) {
+      i++;
+    }
+    return i;
+  };
+
   const inputs: Array<{args: string[]; index: number}> = [];
   let im: RegExpExecArray | null;
   while ((im = inputRe.exec(sampleText)) !== null) {
     // 「输入：X」与「输出：Y」可能写在同一行（用 → 或全角逗号分隔），
     // 也可能各占一行。所以输入值不能一路吃到行尾 —— 要在下一个「输出」前停。
+    const valueFrom = afterLabel(sampleText, im.index + im[0].length);
     const rawInput =
-      readFencedValue(sampleText, im.index + im[0].length) ??
-      readValue(sampleText, im.index + im[0].length, {
+      readFencedValue(sampleText, valueFrom) ??
+      readValue(sampleText, valueFrom, {
         stopAtOutput: true,
       });
     // 纯强调符号说明这里不是「输入：值」这种写法。
@@ -499,8 +527,8 @@ export function extractSamples(
       continue;
     }
     const expected =
-      readFencedValue(sampleText, om.index + om[0].length) ??
-      readValue(sampleText, om.index + om[0].length);
+      readFencedValue(sampleText, afterLabel(sampleText, om.index + om[0].length)) ??
+      readValue(sampleText, afterLabel(sampleText, om.index + om[0].length));
     // 期望值里的省略号会让相等判断失效，直接丢掉这种样例
     if (
       !expected ||

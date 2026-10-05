@@ -33,7 +33,12 @@ import {
   extractDocStdinSamples,
   extractSignature,
 } from '../../../../../plugins/py-samples';
-import {asCallArgument, toPythonLiteral, usableSamples} from '../../pyrunner/runner';
+import {
+  asCallArgument,
+  isScriptSample,
+  toPythonLiteral,
+  usableSamples,
+} from '../../pyrunner/runner';
 import {nodeParams} from '../../pyrunner/snippet';
 import {BUILDER_PY, STDIN_SHIM_PY} from '../../pyrunner/driver';
 import {compare} from '../../pyrunner/compare';
@@ -265,6 +270,21 @@ function pickSamples(
     const literal = samples.filter(
       (s) =>
         s.args.length > 0 &&
+        /**
+         * **操作脚本样例必须排除。**
+         *
+         * `usableSamples` 之所以把它们滤掉，是因为运行条不能把
+         * `["MinStack","push","push",...]` 当一次调用跑。
+         * 而这个兜底分支只看「实参是不是合法字面量」——
+         * 那个脚本**恰好是合法字面量**，于是又漏了进来，
+         * 录制时 `push(["MinStack", ...])` 直接
+         * `TypeError: '<' not supported between instances of 'int' and 'list'`，
+         * 0155 与 0295 两篇整篇录不出来（实测从 170 掉到 169）。
+         *
+         * 脚本有**自己的**通路（`recorder/script.ts` 的 `parseScriptSample`），
+         * 那条路才是对的入口。
+         */
+        !isScriptSample(s) &&
         s.args.every((a) => {
           try {
             JSON.parse(toPythonLiteral(a));
