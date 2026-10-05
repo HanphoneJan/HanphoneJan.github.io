@@ -50,27 +50,17 @@ date_reviewed: []
 
 每次更新最小差值与对应和。
 
-```python
-class Solution:
-    def threeSumClosest(self, nums: list[int], target: int) -> int:
-        nums.sort()
-        result = None
-        min_sub = float('inf')
-        for i in range(len(nums) - 2):
-            left, right = i + 1, len(nums) - 1
-            while left < right:
-                sub = target - nums[i] - nums[left] - nums[right]
-                if sub == 0:
-                    return nums[i] + nums[left] + nums[right]
-                if abs(sub) < min_sub:
-                    min_sub = abs(sub)
-                    result = nums[i] + nums[left] + nums[right]
-                if sub > 0:
-                    left += 1
-                else:
-                    right -= 1
-        return result
-```
+**算法步骤：**
+1. 先对 `nums` 升序排序，这样「往右移一定变大、往左移一定变小」才成立
+2. 用 `result` 记录当前最接近的和、`min_sub` 记录它与 `target` 的最小差值（初值 `float('inf')`，这样第一次比较必然生效）
+3. 枚举固定项 `i`，需留出后面两个数的位置，所以范围是 `range(len(nums) - 2)`
+4. 对每个 `i`，令 `left = i + 1`、`right = len(nums) - 1`，在 `left < right` 时按上面的规则移动指针
+5. 差值更小时同时更新 `result` 与 `min_sub`；`sub == 0` 直接返回（不可能更优）
+6. 循环结束返回 `result`
+
+**为什么固定项只枚举到倒数第三个：** `i` 之后必须至少还剩两个数，否则双指针没有落脚点。
+
+可运行的完整实现见下一节「完整代码实现」。
 
 ---
 

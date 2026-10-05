@@ -545,6 +545,17 @@
   color: var(--ifm-color-emphasis-700);
 }
 
+/* 「本题无可视化步骤」那一行说明（NoVisStepsNote） */
+.noVisNote {
+  margin: 1.5rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--ifm-color-emphasis-300);
+  background: var(--ifm-color-emphasis-100);
+  border-radius: 4px;
+  color: var(--ifm-color-emphasis-800);
+  font-size: 0.9rem;
+}
+
 .visError {
   margin: 0.5rem 0;
   font-size: 0.88rem;
