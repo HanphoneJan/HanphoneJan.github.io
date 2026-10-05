@@ -977,3 +977,10 @@ return topo_order if len(topo_order) == n else []
 ### 连通分量
 - [323. 无向图中连通分量的数目](https://leetcode.cn/problems/number-of-connected-components-in-an-undirected-graph/)
 - [547. 省份数量](https://leetcode.cn/problems/number-of-provinces/)
+
+---
+
+## 算法可视化
+
+下面的播放器可以**改输入后重跑**：把数组换成你自己的，
+逐步看每一帧的状态怎么变。网格是最小的图：格子是顶点、可走的边是边。所以网格 BFS 的那些结论（先进先出 = 最短路、访问标记要入队时就打）在一般图上一样成立。

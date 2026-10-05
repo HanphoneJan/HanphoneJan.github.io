@@ -53,6 +53,26 @@ const LIMIT = (() => {
  * 跑通」，这边验的是「懒加载的 `tracers/index.ts` 真的到了、播放器挂上了、
  * 点播放后画面动起来」。
  */
+/**
+ * 每个 tracer 该渲染成哪种视图。
+ *
+ * 为什么要有这张表：`check-vis` 判「画面画出来了」时，不能一律查
+ * `[data-testid="cell"]` —— 树走 TreeView、网格走 GridView、DP 走 TableView，
+ * 用错选择器会把「视图对了」误报成「没渲染」。
+ *
+ * 而且**期望必须按播放器给，不能按页面给**：`dynamic_programming.md` 一页里
+ * 挂着爬楼梯、0-1 背包、LCS 三个播放器，全是表；`dfs_template.md` 是树 + 数组。
+ * 按页面给一个 view 就必然有播放器对不上（早先那样写，6 个播放器全被
+ * 误报成「画面是空的」—— 是尺子错了，不是页面错了）。
+ */
+const TRACER_VIEW = {
+  'grid-bfs': 'grid',
+  'climb-stairs': 'table',
+  'zero-one-knapsack': 'table',
+  'lcs-table': 'table',
+  'tree-dfs': 'tree',
+};
+
 const TRACER_PAGES = [
   {
     path: '/code-training/patterns/sorting',
@@ -67,16 +87,48 @@ const TRACER_PAGES = [
   {path: '/code-training/patterns/two_pointers', name: '双指针', count: 1},
   {
     path: '/code-training/patterns/dynamic_programming',
-    name: '动态规划（爬楼梯 + 0-1 背包）',
-    count: 2,
+    name: '动态规划（爬楼梯 + 0-1 背包 + LCS 表）',
+    count: 3,
   },
   {path: '/code-training/patterns/bfs', name: 'BFS', count: 1},
+  {path: '/code-training/patterns/dfs', name: 'DFS', count: 1},
+  {path: '/code-training/patterns/backtracking', name: '回溯', count: 1},
+  {path: '/code-training/patterns/hash_map', name: '哈希表模式', count: 1},
   {
     path: '/code-training/templates/binary_search_template',
     name: '二分模板（二分 + lower_bound）',
     count: 2,
   },
   {path: '/code-training/templates/bfs_template', name: 'BFS 模板', count: 1},
+  {
+    path: '/code-training/templates/dfs_template',
+    name: 'DFS 模板（遍历 + 回溯）',
+    count: 2
+  },
+  {path: '/code-training/data-structures/hash_table', name: '哈希表', count: 1},
+  {path: '/code-training/data-structures/linked_list', name: '链表', count: 1},
+  {
+    path: '/code-training/data-structures/stack_queue_heap_unionfind',
+    name: '并查集',
+    count: 1,
+  },
+  {
+    path: '/code-training/data-structures/binary_tree',
+    name: '二叉树',
+    count: 1
+  },
+  {path: '/code-training/data-structures/tree', name: '树', count: 1},
+  {
+    path: '/code-training/data-structures/string',
+    name: '字符串',
+    count: 1
+  },
+  {path: '/code-training/data-structures/array', name: '数组', count: 1},
+  {
+    path: '/code-training/data-structures/graph',
+    name: '图',
+    count: 1
+  },
 ];
 
 /** 每类 adapter 一题（与 probe-adapters 的输出对应） */
@@ -463,16 +515,30 @@ async function main() {
             break;
           }
           pass++;
+          /**
+           * 「画面上有东西」要按**该播放器声明的视图**查。
+           *
+           * 树视图画的是 `tree-node`、DP 表画的是 `dp-table td`，
+           * 而用一个大而全的选择器时，某个视图恰好也有别的东西（比如
+           * aux 行）就会通过 —— 验的不是「这一类视图渲染了」。
+           * 反过来漏掉某个 testid 时又会误报成「画面是空的」。
+           */
           const drew = await evalJs(
             `(() => {
               const root = document.getElementById(${JSON.stringify(id)});
-              // CSS module 的类名是哈希过的（形如 _gridCell_x1y2z），
-              // 所以按类名查网格会一个都查不到 —— 一律用 data-testid。
-              return (
-                root.querySelectorAll(
-                  '[data-testid="cell"], [data-testid="grid"] > *, [data-testid="tree-node"], [data-testid="aux-array"] > *, [data-testid="dp-table"] td',
-                ).length
-              );
+              const want = ${JSON.stringify(
+                // id 形如 vis-grid-bfs，而 TRACER_VIEW 的键是 grid-bfs ——
+                // 忘了剥前缀的话每一项都退化成 'any'，而树 / 网格 / 表三种视图
+                // 都没有 cell，六个播放器会被一起误报成「画面是空的」
+                TRACER_VIEW[id.replace(/^vis-/, '')] ?? 'any',
+              )};
+              const sel = {
+                tree: '[data-testid="tree-node"]',
+                table: '[data-testid="dp-table"] td',
+                grid: '[data-testid="grid"] > *',
+                any: '[data-testid="cell"], [data-testid="aux-array"] > *',
+              }[want];
+              return root.querySelectorAll(sel).length;
             })()`,
           );
           if (drew > 0) pass++;

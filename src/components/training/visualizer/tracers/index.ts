@@ -9,6 +9,8 @@ import type {Tracer} from '../types';
 import {bubbleSort, mergeSort, quickSort} from './sorting';
 import {binarySearch, lowerBound, slidingWindow, twoSum} from './pointers';
 import {climbStairs, gridBfs, zeroOneKnapsack} from './gridAndDp';
+import {subsetBacktrack, treeDfs} from './trees';
+import {hashCount, listReverse, lcsTable, unionFind} from './structures';
 
 /**
  * 输入类型各不相同（数字数组、带目标的数组、网格、两个整数），
@@ -26,6 +28,14 @@ export const TRACERS: Array<Tracer<unknown>> = [
   gridBfs,
   climbStairs,
   zeroOneKnapsack,
+  // 树与回溯：给 dfs / backtracking / 模板 / 二叉树那几篇
+  treeDfs,
+  subsetBacktrack,
+  // 数据结构：给 hash_map / hash_table / linked_list / 并查集 / string
+  hashCount,
+  listReverse,
+  unionFind,
+  lcsTable,
 ];
 
 /** 按 id 取，找不到返回 undefined */
@@ -65,5 +75,30 @@ export const INPUT_HINTS: Record<string, {label: string; hint: string}> = {
   'zero-one-knapsack': {
     label: '物品数 n; 容量 cap',
     hint: '例：4;5 —— 注意观察容量是倒序枚举的',
+  },
+  'tree-dfs': {
+    label: '层序树; 遍历顺序',
+    hint:
+      '例：[1,2,3,null,5]; 中序 —— 层序写 null 表示空位（力扣题面的写法），顺序可填 前序/中序/后序',
+  },
+  'subset-backtrack': {
+    label: '数组',
+    hint: '例：1,2,3 —— 留意每一次「撤销选择」之后 path 怎么退回上一层',
+  },
+  'hash-count': {
+    label: '元素序列',
+    hint: '例：a,b,a,c,b,a —— 词典的键就是画面上那一行',
+  },
+  'list-reverse': {
+    label: '链表节点值',
+    hint: '例：1,2,3,4,5 —— 已反转的那一段会一格一格长出来',
+  },
+  'union-find': {
+    label: '元素数 n; 合并对',
+    hint: '例：6; 0-1, 1-2, 3-4, 0-3 —— 看路径压缩怎么把树压扁',
+  },
+  'lcs-table': {
+    label: '串 a; 串 b',
+    hint: '例：abcde; ace —— 行是 a 的前缀、列是 b 的前缀',
   },
 };
