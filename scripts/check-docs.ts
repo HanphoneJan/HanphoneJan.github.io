@@ -125,8 +125,7 @@ function collectProblemDocs(): Array<{docId: string; abs: string}> {
  * ```
  *
  * 只认「一行 `key: value`」的话，`tags:` 后面是空的 → 报「frontmatter 缺 tags」，
- * 182 篇**全中**。而 tags 明明在那儿。`srs-cards` 插件里有个 `readStringArray`
- * 就是为这件事存在的（见它的 `const RANGE_PAIRS` 附近的注释）。
+ * 178 篇**全中**。而 tags 明明在那儿 —— 判据本身没错，是取值的口径错了。
  */
 function readFrontMatter(md: string): {
   scalars: Record<string, string>;
