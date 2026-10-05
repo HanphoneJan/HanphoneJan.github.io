@@ -549,3 +549,10 @@ def mstKruskal(n: int, edges: List[List[int]]) -> int:
 
 - [并查集详解 - CSDN](https://blog.csdn.net/the_zed/article/details/105126583)
 - [Python heapq文档](https://docs.python.org/zh-cn/3/library/heapq.html)
+
+---
+
+## 算法可视化
+
+下面的播放器可以**改输入后重跑**：把数组换成你自己的，
+逐步看每一帧的状态怎么变。路径压缩与按大小合并一起做，均摊复杂度才是 O(α(n))。画面上能看到查找时经过的每个节点都直接指向祖父，树越用越扁。

@@ -54,8 +54,16 @@ export const INLINE_TRACER_PLACEMENT: Record<string, readonly Placement[]> = {
   'patterns/dynamic_programming.md': [
     {tracerId: 'climb-stairs', title: '动态规划：爬楼梯'},
     {tracerId: 'zero-one-knapsack', title: '动态规划：0-1 背包'},
+    {tracerId: 'lcs-table', title: '二维 DP 表：最长公共子序列'},
   ],
   'patterns/bfs.md': [{tracerId: 'grid-bfs', title: '网格 BFS 最短路'}],
+  'patterns/dfs.md': [
+    {tracerId: 'tree-dfs', title: '树的 DFS 遍历（前序 / 中序 / 后序）'},
+  ],
+  'patterns/backtracking.md': [
+    {tracerId: 'subset-backtrack', title: '回溯：子集'},
+  ],
+  'patterns/hash_map.md': [{tracerId: 'hash-count', title: '哈希表：就地统计出现次数'}],
 
   // ── 代码模板 ────────────────────────────────────────────────────────
   'templates/binary_search_template.md': [
@@ -63,6 +71,34 @@ export const INLINE_TRACER_PLACEMENT: Record<string, readonly Placement[]> = {
     {tracerId: 'lower-bound', title: 'lower_bound（左闭右开写法）'},
   ],
   'templates/bfs_template.md': [{tracerId: 'grid-bfs', title: '网格 BFS 最短路'}],
+  'templates/dfs_template.md': [
+    {tracerId: 'tree-dfs', title: '树的 DFS 遍历（前序 / 中序 / 后序）'},
+    {tracerId: 'subset-backtrack', title: '回溯：子集'},
+  ],
+
+  // ── 数据结构 ────────────────────────────────────────────────────────
+  'data-structures/hash_table.md': [
+    {tracerId: 'hash-count', title: '哈希表：就地统计出现次数'},
+  ],
+  'data-structures/linked_list.md': [
+    {tracerId: 'list-reverse', title: '链表反转：三个指针'},
+  ],
+  'data-structures/stack_queue_heap_unionfind.md': [
+    {tracerId: 'union-find', title: '并查集：路径压缩 + 按大小合并'},
+  ],
+  'data-structures/binary_tree.md': [
+    {tracerId: 'tree-dfs', title: '树的 DFS 遍历（前序 / 中序 / 后序）'},
+  ],
+  'data-structures/tree.md': [
+    {tracerId: 'tree-dfs', title: '树的 DFS 遍历（前序 / 中序 / 后序）'},
+  ],
+  'data-structures/string.md': [
+    {tracerId: 'lcs-table', title: '二维 DP 表：最长公共子序列'},
+  ],
+  'data-structures/array.md': [
+    {tracerId: 'lcs-table', title: '二维 DP 表：最长公共子序列'},
+  ],
+  'data-structures/graph.md': [{tracerId: 'grid-bfs', title: '网格 BFS 最短路'}],
 };
 
 /** 这篇文档该内嵌哪些 tracer；没有就返回空数组 */
