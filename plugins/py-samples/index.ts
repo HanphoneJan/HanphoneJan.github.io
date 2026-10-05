@@ -128,6 +128,35 @@ function pythonBlock(sectionText: string | undefined): string {
 }
 
 /**
+ * 「这个偏移量落在哪个 class 里」。
+ *
+ * 只按**行首的 `class X` 与下一个行首 `class`/`def` 之间**来切 ——
+ * Python 的缩进本来就够用，不需要真做语法分析。
+ * 注意 `$(?![\\s\\S])` 而不是 `\\Z`：JS 里 `\\Z` 是 identity escape
+ * （匹配字面量字符 Z），照搬 Python 正则会一条都匹配不上。
+ */
+function classRanges(code: string): (offset: number) => string | undefined {
+  const marks: Array<{start: number; end: number; name: string}> = [];
+  const classRe = /^[ \t]*class\s+(\w+)[^\n]*$/gm;
+  let cm: RegExpExecArray | null;
+  while ((cm = classRe.exec(code)) !== null) {
+    marks.push({start: cm.index, end: code.length, name: cm[1]});
+  }
+  // 结束位置 = 下一个 class 的起点（没有就是文件末尾）
+  for (let i = 0; i < marks.length - 1; i++) {
+    marks[i].end = marks[i + 1].start;
+  }
+  return (offset: number): string | undefined => {
+    for (const mk of marks) {
+      if (offset >= mk.start && offset < mk.end) {
+        return mk.name;
+      }
+    }
+    return undefined;
+  };
+}
+
+/**
  * 抽入口签名。
  *
  * 先找 `class Solution` 里第一个带 self 的非魔法方法（跳过 `__init__` ——
@@ -139,13 +168,39 @@ export function extractSignature(
   code: string,
 ): {method: string | null; paramNames: string[]; requiredCount: number} {
   const methodRe = /^[ \t]+def\s+(\w+)\s*\(\s*self\s*(?:,\s*([^)]*))?\s*\)/gm;
-  const candidates: Array<{method: string; paramNames: string[]; requiredCount: number}> = [];
+  const candidates: Array<{
+    method: string;
+    paramNames: string[];
+    requiredCount: number;
+    inSolution: boolean;
+  }> = [];
+  /**
+   * 每个方法**属于哪个类**。
+   *
+   * 力扣题的约定是 `class Solution`，而题解里常把辅助数据结构的类也写在
+   * 同一段代码里：0399 口袋算式是 `class UnionFind`（带权并查集）
+   * + `class Solution`（真正的入口 `calcEquation`）。
+   *
+   * 早先只按「第一个带 self 的方法」挑，于是挑中 `UnionFind.find(x)` ——
+   * 而驱动里写的是 `Solution().find(...)`，那个方法**根本不存在**。
+   * 现象是 0399 的样例区空着（参数个数对不上，样例被丢光了），
+   * 读者手动输参数跑出来是 AttributeError，看起来像「题解写错了」。
+   *
+   * 所以：**`Solution` 的方法优先**，辅助类里的方法排到最后。
+   * 没有 `class Solution` 时（0297 写的是 `class Codec`）退回原样。
+   */
+  const classOf = classRanges(code);
   let m: RegExpExecArray | null;
   while ((m = methodRe.exec(code)) !== null) {
     if (m[1].startsWith('__') && m[1].endsWith('__')) {
       continue;
     }
-    candidates.push({method: m[1], ...parseParams(m[2] ?? '')});
+    const owner = classOf(m.index);
+    candidates.push({
+      method: m[1],
+      inSolution: owner === 'Solution',
+      ...parseParams(m[2] ?? ''),
+    });
   }
   if (candidates.length > 0) {
     const picked = pickPublicEntry(candidates);
@@ -156,12 +211,37 @@ export function extractSignature(
     };
   }
 
+  /**
+   * 顶层函数的候选也要**一起挑**，不能拿第一个。
+   *
+   * balance_paths 的代码里两个顶层函数：`build_tree(level_order)`（造树）
+   * 与 `count_balance_paths(root)`（题目要的），照「第一个」挑中前者 ——
+   * 页面上两组样例全报 AttributeError，因为 `build_tree` 返回的是树本身。
+   */
+  const topLevel: Array<{
+    method: string;
+    paramNames: string[];
+    requiredCount: number;
+    inSolution: boolean;
+  }> = [];
   const funcRe = /^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)/gm;
   while ((m = funcRe.exec(code)) !== null) {
     if (m[1].startsWith('__') && m[1].endsWith('__')) {
       continue;
     }
-    return {method: m[1], ...parseParams(m[2])};
+    topLevel.push({
+      method: m[1],
+      inSolution: false,
+      ...parseParams(m[2]),
+    });
+  }
+  if (topLevel.length > 0) {
+    const picked = pickPublicEntry(topLevel);
+    return {
+      method: picked.method,
+      paramNames: picked.paramNames,
+      requiredCount: picked.requiredCount,
+    };
   }
 
   return {method: null, paramNames: [], requiredCount: 0};
@@ -187,11 +267,48 @@ const RANGE_PAIRS: Array<[string, string]> = [
   ['begin', 'end'],
 ];
 
+/**
+ * 「把入参加工成另一个东西」的函数名 —— 造对象的辅助函数，不是题目入口。
+ *
+ * balance_paths 的代码是 `build_tree(level_order)` + `count_balance_paths(root)`，
+ * 照「第一个」挑中 `build_tree` —— 它返回的是那棵树本身，
+ * 而题面要的是那条路径数，于是页面上两组样例全报
+ * `AttributeError: 'TreeNode' object has no attribute ...`，
+ * 看起来像「题解写错了」。
+ *
+ * **只在有得选时才换**：0105 的入口真的叫 `buildTree`（从前中序造树），
+ * 0761 真的叫 `makeLargestSpecial` —— 全语料里这样的题有 4 篇，
+ * 唯独这两篇与 HJ36 之外还有别的候选，换过来才是对的。
+ */
+function looksLikeFactory(name: string): boolean {
+  return /^(build|make|create|parse|construct|from|to|of)([A-Z_]|$)/i.test(name);
+}
+
 function pickPublicEntry<
-  T extends {method: string; paramNames: string[]; requiredCount: number},
+  T extends {
+    method: string;
+    paramNames: string[];
+    requiredCount: number;
+    inSolution?: boolean;
+  },
 >(candidates: T[]): T {
   if (candidates.length === 1) {
     return candidates[0];
+  }
+  /**
+   * `Solution` 里的方法先挑（辅助类 `UnionFind.find` 不是入口），
+   * 与 `extractSignature` 里那条注释是同一件事。
+   */
+  const notFactory = candidates.filter((c) => !looksLikeFactory(c.method));
+  const pool0 = notFactory.length > 0 ? notFactory : candidates;
+  const inSolution = pool0.filter((c) => c.inSolution);
+  if (inSolution.length > 0) {
+    const rest = inSolution;
+    const isRange = (p: string[]): boolean =>
+      RANGE_PAIRS.some(([a, b]) => p.includes(a) && p.includes(b));
+    return (
+      rest.find((c) => !c.method.startsWith('_') && !isRange(c.paramNames)) ?? rest[0]
+    );
   }
   const isRange = (p: string[]): boolean =>
     RANGE_PAIRS.some(([a, b]) => p.includes(a) && p.includes(b));
@@ -203,8 +320,8 @@ function pickPublicEntry<
    * `missing 1 required positional argument`，页面上「跑样例」也是同一个错 ——
    * 两边都错，因为它们用的是同一份判据。与 `snippet.ts` 的 `pickEntry` 同步。
    */
-  const publicOnes = candidates.filter((c) => !c.method.startsWith('_'));
-  const pool = publicOnes.length > 0 ? publicOnes : candidates;
+  const publicOnes = pool0.filter((c) => !c.method.startsWith('_'));
+  const pool = publicOnes.length > 0 ? publicOnes : pool0;
   return pool.find((c) => !isRange(c.paramNames)) ?? pool[0];
 }
 

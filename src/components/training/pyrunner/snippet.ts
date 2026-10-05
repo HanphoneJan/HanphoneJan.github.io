@@ -279,6 +279,22 @@ function pickEntry<
     return candidates[0];
   }
   /**
+   * 「把入参加工成另一个东西」的函数名先让给别的候选。
+   *
+   * balance_paths 的代码是 `build_tree(level_order)` + `count_balance_paths(root)`，
+   * 挑中 `build_tree` 之后页面上两组样例全报
+   * `AttributeError: 'TreeNode' object has no attribute ...` ——
+   * 它返回的是那棵树本身，而题面要的是那条路径数。
+   *
+   * **只在有得选时才换**：0105 的入口真的叫 `buildTree`、0761 真的叫
+   * `makeLargestSpecial`，单候选时不动。
+   * 与 py-samples 的 `looksLikeFactory` 是同一条判据，两边必须同步。
+   */
+  const notFactory = candidates.filter(
+    (c) => !/^(build|make|create|parse|construct|from|to|of)([A-Z_]|$)/i.test(c.name),
+  );
+  const pool0 = notFactory.length > 0 ? notFactory : candidates;
+  /**
    * **下划线开头的是私有辅助函数**，不是题目入口。
    *
    * shoppee 合并降序链表写的是 `MergeList(l1, l2)` 与 `_reverse(head)`，
@@ -292,8 +308,8 @@ function pickEntry<
    * 判据用单下划线（Python 的「非公开」约定）而不是双下划线 ——
    * dunder 已经在 `isDunder` 里滤掉了。
    */
-  const publicOnes = candidates.filter((c) => !c.name.startsWith('_'));
-  const pool = publicOnes.length > 0 ? publicOnes : candidates;
+  const publicOnes = pool0.filter((c) => !c.name.startsWith('_'));
+  const pool = publicOnes.length > 0 ? publicOnes : pool0;
   return pool.find((c) => !looksLikeRangeParam(c.info.names)) ?? pool[0];
 }
 
