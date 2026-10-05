@@ -521,13 +521,61 @@ function isPythonLiteral(t: string): boolean {
   return false;
 }
 
+/**
+ * 这是不是「操作脚本」样例 —— class-API 设计题的那种。
+ *
+ * 力扣的 0146 LRU / 0155 最小栈 / 0208 前缀树 / 0295 中位数，题面样例
+ * 不是一次调用，而是**构造一次 + 挨个调方法**的序列：
+ *
+ * ```
+ * 输入：["MinStack","push","push","getMin","pop"]
+ * 输出：[null,null,null,-3,null]
+ * ```
+ *
+ * 抽出来是「一个实参、那个实参是一串方法名」。运行条**不能**把它当调用跑 ——
+ * `push(["MinStack","push",...])` 必然报错，而报错的 ✗ 会挂在**正确**的题解下面。
+ *
+ * 录制器能处理（`recorder/script.ts` 的 `parseScriptSample` 单独一条路），
+ * 所以过滤放在这里 —— `usableSamples` 是运行条与录制器**共用的**那一层，
+ * 而录制器的脚本路径不经过它。
+ *
+ * 判据四条，缺一不可（少一条就会误伤正常样例）：
+ * 1. 恰好一个实参（多参数的那是真的调用）
+ * 2. 实参能 JSON.parse 成数组
+ * 3. 数组的**首元素是大写开头的字符串**（类名）
+ * 4. 期望值也是数组（脚本的返回值天然是一个列表）
+ */
+export function isScriptSample(s: PySample): boolean {
+  if (s.args.length !== 1) {
+    return false;
+  }
+  let ops: unknown;
+  try {
+    ops = JSON.parse(s.args[0]);
+  } catch {
+    return false;
+  }
+  if (!Array.isArray(ops) || ops.length < 2 || typeof ops[0] !== 'string') {
+    return false;
+  }
+  if (!/^[A-Z]/.test(ops[0])) {
+    return false;
+  }
+  try {
+    return Array.isArray(JSON.parse(s.expected));
+  } catch {
+    return false;
+  }
+}
+
 /** 只保留期望值可判定的样例；省略号的样例（「[0,1,2,...]」）没法比 */
 export function usableSamples(samples: PySample[]): PySample[] {
   return samples.filter(
     (s) =>
       (isUsableExpected(s.expected) || isArrowList(s.expected)) &&
       s.args.length > 0 &&
-      !s.args.some(isPlaceholderArg),
+      !s.args.some(isPlaceholderArg) &&
+      !isScriptSample(s),
   );
 }
 
