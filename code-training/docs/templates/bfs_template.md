@@ -384,3 +384,10 @@ def levelOrder(root: Node) -> List[List[int]]:
 - [BFS 模式](../patterns/bfs.md)
 - [DFS 模板](dfs_template.md)
 - [二叉树](../data-structures/binary_tree.md)
+
+---
+
+## 算法可视化
+
+下面的播放器可以**改输入后重跑**：把数组换成你自己的，
+逐步看每一帧的状态怎么变。多源 BFS 与单源 BFS 的差别只在一行：把所有起点一起塞进初始队列。网格 BFS 里每格的状态就是队列的出队顺序。
