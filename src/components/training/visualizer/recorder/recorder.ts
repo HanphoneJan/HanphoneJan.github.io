@@ -136,11 +136,28 @@ def _tscan_values(locals_dict, capture_self):
         yield v
 
 
-def _tbuild_nmap(locals_dict, capture_self=False):
+def _tbuild_nmap(locals_dict, capture_self=False, anchor=None):
     """挑一个「根」节点局部变量，建 id -> 下标 的映射。
 
-    优先用入口参数名（root / head / l1 ...），它们就是题面描述的对象；
-    找不到再按「谁的值最大」猜一个（根节点的子树通常最全）。
+    anchor 不为 None 时**直接用它**（只有树题会传，见下面）；
+    否则优先用入口参数名（root / head / l1 ...），再退到「谁的值最大」。
+
+    ## 为什么树题必须钉住 anchor
+
+    每帧重新挑「根」，挑中的是**当前**那个 root 局部变量 —— 而递归里它
+    会被重新绑定成**子树**：0104 二叉树最大深度第一帧 root 是整棵 7 格，
+    到第二层就只剩左边那 1 格。录出来的轨迹于是每帧一棵更小的树，
+    adapter 忠实地把它画出来，读者看到的是「树在递归中越缩越小」——
+    而这题根本没有删节点。
+
+    钉住入口实参那个对象之后，index 是**整棵树层序里的稳定坐标**：
+    同一批节点在每一帧都是同一个下标，树不会变形，光标也才标得对
+    （0101 的对称二叉树之前根本没有光标：root 被编成整棵子树，
+    只有 q 留下了带下标的单节点标记，而那个下标是相对子树的坐标，
+    落在 7 格那棵树上就是错的一格）。
+
+    链表**不**这么干：0206 反转链表、0021 合并链表、0148 排序链表
+    本来就是原地改链，每帧的锚点链正是要显示的那条链。
 
     capture_self 为真时也看 self.<attr> —— class-API 设计题的数据全在
     实例属性上（0146 的 self.key_to_node 与 self.dummy），
@@ -148,22 +165,23 @@ def _tbuild_nmap(locals_dict, capture_self=False):
 
     （注意：这个字符串是 JS 模板字面量的一部分，里面**不能出现反引号**。）
     """
-    best = None
-    best_key = None
-    for k, v in _tscan_items(locals_dict, capture_self):
-        if k == "self" or not hasattr(v, "val"):
-            continue
-        is_tree = hasattr(v, "left") or hasattr(v, "right")
-        is_list = hasattr(v, "next")
-        if not (is_tree or is_list):
-            continue
-        # 入口参数优先
-        score = 0 if k in ("root", "head", "l1", "l2", "headA", "headB", "p", "q") else 1
-        size = _tsize(v)
-        key = (score, -size)
-        if best_key is None or key < best_key:
-            best_key = key
-            best = v
+    best = anchor
+    if best is None:
+        best_key = None
+        for k, v in _tscan_items(locals_dict, capture_self):
+            if k == "self" or not hasattr(v, "val"):
+                continue
+            is_tree = hasattr(v, "left") or hasattr(v, "right")
+            is_list = hasattr(v, "next")
+            if not (is_tree or is_list):
+                continue
+            # 入口参数优先
+            score = 0 if k in ("root", "head", "l1", "l2", "headA", "headB", "p", "q") else 1
+            size = _tsize(v)
+            key = (score, -size)
+            if best_key is None or key < best_key:
+                best_key = key
+                best = v
     if best is None:
         return None
 
@@ -291,7 +309,7 @@ def _tinstall(target_filename, events, limit, capture_self=False):
             if event == "line":
                 if len(events) >= limit:
                     return None
-                nmap = _tbuild_nmap(frame.f_locals, capture_self)
+                nmap = _tbuild_nmap(frame.f_locals, capture_self, __ANCHOR__[0])
                 loc = {}
                 for k, v in frame.f_locals.items():
                     if k == "self":
@@ -430,6 +448,9 @@ __EVENTS__ = []
 __RESULT__ = None
 __STDOUT__ = ""
 __ERR__ = None
+# 节点坐标的锚点：树题钉住入口那个 root 对象（见 _tbuild_nmap 的说明）。
+# 链表题故意留空 —— 它们每帧要显示的就是当前那条链。
+__ANCHOR__ = [None]
 
 ns = {"__name__": "__snippet__"}
 try:
@@ -469,6 +490,13 @@ ${
         __saved_stdout__ = sys.stdout
         __buf__ = io.StringIO()
         sys.stdout = __buf__
+        ${
+          // 树题把第一个实参钉成锚点：递归里 root 会重新绑定成子树，
+          // 不钉住的话节点坐标每帧都变（画面上是「树越缩越小」）。
+          opts.kinds?.some((k) => k === 'tree')
+            ? `__ANCHOR__[0] = next((v for v in _args if hasattr(v, "val")), None)`
+            : '__ANCHOR__[0] = None'
+        }
         try:
 ${
   opts.script

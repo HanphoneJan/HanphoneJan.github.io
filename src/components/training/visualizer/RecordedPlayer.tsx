@@ -285,7 +285,7 @@ function Player({
  */
 function FrameView({frame}: {frame: Frame}): React.ReactElement {
   if (isGridFrame(frame)) {
-    return <GridView frame={frame.grid} />;
+    return <GridView frame={frame.grid} aux={frame.aux} />;
   }
   if (isTableFrame(frame)) {
     return <TableView frame={frame.table} />;
