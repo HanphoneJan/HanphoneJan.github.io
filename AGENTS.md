@@ -32,6 +32,45 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 - **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量 + 递归深度落成 `static/traces/*.json`（进 git）；`plugins/vis-traces` 在构建期把轨迹过一遍八个 adapter（`visualizer/adapters/`：list/tree/stack/grid/array-scan/aux-table/string/dp-counter）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `DocItem/Layout` 渲染 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`），展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 182 篇题解里 171 篇录制成功、167 篇有可视化（录制产物的 98%），剩下 4 篇在页面上显式写「本题无可视化步骤」。详见「算法可视化」小节。
 - **算法可视化（手写 tracer，内嵌模式/模板/数据结构文档）**: `src/components/training/visualizer/tracers/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。放置表在 `visualizer/inlinePlacement.ts`，**独立页已删除**（16 个 tracer 覆盖 19 篇文档）。
 - **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测与手写 tracer 两处都用它跳转（录制式可视化不跳转，它就长在那篇题解里）。
+- **静态重定向** (`plugins/static-redirects/index.ts`): 页面搬家后 `postBuild` 写一个 `<meta refresh>` HTML，保住已上线的旧地址。详见「板块根路径与旧地址」。
+
+### 板块根路径与旧地址
+
+**`/code-training` 与 `/docs` 这种「板块根」没有天然路由。** docs 插件只给
+**真实存在的 doc 文件**生成路由，而两个 docs 目录下都**没有 `index.md`**：
+落地页是 `intro.md`，permalink 自然是 `/code-training/intro`。
+于是板块根 404 —— 而且这个 404 静悄悄的：导航栏的「代码训练」是个
+`dropdown`，六个条目全是 `category/*`，没有任何一处链到板块根。
+
+修法是给落地页 `slug: /`（`code-training/docs/intro.md`）。**两个连带坑**：
+
+- **页面上了一级，正文里的相对链接会全部失效。** `intro.md` 里写的是
+  `category/题库`，在 `/code-training/intro` 上恰好解析成
+  `/code-training/category/题库`；挂到根路径后同一个相对路径解析成
+  `/category/题库`，构建直接 `Docusaurus found broken links` 失败。
+  这种链接要改成**从站点根算的绝对路径**。
+- **产物是 `build/code-training.html`，不是 `build/code-training/index.html`。**
+  （`trailingSlash: false` 下一律 `<route>.html`。）写重定向时按
+  `a/index.html` 去推断会推断错，于是自检报「目标不存在」并跳过写入 ——
+  **重定向根本没生成，而日志照旧打印「写了 1 条」**（那是表的长度，
+  不是真正写出的数量）。
+
+**GitHub Pages 上 `X.html` 优先于 `X/` 目录**，所以 `code-training.html`
+能被 `/code-training` 命中。实测证据就在产物里：`/code-training/tags`
+既是 doc permalink（`tags.html`）又是目录（`tags/`，里面是各标签页），
+线上访问它服务的是 `tags.html`（`class` 含 `docs-tags-list-page`）。
+**别用 `docusaurus serve` 的结果来判断线上**—— 它对 `/code-training`
+直接返回 200，而线上是 `301 → /code-training/ → 404`。
+
+**旧地址为什么不直接让它 404**：`/code-training/intro` 是**已经上线**的
+URL（书签、搜索引擎、外链都指着它）。仓库里「博客旧 URL 故意 404」那条
+规矩针对的是**被删掉**的内容，这里是**搬家**，性质不同。
+3.9.2 的 `plugin-content-docs` 已经**没有** `redirects` 选项了
+（整个包里搜不到 `redirect` 这个词），`docusaurus-plugin-client-redirects`
+又没装，所以 `plugins/static-redirects` 在 `postBuild` 里直接写 HTML：
+`<meta http-equiv="refresh">` 在**没有 JS** 时也能跳，
+再加 `<link rel="canonical">`。**只给「本来就 404」的路径加重定向没意义**，
+站内链接请改源头。
 
 ### Dual-plugin docs setup
 
