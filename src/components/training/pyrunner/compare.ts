@@ -30,6 +30,15 @@ export function compare(
   // 1) 双方都是合法 JSON -> 结构化深比较
   const aj = tryJson(a);
   const ej = tryJson(e);
+  /**
+   * JSON 双方不等时**不要就地返回**，记下理由继续往下走。
+   *
+   * 早先在 step 1 里直接 return，于是 step 2 那几条「一边带引号一边不带」
+   * 永远没机会执行 —— 而 HJ11 数字颠倒第二组正好需要它：
+   * 题面写 `输出 0`，题解返回的是字符串 `"0"`。
+   * 表现是「✗ 内容不符：期望 0，实际 "0"」，挂在一个**完全正确**的题解下面。
+   */
+  let jsonReason: string | undefined;
   if (aj.ok && ej.ok) {
     if (deepEqual(aj.value, ej.value)) {
       return {ok: true};
@@ -51,22 +60,40 @@ export function compare(
     if (opts.multiAnswer && sameNodeValues(aj.value, ej.value)) {
       return {ok: true};
     }
-    return {
-      ok: false,
-      reason: `内容不符：期望 ${JSON.stringify(ej.value)}，实际 ${JSON.stringify(aj.value)}`,
-    };
+    jsonReason = `内容不符：期望 ${JSON.stringify(ej.value)}，实际 ${JSON.stringify(aj.value)}`;
   }
 
-  // 2) 有一边是 JSON 字符串字面量时，去掉引号再比
-  //    - 期望值带引号、实际不带：题解写 "abc"，Python 打出 abc
-  //    - 实际带引号、期望值不带：返回值是字符串时 json.dumps 必然加引号。
-  //      这一条不是锦上添花 —— HJ11「数字颠倒」的期望值是 0006151，
-  //      实际是 "0006151"，而 0006151 会被 JSON.parse 吃成数字 6151，
-  //      于是数字容差那一步还会给出「期望 6151」这种莫名其妙的理由。
   if (ej.ok && typeof ej.value === 'string' && ej.value === a) {
     return {ok: true};
   }
   if (aj.ok && typeof aj.value === 'string' && aj.value === e) {
+    return {ok: true};
+  }
+  // 2b) 一边是「数字的字符串」、另一边是那个数字
+  //
+  // HJ11 数字颠倒的第二组样例是「输入 0 / 输出 0」，而题解的入口签名是
+  // `reverse_number(num_str: str) -> str` —— 返回值是**字符串** `"0"`，
+  // 题面写的却是裸的 `0`。判失败的话读者看到的是「✗ 内容不符：期望 0，实际 "0"」，
+  // 而代码一个字都没错。
+  //
+  // 只认「字符串正好是那个数字的十进制写法」这一种形态：
+  // `"0"` vs `0`、`"42"` vs `42` 判过，`"0"` vs `1` 照常判失败。
+  if (
+    aj.ok &&
+    typeof aj.value === 'string' &&
+    ej.ok &&
+    typeof ej.value === 'number' &&
+    String(ej.value) === aj.value
+  ) {
+    return {ok: true};
+  }
+  if (
+    ej.ok &&
+    typeof ej.value === 'string' &&
+    aj.ok &&
+    typeof aj.value === 'number' &&
+    String(aj.value) === ej.value
+  ) {
     return {ok: true};
   }
 
@@ -87,10 +114,10 @@ export function compare(
   if (Number.isFinite(an) && Number.isFinite(en)) {
     return Math.abs(an - en) < 1e-6
       ? {ok: true}
-      : {ok: false, reason: `数值不符：期望 ${en}，实际 ${an}`};
+      : {ok: false, reason: jsonReason ?? `数值不符：期望 ${en}，实际 ${an}`};
   }
 
-  return {ok: false, reason: `期望 ${e}，实际 ${a}`};
+  return {ok: false, reason: jsonReason ?? `期望 ${e}，实际 ${a}`};
 }
 
 export function tryJson(s: string): {ok: true; value: unknown} | {ok: false} {

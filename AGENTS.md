@@ -870,15 +870,49 @@ webpack 打浏览器 bundle 时会连这些分支一起解析。**与体积无�
 | 跨页面复用 | 页面内 `fetch` 拦截 + Cache API |
 | `static/pyodide/` 12.9MB | gitignore，`deploy.yml` 构建时下载 |
 
-**端到端验证靠「逐页点按钮」的扫描脚本，不是靠肉眼看。**
-`bars.mjs`（单页逐条跑）与 `sweep2.mjs`（全量 177 页）用无头 Chrome + CDP
-点真实按钮，收集 `N / M 组通过`。两个坑：
+**逐题验证「▶ 跑样例」按钮：`pnpm check:runbar`（120 篇全过）。**
+
+`test:pyrunner` 只验纯函数、`test:pyodide` 只验执行协议 —— **两者都不验
+「这一篇的样例端到端跑出来对不对」**，而那正是读者点一下按钮看到的。
+这条路径上出过的错没有一个会让上面两个单测失败：裸单词样例、箭头串、
+`str` 标注的裸数字、入口挑到辅助类。
+
+脚本完全照抄 `runner.ts` 的 `samples` 分支（**同一个 `sampleCase` 函数**），
+在真 Pyodide 里跑 `buildCallDriver` 的产物，再用 `compare()` 判。
+它第一次跑出来就是 **10 篇失败**，逐个修完：
+
+| 篇目 | 原因 | 修在哪 |
+|---|---|---|
+| 0399 口袋算式 | 入口挑中 `UnionFind.find`（辅助类），`Solution.find` 根本不存在 | `extractSignature` 优先 `Solution` 里的方法 |
+| balance_paths | 入口挑中 `build_tree`（造树），题面要的是路径数 | 顶层函数也一起挑；「像构造器」的名字让位 |
+| HJ1 / HJ11 / HJ85 | 围栏样例是裸单词，samples 分支只 `toPythonLiteral` | `sampleCase` 走 `asCallArgument` |
+| HJ50 / HJ67 | 同上（第一组样例是裸数字/裸单词） | 同上 |
+| shoppee_merge / max_distance | 箭头串不被还原成数组 | `asCallArgument` 认 `5 -> 3 -> 1` |
+| HJ11 第二组 | 期望 `0`、实际 `"0"`（入口返回 `str`） | `compare` step 1 不再就地返回；新增「数字的字符串 vs 数字」 |
+| shoppee_merge 第三组 | 实参是 `(空)` 这种占位符 | `usableSamples` 整组丢掉 |
+| 0049 / 0108 / 0347 | 误报：题面说「任意顺序 / 答案不唯一」 | 脚本改成透传 `orderAgnostic`/`multiAnswer`（尺子的错） |
+
+**「整组丢掉」优于「猜对」**：`l1: (空)` 意思当然是空链表，但我们不知道每个
+形参该还原成什么（`[]`？`""`？`None`？）。猜错的后果是给出一个必然报错的
+样例，那个 ✗ 挂在**正确**的题解下面 —— 比少一组样例糟得多。
+
+**入口挑选的三条新判据**（py-samples 的 `pickPublicEntry` 与
+`snippet.ts` 的 `pickEntry` 必须同步）：
+
+1. **`Solution` 里的方法优先**（辅助类 `UnionFind.find` 不是入口）。
+2. **下划线开头的是私有辅助函数**（`_reverse`）。
+3. **像构造器的名字让位**：`build|make|create|parse|construct|from|to|of`
+   后面跟大写或下划线。**只在有得选时才换** —— 0105 的入口真的叫
+   `buildTree`、0761 真的叫 `makeLargestSpecial`，单候选时不动。
+   （顶层函数那一条之前是「返回第一个」，balance_paths 就栽在那里。）
+
+**原来的端到端扫描脚本 `bars.mjs` / `sweep2.mjs` 已不在仓库里**，
+`check:runbar` 在 Node 里跑同一条路径，不必开浏览器。要在浏览器里点真实
+按钮时仍然得注意那两个坑：
 - **每页的第一个块要给足冷启动时间**（Pyodide 首次加载可能 30s+）。
   早先按 28s 上限轮询，130 个「还在加载」被误记成「没有结果」，
-  报告看起来像 143 个问题，实际只有 39 个。轮询要按按钮状态区分
-  「加载中/运行中」与「跑完了」。
-- 判定要挑**带样例按钮的条**（`[data-testid="run"]`），不是按条序号 ——
-  序号会随页面里代码块数量变化。
+  报告看起来像 143 个问题，实际只有 39 个。
+- 判定要挑**带样例按钮的条**（`[data-testid="run"]`），不是按条序号。
 
 **为什么缓存用 fetch 拦截而不是 Service Worker（两条路都走过）：**
 
