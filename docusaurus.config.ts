@@ -70,15 +70,15 @@ const config: Config = {
     /**
      * 保持默认的 `warn`，**不要**改成 `'ignore'`。
      *
-     * 构建时每篇题解页都会报一条
-     * 「Broken anchor … -> #visualizer」，模式/模板页报 `#vis-<tracerId>`。
-     * 那是**误报**：这两个小节渲染在 `</DocItemContent>` 之后
-     * （`src/theme/DocItem/Layout/index.tsx`），`id` 与右侧 TOC 里指向它的
-     * `<a href>` 都是 React 写上去的，而 Docusaurus 的锚点检查只知道
-     * **构建期从 markdown 解析出来**的锚点 —— 两头都没有就报 broken。
-     * 实测构建产物里两者都真实存在：
-     * `grep -o 'id="visualizer"' build/…/11.html` 有一处，
-     * `grep -o 'id="vis-grid-bfs"' build/code-training/patterns/bfs.html` 也有。
+     * 题解页的录制式播放器搬进「完整代码实现」那一节之后，
+     * `#visualizer` 不再有任何 `<a href>` 指向它（那个 id 只留着给
+     * `pnpm check:vis` 在构建产物里扫页面用），所以那条误报自然消失了。
+     * 模式/模板页仍会报 `#vis-<tracerId>`：手写 tracer 的播放器渲染在
+     * `</DocItemContent>` 之后（`src/theme/DocItem/Layout/index.tsx`），
+     * `id` 与指向它的 `<a href>` 都是 React 写上去的，而 Docusaurus 的锚点检查
+     * 只知道**构建期从 markdown 解析出来**的锚点 —— 两头都没有就报 broken。
+     * 实测构建产物里它是真实存在的：
+     * `grep -o 'id="vis-grid-bfs"' build/code-training/patterns/bfs.html`。
      *
      * 本仓库的 Docusaurus 3.9 只接受枚举值（`ignore|log|warn|throw`），
      * **不支持**按链接内容返回结果的函数形式（3.10+ 才有），

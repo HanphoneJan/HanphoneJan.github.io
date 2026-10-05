@@ -18,6 +18,16 @@
  *   （已剥掉高亮注释的干净源码）与 `metadata.language`。不碰 DOM、不碰
  *   mdast、不碰 MDX。这是 `docusaurus-theme-live-codeblock` 用的同一个接缝。
  *
+ * ## 录制式播放器为什么不也挂在这里
+ *
+ * 试过：把播放器挂到 `## 完整代码实现` 那个代码块下面，位置比挂在标题上更好看。
+ * 但这个接缝只有 `metadata.code`，**挑不出「哪一块才是完整代码那一块」**：
+ * 178 篇题解里有 3 篇在「解题思路」里抄了一遍一字不差的完整代码，
+ * 而按「第几块一样的」去数又会栽在 Docusaurus 那个
+ * `key={String(isBrowser)}` 的重挂上（每个代码块水合后都会重挂一次，
+ * 计数器整体错位，服务端渲好的节点还会被 React 当成多余的删掉）。
+ * 完整推导见 `src/theme/MDXComponents.tsx` 的文件头。
+ *
  * ## 为什么每次运行还要 key={String(isBrowser)}
  *
  * 这不是我们加的，是官方 `CodeBlock/index.tsx` 的既有行为：SSR 时 Prism 用
@@ -35,14 +45,14 @@ import type {Props} from '@theme/CodeBlock/Layout';
 import Buttons from '@theme/CodeBlock/Buttons';
 import SnippetBar from '@site/src/components/training/pyrunner/SnippetBar';
 import type {PySamplesData} from '@site/plugins/py-samples';
-import {usePyRunnerScope} from '@site/src/components/training/pyrunner/scope';
+import {useTrainingDocScope} from '@site/src/components/training/scope';
 import {usePluginData} from '@docusaurus/useGlobalData';
 
 import styles from './styles.module.css';
 
 export default function CodeBlockLayout({className}: Props): ReactNode {
   const {metadata} = useCodeBlockContext();
-  const scope = usePyRunnerScope();
+  const scope = useTrainingDocScope();
   const samples = usePluginData('py-samples') as unknown as
     | PySamplesData
     | undefined;

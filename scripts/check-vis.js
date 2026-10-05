@@ -16,11 +16,12 @@
  * 对每个带 `id="visualizer"` 的题解页：
  *
  * 1. 折叠块在（构建期 globalData 有这篇）
- * 2. TOC 里有「算法可视化」条目
- * 3. 展开后播放器挂上了（fetch 成功、adapter 在浏览器里跑通了）
- * 4. **没有 `.visError`**（轨迹解析/渲染抛异常时组件显示的就是它）
- * 5. 真的画出了东西（格子 / 树节点 / 网格单元 / aux 行 至少一个）
- * 6. 单步有效（点「下一步」note 会变）—— 证明帧不是全部相同
+ * 2. **播放器紧跟在「完整代码实现」那一节的标题下面**（不在页面最底部）
+ * 3. 右侧导航里**没有**单独的「算法可视化」条目（它是那一节的一部分）
+ * 4. 展开后播放器挂上了（fetch 成功、adapter 在浏览器里跑通了）
+ * 5. **没有 `.visError`**（轨迹解析/渲染抛异常时组件显示的就是它）
+ * 6. 真的画出了东西（格子 / 树节点 / 网格单元 / aux 行 至少一个）
+ * 7. 单步有效（点「下一步」note 会变）—— 证明帧不是全部相同
  *
  * ## 跑法
  *
@@ -582,24 +583,44 @@ async function main() {
       if (!page.all) console.log(`✓ ${page.name}：折叠块在页面上`);
 
       /**
-       * 查侧边栏里的条目，但**不能只查 `nav a` / `.table-of-contents a`**。
+       * 播放器必须**紧跟在 `## 完整代码实现` 那一节的标题下面**，
+       * 且右侧导航里**没有**单独的「算法可视化」条目。
        *
-       * 无头 Chrome 默认窗口 800×600 → `useWindowSize()` 判成 mobile，
-       * 于是 `DocItem/Layout` 只渲染 `DocItemTOCMobile`，**桌面侧边栏
-       * 根本不进 DOM**。实测那个宽度下 `.table-of-contents a` 一条都没有，
-       * 条目全在 `.menu` 里（20 条）。
+       * 两条都是这次改动的验收点：播放器原来渲染在 `</DocItemContent>` 之后
+       * （页面最底部，离它逐帧回放的那段代码隔了好几节），TOC 里还多一条同名条目。
        *
-       * 只查桌面那两个选择器的话，「TOC 里没有条目」会**每一页都失败**，
-       * 而页面上明明有条目 —— 是尺子错了，不是页面错了。
+       * 用 `previousElementSibling` 而不是父容器：播放器挂在标题的**下一个兄弟**
+       * 位置（`@theme/MDXComponents` 的 `h2`），中间不该夹着别的元素。
+       *
+       * 条目要同时查 `.menu a` 与 `.table-of-contents a`：无头 Chrome 默认窗口
+       * 800×600 → `useWindowSize()` 判成 mobile，桌面侧边栏不进 DOM，
+       * 条目全在 `.menu` 里。
        */
+      const attached = await evalJs(
+        `(() => {
+           const el = document.getElementById('visualizer');
+           if (!el) return false;
+           const prev = el.previousElementSibling;
+           // 按 id 判而不是 textContent：标题里还挂着一个 hash-link（锚点按钮），
+           // textContent 会把它的「」也读进来
+           return !!prev && prev.tagName === 'H2' &&
+             prev.id === '完整代码实现';
+         })()`,
+      );
+      if (attached) pass++;
+      else {
+        fails.push(`${page.name}: 播放器不在「完整代码实现」那一节里`);
+        if (!page.all) console.log(`✗ ${page.name}：播放器位置不对`);
+      }
+
       const inToc = await evalJs(
         `!!Array.from(document.querySelectorAll('.menu a, .table-of-contents a'))
            .find(a => a.textContent.trim() === '算法可视化')`,
       );
-      if (inToc) pass++;
+      if (!inToc) pass++;
       else {
-        fails.push(`${page.name}: TOC 里没有条目`);
-        if (!page.all) console.log(`✗ ${page.name}：TOC 条目`);
+        fails.push(`${page.name}: TOC 里仍有单独的「算法可视化」条目`);
+        if (!page.all) console.log(`✗ ${page.name}：TOC 里仍有可视化条目`);
       }
 
       await evalJs(`document.getElementById('visualizer').open = true`);
