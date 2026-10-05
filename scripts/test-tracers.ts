@@ -63,6 +63,294 @@ function tracer(id: string) {
 }
 
 // ============================================================
+// 树：DFS 三种遍历
+// ============================================================
+
+const dfsT = tracer('tree-dfs');
+
+interface RefNode {
+  val: number;
+  left: RefNode | null;
+  right: RefNode | null;
+}
+
+/** 参考实现：按层序数组建树（与 tracer 无关的第二份实现） */
+function refBuild(level: Array<number | null>): RefNode | null {
+  if (level.length === 0 || level[0] === null) {
+    return null;
+  }
+  const mk = (v: number | null): RefNode | null =>
+    v === null ? null : {val: v, left: null, right: null};
+  const nodes = level.map(mk);
+  for (let i = 0; i < nodes.length; i++) {
+    if (!nodes[i]) {
+      continue;
+    }
+    nodes[i]!.left = nodes[2 * i + 1] ?? null;
+    nodes[i]!.right = nodes[2 * i + 2] ?? null;
+  }
+  return nodes[0];
+}
+
+function refDfs(root: RefNode | null, order: 'pre' | 'in' | 'post'): number[] {
+  const out: number[] = [];
+  const walk = (n: RefNode | null): void => {
+    if (!n) {
+      return;
+    }
+    if (order === 'pre') {
+      out.push(n.val);
+    }
+    walk(n.left);
+    if (order === 'in') {
+      out.push(n.val);
+    }
+    walk(n.right);
+    if (order === 'post') {
+      out.push(n.val);
+    }
+  };
+  walk(root);
+  return out;
+}
+
+/** 从末帧的 note 里把「访问顺序：a → b → c」抠出来 */
+function dfsNoteOrder(note: string): string {
+  const m = /访问顺序：([0-9 →]*)/.exec(note);
+  return (m?.[1] ?? '').trim();
+}
+
+for (const tree of [
+  [1, 2, 3, 4, 5, null, 7],
+  [1, null, 2, 3],
+  [5, 3, 8, 1, 4, null, 7],
+] as Array<Array<number | null>>) {
+  for (const order of ['pre', 'in', 'post'] as const) {
+    const frames = dfsT.run({tree, order});
+    const last = frames[frames.length - 1];
+    const got = dfsNoteOrder(last.note);
+    const want = refDfs(refBuild(tree), order).join(' → ');
+    check(
+      `树 DFS ${order} [${tree.join(',')}] = ${want}`,
+      got === want,
+      {got, want},
+    );
+    // 光标必须落在树内：层序下标越界说明树的层数算错了
+    const badCursor = frames.some(
+      (f) =>
+        f.tree !== undefined &&
+        f.tree.cursor !== undefined &&
+        (f.tree.cursor < 0 || f.tree.cursor >= f.tree.cells.length),
+    );
+    check(`树 DFS ${order} [${tree.join(',')}] 光标不越界`, !badCursor);
+  }
+}
+
+// ============================================================
+// 回溯：子集
+// ============================================================
+
+const bt = tracer('subset-backtrack');
+
+/**
+ * 参考实现：位掩码枚举。
+ *
+ * **按集合比，不按顺序比**：tracer 走的是 DFS（`[] [1] [1,2] [1,2,3] [1,3] [2] …`），
+ * 位掩码枚举出来的顺序不一样（`[] [1] [2] [1,2] …`），
+ * 但**两个集合完全一样**。子集是无序的，按序比就是在比一个没有意义的东西
+ * —— 早先这么写，四组用例全红，而 tracer 一直是对的。
+ */
+function subsetsRef(nums: number[]): string {
+  const out: string[] = [];
+  for (let mask = 0; mask < 1 << nums.length; mask++) {
+    const picked = nums.filter((_, i) => (mask >> i) & 1);
+    out.push(picked.length ? `[${picked.join(',')}]` : '[]');
+  }
+  return out.sort().join(' ');
+}
+
+for (const nums of [[1, 2, 3], [1], [1, 2], [4, 2, 9]]) {
+  const frames = bt.run(nums);
+  const last = frames[frames.length - 1];
+  const got = (/一共 \d+ 个子集：([^\n]*)/.exec(last.note)?.[1] ?? '').split(' ').sort().join(' ');
+  const want = subsetsRef(nums);
+  check(`回溯子集 [${nums.join(',')}] = ${want}`, got === want, {got, want});
+  // 每一次「撤销」之后 path 必须退回上一层，否则会把别的分支带进来
+  const undoFrames = frames.filter((f) => f.note.startsWith('撤销'));
+  check(
+    `回溯子集 [${nums.join(',')}] 撤销次数 = ${2 ** nums.length - 1}`,
+    undoFrames.length === 2 ** nums.length - 1,
+    undoFrames.length,
+  );
+}
+
+// ============================================================
+// 哈希表：词频统计
+// ============================================================
+
+const hc = tracer('hash-count');
+
+/** 参考实现：Map 累加。注意输出的分隔符要跟 tracer 的 note 一致（`×` 而不是 `:`） */
+function countRef(items: string[]): string {
+  const cnt = new Map<string, number>();
+  for (const x of items) {
+    cnt.set(x, (cnt.get(x) ?? 0) + 1);
+  }
+  return [...cnt.entries()].map(([k, v]) => `${k}×${v}`).join('，');
+}
+
+for (const items of [
+  ['a', 'b', 'a', 'c', 'b', 'a'],
+  ['x'],
+  ['a', 'b', 'c'],
+  ['1', '2', '1', '3', '2', '1', '2'],
+]) {
+  const frames = hc.run(items);
+  const last = frames[frames.length - 1];
+  const got = /共 \d+ 个不同的键：([^\n]*)/.exec(last.note)?.[1] ?? '';
+  const want = countRef(items);
+  check(`词频 [${items.join(',')}] = ${want}`, got === want, {got, want});
+  // 每个键出现时都必须有一帧（词典新增键是这一题的教学内容）
+  const keys = new Set(items);
+  check(
+    `词频 [${items.join(',')}] 每个键都出现过一帧`,
+    frames.filter((f) => f.note.includes('不在表里')).length === keys.size,
+  );
+}
+
+// ============================================================
+// 链表反转
+// ============================================================
+
+const lr = tracer('list-reverse');
+
+for (const nums of [[1, 2, 3, 4, 5], [1, 2], [9, 8, 7, 6]]) {
+  const frames = lr.run(nums);
+  const last = frames[frames.length - 1];
+  const got = /新的头：([0-9 →]*)/.exec(last.note)?.[1] ?? '';
+  const want = [...nums].reverse().join(' → ');
+  check(`链表反转 [${nums.join(',')}] = ${want}`, got === want, {got, want});
+  // 主数组的值不能被改（链表是就地改指针，不是改值）
+  const firstFrame = frames[0];
+  check(
+    `链表反转 [${nums.join(',')}] 主数组保持原样`,
+    JSON.stringify(asArray(firstFrame).array) === JSON.stringify(nums),
+  );
+}
+
+// ============================================================
+// 并查集
+// ============================================================
+
+const uf = tracer('union-find');
+
+/** 参考实现：朴素的「每个元素一个集合」写法 */
+function ufRef(n: number, pairs: Array<[number, number]>): string {
+  const groups: number[][] = Array.from({length: n}, (_, i) => [i]);
+  const findG = (x: number): number => groups.findIndex((g) => g.includes(x));
+  for (const [a, b] of pairs) {
+    const ra = findG(a);
+    const rb = findG(b);
+    if (ra !== rb) {
+      groups[ra].push(...groups[rb]);
+      groups.splice(rb, 1);
+    }
+  }
+  // 每个元素归到哪个集合（用最小元素当代表，与按大小合并的根未必相同，
+  // 所以断言的是「集合的划分」而不是根是谁）
+  const sets = new Set(groups.map((g) => g.slice().sort((x, y) => x - y).join(',')));
+  return [...sets].sort().join(' | ');
+}
+
+function ufSetsOf(note: string, n: number): string {
+  const m = /还剩 \d+ 个集合（([^）]*)）/.exec(note);
+  if (!m) {
+    return '';
+  }
+  // 末帧的 note 只列了根；这一步改用主数组反推更可靠
+  return m[1];
+}
+
+for (const [n, pairs] of [
+  [6, [[0, 1], [1, 2], [3, 4], [0, 3], [2, 4]]],
+  [4, [[0, 1]]],
+  [5, [[0, 1], [1, 2], [2, 3], [3, 4]]],
+] as Array<[number, Array<[number, number]>]>) {
+  const frames = uf.run({n, pairs});
+  const last = frames[frames.length - 1];
+  const finalParent = asArray(last).array as number[];
+  /** 由末帧的 parent 数组反推集合划分 */
+  const groups = new Map<number, number[]>();
+  for (let i = 0; i < n; i++) {
+    // 沿 parent 一路往上跳
+    let r = i;
+    while (parentChain(finalParent, r) !== r) {
+      r = parentChain(finalParent, r);
+    }
+    if (!groups.has(r)) {
+      groups.set(r, []);
+    }
+    groups.get(r)!.push(i);
+  }
+  const got = [...groups.values()]
+    .map((g) => g.sort((x, y) => x - y).join(','))
+    .sort()
+    .join(' | ');
+  const want = ufRef(n, pairs);
+  check(`并查集 n=${n} 合并 ${pairs.length} 对 → ${want}`, got === want, {got, want});
+  void ufSetsOf(last.note, n);
+}
+
+/** parent[i] 就是 i 的父亲 */
+function parentChain(parent: number[], i: number): number {
+  return parent[i] >= 0 && parent[i] < parent.length ? parent[i] : i;
+}
+
+// ============================================================
+// 二维 DP 表：最长公共子序列
+// ============================================================
+
+const lcsT = tracer('lcs-table');
+
+/** 参考实现：滚动数组的朴素 LCS */
+function lcsRef(a: string[], b: string[]): number {
+  const prev = new Array<number>(b.length + 1).fill(0);
+  for (const x of a) {
+    const cur = new Array<number>(b.length + 1).fill(0);
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] =
+        x === b[j - 1] ? prev[j - 1] + 1 : Math.max(prev[j], cur[j - 1]);
+    }
+    for (let j = 0; j <= b.length; j++) {
+      prev[j] = cur[j];
+    }
+  }
+  return prev[b.length];
+}
+
+for (const [a, b] of [
+  ['abcde', 'ace'],
+  ['abc', 'abc'],
+  ['abc', 'def'],
+  ['aggt', 'atgt'],
+  ['ab', 'ba'],
+] as Array<[string, string]>) {
+  const frames = lcsT.run({a: [...a], b: [...b]});
+  const last = frames[frames.length - 1];
+  const table = last.table;
+  const got = table ? table.values[a.length][b.length] : undefined;
+  const want = lcsRef([...a], [...b]);
+  check(`LCS(${a}, ${b}) = ${want}`, got === want, got);
+  // 第一行第一列必须全 0（空串与任何串的 LCS 为 0）
+  check(
+    `LCS(${a}, ${b}) 首行首列为 0`,
+    table !== undefined &&
+      table.values[0].every((v) => v === 0) &&
+      table.values.every((row) => row[0] === 0),
+  );
+}
+
+// ============================================================
 // 排序：结果必须等于朴素 sort 的输出
 // ============================================================
 
