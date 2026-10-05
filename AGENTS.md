@@ -31,7 +31,7 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 - **自测题库** (`static/quiz/bank.json`): 主动回忆题，加在题解正文末尾。`plugins/self-test/index.ts` 只把「哪些题解有题」的清单放进 globalData，`src/theme/DocItem/Layout/index.tsx`（已 swizzle）在正文末尾渲染 `<SelfTest>`，题目数据由组件在用户点开时 fetch。**题解 md 一行都不用改** —— 题库是唯一事实来源。详见「自测题库」小节。
 - **间隔重复复习** (`/code-training/review`): `plugins/srs-cards/index.ts` 构建期把 182 篇题解解析成复习卡片（题号/难度/标签/首解日期），进度存浏览器 localStorage。调度器是 SM-2 lite 三档（忘了/记得/秒答）。
 - **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量 + 递归深度落成 `static/traces/*.json`（进 git）；`plugins/vis-traces` 在构建期把轨迹过一遍八个 adapter（`visualizer/adapters/`：list/tree/stack/grid/array-scan/aux-table/string/dp-counter）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `DocItem/Layout` 渲染 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`），展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 182 篇题解里 170 篇录制成功、166 篇有可视化（录制产物的 98%），剩下 4 篇在页面上显式写「本题无可视化步骤」。详见「算法可视化」小节。
-- **算法可视化（手写 tracer，内嵌模式/模板文档）**: `src/components/training/visualizer/tracers/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。放置表在 `visualizer/inlinePlacement.ts`，**独立页已删除**（10 个 tracer 全部搬进讲它们的文档）。
+- **算法可视化（手写 tracer，内嵌模式/模板/数据结构文档）**: `src/components/training/visualizer/tracers/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。放置表在 `visualizer/inlinePlacement.ts`，**独立页已删除**（16 个 tracer 覆盖 19 篇文档）。
 - **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测、复习队列、手写 tracer 三处都用它跳转（录制式可视化不跳转，它就长在那篇题解里）。
 
 ### Dual-plugin docs setup
@@ -192,8 +192,8 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 | 代码 | `visualizer/recorder/` + `visualizer/adapters/` | `visualizer/tracers/` |
 | 覆盖 | 每道能录制的题（**170/182 录制成功，166 篇适配 = 91%**） | 16 个算法模式，19 篇模式/模板/数据结构文档 |
 | 产出 | 逐题，零手写 | 每个算法手写 30~60 行 |
-| 视图 | 数组/链表/树/网格/栈/DP/字符/字典八种 | 数组 / 网格 BFS / DP 表格 |
-| 单测 | `pnpm test:adapters`（2293 项） | `pnpm test:tracers`（90 项） |
+| 视图 | 数组/链表/树/网格/栈/DP/字符/字典八种 | 数组 / 树 / 网格 / DP 表格 |
+| 单测 | `pnpm test:adapters`（2293 项） | `pnpm test:tracers`（263 项） |
 
 **为什么要有录制这条路**：手写 tracer 覆盖不了 126 篇题解，而且手写的帧
 **会骗人** —— 算法写错了动画照样流畅跑完，读者反而更确信自己错了。
@@ -724,10 +724,11 @@ JS 里「字符串结尾」要写 `$(?![\s\S])`。凡是照着 Python 正则搬�
 
 #### 手写 tracer（内嵌在模式/模板文档里）
 
-覆盖数组扫描之外的三类形态：排序（柱状图）、网格 BFS、DP 表格。
-录制式管线目前只出一维数组 + 指针，所以这三类还得靠手写。
+覆盖录制式管线画不出来的形态：排序（柱状图）、网格 BFS、DP 表格、树、回溯、
+并查集、链表、词典。录制式目前只从**题解代码**取轨迹，而模式/模板/数据结构页
+讲的是算法与结构本身，没有「一道题 + 一组样例」可录。
 
-**独立页 `/code-training/visualizer` 已删除**，十个 tracer 全部搬进讲它们的那篇文档
+**独立页 `/code-training/visualizer` 已删除**，tracer 全部搬进讲它们的那篇文档
 （放置表 `visualizer/inlinePlacement.ts`）：
 
 **16 个 tracer 覆盖 19 篇文档**（模式 11 + 模板 3 + 数据结构 8 = 全部）：
