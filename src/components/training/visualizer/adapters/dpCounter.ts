@@ -77,6 +77,17 @@ interface Pick {
   digitVar?: string;
   /** 推进位置的名字（enumerate 下标 / range 下标） */
   cursorVar?: string;
+  /**
+   * 「没有下标变量」的 for 循环所在行号，光标位置由**迭代次数**推出来。
+   *
+   * 一批题写成 `for x in nums:` —— 循环变量是元素值，没有下标，
+   * 于是 `cursorVar` 找不到，画面上一格都不标（0152 乘积最大子数组、
+   * 0169 多数元素、0128 最长连续序列都是这样）。
+   *
+   * 而「现在算到第几个」正是这几题要讲的事。所以数那条 `for` 语句
+   * 在轨迹里出现了几次：每出现一次就是新的一轮。
+   */
+  loopLine?: number;
   /** 滚动标量名字，按首次出现顺序 */
   dpVars: string[];
   /** 「在长大」的 DP 表，当 aux 行渲染 */
@@ -542,6 +553,27 @@ function pickShapes(
   if (arrayVar && !seq) {
     return null;
   }
+
+  /**
+   * `for x in <列表>:` 的行号（**只在没有下标证据时**找）。
+   *
+   * 判据三条，缺一不可：
+   * 1. 已经有主画面（不然光标标在谁身上？）
+   * 2. `cursorVar` 还没找到（找到了就用真下标，不猜）
+   * 3. 循环的目标确实是**录到了的列表**（不是 `range(...)`、不是字符串）
+   */
+  let loopLine: number | undefined;
+  if (arrayVar && !cursorVar) {
+    const target = arrayVar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const lines = code.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      if (!new RegExp(`^\\s*for\\s+[A-Za-z_]\\w*\\s+in\\s+${target}\\s*:`).test(lines[i])) {
+        continue;
+      }
+      loopLine = i + 1;
+      break;
+    }
+  }
   return {
     arrayVar,
     /** 主数组在这一题里的**最长**样子；短的那些帧由帧循环补空格 */
@@ -558,6 +590,7 @@ function pickShapes(
     synthVar,
     digitVar,
     cursorVar,
+    loopLine,
     dpVars: dpVars.slice(0, 3),
     auxVars,
   };
@@ -586,8 +619,19 @@ export function adaptDpCounter(trace: RawTrace): AdapterResult | null {
   });
   let lastContent = '';
   let contentChanged = false;
+  /**
+   * `for x in <列表>:` 的迭代计数。
+   *
+   * `sys.settrace` 的 `line` 事件是「即将执行这一行」，所以那条 `for`
+   * 每出现一次就是新的一轮；第一次出现（计数 0）之后，
+   * 循环体里的每一帧才知道「现在算到第几个」。
+   */
+  let loopCount = -1;
 
   for (const e of trace.events) {
+    if (pick.loopLine !== undefined && e.line === pick.loopLine) {
+      loopCount++;
+    }
     /**
      * 有真实数组时它每帧都得在（原地修改的题会改内容）；
      * 合成格子条时内容恒定，只要长度对得上就行。
@@ -633,12 +677,26 @@ export function adaptDpCounter(trace: RawTrace): AdapterResult | null {
      * 123（越界，画面上根本没有那一格）。而「还剩几位」正是这一帧
      * 真正要讲的事 —— 左边暗掉了几位，右边就长出来几位。
      */
-    const ci =
+    let ci =
       typeof cursorVal === 'number'
         ? pick.digitVar
           ? String(Math.abs(cursorVal)).length
           : cursorVal
         : undefined;
+    /**
+     * 没有下标变量时，光标位置 = `for x in <列表>:` 的迭代次数。
+     *
+     * 0152 乘积最大子数组的 `for x in nums:` 没有下标变量，
+     * 于是整题画面一格都不标 —— 而「现在算到第几个、
+     * cur/prev 是多少」恰恰是这题的全部教学内容。
+     *
+     * 越界就当没有（循环跑完之后的帧仍用真下标，没有就退回 undefined），
+     * 不硬凑一个越界的下标：画面上根本没有那一格，
+     * 标一个越界位置比不标更糟。
+     */
+    if (ci === undefined && pick.loopLine !== undefined && loopCount >= 0 && loopCount < n) {
+      ci = loopCount;
+    }
     if (ci !== undefined && ci >= 0 && ci <= n) {
       if (ci < n) {
         states[ci] = 'active';
