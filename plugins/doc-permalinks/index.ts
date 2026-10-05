@@ -16,7 +16,7 @@ import type {LoadContext, Plugin} from '@docusaurus/types';
  *
  * ## 为什么需要它
  *
- * tracer、自测、复习队列都持有「题解 md 的相对路径」这个稳定标识，
+ * tracer、自测都持有「题解 md 的相对路径」这个稳定标识，
  * 但要跳转就必须拿到真实 permalink。有了这张表，三处都能用同一个 key 跳转。
  */
 
