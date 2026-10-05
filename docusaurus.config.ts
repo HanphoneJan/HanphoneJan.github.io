@@ -153,6 +153,8 @@ const config: Config = {
       path.join(__dirname, 'plugins/vis-traces/index.ts'),
       // code-training 文档的 md 相对路径 -> 真实 permalink 映射
       path.join(__dirname, 'plugins/doc-permalinks/index.ts'),
+      // 页面搬家后留下的旧地址：构建后写静态 HTML 重定向
+      path.join(__dirname, 'plugins/static-redirects/index.ts'),
       // 题解里的可运行代码与测试样例，供浏览器内 Pyodide 使用
       path.join(__dirname, 'plugins/py-samples/index.ts'),
       [
