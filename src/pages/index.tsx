@@ -13,7 +13,7 @@ export default function Home() {
           <h1 className={styles.title}>{siteConfig.title}</h1>
           <p className={styles.subtitle}>{siteConfig.tagline}</p>
           <div className={styles.buttons}>
-            <Link href="/docs/intro" className={styles.heroButton}>
+            <Link href="/docs" className={styles.heroButton}>
               开始阅读
             </Link>
             <Link
