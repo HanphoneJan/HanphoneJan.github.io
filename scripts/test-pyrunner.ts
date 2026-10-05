@@ -34,6 +34,7 @@ import {
   manualCase,
   quoteIfStr,
   toPythonLiteral,
+  usableSamples,
 } from '../src/components/training/pyrunner/runner';
 
 let pass = 0;
@@ -773,6 +774,64 @@ check('正常期望值可用', isUsableExpected('[0, 1]'));
     extractSamples(md, ['nums', 'k'], 2),
     [{args: ['[3,2,1,5,6,4]', '2'], expected: '5'}],
   );
+}
+
+{
+  /**
+   * `**输入：**` / `**输出：**` 这种「加粗标签」写法。
+   *
+   * 星号包住的是**标签**，正则 `输入(?:\*\*)?[：:]` 在「：` 处就匹配完了，
+   * 冒号后面还剩一个收尾的 `**` —— 值被读成 `** nums = [1,2,3]`，
+   * `splitTopLevel` 又按顶层逗号切（逗号都在方括号里，切不开），
+   * 于是整段变成位置实参、形参名匹配不上，期望值也成了不可判定的 `** 6`。
+   *
+   * 现象是**样例一条都抽不出来**、页面静默退化成「手动填参数」。
+   * 之所以一直没被发现：现有 182 篇恰好都用不带星号的写法。
+   * 而 `leetcode-processor` 的规范明确要求写这两个前缀，新 agent 照着
+   * 写成加粗的就会踩 —— 所以这条断言守的就是那个规范。
+   */
+  const bold = [
+    '**输入：** nums = [1,2,3]',
+    '**输出：** 6',
+  ].join('\n');
+  eq('加粗标签的输入输出', extractSamples(bold, ['nums'], 1), [
+    {args: ['[1,2,3]'], expected: '6'},
+  ]);
+  const boldWithExplain = [
+    '### 示例 1',
+    '',
+    '**输入：** nums = [1,2,3]',
+    '**输出：** 6',
+    '**解释：** 1+2+3 = 6',
+  ].join('\n');
+  eq(
+    '加粗标签 + 解释行',
+    extractSamples(boldWithExplain, ['nums'], 1),
+    [{args: ['[1,2,3]'], expected: '6'}],
+  );
+}
+
+{
+  /**
+   * 「操作脚本」样例要让运行条**放弃**它。
+   *
+   * class-API 设计题（0146 LRU / 0155 最小栈 / 0208 前缀树 / 0295 中位数）
+   * 的题面样例是「构造一次 + 挨个调方法」：
+   * `输入：["MinStack","push","push","getMin"]` / `输出：[null,null,null,-3]`。
+   *
+   * 抽出来是「一个实参、那个实参是一串方法名」。运行条若把它当调用，
+   * `push(["MinStack", ...])` 必然报错 —— 而那个 ✗ 挂在**正确**的题解下面。
+   * 录制器不受影响：它走 `recorder/script.ts` 的独立路径。
+   *
+   * 这条断言守住的是「加了 `**输入：**` 星号容忍之后，脚本样例不会被误认成正常样例」。
+   */
+  const scriptMd = [
+    '**输入：** ["MinStack","push","push","getMin","pop"]',
+    '**输出：** [null,null,null,-3,null]',
+  ].join('\n');
+  const scriptSamples = extractSamples(scriptMd, ['x'], 1);
+  eq('脚本样例抽得到（录制器要靠它）', scriptSamples.length, 1);
+  eq('但运行条不接它', usableSamples(scriptSamples), []);
 }
 
 {

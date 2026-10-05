@@ -109,6 +109,25 @@ if __name__ == "__main__":
 
 ### 4. Create Markdown Documentation
 一般的leetcode题解文档位于项目根目录/docs/problems/leetcode/*.md，建议参考已有文档
+
+> **`## 示例` 小节必须用 `输入：` / `输出：` 前缀**，这是**硬要求**，不是风格偏好。
+> 页面上那个「▶ 跑样例」按钮与逐帧可视化都靠它抽样例（`plugins/py-samples`
+> 与 `visualizer/recorder` 都是按这两个前缀正则匹配的）。写成散文、表格或
+> `Input:`/`Output:` 英文前缀，样例**一条都抽不出来** ——
+> 而页面**不会报错**，只会静默退化成「手动填参数」，功能悄悄消失。
+> 多个样例就重复这两行；牛客题同理（`输入格式`/`输出格式` 讲的是题意，
+> `## 示例` 里仍要写 `输入：`/`输出：`）。
+>
+> ```
+> ## 示例
+>
+> ### 示例 1
+>
+> **输入：** nums = [2,7,11,15], target = 9
+> **输出：** [0,1]
+> **解释：** nums[0] + nums[1] == target
+> ```
+
 **Document structure (follow exactly):**
 
 ```markdown
@@ -399,6 +418,9 @@ if __name__ == "__main__":
 
 ## Red Flags - Check Before Finishing
 
+- [ ] **`## 示例` 每组样例都有 `输入：` / `输出：` 前缀** - 页面「跑样例」与逐帧可视化都靠它抽样例；写不成这两个前缀，功能会**静默消失**（不报错）
+- [ ] **新题跑过 `pnpm trace:record <题号>`** - 逐帧可视化是从代码录制出来的，不跑就没有
+- [ ] **新题跑过 `pnpm quiz:gen && pnpm quiz:merge`** - 自测题库只认 `bank.json` 里有的 `docId`
 - [ ] **Original code is preserved** - user's handwritten code/comments are not deleted
 - [ ] **TreeNode/ListNode 不在提交区域** - 辅助类定义在 `@lcpr-template-start` 和 `@lcpr-template-end` 之间，不在 `@lc code=start` 和 `@lc code=end` 之间
 - [ ] **main 测试代码在文件最后** - `if __name__ == "__main__":` 位于文件末尾，在所有 LeetCode 注释之后
@@ -417,6 +439,34 @@ if __name__ == "__main__":
 - [ ] `patterns` 与正文主体解法一致（不是 tags 里顺带提到的）
 - [ ] 无法确定的 pattern **留空**，没有猜测
 - [ ] `topics: []`（该字段目前无语义，不要填路径）
+
+### 新增题解的收尾命令（**新题必跑，改既有题不必**）
+
+写完一篇**新**题解，页面上有三个功能是从文档里**派生**出来的，
+它们不会自己出现 —— 必须各跑一条命令，否则那一节就是空的：
+
+```bash
+pnpm trace:record 0042      # 逐帧可视化：用 Pyodide 真跑这份代码取执行轨迹
+pnpm quiz:gen && pnpm quiz:merge   # 自测题：从「## 复杂度分析」的表格抽单选题
+node scripts/check-docs.ts  # 体检：运行条样例数 / 轨迹 / 自测题 / frontmatter
+```
+
+三条都**不报错**地静默生效，所以「以为做完了」是这里最容易犯的错：
+
+- **可视化**：录制器需要一个能对上题面样例的入口，且跑出来的结果必须与期望值一致
+  （结果不符就整篇丢弃）。需要先 `pnpm sync:pyodide`（12.9MB，已 gitignore）；
+  没下运行时脚本会打印提示后以 0 退出 —— **别把那个退出码当成「可视化已生成」**。
+  跑完顺手看一眼 `pnpm test:adapters`：它会校验「轨迹里的代码 == 题解
+  `## 完整代码实现`」，所以**改动既有题解的代码后必须重录**，否则单测会红。
+- **自测题**：`quiz:gen` 从 `## 复杂度分析` 的表格机械抽题，产出候选到
+  `bank.generated.json`；`quiz:merge` 合进 `bank.json`（人工题保留）。
+  `plugins/self-test` 只认 `bank.json` 里有的 `docId`，所以新题不进 bank 就没自测小节。
+- **运行条**：`plugins/py-samples` 自动扫 `problems/**/*.md`，没有额外命令 ——
+  但它抽不出样例时同样**不报错**，所以要以 `check-docs.ts` 的报告为准。
+
+> `patterns` / `templates` / `data-structures` 那三页若也要播放器，放置表
+> `src/components/training/visualizer/inlinePlacement.ts` 要手动加一行 ——
+> 那是代码不是文档，`check-docs.ts` 管不到。
 
 ### 题库同步
 
