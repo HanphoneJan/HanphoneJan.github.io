@@ -190,7 +190,7 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 |---|---|---|
 | 入口 | `code-training/docs/problems/**/*.md` | `patterns/*.md`、`templates/*.md`（放置表 `visualizer/inlinePlacement.ts`） |
 | 代码 | `visualizer/recorder/` + `visualizer/adapters/` | `visualizer/tracers/` |
-| 覆盖 | 每道能录制的题（**170/182 录制成功，166 篇适配 = 91%**） | 10 个算法模式 |
+| 覆盖 | 每道能录制的题（**170/182 录制成功，166 篇适配 = 91%**） | 16 个算法模式，19 篇模式/模板/数据结构文档 |
 | 产出 | 逐题，零手写 | 每个算法手写 30~60 行 |
 | 视图 | 数组/链表/树/网格/栈/DP/字符/字典八种 | 数组 / 网格 BFS / DP 表格 |
 | 单测 | `pnpm test:adapters`（2293 项） | `pnpm test:tracers`（90 项） |
@@ -710,11 +710,17 @@ JS 里「字符串结尾」要写 `$(?![\s\S])`。凡是照着 Python 正则搬�
     所以 `#visualizer` / `#vis-*` / `#selftest` 这几个 React 生成的锚点
     没法单独放过。实测它们在产物里都真实存在，警告保持默认的 `warn`。）
 
-**`--tracers` 模式**验的是内嵌手写 tracer 的那 7 篇文档（40 项）：折叠壳数量对不对、
+**`--tracers` 模式**验的是内嵌手写 tracer 的那 19 篇文档（94 项）：折叠壳数量对不对、
 懒加载的 chunk 到没到（放置表 id 拼错时页面上一片空白）、画面画出了东西、
 单步有效。CSS module 的类名是哈希过的，所以格子一律按 `data-testid` 查：
 `cell` / `grid > *` / `tree-node` / `aux-array > *` / `dp-table td` ——
 漏掉 `dp-table td` 时两个 DP 播放器会被误报成「画面是空的」。
+
+而且**期望要按播放器给，不能按页面给**：`dynamic_programming.md` 一页挂着三个
+表视图的播放器，`dfs_template.md` 是树 + 数组；按页面给一个 view 必然有播放器
+对不上。而且查表时**必须剥掉 `vis-` 前缀**（box id 是 `vis-grid-bfs`，
+表里的键是 `grid-bfs`）—— 忘了剥的话每项都退化成 `any`，而树 / 网格 / 表三种视图
+都没有 `cell`，六个播放器会被一起误报成「画面是空的」。
 
 #### 手写 tracer（内嵌在模式/模板文档里）
 
@@ -724,14 +730,34 @@ JS 里「字符串结尾」要写 `$(?![\s\S])`。凡是照着 Python 正则搬�
 **独立页 `/code-training/visualizer` 已删除**，十个 tracer 全部搬进讲它们的那篇文档
 （放置表 `visualizer/inlinePlacement.ts`）：
 
+**16 个 tracer 覆盖 19 篇文档**（模式 11 + 模板 3 + 数据结构 8 = 全部）：
+
 | 文档 | 内嵌 |
 |---|---|
 | `patterns/two_pointers.md` | 两数之和 |
 | `patterns/sliding_window.md` | 滑动窗口 |
 | `patterns/sorting.md` | 冒泡 / 归并 / 快排 |
-| `patterns/dynamic_programming.md` | 爬楼梯 / 0-1 背包 |
-| `patterns/bfs.md`、`templates/bfs_template.md` | 网格 BFS |
+| `patterns/dynamic_programming.md` | 爬楼梯 / 0-1 背包 / LCS（二维 DP 表） |
+| `patterns/bfs.md` | 网格 BFS |
+| `patterns/dfs.md` | 树的 DFS 遍历 |
+| `patterns/backtracking.md` | 回溯：子集 |
+| `patterns/hash_map.md` | 哈希表：就地统计出现次数 |
 | `templates/binary_search_template.md` | 二分 / lower_bound |
+| `templates/bfs_template.md` | 网格 BFS |
+| `templates/dfs_template.md` | 树的 DFS 遍历 / 回溯：子集 |
+| `data-structures/hash_table.md` | 哈希表：就地统计出现次数 |
+| `data-structures/linked_list.md` | 链表反转：三个指针 |
+| `data-structures/stack_queue_heap_unionfind.md` | 并查集：路径压缩 + 按大小合并 |
+| `data-structures/binary_tree.md`、`tree.md` | 树的 DFS 遍历 |
+| `data-structures/string.md`、`array.md` | LCS（二维 DP 表） |
+| `data-structures/graph.md` | 网格 BFS |
+
+新增的六个（`tracers/trees.ts`、`tracers/structures.ts`）都是**结构自身的用法**，
+不是某道题：词典那一行就是计数表本身、链表的已反转段一格格长出来、
+并查集的路径压缩把树压扁、LCS 的表格行列各对应一个前缀长度。
+`patterns/greedy.md` 与 `patterns/recursion.md` 仍然没有播放器 ——
+它们讲的是「什么时候能贪心」「递归三要素」这类**判断标准**，
+没有可逐步展示的状态，硬摆一个不相干的动画只会添乱。
 
 **为什么放文档里而不是留一个独立页**：读者在「滑动窗口」这一页读到窗口怎么收缩时，
 顺手就该能把输入调大重跑，而不是跳去另一个页面从头找。独立页的算法与文档一一对应，
@@ -758,8 +784,8 @@ JSX，但那是 220 多篇文档的解析方式，里面还有大段含 `{` 与 
 trace 函数，白送一整套播放/暂停/单步/回退/调速/换输入/源码高亮。
 
 ```bash
-pnpm test:tracers          # 138 项：算法结果与参考实现对拍 + 放置表完整性
-node scripts/check-vis.js --tracers   # 40 项：7 篇文档的播放器在浏览器里真能跑
+pnpm test:tracers          # 263 项：算法结果与参考实现对拍 + 放置表完整性
+node scripts/check-vis.js --tracers   # 94 项：19 篇文档的播放器在浏览器里真能跑
 ```
 
 **这个单测不是可选项。** tracer 的 `run()` 有两类高危 bug：

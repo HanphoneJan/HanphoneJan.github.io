@@ -186,3 +186,10 @@ format(10, 'b')            # 整数转二进制字符串 => '1010'
 
 - [几道常见的字符串算法题 | JavaGuide](https://javaguide.cn/cs-basics/algorithms/string-algorithm-problems.html)
 - LeetCode 字符串专题
+
+---
+
+## 算法可视化
+
+下面的播放器可以**改输入后重跑**：把数组换成你自己的，
+逐步看每一帧的状态怎么变。最长公共子序列的表格：行是 a 的前缀、列是 b 的前缀，所以「dp[i][j] 就是左上那一格」在画面上就是「往左上角看一眼」。
