@@ -1,6 +1,16 @@
 /**
  * 题解页内嵌的算法可视化。
  *
+ * ## 位置：`## 完整代码实现` 那一节的标题下面
+ *
+ * 早先它渲染在 `</DocItemContent>` 之后（`DocItem/Layout`），也就是页面最底部
+ * —— 离它逐帧回放的那段代码隔了「示例推演 / 复杂度 / 易错点 / 相关题目 / 自测」几节。
+ * 现在由 `@theme/MDXComponents` 的 `h2` 接到那一节的标题下面
+ * （为什么不能挂到代码块下面、那条路踩过哪些坑，见那个文件头）。
+ *
+ * **没有独立的 TOC 条目**：播放器是「完整代码实现」这一节的一部分，
+ * 那一节标题本来就在右侧导航里，再补一条「算法可视化」只是同一个位置的第二个入口。
+ *
  * ## 为什么要按需加载
  *
  * 播放器 + 三个 renderer + 帧数据约 100KB。题解有 126 篇，
@@ -27,9 +37,16 @@ import React, {Suspense, lazy, useMemo, useState} from 'react';
 import styles from './styles.module.css';
 import type {VisTraceEntry} from '@site/plugins/vis-traces';
 
-/** 与 `selftest/toc.tsx` 的 SELF_TEST_ANCHOR 同样处理：显式 id，不猜 slug */
+/**
+ * 折叠壳的 id。
+ *
+ * 保留它有两个用处：读者可以直接链到「这道题的可视化」，
+ * 以及 `pnpm check:vis` 在构建产物里靠 `id="visualizer"` 找出全部页面
+ * ——那份清单是扫出来的，不是维护出来的。
+ *
+ * **它不再进 TOC**：位置由「完整代码实现」那一节的标题承担。
+ */
 export const VIS_ANCHOR = 'visualizer';
-export const VIS_TITLE = '算法可视化';
 
 /**
  * 播放器本体。
@@ -62,7 +79,8 @@ export default function InlineVisualizer({entry}: Props): React.ReactElement {
 
   return (
     <details
-      // 显式 id，右侧 TOC 的条目直接指向它。
+      // 显式 id：读者可以直接链到「这道题的可视化」，
+      // `pnpm check:vis` 也靠它在构建产物里扫出全部页面。
       // 不能指望 @theme/Heading 从 <summary> 生成锚点 —— summary 不是标题元素。
       id={VIS_ANCHOR}
       className={styles.visBox}

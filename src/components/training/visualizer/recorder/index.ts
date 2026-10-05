@@ -42,6 +42,7 @@ import {
 import {nodeParams} from '../../pyrunner/snippet';
 import {BUILDER_PY, STDIN_SHIM_PY} from '../../pyrunner/driver';
 import {compare} from '../../pyrunner/compare';
+import {canonCode} from '../canonicalCode';
 import {asSnippetEntry, entryCandidates} from './entries';
 import {classNames, parseScriptSample} from './script';
 import type {ScriptSample} from './script';
@@ -88,28 +89,9 @@ async function loadPy(): Promise<PyodideLike | null> {
 /**
  * `## 完整代码实现` 小节里的第一个 python 块。
  *
- * **必须按小节取，不能全文正则取第一个块** —— 题解的「解题思路」里往往先
- * 出现暴力解法的片段。录暴力解法会得到 n/i/j 三重循环的轨迹：
- * 帧数暴涨、指针有三个、读者看到的还不是题解主推的解法
- * （实测 0001 全文首个块是 O(n²) 的嵌套循环，录出来完全不是那题该有的样子）。
+ * 实现在 `../canonicalCode`：录制器与 `vis-traces` 插件必须抽到同一段，
+ * 否则播放器会挂到页面上找不到的代码块下面。
  */
-function canonCode(md: string): string {
-  const lines = md.split('\n');
-  const startRe = /^##\s+完整代码实现\s*$/;
-  const start = lines.findIndex((l) => startRe.test(l.trim()));
-  if (start === -1) {
-    return '';
-  }
-  let end = lines.length;
-  for (let i = start + 1; i < lines.length; i++) {
-    if (/^##\s+/.test(lines[i].trim())) {
-      end = i;
-      break;
-    }
-  }
-  const m = lines.slice(start + 1, end).join('\n').match(/```python\s*\n([\s\S]*?)```/);
-  return m ? m[1].trim() : '';
-}
 
 function num(v: Json): number | null {
   return typeof v === 'number' && Number.isFinite(v) ? v : null;

@@ -36,24 +36,17 @@ date_reviewed: []
 
 用长度为 `len(needle)` 的窗口在 `haystack` 上从左向右滑动，逐个窗口与 `needle` 比较，首次相等的位置即答案。
 
-```python
-class Solution:
-    def strStr(self, haystack: str, needle: str) -> int:
-        length = len(haystack)
-        window = len(needle)
-        if window == 0:
-            return 0
-        if length < window:
-            return -1
-        for left in range(0, length - window + 1):
-            if needle == haystack[left:left + window]:
-                return left
-        return -1
-```
+**算法步骤：**
+1. 空模式串返回 `0`（任何位置都能匹配）
+2. `len(haystack) < len(needle)` 时返回 `-1`
+3. 枚举窗口起点 `left`，比较切片 `haystack[left:left + window]` 与 `needle`
+4. 相等就返回 `left`，全部比完仍没找到则返回 `-1`
 
 **窗口起点范围**：窗口右端 `left + window` 不能越界，故 `left` 最大为 `length - window`，即 `range(0, length - window + 1)`。
 
 **为何可接受**：`n`、`m` 规模小（最多约 5×10⁴），Python 的切片比较由 C 层实现，通常足够快。
+
+可运行的完整实现见下一节「完整代码实现」。
 
 ### 第三步：优化解法（KMP）
 
