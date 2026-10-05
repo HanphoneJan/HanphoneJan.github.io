@@ -145,6 +145,30 @@ export function manualCase(argsText: string, entry: SnippetEntry): string[] {
 }
 
 /**
+ * 样例实参 -> Python 字面量。**「跑样例」那条路专用**，与 `manualCase` 同一个函数。
+ *
+ * ## 为什么不能只 `toPythonLiteral`
+ *
+ * `toPythonLiteral` 只认字面量，而样例里有一批不是字面量的写法：
+ *
+ * - `HelloNowcoder`（裸单词）—— 牛客题的围栏样例，HJ1/HJ11/HJ85 三篇
+ * - `5 -> 3 -> 1`（箭头串）—— shoppee 链表题
+ * - `1516000` + `num_str: str` —— 直接翻会变成整数，于是
+ *   `'int' object is not subscriptable`
+ *
+ * 早先 samples 分支只调 `toPythonLiteral`，于是这些样例在**页面上**全部报
+ * `ValueError: malformed node or string`（读者看到的是「你的解法写错了」），
+ * 而录制器那边走 `asCallArgument` 跑得好好的 —— 两边口径不一致。
+ *
+ * 现在两边同一个函数，`scripts/check-run-bar.ts` 逐题端到端盯着这条路径。
+ */
+export function sampleCase(args: string[], entry: SnippetEntry): string[] {
+  return args.map((a, i) =>
+    toPythonLiteral(asCallArgument(a, entry.annotations[i])),
+  );
+}
+
+/**
  * 是不是「哑节点 + 原地删链表」的写法。
  *
  * 0019 的标准解法是 `dummy = ListNode(0, head)` 起步、最后 `return dummy.next`。
@@ -197,8 +221,9 @@ export async function runSnippet(opts: {
       let cases: string[][] | null = null;
       let stdin = '';
       if (mode.type === 'samples' && target) {
-        // 样例抄自力扣题面，是 JavaScript 记法（null / [1,2]），要先翻译
-        cases = mode.samples.map((s) => s.args.map(toPythonLiteral));
+        // 样例抄自力扣题面，是 JavaScript 记法（null / [1,2]），要先翻译；
+        // 而裸单词 / 箭头串这类写法还得靠 `asCallArgument` 补引号或还原成数组
+        cases = mode.samples.map((s) => sampleCase(s.args, entry!));
       } else if (mode.type === 'manual' && target) {
         cases = [manualCase(mode.argsText, entry!)];
       } else if (mode.type === 'stdin') {
@@ -501,8 +526,25 @@ export function usableSamples(samples: PySample[]): PySample[] {
   return samples.filter(
     (s) =>
       (isUsableExpected(s.expected) || isArrowList(s.expected)) &&
-      s.args.length > 0,
+      s.args.length > 0 &&
+      !s.args.some(isPlaceholderArg),
   );
+}
+
+/**
+ * 「(空)」这种占位实参。
+ *
+ * shoppee 合并降序链路的第三组样例是 `l1: (空)`，意思当然是「空链表」。
+ * 但我们不知道每个形参该还原成什么：`MergeList(l1, l2)` 要的是 `[]`，
+ * 别的入口可能要是 `""` 或 `None`。猜错的后果是页面上给出一个必然报错的
+ * 样例（`TypeError: 'str' object is not iterable`），而那个 ✗ 挂在**正确**
+ * 的题解下面 —— 比少一组样例糟得多。
+ *
+ * 所以整组丢掉：判不了就不给，题面里的说明文字还在。
+ */
+function isPlaceholderArg(raw: string): boolean {
+  const t = raw.trim();
+  return /^[（(【\[]?\s*空\s*[)）】\]]?$/.test(t) || /^(空|无|none|nil)$/i.test(t);
 }
 
 /**
