@@ -68,18 +68,11 @@ class Solution:
 
 这是一种常见且简洁的写法，时间和空间都在可接受范围内。
 
-```python
-class Solution:
-    def isPalindrome(self, x: int) -> bool:
-        if x < 0:
-            return False
-        s = str(x)
-        mid = len(s) // 2
-        for i in range(mid):
-            if s[i] != s[len(s) - 1 - i]:
-                return False
-        return True
-```
+**算法步骤：**
+1. 负数直接返回 `false`（负号只出现在最左边，倒过来读就不一样了）
+2. 把整数转成字符串 `s`，取 `mid = len(s) // 2`
+3. 遍历前一半：比较 `s[i]` 与 `s[len(s) - 1 - i]`，不相等就返回 `false`
+4. 全部对称则返回 `true`
 
 **双指针的含义：**
 - `i` 从 0 开始，表示左端指针
@@ -89,6 +82,8 @@ class Solution:
 **为什么只遍历一半：** 回文的对称性意味着只需检查 `mid` 次，不需要遍历全部字符。这个优化让比较次数减半。
 
 **不足之处：** 将整数转为字符串需要额外的字符串空间，空间复杂度为 O(log n)。
+
+可运行的完整实现见下一节「完整代码实现」。
 
 ### 第四步：最优解法——反转一半数字（不转字符串）
 

@@ -29,7 +29,7 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 - **LeetCode progress sync** (`scripts/sync-leetcode.js`): Pulls accepted LeetCode (leetcode.cn) submissions using the `LEETCODE_SESSION` cookie (stored as GitHub secret), diffs against local `code-training/leetcode/`, and generates new `*.py` + `docs/problems/leetcode/*.md` files. Runs every 2 days via `sync-leetcode.yml`; commits only when new problems exist. The script also **auto-refreshes the session cookie** (LeetCode returns a renewed `LEETCODE_SESSION` in `Set-Cookie` on every GraphQL call); the workflow writes it back to the `LEETCODE_SESSION` secret when a PAT (`SYNC_PAT` / `STARS_PAT`) is available.
 - **NowCoder progress sync** (`scripts/sync-nowcoder.js`): Pulls accepted NowCoder submissions using `NOWCODER_COOKIE` + `NOWCODER_UID` secrets, diffs against local `code-training/nowcoder/`, and generates new code files + `docs/problems/nowcoder/*.md`. Runs every 2 days via `sync-nowcoder.yml`; commits only when new problems exist.
 - **自测题库** (`static/quiz/bank.json`): 主动回忆题，加在题解正文末尾。`plugins/self-test/index.ts` 只把「哪些题解有题」的清单放进 globalData，`src/theme/DocItem/Layout/index.tsx`（已 swizzle）在正文末尾渲染 `<SelfTest>`，题目数据由组件在用户点开时 fetch。**题解 md 一行都不用改** —— 题库是唯一事实来源。详见「自测题库」小节。
-- **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量 + 递归深度落成 `static/traces/*.json`（进 git）；`plugins/vis-traces` 在构建期把轨迹过一遍八个 adapter（`visualizer/adapters/`：list/tree/stack/grid/array-scan/aux-table/string/dp-counter）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `DocItem/Layout` 渲染 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`），展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 182 篇题解里 171 篇录制成功、167 篇有可视化（录制产物的 98%），剩下 4 篇在页面上显式写「本题无可视化步骤」。详见「算法可视化」小节。
+- **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量 + 递归深度落成 `static/traces/*.json`（进 git）；`plugins/vis-traces` 在构建期把轨迹过一遍八个 adapter（`visualizer/adapters/`：list/tree/stack/grid/array-scan/aux-table/string/dp-counter）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `MDXComponents`（`src/theme/MDXComponents.tsx`）把 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`）接到 **`## 完整代码实现` 那一节的标题下面**，展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 182 篇题解里 171 篇录制成功、167 篇有可视化（录制产物的 98%），剩下 4 篇在页面上显式写「本题无可视化步骤」。详见「算法可视化」小节。
 - **算法可视化（手写 tracer，内嵌模式/模板/数据结构文档）**: `src/components/training/visualizer/tracers/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。放置表在 `visualizer/inlinePlacement.ts`，**独立页已删除**（16 个 tracer 覆盖 19 篇文档）。
 - **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测与手写 tracer 两处都用它跳转（录制式可视化不跳转，它就长在那篇题解里）。
 - **静态重定向** (`plugins/static-redirects/index.ts`): 页面搬家后 `postBuild` 写一个 `<meta refresh>` HTML，保住已上线的旧地址。详见「板块根路径与旧地址」。
@@ -212,6 +212,21 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 `console.log` 一次都不打印；同时 230 个页面的 SSG 挂在 `useDocTOC`
 （`toc` 读到 `undefined`）。两种 import 写法（本仓库其它插件用的
 `path.join(__dirname, '...index.ts')`）都试过，一样。
+
+### 算法可视化挂在哪（两条路，位置不同）
+
+| | 录制式（题解内嵌） | 手写 tracer（模式/模板页内嵌） |
+|---|---|---|
+| 挂点 | **`## 完整代码实现` 那一节的标题下面** | `## 算法可视化` 小节之后（正文末尾） |
+| 接缝 | swizzled `MDXComponents` 的 `h2`（`src/theme/MDXComponents.tsx`） | `DocItem/Layout` 的 `</DocItemContent>` 之后 |
+| TOC 条目 | **没有** —— 那是那一节的一部分 | 靠 md 里的 `## 算法可视化` 标题 |
+
+录制式原来也在正文末尾（离它回放的那段代码隔着「示例推演 / 复杂度 / 易错点 /
+相关题目 / 自测」几节），搬到了那一节里。**为什么不能挂到代码块下面**
+（挑不出「哪一块才是完整代码那一块」、以及那个计数器栽在
+`key={String(isBrowser)}` 重挂上的实测），见 `src/theme/MDXComponents.tsx`
+文件头。`id="visualizer"` 保留着，但**没有任何 `<a href>` 指向它**，
+只给 `pnpm check:vis` 扫页面用。
 
 ### 算法可视化（两条路，别混）
 
@@ -733,8 +748,13 @@ JS 里「字符串结尾」要写 `$(?![\s\S])`。凡是照着 Python 正则搬�
   硬塞给它只会得到一个「改了输入但画面不变」的假输入框。
 - **`note` 里放的是源码那一行**（去注释）+ 指针当前值。代码行才是作者
   真正想说的话，自动生成的文案再漂亮也比不上。
-- **TOC 用显式 id**（`VIS_ANCHOR = 'visualizer'`），机制与自测小节共用
-  `selftest/toc.tsx` 的 `ExtraTocProvider`。
+- **位置在「完整代码实现」那一节的标题下面，不在页面最底部，也不再有单独的
+  TOC 条目**：由 swizzled 的 `@theme/MDXComponents` 的 `h2` 接上
+  （`src/theme/MDXComponents.tsx`）。早先它渲染在 `</DocItemContent>` 之后，
+  离它回放的那段代码隔了好几节。`id="visualizer"` 保留着，只给
+  `pnpm check:vis` 扫页面用，没有任何 `<a href>` 指向它 —— 所以那条
+  「Broken anchor → #visualizer」的误报自然消失了（见 `docusaurus.config.ts`）。
+  完整推导（含「为什么不能挂到代码块下面」）在那个文件头。
 - **端到端靠无头 Chrome 点真实按钮验证**，不是肉眼看：`pnpm check:vis`
   每类 adapter 挑一题，验证播放器挂上、**对应视图的格子真的渲染了**、
   指针/光标/状态量出现、单步有效。

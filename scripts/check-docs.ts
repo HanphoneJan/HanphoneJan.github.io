@@ -256,6 +256,30 @@ function inspect(doc: {docId: string; abs: string}, bankDocIds: Set<string>): Ro
     issues.push({level: 'warn', text: '没有录制轨迹（`pnpm trace:record ' + name.split('_')[0] + '`）'});
   }
 
+  // ── 2b. 「解题思路」里不该有和完整代码一字不差的代码块 ────────
+  //
+  // 完整代码的位置只有一个：`## 完整代码实现`。而「解题思路」里再抄一份，
+  // 读者会读到同一段代码两遍，而且**第二遍才是录制与运行条用的那份** ——
+  // 两份一旦只改了一份，可视化播的就和眼前这段对不上。
+  //
+  // 为什么是 warn 不是 error：它不影响任何功能（可视化挂的是「完整代码实现」
+  // 那一节，逐帧照样播）。只是文档冗余，改起来是内容工作。
+  //
+  // 判据：全文所有 ```python 块里，出现次数 > 1 的那一份。
+  if (hasCode) {
+    const canon = code.trim();
+    const blocks = [...md.matchAll(/```python\s*\n([\s\S]*?)```/g)].map((m) => m[1].trim());
+    const dupCount = blocks.filter((b) => b === canon).length;
+    if (dupCount > 1) {
+      issues.push({
+        level: 'warn',
+        text:
+          `「解题思路」里有一段代码与「完整代码实现」一字不差（全文共 ${dupCount} 段）` +
+          ' —— 思路里讲关键步骤，完整代码只留一份',
+      });
+    }
+  }
+
   // ── 3. 自测题 ────────────────────────────────────────────────
   const hasQuiz = bankDocIds.has(doc.docId);
   if (!hasQuiz) {
