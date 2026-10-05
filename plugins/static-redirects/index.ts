@@ -39,6 +39,11 @@ const REDIRECTS: ReadonlyArray<{from: string; to: string; why: string}> = [
     to: '/code-training',
     why: '落地页挂到板块根路径（intro.md 的 slug: /）之后，旧地址要兜住',
   },
+  {
+    from: '/docs/intro',
+    to: '/docs',
+    why: '同上；首页「开始阅读」按钮原先就指着这个地址',
+  },
 ];
 
 /**

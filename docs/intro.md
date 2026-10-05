@@ -1,6 +1,19 @@
 ---
 sidebar_position: 1
 title: 欢迎
+# 挂在板块根路径上，否则 `/docs` 没有任何路由（404）。
+#
+# docs 插件只给**真实存在的 doc 文件**生成路由，而这个目录下没有
+# `index.md`；不加 slug 的话落地页的 permalink 是 `/docs/intro`，
+# 于是「文档」这个板块的入口 URL 整个是 404。
+#
+# 这篇正文里一条 markdown 链接都没有，所以页面上移一级不会打断任何相对链接
+# —— 这正是它比 `code-training/docs/intro.md` 少一个坑的原因
+# （那一篇正文有 6 个 `category/*` 相对链接，上移后全部解析错，构建直接失败）。
+#
+# 副作用：旧的 `/docs/intro` 不再是这篇的地址，由 `plugins/static-redirects`
+# 写一个静态重定向兜住（那是个已上线的 URL，首页的「开始阅读」按钮就指着它）。
+slug: /
 ---
 
 # 欢迎来到技术文档站

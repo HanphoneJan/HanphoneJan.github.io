@@ -38,11 +38,13 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 
 **`/code-training` 与 `/docs` 这种「板块根」没有天然路由。** docs 插件只给
 **真实存在的 doc 文件**生成路由，而两个 docs 目录下都**没有 `index.md`**：
-落地页是 `intro.md`，permalink 自然是 `/code-training/intro`。
+落地页是 `intro.md`，permalink 自然是 `/code-training/intro` / `/docs/intro`。
 于是板块根 404 —— 而且这个 404 静悄悄的：导航栏的「代码训练」是个
 `dropdown`，六个条目全是 `category/*`，没有任何一处链到板块根。
+（两个板块都已修：各自 `intro.md` 加了 `slug: /`。）
 
-修法是给落地页 `slug: /`（`code-training/docs/intro.md`）。**两个连带坑**：
+**两个连带坑**（`code-training/docs/intro.md` 两个都踩了，`docs/intro.md`
+只踩第二个 —— 它正文里一条 markdown 链接都没有）：
 
 - **页面上了一级，正文里的相对链接会全部失效。** `intro.md` 里写的是
   `category/题库`，在 `/code-training/intro` 上恰好解析成
@@ -62,8 +64,12 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 **别用 `docusaurus serve` 的结果来判断线上**—— 它对 `/code-training`
 直接返回 200，而线上是 `301 → /code-training/ → 404`。
 
-**旧地址为什么不直接让它 404**：`/code-training/intro` 是**已经上线**的
-URL（书签、搜索引擎、外链都指着它）。仓库里「博客旧 URL 故意 404」那条
+**站内硬链要一起改。** 首页「开始阅读」按钮原先写的是 `/docs/intro`，
+改完 slug 之后它会跳一次重定向 —— 能用，但多一跳且搜索抓到的还是旧地址。
+`grep 'href="/docs/intro"' build/` 应当无输出。
+
+**旧地址为什么不直接让它 404**：`/code-training/intro` 与 `/docs/intro`
+都是**已经上线**的 URL（书签、搜索引擎、外链都指着它们）。仓库里「博客旧 URL 故意 404」那条
 规矩针对的是**被删掉**的内容，这里是**搬家**，性质不同。
 3.9.2 的 `plugin-content-docs` 已经**没有** `redirects` 选项了
 （整个包里搜不到 `redirect` 这个词），`docusaurus-plugin-client-redirects`
