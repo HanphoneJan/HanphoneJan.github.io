@@ -8,6 +8,11 @@ sidebar_position: 1
 #
 # 副作用：旧的 `/code-training/intro` 不再是这篇的地址，
 # 由 `plugins/static-redirects` 写一个静态重定向兜住（那是个已上线的 URL）。
+#
+# 正文里的板块链接因此必须写成**从站点根算的绝对路径**（`/code-training/...`）。
+# 原来写相对路径 `category/题库` 恰好能解析到 `/code-training/category/题库`；
+# 页面上了一级之后，同一个相对路径就解析成 `/category/题库`，构建直接报
+# broken links。这几行是给维护者看的，**不要写进正文**（会渲染出来）。
 slug: /
 ---
 
@@ -24,11 +29,6 @@ slug: /
 | [数据结构](/code-training/category/数据结构) | 数据结构分类的知识体系梳理 |
 | [算法模式](/code-training/category/算法模式) | 通用解题套路、思维框架，以及每个模式的标准实现 |
 | [复习系统](/code-training/category/复习系统) | 学习笔记与速查表 |
-
-> 这几个链接必须写成**从站点根算的绝对路径**。这篇文档原来在
-> `/code-training/intro`，写相对路径 `category/题库` 恰好能解析到
-> `/code-training/category/题库`；挂到 `slug: /` 之后页面上了一级，
-> 同一个相对路径就解析成了 `/category/题库` —— 构建直接报 broken links。
 
 ## 使用方式
 
