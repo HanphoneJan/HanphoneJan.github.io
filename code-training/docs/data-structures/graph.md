@@ -258,7 +258,7 @@ dfs(0) → dfs(1) → dfs(3) → 回溯 → dfs(4) → 回溯 → 回溯 → dfs
 | 最短路 | **天然支持**（无权图） | 不支持 |
 | 适合场景 | 最短路、层序遍历、最小步数 | 连通性判断、拓扑排序、回溯搜索 |
 | 空间复杂度 | O(n)（最坏时队列存所有节点） | O(n)（递归栈深度） |
-| 代码模板 | `while q: x = q.popleft()` | `def dfs(x): for y in g[x]: dfs(y)` |
+| 核心写法 | `while q: x = q.popleft()` | `def dfs(x): for y in g[x]: dfs(y)` |
 
 > **选 BFS 还是 DFS？**
 > - 求最短路 / 最少步数 → BFS

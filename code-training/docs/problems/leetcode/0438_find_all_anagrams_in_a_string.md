@@ -9,7 +9,9 @@ tags:
   - 哈希表
   - 滑动窗口
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/hash_map.md
+  - ../../patterns/sliding_window.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

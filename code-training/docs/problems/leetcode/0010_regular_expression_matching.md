@@ -9,7 +9,9 @@ tags:
   - 动态规划
   - 递归
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dynamic_programming.md
+  - ../../patterns/recursion.md
 date_added: 2026-03-20
 date_reviewed: []
 ---

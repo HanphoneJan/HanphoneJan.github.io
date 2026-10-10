@@ -9,7 +9,8 @@ tags:
   - 哈希表
   - 前缀和
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/hash_map.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

@@ -7,6 +7,8 @@ url: https://leetcode.cn/problems/remove-nth-node-from-end-of-list/
 tags:
   - 链表
   - 双指针
+patterns:
+  - ../../patterns/two_pointers.md
 date_added: 2026-03-25
 ---
 

@@ -8,8 +8,11 @@ tags:
   - 数学
   - 动态规划
   - 组合
+  - 组合数学
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/backtracking.md
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-03-23
 date_reviewed: []
 ---

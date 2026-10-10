@@ -59,22 +59,16 @@ export const INLINE_TRACER_PLACEMENT: Record<string, readonly Placement[]> = {
   'patterns/bfs.md': [{tracerId: 'grid-bfs', title: '网格 BFS 最短路'}],
   'patterns/dfs.md': [
     {tracerId: 'tree-dfs', title: '树的 DFS 遍历（前序 / 中序 / 后序）'},
+    {tracerId: 'subset-backtrack', title: '回溯：子集'},
+  ],
+  'patterns/search.md': [
+    {tracerId: 'binary-search', title: '二分查找'},
+    {tracerId: 'lower-bound', title: 'lower_bound（左闭右开写法）'},
   ],
   'patterns/backtracking.md': [
     {tracerId: 'subset-backtrack', title: '回溯：子集'},
   ],
   'patterns/hash_map.md': [{tracerId: 'hash-count', title: '哈希表：就地统计出现次数'}],
-
-  // ── 代码模板 ────────────────────────────────────────────────────────
-  'templates/binary_search_template.md': [
-    {tracerId: 'binary-search', title: '二分查找'},
-    {tracerId: 'lower-bound', title: 'lower_bound（左闭右开写法）'},
-  ],
-  'templates/bfs_template.md': [{tracerId: 'grid-bfs', title: '网格 BFS 最短路'}],
-  'templates/dfs_template.md': [
-    {tracerId: 'tree-dfs', title: '树的 DFS 遍历（前序 / 中序 / 后序）'},
-    {tracerId: 'subset-backtrack', title: '回溯：子集'},
-  ],
 
   // ── 数据结构 ────────────────────────────────────────────────────────
   'data-structures/hash_table.md': [

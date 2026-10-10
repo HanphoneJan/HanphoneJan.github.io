@@ -9,7 +9,9 @@ tags:
   - 二分查找
   - 分治
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/recursion.md
+  - ../../patterns/search.md
 date_added: 2026-03-10
 date_reviewed: []
 ---

@@ -9,7 +9,9 @@ tags:
   - 回溯
   - 动态规划
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/backtracking.md
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-04-03
 date_reviewed: []
 ---

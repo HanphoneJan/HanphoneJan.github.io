@@ -1,0 +1,37 @@
+/* 「相关题目」列表：算法模式页末尾 */
+
+.section {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ifm-color-emphasis-300);
+}
+
+.hint {
+  margin: 0.5rem 0 1rem;
+  font-size: 0.92em;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.group {
+  margin-bottom: 0.75rem;
+}
+
+.groupTitle {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.item {
+  margin: 0.15rem 0;
+}
+
+.platform {
+  margin-left: 0.5rem;
+  font-size: 0.8em;
+  color: var(--ifm-color-emphasis-600);
+}

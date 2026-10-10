@@ -1,7 +1,7 @@
 /**
  * 树与回溯的 tracer。
  *
- * 覆盖 `templates/dfs_template.md`、`patterns/dfs.md`、`patterns/backtracking.md`、
+ * 覆盖 `patterns/dfs.md`、`patterns/backtracking.md`、
  * `data-structures/binary_tree.md`、`data-structures/tree.md`。
  *
  * 录制式管线已经有树视图（15 篇题解），但那些题的**树是给定的**；
@@ -158,7 +158,7 @@ export const treeDfs: Tracer<DfsInput> = {
   defaultInput: {tree: [1, 2, 3, 4, 5, null, 7], order: 'pre'},
   formatInput: formatDfs,
   parseInput: parseDfs,
-  relatedDocId: 'templates/dfs_template.md',
+  relatedDocId: 'patterns/dfs.md',
   run(input: DfsInput): Frame[] {
     const b = new TraceBuilder();
     const slots = slotCount(input.tree.length);

@@ -8,6 +8,10 @@ tags:
   - 字符串
   - 哈希表
   - 排序
+  - 数组
+patterns:
+  - ../../patterns/hash_map.md
+  - ../../patterns/sorting.md
 date_added: 2026-03-25
 ---
 

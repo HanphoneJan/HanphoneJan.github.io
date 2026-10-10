@@ -9,7 +9,8 @@ tags:
   - 哈希表
   - 并查集
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/hash_map.md
 date_added: 2026-04-03
 date_reviewed: []
 ---

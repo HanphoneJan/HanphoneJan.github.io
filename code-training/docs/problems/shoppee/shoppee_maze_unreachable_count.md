@@ -9,7 +9,9 @@ tags:
   - Flood Fill
   - 矩阵
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/bfs.md
+  - ../../patterns/dfs.md
 date_added: 2026-09-20
 date_reviewed: []
 ---

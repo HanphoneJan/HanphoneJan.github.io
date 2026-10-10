@@ -8,8 +8,11 @@ tags:
   - 数组
   - 排序
   - 贪心
+  - 快速排序
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/greedy.md
+  - ../../patterns/sorting.md
 date_added: 2026-03-23
 date_reviewed: []
 ---

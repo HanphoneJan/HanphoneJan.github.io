@@ -9,7 +9,9 @@ tags:
   - 最长路径
   - 记忆化搜索
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dynamic_programming.md
+  - ../../patterns/recursion.md
 date_added: 2025-04-30
 date_reviewed: []
 ---

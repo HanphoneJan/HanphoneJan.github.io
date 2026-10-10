@@ -8,6 +8,8 @@ tags:
   - 数组
   - 动态规划
   - 区间DP
+patterns:
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-04-24
 ---
 

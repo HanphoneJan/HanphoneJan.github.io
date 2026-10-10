@@ -8,8 +8,11 @@ tags:
   - 树
   - 深度优先搜索
   - 二叉树
+  - 最近公共祖先
+  - 倍增
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dfs.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

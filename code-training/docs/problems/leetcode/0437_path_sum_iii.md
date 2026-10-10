@@ -9,8 +9,11 @@ tags:
   - 深度优先搜索
   - 哈希表
   - 前缀和
+  - 二叉树
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dfs.md
+  - ../../patterns/hash_map.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

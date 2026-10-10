@@ -8,6 +8,11 @@ tags:
   - 数组
   - 动态规划
   - 0/1背包
+  - 回溯
+  - 背包问题
+patterns:
+  - ../../patterns/backtracking.md
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-04-24
 ---
 

@@ -8,6 +8,8 @@ tags:
   - 数组
   - 二分查找
   - 矩阵
+patterns:
+  - ../../patterns/search.md
 date_added: 2026-03-25
 ---
 

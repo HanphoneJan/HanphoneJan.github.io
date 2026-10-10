@@ -8,6 +8,10 @@ tags:
   - 数组
   - 二分查找
   - 分治
+  - 矩阵
+patterns:
+  - ../../patterns/recursion.md
+  - ../../patterns/search.md
 date_added: 2026-04-09
 ---
 

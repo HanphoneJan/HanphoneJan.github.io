@@ -8,6 +8,7 @@ tags:
   - 数组
   - 矩阵
   - 数学
+patterns: []
 date_added: 2026-03-25
 ---
 

@@ -8,6 +8,10 @@ tags:
   - 动态规划
   - 递归
   - 记忆化搜索
+  - 数学
+patterns:
+  - ../../patterns/dynamic_programming.md
+  - ../../patterns/recursion.md
 date_added: 2026-03-25
 ---
 

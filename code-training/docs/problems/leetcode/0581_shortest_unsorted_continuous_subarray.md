@@ -7,6 +7,14 @@ url: https://leetcode.cn/problems/shortest-unsorted-continuous-subarray/
 tags:
   - 数组
   - 双指针
+  - 栈
+  - 贪心
+  - 排序
+  - 单调栈
+patterns:
+  - ../../patterns/greedy.md
+  - ../../patterns/sorting.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-04-24
 ---
 
