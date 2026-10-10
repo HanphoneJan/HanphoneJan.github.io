@@ -113,6 +113,7 @@ classic preset 里的 `blog` 选项、导航栏「博客」项、`src/theme/Blog
 - **refresh-data.yml**: Daily at 3am UTC. Fetches stars and projects via `scripts/fetch-stars.js` / `scripts/fetch-projects.js`, then rebuilds and redeploys. Data is used at build time only — **never committed to git**, keeping history clean. `data/*.json` are fallback snapshots for local development.
 - **sync-leetcode.yml**: Every 2 days at 3am UTC + manual dispatch. Runs `scripts/sync-leetcode.js` with the `LEETCODE_SESSION` secret, auto-refreshes the cookie into the secret (needs `SYNC_PAT`/`STARS_PAT`), and commits new problems. **Only commits when `git status` has changes** — no-op sync produces no commit.
 - **sync-nowcoder.yml**: Every 2 days at 3am UTC + manual dispatch. Runs `scripts/sync-nowcoder.js` with the `NOWCODER_COOKIE` and `NOWCODER_UID` secrets, and commits new problems. **Only commits when `git status` has changes** — no-op sync produces no commit.
+- **两个部署 workflow 的步骤必须逐条对齐（deploy.yml 与 refresh-data.yml）。** `static/pyodide/` 已 gitignore，CI 每次都要 `node scripts/fetch-pyodide.js` 现下。refresh-data.yml 早先漏了这一步，于是**每天的定时刷新都会用一份不含运行时的产物覆盖线上**：构建不失败（`trace:record` 的轨迹已进 git，构建期不需要 Pyodide），站点照常上线，只有读者点题解里的「▶ 运行」时浏览器 fetch `/pyodide/pyodide.mjs` 得到 404，报 `Failed to fetch dynamically imported module`。两个 workflow 现在都有 `Fetch Pyodide runtime`，并在 build 之后加了 `Verify Pyodide runtime is in the artifact`（查 `build/pyodide/pyodide.mjs` 是否存在）—— 这类缺口**永远不会让 `pnpm build` 失败**，只能显式挡住。
 
 ### 字体：不用任何 Web Font
 
