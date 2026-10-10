@@ -650,6 +650,41 @@ key in d                       # O(1)
 key not in d                   # O(1)
 ```
 
+### 排序
+
+`sorted()` **不改原字典**，返回一个列表；想要「排好序的新字典」再套一层 `dict()`。
+`d.items()` 里的每一项是 `(键, 值)` 元组，`key=lambda kv: ...` 里的 `kv` 就是它。
+
+```python
+d = {'b': 2, 'a': 3, 'c': 2}
+
+# 只排序键 —— 返回键的列表（等价于 sorted(d.keys())）
+sorted(d)                                          # ['a', 'b', 'c']
+
+# 只排序键值对 —— 返回 (键, 值) 列表，默认按键排序
+sorted(d.items())                                  # [('a', 3), ('b', 2), ('c', 2)]
+
+# 按键排序，返回新字典
+dict(sorted(d.items()))                            # {'a': 3, 'b': 2, 'c': 2}
+
+# 按值升序
+dict(sorted(d.items(), key=lambda kv: kv[1]))      # {'b': 2, 'c': 2, 'a': 3}
+
+# 按值降序
+dict(sorted(d.items(), key=lambda kv: kv[1], reverse=True))   # {'a': 3, 'b': 2, 'c': 2}
+
+# 值相同则按键升序（多关键字：先按值，再按键）
+dict(sorted(d.items(), key=lambda kv: (kv[1], kv[0])))        # {'b': 2, 'c': 2, 'a': 3}
+```
+
+> **按值降序的两种写法**：`reverse=True` 通用；`key=lambda kv: -kv[1]` 更短，但**只对数值成立**（字符串取负会报 `TypeError`）。
+>
+> **多关键字里排在前面的优先级更高**：`(kv[1], kv[0])` 是「先按值，值相同再按键」。想「值降序 + 键升序」要写 `key=lambda kv: (-kv[1], kv[0])`（同样要求值是数字）；**别写成 `key=lambda kv: (kv[1], kv[0]), reverse=True`** —— `reverse` 会把两个字段一起翻，值降序的同时键也降序了。
+>
+> **`sorted` 是稳定的**：`key` 只取一个字段时，值相同的元素保持原有相对顺序（Python 3.7+ 字典本身有序，所以这个「原有顺序」就是插入顺序）。`reverse=True` 也**不会打乱**这个顺序 —— 它只是把「不同值之间」的顺序倒过来，相等键的先后不变。
+>
+> **字典没有 `.sort()`**：`d` 和 `d.items()` 都不能原地排序，必须先 `sorted()` 转成列表，需要字典再 `dict()` 转回去。
+
 ---
 
 ## 集合 set
