@@ -9,7 +9,9 @@ tags:
   - 贪心
   - 动态规划
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dynamic_programming.md
+  - ../../patterns/greedy.md
 date_added: 2026-04-03
 date_reviewed: []
 ---

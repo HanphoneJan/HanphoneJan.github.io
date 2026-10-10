@@ -8,6 +8,12 @@ tags:
   - 堆
   - 设计
   - 数据结构
+  - 双指针
+  - 数据流
+  - 排序
+patterns:
+  - ../../patterns/sorting.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-04-09
 ---
 

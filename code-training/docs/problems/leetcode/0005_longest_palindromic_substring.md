@@ -8,8 +8,11 @@ tags:
   - 字符串
   - 动态规划
   - 双指针
+  - Manacher 算法
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dynamic_programming.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-03-20
 date_reviewed: []
 ---

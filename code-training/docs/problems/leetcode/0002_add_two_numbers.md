@@ -8,6 +8,8 @@ tags:
   - 链表
   - 递归
   - 数学
+patterns:
+  - ../../patterns/recursion.md
 date_added: 2026-03-25
 ---
 

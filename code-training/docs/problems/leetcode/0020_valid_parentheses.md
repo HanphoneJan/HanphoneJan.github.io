@@ -7,7 +7,9 @@ url: https://leetcode.cn/problems/valid-parentheses/
 tags:
   - 字符串
   - 栈
+  - 括号序列
 topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

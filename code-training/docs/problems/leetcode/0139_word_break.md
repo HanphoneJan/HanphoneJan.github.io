@@ -9,8 +9,16 @@ tags:
   - 动态规划
   - 回溯
   - 记忆化搜索
+  - 字典树
+  - 数组
+  - 哈希表
+  - 暴力搜索
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/backtracking.md
+  - ../../patterns/dynamic_programming.md
+  - ../../patterns/hash_map.md
+  - ../../patterns/recursion.md
 date_added: 2026-04-03
 date_reviewed: []
 ---

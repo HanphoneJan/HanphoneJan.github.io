@@ -6,10 +6,11 @@ id: balance-paths
 url: ""
 tags:
   - 二叉树
-  - DFS
+  - 深度优先搜索
   - 枚举
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dfs.md
 date_added: 2025-04-30
 date_reviewed: []
 ---

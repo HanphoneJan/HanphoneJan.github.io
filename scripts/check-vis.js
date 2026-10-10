@@ -39,7 +39,7 @@
 const PORT = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : '3100';
 const BASE = `http://localhost:${PORT}`;
 const ALL = process.argv.includes('--all');
-/** `--tracers`：只查内嵌手写 tracer 的文档（模式 / 模板页） */
+/** `--tracers`：只查内嵌手写 tracer 的文档（算法模式页） */
 const TRACERS_ONLY = process.argv.includes('--tracers');
 const LIMIT = (() => {
   const i = process.argv.indexOf('--all');
@@ -48,7 +48,7 @@ const LIMIT = (() => {
 })();
 
 /**
- * 内嵌手写 tracer 的文档：模式 6 篇 + 模板 2 篇（与 `inlinePlacement.ts` 同步）。
+ * 内嵌手写 tracer 的文档：算法模式 9 篇 + 数据结构 8 篇（与 `inlinePlacement.ts` 同步）。
  *
  * 这批要验的东西与录制式不同：那边验的是「轨迹 fetch 回来、adapter 在浏览器里
  * 跑通」，这边验的是「懒加载的 `tracers/index.ts` 真的到了、播放器挂上了、
@@ -62,7 +62,7 @@ const LIMIT = (() => {
  * 用错选择器会把「视图对了」误报成「没渲染」。
  *
  * 而且**期望必须按播放器给，不能按页面给**：`dynamic_programming.md` 一页里
- * 挂着爬楼梯、0-1 背包、LCS 三个播放器，全是表；`dfs_template.md` 是树 + 数组。
+ * 挂着爬楼梯、0-1 背包、LCS 三个播放器，全是表；`patterns/dfs.md` 是树 + 回溯两个。
  * 按页面给一个 view 就必然有播放器对不上（早先那样写，6 个播放器全被
  * 误报成「画面是空的」—— 是尺子错了，不是页面错了）。
  */
@@ -92,19 +92,17 @@ const TRACER_PAGES = [
     count: 3,
   },
   {path: '/code-training/patterns/bfs', name: 'BFS', count: 1},
-  {path: '/code-training/patterns/dfs', name: 'DFS', count: 1},
+  {
+    path: '/code-training/patterns/dfs',
+    name: 'DFS（遍历 + 回溯）',
+    count: 2,
+  },
   {path: '/code-training/patterns/backtracking', name: '回溯', count: 1},
   {path: '/code-training/patterns/hash_map', name: '哈希表模式', count: 1},
   {
-    path: '/code-training/templates/binary_search_template',
-    name: '二分模板（二分 + lower_bound）',
+    path: '/code-training/patterns/search',
+    name: '查找 / 二分（二分 + lower_bound）',
     count: 2,
-  },
-  {path: '/code-training/templates/bfs_template', name: 'BFS 模板', count: 1},
-  {
-    path: '/code-training/templates/dfs_template',
-    name: 'DFS 模板（遍历 + 回溯）',
-    count: 2
   },
   {path: '/code-training/data-structures/hash_table', name: '哈希表', count: 1},
   {path: '/code-training/data-structures/linked_list', name: '链表', count: 1},

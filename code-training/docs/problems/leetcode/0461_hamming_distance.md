@@ -6,6 +6,7 @@ id: 461
 url: https://leetcode.cn/problems/hamming-distance/
 tags:
   - 位运算
+patterns: []
 date_added: 2026-04-24
 ---
 

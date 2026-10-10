@@ -6,7 +6,10 @@ id: 14
 url: https://leetcode.cn/problems/longest-common-prefix/
 tags:
   - 字符串
+  - 字典树
+  - 数组
 topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

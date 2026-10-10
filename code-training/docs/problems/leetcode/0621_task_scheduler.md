@@ -8,6 +8,14 @@ tags:
   - 贪心
   - 数组
   - 数学
+  - 哈希表
+  - 计数
+  - 排序
+  - 堆
+patterns:
+  - ../../patterns/greedy.md
+  - ../../patterns/hash_map.md
+  - ../../patterns/sorting.md
 date_added: 2026-04-24
 ---
 

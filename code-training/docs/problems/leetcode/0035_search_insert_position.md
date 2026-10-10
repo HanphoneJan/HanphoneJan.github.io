@@ -7,6 +7,8 @@ url: https://leetcode.cn/problems/search-insert-position/
 tags:
   - 数组
   - 二分查找
+patterns:
+  - ../../patterns/search.md
 date_added: 2026-03-25
 ---
 

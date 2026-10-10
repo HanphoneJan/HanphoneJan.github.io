@@ -7,6 +7,9 @@ url: https://leetcode.cn/problems/find-all-numbers-disappeared-in-an-array/
 tags:
   - 数组
   - 原地哈希
+  - 哈希表
+patterns:
+  - ../../patterns/hash_map.md
 date_added: 2026-04-24
 ---
 

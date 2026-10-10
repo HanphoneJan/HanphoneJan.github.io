@@ -11,7 +11,9 @@ tags:
   - 数组
   - 矩阵
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/bfs.md
+  - ../../patterns/dfs.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

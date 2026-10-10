@@ -8,6 +8,11 @@ tags:
   - 数组
   - 双指针
   - 排序
+  - 冒泡排序
+  - 快速排序
+patterns:
+  - ../../patterns/sorting.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-03-25
 ---
 

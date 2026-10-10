@@ -44,6 +44,8 @@ PLACEMENT = {
     'patterns/dfs.md': (
         '三种遍历的差别只有「访问根」那一句放在哪。把输入的顺序改成前序 / 中序 / 后序，'
         '看访问序列怎么变 —— 中序在二叉搜索树上是有序的，这不是巧合。'
+        '下面还有一个回溯（子集）播放器：「选 → 递归 → 撤销」三步一组，'
+        '撤销那一步被漏掉时画面会立刻自相矛盾。'
     ),
     'patterns/backtracking.md': (
         '重点看每一次「撤销选择」之后 path 怎么退回上一层。'
@@ -54,18 +56,10 @@ PLACEMENT = {
         '所以不需要先判断「在不在表里」。画面上那一行就是词典本身，'
         '新键会亮起来。'
     ),
-    'templates/binary_search_template.md': (
+    'patterns/search.md': (
         '两个写法的差别全在边界：闭区间写法每次判断 `left <= right`，'
         '左闭右开写法判断 `left < right` 且 `right` 取 `len(nums)`。'
         '画面上能看到 `right` 初值就是数组长度这件事。'
-    ),
-    'templates/bfs_template.md': (
-        '多源 BFS 与单源 BFS 的差别只在一行：把所有起点一起塞进初始队列。'
-        '网格 BFS 里每格的状态就是队列的出队顺序。'
-    ),
-    'templates/dfs_template.md': (
-        '前 / 中 / 后序只差「访问根」那一句的位置；回溯那段则是「选 → 递归 → 撤销」'
-        '三步一组，撤销那一步被漏掉时画面会立刻自相矛盾。'
     ),
     'data-structures/hash_table.md': (
         '平均 O(1) 的代价是什么：键的哈希冲突由 Python 的 dict 处理，'

@@ -8,6 +8,9 @@ tags:
   - 字符串
   - 滑动窗口
   - 哈希表
+patterns:
+  - ../../patterns/hash_map.md
+  - ../../patterns/sliding_window.md
 date_added: 2026-03-25
 ---
 

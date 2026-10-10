@@ -8,8 +8,13 @@ url: https://leetcode.cn/problems/find-the-index-of-the-first-occurrence-in-a-st
 tags:
   - 字符串
   - 双指针
+  - 字符串匹配
+  - KMP 算法
+  - Boyer–Moore 算法
+  - 扩展 KMP
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/two_pointers.md
 date_added: 2026-09-29
 date_reviewed: []
 ---

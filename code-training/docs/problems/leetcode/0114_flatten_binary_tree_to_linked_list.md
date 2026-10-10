@@ -8,6 +8,10 @@ tags:
   - 树
   - 链表
   - 二叉树
+  - 栈
+  - 深度优先搜索
+patterns:
+  - ../../patterns/dfs.md
 date_added: 2026-03-25
 ---
 

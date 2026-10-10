@@ -7,6 +7,8 @@ url: https://leetcode.cn/problems/counting-bits/
 tags:
   - 位运算
   - 动态规划
+patterns:
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-04-24
 ---
 

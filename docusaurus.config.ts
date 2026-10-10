@@ -157,6 +157,8 @@ const config: Config = {
       path.join(__dirname, 'plugins/static-redirects/index.ts'),
       // 题解里的可运行代码与测试样例，供浏览器内 Pyodide 使用
       path.join(__dirname, 'plugins/py-samples/index.ts'),
+      // 知识图谱：题解的 patterns 字段反向索引，算法模式页据此列「相关题目」
+      path.join(__dirname, 'plugins/pattern-graph/index.ts'),
       [
         '@docusaurus/plugin-content-docs',
         {
@@ -257,7 +259,6 @@ const config: Config = {
               {to: '/code-training/category/机器学习', label: '机器学习'},
               {to: '/code-training/category/数据结构', label: '数据结构'},
               {to: '/code-training/category/算法模式', label: '算法模式'},
-              {to: '/code-training/category/代码模板', label: '代码模板'},
               {to: '/code-training/category/复习系统', label: '总结盘点'},
             ],
           },

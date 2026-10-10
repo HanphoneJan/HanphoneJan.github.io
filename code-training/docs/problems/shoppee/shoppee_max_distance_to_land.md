@@ -9,7 +9,8 @@ tags:
   - 多源 BFS
   - 矩阵
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/bfs.md
 date_added: 2026-09-20
 date_reviewed: []
 ---

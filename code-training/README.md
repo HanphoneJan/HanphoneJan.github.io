@@ -23,8 +23,7 @@
 | ------ | -------------------------- | ----------------------------- |
 | 原子层 | `docs/problems/`         | 每道题目独立存档              |
 | 聚合层 | `docs/data-structures/`  | 按数据结构分类的知识体系      |
-| 抽象层 | `docs/patterns/`         | 通用解题模式和算法思想        |
-| 工具层 | `docs/templates/`        | 常用算法的标准实现            |
+| 抽象层 | `docs/patterns/`         | 通用解题模式、算法思想与标准实现 |
 | 反馈层 | `docs/review/`           | 错题本和周总结                |
 | 代码层 | `leetcode/`              | LeetCode 刷题代码文件         |
 
@@ -36,8 +35,7 @@ code-training/
 │   ├── problems/                  # 题解文档
 │   │   └── leetcode/              # LeetCode 题解（120+ 道）
 │   ├── data-structures/           # 数据结构（8 个）
-│   ├── patterns/                  # 算法模式（11 个）
-│   ├── templates/                 # 代码模板（4 个）
+│   ├── patterns/                  # 算法模式 + 标准实现（11 个）
 │   ├── review/                    # 复习系统
 │   └── resources.md               # 学习资源汇总
 │

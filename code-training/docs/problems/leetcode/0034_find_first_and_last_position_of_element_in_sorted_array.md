@@ -7,6 +7,8 @@ url: https://leetcode.cn/problems/find-first-and-last-position-of-element-in-sor
 tags:
   - 数组
   - 二分查找
+patterns:
+  - ../../patterns/search.md
 date_added: 2026-03-25
 ---
 

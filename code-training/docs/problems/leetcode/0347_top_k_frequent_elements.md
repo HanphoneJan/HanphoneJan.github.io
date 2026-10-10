@@ -9,8 +9,16 @@ tags:
   - 哈希表
   - 堆
   - 桶排序
+  - 分治
+  - 计数
+  - 快速选择
+  - 排序
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/hash_map.md
+  - ../../patterns/recursion.md
+  - ../../patterns/search.md
+  - ../../patterns/sorting.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

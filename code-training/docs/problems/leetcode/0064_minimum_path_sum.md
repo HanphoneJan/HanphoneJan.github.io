@@ -8,6 +8,8 @@ tags:
   - 数组
   - 动态规划
   - 矩阵
+patterns:
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-03-25
 ---
 

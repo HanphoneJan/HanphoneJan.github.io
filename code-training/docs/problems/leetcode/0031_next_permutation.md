@@ -8,7 +8,8 @@ tags:
   - 数组
   - 双指针
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/two_pointers.md
 date_added: 2026-03-20
 date_reviewed: []
 ---

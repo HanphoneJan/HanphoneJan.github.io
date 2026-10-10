@@ -29,8 +29,9 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 - **LeetCode progress sync** (`scripts/sync-leetcode.js`): Pulls accepted LeetCode (leetcode.cn) submissions using the `LEETCODE_SESSION` cookie (stored as GitHub secret), diffs against local `code-training/leetcode/`, and generates new `*.py` + `docs/problems/leetcode/*.md` files. Runs every 2 days via `sync-leetcode.yml`; commits only when new problems exist. The script also **auto-refreshes the session cookie** (LeetCode returns a renewed `LEETCODE_SESSION` in `Set-Cookie` on every GraphQL call); the workflow writes it back to the `LEETCODE_SESSION` secret when a PAT (`SYNC_PAT` / `STARS_PAT`) is available.
 - **NowCoder progress sync** (`scripts/sync-nowcoder.js`): Pulls accepted NowCoder submissions using `NOWCODER_COOKIE` + `NOWCODER_UID` secrets, diffs against local `code-training/nowcoder/`, and generates new code files + `docs/problems/nowcoder/*.md`. Runs every 2 days via `sync-nowcoder.yml`; commits only when new problems exist.
 - **自测题库** (`static/quiz/bank.json`): 主动回忆题，加在题解正文末尾。`plugins/self-test/index.ts` 只把「哪些题解有题」的清单放进 globalData，`src/theme/DocItem/Layout/index.tsx`（已 swizzle）在正文末尾渲染 `<SelfTest>`，题目数据由组件在用户点开时 fetch。**题解 md 一行都不用改** —— 题库是唯一事实来源。详见「自测题库」小节。
+- **知识图谱（题解 → 算法模式）** (`plugins/pattern-graph/index.ts`): 题解 frontmatter 的 `patterns` 是「题解 → 算法模式文档」的边，由 `scripts/gen-patterns.js`（`pnpm patterns:gen`）从 `tags` 机械推导（映射表在脚本里，`.agents/skills/leetcode-processor/SKILL.md` 有一份同步的）。插件在 `allContentLoaded` 里用 docs 插件给出的 `source`/`permalink`/`frontMatter` 建**反向索引**（pattern 文档 → 题目列表），只把标题/链接/难度发进 globalData；`src/components/training/pattern-graph/` 由已 swizzle 的 `DocItem/Layout` 在算法模式页末尾渲染「相关题目」，**md 一行都不用改**。改了题解 `tags` 后跑一次 `pnpm patterns:gen`。详见「知识图谱」小节。
 - **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量 + 递归深度落成 `static/traces/*.json`（进 git）；`plugins/vis-traces` 在构建期把轨迹过一遍八个 adapter（`visualizer/adapters/`：list/tree/stack/grid/array-scan/aux-table/string/dp-counter）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `MDXComponents`（`src/theme/MDXComponents.tsx`）把 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`）接到 **`## 完整代码实现` 那一节的标题下面**，展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 182 篇题解里 171 篇录制成功、167 篇有可视化（录制产物的 98%），剩下 4 篇在页面上显式写「本题无可视化步骤」。详见「算法可视化」小节。
-- **算法可视化（手写 tracer，内嵌模式/模板/数据结构文档）**: `src/components/training/visualizer/tracers/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。放置表在 `visualizer/inlinePlacement.ts`，**独立页已删除**（16 个 tracer 覆盖 19 篇文档）。
+- **算法可视化（手写 tracer，内嵌模式/数据结构文档）**: `src/components/training/visualizer/tracers/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。放置表在 `visualizer/inlinePlacement.ts`，**独立页已删除**（16 个 tracer 覆盖 17 篇文档）。
 - **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测与手写 tracer 两处都用它跳转（录制式可视化不跳转，它就长在那篇题解里）。
 - **静态重定向** (`plugins/static-redirects/index.ts`): 页面搬家后 `postBuild` 写一个 `<meta refresh>` HTML，保住已上线的旧地址。详见「板块根路径与旧地址」。
 
@@ -186,6 +187,35 @@ pnpm quiz:validate  # 校验；有 error 退出非 0
 - 出题规范（含干扰项设计、红线、常见错误）见
   `.agents/skills/quiz-bank-processor/SKILL.md`。
 
+### 知识图谱（题解 → 算法模式）
+
+「想做 BFS / DFS / 动态规划的题，去哪找」的答案就是这条边。
+
+```bash
+pnpm tags:fetch      # 从 leetcode.cn 官方 topicTags 补全题解 tags（联网，幂等）
+pnpm tags:normalize  # 把历史 tags 归一化到词表（BFS→广度优先搜索…）
+pnpm patterns:gen    # 从题解 tags 推出 patterns 字段，写回 frontmatter（幂等）
+pnpm check:docs      # 顺带校验每个 patterns 路径真的存在
+```
+
+- **标签词表与归一化映射在 `scripts/tag-vocabulary.js`**（`SYNONYMS` +
+  `TAG_TO_PATTERNS`），三个脚本共用，`SKILL.md` 的「标签词表」是它的文档版。
+- `fetch-leetcode-tags.js` 只增不删：读官方 `topicTags` 的**中文** `translatedName`，
+  归一化后追加到已有 tags 后面；网络失败的题跳过、可重跑。
+- **边存在题解 frontmatter 的 `patterns` 里**，值是 `../../patterns/<slug>.md`。
+  它是**从 `tags` 机械推导**的（`gen-patterns.js` 的 `TAG_TO_PATTERNS`），
+  所以题解「顺带提到」的标签也会连上一条边 —— 要更准就打开正文手工微调。
+  tag 里没有对应模式的（字典树 / 单调栈 / 前缀和 / 并查集…）**留空即可**，
+  空数组是合法状态；宁少一条边，不要一条错的边。
+- **`plugins/pattern-graph`** 在 `allContentLoaded` 里把它做成**反向索引**
+  （pattern 文档 → 题目列表）。permalink 必须取 docs 插件给的
+  （`0001_two_sum.md` → `/1`、`HJ48.xxx.md` → `/HJ48`），自己拼必错 ——
+  与 `plugins/doc-permalinks` 同一套取法。
+- **渲染接缝和自测一样**：`src/components/training/pattern-graph/` 由已 swizzle 的
+  `DocItem/Layout` 在 `</DocItemContent>` 之后渲染，`## 相关题目` 的 TOC 条目
+  通过 `ExtraTocProvider` 补（md 里没有这个标题）。**md 一行都不用改。**
+- 改动**既有**题解的 `tags` 之后记得重跑 `pnpm patterns:gen`；只改正文不用。
+
 ### ⚠️ 为什么不用 remark 插件注入 JSX 组件
 
 试过，会被 MDX **静默丢弃**：手写进 mdast 的 `mdxjsEsm` 节点必须自带
@@ -216,7 +246,7 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 
 ### 算法可视化挂在哪（两条路，位置不同）
 
-| | 录制式（题解内嵌） | 手写 tracer（模式/模板页内嵌） |
+| | 录制式（题解内嵌） | 手写 tracer（模式页内嵌） |
 |---|---|---|
 | 挂点 | **`## 完整代码实现` 那一节的标题下面** | `## 算法可视化` 小节之后（正文末尾） |
 | 接缝 | swizzled `MDXComponents` 的 `h2`（`src/theme/MDXComponents.tsx`） | `DocItem/Layout` 的 `</DocItemContent>` 之后 |
@@ -233,11 +263,11 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 
 可视化有两套实现，**互不替代**：
 
-| | 录制式（题解内嵌） | 手写 tracer（模式/模板内嵌） |
+| | 录制式（题解内嵌） | 手写 tracer（模式内嵌） |
 |---|---|---|
-| 入口 | `code-training/docs/problems/**/*.md` | `patterns/*.md`、`templates/*.md`（放置表 `visualizer/inlinePlacement.ts`） |
+| 入口 | `code-training/docs/problems/**/*.md` | `patterns/*.md`（放置表 `visualizer/inlinePlacement.ts`） |
 | 代码 | `visualizer/recorder/` + `visualizer/adapters/` | `visualizer/tracers/` |
-| 覆盖 | 每道能录制的题（**171/182 录制成功，167 篇适配 = 92%**） | 16 个算法模式，19 篇模式/模板/数据结构文档 |
+| 覆盖 | 每道能录制的题（**171/182 录制成功，167 篇适配 = 92%**） | 16 个算法模式，17 篇模式/数据结构文档 |
 | 产出 | 逐题，零手写 | 每个算法手写 30~60 行 |
 | 视图 | 数组/链表/树/网格/栈/DP/字符/字典八种 | 数组 / 树 / 网格 / DP 表格 |
 | 单测 | `pnpm test:adapters`（2310 项） | `pnpm test:tracers`（263 项） |
@@ -800,21 +830,21 @@ JS 里「字符串结尾」要写 `$(?![\s\S])`。凡是照着 Python 正则搬�
 漏掉 `dp-table td` 时两个 DP 播放器会被误报成「画面是空的」。
 
 而且**期望要按播放器给，不能按页面给**：`dynamic_programming.md` 一页挂着三个
-表视图的播放器，`dfs_template.md` 是树 + 数组；按页面给一个 view 必然有播放器
+表视图的播放器，`patterns/dfs.md` 是树 + 回溯；按页面给一个 view 必然有播放器
 对不上。而且查表时**必须剥掉 `vis-` 前缀**（box id 是 `vis-grid-bfs`，
 表里的键是 `grid-bfs`）—— 忘了剥的话每项都退化成 `any`，而树 / 网格 / 表三种视图
 都没有 `cell`，六个播放器会被一起误报成「画面是空的」。
 
-#### 手写 tracer（内嵌在模式/模板文档里）
+#### 手写 tracer（内嵌在模式文档里）
 
 覆盖录制式管线画不出来的形态：排序（柱状图）、网格 BFS、DP 表格、树、回溯、
-并查集、链表、词典。录制式目前只从**题解代码**取轨迹，而模式/模板/数据结构页
+并查集、链表、词典。录制式目前只从**题解代码**取轨迹，而模式/数据结构页
 讲的是算法与结构本身，没有「一道题 + 一组样例」可录。
 
 **独立页 `/code-training/visualizer` 已删除**，tracer 全部搬进讲它们的那篇文档
 （放置表 `visualizer/inlinePlacement.ts`）：
 
-**16 个 tracer 覆盖 19 篇文档**（模式 11 + 模板 3 + 数据结构 8 = 全部）：
+**16 个 tracer 覆盖 17 篇文档**（模式 9 + 数据结构 8 = 全部）：
 
 | 文档 | 内嵌 |
 |---|---|
@@ -823,12 +853,10 @@ JS 里「字符串结尾」要写 `$(?![\s\S])`。凡是照着 Python 正则搬�
 | `patterns/sorting.md` | 冒泡 / 归并 / 快排 |
 | `patterns/dynamic_programming.md` | 爬楼梯 / 0-1 背包 / LCS（二维 DP 表） |
 | `patterns/bfs.md` | 网格 BFS |
-| `patterns/dfs.md` | 树的 DFS 遍历 |
+| `patterns/dfs.md` | 树的 DFS 遍历 / 回溯：子集 |
+| `patterns/search.md` | 二分 / lower_bound |
 | `patterns/backtracking.md` | 回溯：子集 |
 | `patterns/hash_map.md` | 哈希表：就地统计出现次数 |
-| `templates/binary_search_template.md` | 二分 / lower_bound |
-| `templates/bfs_template.md` | 网格 BFS |
-| `templates/dfs_template.md` | 树的 DFS 遍历 / 回溯：子集 |
 | `data-structures/hash_table.md` | 哈希表：就地统计出现次数 |
 | `data-structures/linked_list.md` | 链表反转：三个指针 |
 | `data-structures/stack_queue_heap_unionfind.md` | 并查集：路径压缩 + 按大小合并 |
@@ -1086,7 +1114,7 @@ frontmatter），并把问题分成两级：
 
 现状：178 篇（有 python 代码的）**error 0**，样例可跑 121 / 有轨迹 171 /
 有自测题 177；4 篇 SQL 题没有 python 块，不计入。
-它只管 `problems/`，算法模式 / 代码模板 / 数据结构那三页归 `check:tracers`。
+它只管 `problems/`，算法模式 / 数据结构那两页归 `check:tracers`。
 
 **原来的端到端扫描脚本 `bars.mjs` / `sweep2.mjs` 已不在仓库里**，
 `check:runbar` 在 Node 里跑同一条路径，不必开浏览器。要在浏览器里点真实

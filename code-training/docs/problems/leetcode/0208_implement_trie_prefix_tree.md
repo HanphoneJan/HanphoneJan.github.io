@@ -10,7 +10,8 @@ tags:
   - 哈希表
   - 字符串
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/hash_map.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

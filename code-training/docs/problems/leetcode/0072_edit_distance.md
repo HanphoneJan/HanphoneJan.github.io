@@ -8,7 +8,8 @@ tags:
   - 字符串
   - 动态规划
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-03-23
 date_reviewed: []
 ---

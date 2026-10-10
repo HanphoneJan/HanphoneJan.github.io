@@ -7,10 +7,13 @@ url: https://leetcode.cn/problems/merge-k-sorted-lists/
 tags:
   - 链表
   - 分治
-  - 堆（优先队列）
+  - 堆
   - 归并排序
+  - 锦标赛排序
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/recursion.md
+  - ../../patterns/sorting.md
 date_added: 2026-03-20
 date_reviewed: []
 ---

@@ -6,8 +6,14 @@ id: 297
 url: https://leetcode.cn/problems/serialize-and-deserialize-binary-tree/
 tags:
   - 树
-  - BFS
+  - 广度优先搜索
   - 设计
+  - 深度优先搜索
+  - 字符串
+  - 二叉树
+patterns:
+  - ../../patterns/bfs.md
+  - ../../patterns/dfs.md
 date_added: 2026-04-24
 ---
 

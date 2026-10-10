@@ -8,7 +8,8 @@ tags:
   - 回溯
   - 数组
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/backtracking.md
 date_added: 2026-03-23
 date_reviewed: []
 ---

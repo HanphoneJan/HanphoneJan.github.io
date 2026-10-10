@@ -8,7 +8,8 @@ tags:
   - 数组
   - 二分查找
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/search.md
 date_added: 2026-04-03
 date_reviewed: []
 ---
