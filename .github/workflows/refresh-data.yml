@@ -47,8 +47,26 @@ jobs:
           node scripts/fetch-stars.js
           node scripts/fetch-projects.js
 
+      - name: Fetch Pyodide runtime
+        # static/pyodide/ 有 12.9MB 且已 gitignore —— 每次部署都必须重新下载。
+        # 这个 workflow 早先漏了这一步，于是每日定时刷新会用一份不含运行时的
+        # 构建产物覆盖线上站点：构建**不会**失败（轨迹已进 git，构建期不需要
+        # Pyodide），但读者点「▶ 运行」时浏览器 fetch /pyodide/pyodide.mjs
+        # 得到 404，报「Failed to fetch dynamically imported module」。
+        # deploy.yml 一直有这一步，两个 workflow 必须保持一致。
+        run: node scripts/fetch-pyodide.js
+
       - name: Build website
         run: pnpm run build
+
+      - name: Verify Pyodide runtime is in the artifact
+        # 上面的坑不会让 build 失败，只会让线上静默 404。这里显式挡住：
+        # 产物里没有运行时就直接判失败，而不是发布一个按钮坏掉的站点。
+        run: |
+          if [ ! -f build/pyodide/pyodide.mjs ]; then
+            echo "::error::build/pyodide/pyodide.mjs 不存在 —— 运行时没进构建产物，线上「▶ 运行」会 404"
+            exit 1
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

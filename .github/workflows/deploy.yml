@@ -56,6 +56,16 @@ jobs:
       - name: Build website
         run: pnpm run build
 
+      - name: Verify Pyodide runtime is in the artifact
+        # 与 refresh-data.yml 同样的护栏：构建期不需要 Pyodide（轨迹已进 git），
+        # 缺了不会让 build 失败，只会让线上 /pyodide/pyodide.mjs 静默 404。
+        # 见 refresh-data.yml 里 Fetch 步骤的注释。
+        run: |
+          if [ ! -f build/pyodide/pyodide.mjs ]; then
+            echo "::error::build/pyodide/pyodide.mjs 不存在 —— 运行时没进构建产物，线上「▶ 运行」会 404"
+            exit 1
+          fi
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
