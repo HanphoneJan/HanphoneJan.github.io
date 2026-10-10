@@ -301,8 +301,8 @@ def flatten(self, root: TreeNode) -> None:
 - [树](tree.md)
 - [BFS 模式](../patterns/bfs.md)
 - [DFS 模式](../patterns/dfs.md)
-- [BFS 模板](../templates/bfs_template.md)
-- [DFS 模板](../templates/dfs_template.md)
+- [BFS 模式](../patterns/bfs.md)
+- [DFS 模式](../patterns/dfs.md)
 
 ## 题目列表
 

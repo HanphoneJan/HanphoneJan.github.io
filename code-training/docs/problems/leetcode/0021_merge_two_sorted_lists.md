@@ -8,7 +8,8 @@ tags:
   - 链表
   - 递归
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/recursion.md
 date_added: 2026-03-20
 date_reviewed: []
 ---

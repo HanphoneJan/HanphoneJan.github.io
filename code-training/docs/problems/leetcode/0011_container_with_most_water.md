@@ -9,7 +9,9 @@ tags:
   - 双指针
   - 贪心
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/greedy.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-03-20
 date_reviewed: []
 ---

@@ -9,7 +9,8 @@ tags:
   - 双指针
   - 数学
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/two_pointers.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

@@ -7,7 +7,12 @@ url: https://leetcode.cn/problems/palindromic-substrings/
 tags:
   - 字符串
   - 回文
-  - Manacher
+  - Manacher 算法
+  - 双指针
+  - 动态规划
+patterns:
+  - ../../patterns/dynamic_programming.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-04-24
 ---
 

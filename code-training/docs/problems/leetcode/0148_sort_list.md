@@ -11,7 +11,10 @@ tags:
   - 排序
   - 归并排序
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/recursion.md
+  - ../../patterns/sorting.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-04-03
 date_reviewed: []
 ---

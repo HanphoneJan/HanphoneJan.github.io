@@ -10,7 +10,9 @@ tags:
   - 链表
   - 双指针
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/recursion.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

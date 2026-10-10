@@ -9,7 +9,8 @@ tags:
   - 栈
   - 递归
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/recursion.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

@@ -8,7 +8,8 @@ tags:
   - 动态规划
   - 数组
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

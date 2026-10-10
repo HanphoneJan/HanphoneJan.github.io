@@ -7,8 +7,13 @@ url: https://leetcode.cn/problems/maximum-depth-of-binary-tree/
 tags:
   - 树
   - 递归
-  - DFS
+  - 深度优先搜索
   - 二叉树
+  - 广度优先搜索
+patterns:
+  - ../../patterns/bfs.md
+  - ../../patterns/dfs.md
+  - ../../patterns/recursion.md
 date_added: 2026-03-25
 ---
 

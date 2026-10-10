@@ -10,7 +10,8 @@ tags:
   - 二叉搜索树
   - 二叉树
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dfs.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

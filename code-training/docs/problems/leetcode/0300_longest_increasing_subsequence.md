@@ -8,6 +8,12 @@ tags:
   - 动态规划
   - 二分查找
   - 贪心
+  - 数组
+  - 最长上升子序列
+patterns:
+  - ../../patterns/dynamic_programming.md
+  - ../../patterns/greedy.md
+  - ../../patterns/search.md
 date_added: 2026-04-09
 ---
 

@@ -22,7 +22,12 @@ import {
 import {TrainingDocScopeProvider} from '@site/src/components/training/scope';
 import InlineTracerSection from '@site/src/components/training/visualizer/InlineTracerVisualizer';
 import {placementsOf} from '@site/src/components/training/visualizer/inlinePlacement';
+import RelatedProblems, {
+  RELATED_ANCHOR,
+  RELATED_TITLE,
+} from '@site/src/components/training/pattern-graph';
 import type {SelfTestData} from '@site/plugins/self-test';
+import type {PatternGraphData} from '@site/plugins/pattern-graph';
 
 export interface Props {
   readonly children: ReactNode;
@@ -100,12 +105,30 @@ export default function DocItemLayout({children}: Props): ReactNode {
    */
   const tracerPlacements = placementsOf(selfTestKeyValue);
 
+  /**
+   * 知识图谱：算法模式文档末尾列出「相关题目」。
+   *
+   * 数据来自构建期插件 `pattern-graph`（题解 frontmatter 的 `patterns`
+   * 反向索引）。没有相关题目的模式文档不渲染，也不占 TOC 一条。
+   */
+  const patternGraph = usePluginData('pattern-graph') as unknown as
+    | PatternGraphData
+    | undefined;
+  const hasRelated = Boolean(
+    selfTestKeyValue && patternGraph?.byPattern?.[selfTestKeyValue]?.length,
+  );
+
   // 「自测」渲染在正文之外（</DocItemContent> 之后），构建期的 TOC 抓不到它。
   // 这里显式补，桌面侧边栏与移动端折叠菜单都会出现。
   // Provider 必须包住**整个 row** —— 桌面侧边栏是 docItemContainer 的兄弟节点。
-  const extraToc = hasSelfTest
-    ? [{id: SELF_TEST_ANCHOR, value: SELF_TEST_TITLE, level: 2}]
-    : [];
+  const extraToc = [
+    ...(hasRelated
+      ? [{id: RELATED_ANCHOR, value: RELATED_TITLE, level: 2}]
+      : []),
+    ...(hasSelfTest
+      ? [{id: SELF_TEST_ANCHOR, value: SELF_TEST_TITLE, level: 2}]
+      : []),
+  ];
 
   return (
     <ExtraTocProvider entries={extraToc}>
@@ -127,6 +150,9 @@ export default function DocItemLayout({children}: Props): ReactNode {
             )}
             {tracerPlacements.length > 0 && (
               <InlineTracerSection placements={tracerPlacements} />
+            )}
+            {hasRelated && selfTestKeyValue && (
+              <RelatedProblems docId={selfTestKeyValue} />
             )}
             {hasSelfTest && selfTestKeyValue && (
               <SelfTest docId={selfTestKeyValue} />

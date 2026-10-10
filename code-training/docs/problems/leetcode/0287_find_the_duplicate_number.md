@@ -8,7 +8,12 @@ tags:
   - 数组
   - 双指针
   - 二分查找
-  - Floyd判圈
+  - Floyd 判圈算法
+  - 位运算
+  - 抽屉原理
+patterns:
+  - ../../patterns/search.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-04-09
 ---
 

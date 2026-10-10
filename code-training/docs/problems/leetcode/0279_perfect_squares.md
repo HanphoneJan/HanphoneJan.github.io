@@ -8,6 +8,11 @@ tags:
   - 动态规划
   - 数学
   - 完全背包
+  - 广度优先搜索
+  - 背包问题
+patterns:
+  - ../../patterns/bfs.md
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-04-09
 ---
 

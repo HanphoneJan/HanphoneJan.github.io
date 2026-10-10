@@ -8,6 +8,11 @@ tags:
   - 贪心
   - 排序
   - 数组
+  - 树状数组
+  - 线段树
+patterns:
+  - ../../patterns/greedy.md
+  - ../../patterns/sorting.md
 date_added: 2026-04-24
 ---
 

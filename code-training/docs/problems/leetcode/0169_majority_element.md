@@ -12,7 +12,11 @@ tags:
   - 排序
   - Boyer-Moore 投票算法
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/greedy.md
+  - ../../patterns/hash_map.md
+  - ../../patterns/recursion.md
+  - ../../patterns/sorting.md
 date_added: 2026-04-03
 date_reviewed: []
 ---

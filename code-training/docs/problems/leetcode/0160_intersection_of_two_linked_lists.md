@@ -9,7 +9,9 @@ tags:
   - 双指针
   - 哈希表
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/hash_map.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-04-03
 date_reviewed: []
 ---

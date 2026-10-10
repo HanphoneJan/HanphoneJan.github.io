@@ -8,8 +8,11 @@ tags:
   - 字符串
   - 递归
   - 排序
+  - 分治
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/recursion.md
+  - ../../patterns/sorting.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

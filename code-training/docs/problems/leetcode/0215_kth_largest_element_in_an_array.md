@@ -9,9 +9,12 @@ tags:
   - 分治
   - 快速选择
   - 排序
-  - 堆（优先队列）
+  - 堆
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/recursion.md
+  - ../../patterns/search.md
+  - ../../patterns/sorting.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

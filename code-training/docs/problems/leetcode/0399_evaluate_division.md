@@ -7,7 +7,16 @@ url: https://leetcode.cn/problems/evaluate-division/
 tags:
   - 图
   - 并查集
-  - 并查集
+  - 深度优先搜索
+  - 广度优先搜索
+  - 数组
+  - 字符串
+  - 最短路
+  - Floyd 算法
+  - Bellman–Ford 算法
+patterns:
+  - ../../patterns/bfs.md
+  - ../../patterns/dfs.md
 date_added: 2026-04-24
 ---
 
