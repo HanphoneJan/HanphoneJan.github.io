@@ -8,8 +8,12 @@ tags:
   - 二叉树
   - 深度优先搜索
   - 动态规划
+  - 树
+  - 树形DP
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dfs.md
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-04-03
 date_reviewed: []
 ---

@@ -8,6 +8,13 @@ tags:
   - 动态规划
   - 完全背包
   - 记忆化搜索
+  - 广度优先搜索
+  - 数组
+  - 背包问题
+patterns:
+  - ../../patterns/bfs.md
+  - ../../patterns/dynamic_programming.md
+  - ../../patterns/recursion.md
 date_added: 2026-04-09
 ---
 

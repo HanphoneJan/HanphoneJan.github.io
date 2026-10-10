@@ -8,6 +8,11 @@ tags:
   - 数组
   - 回溯
   - 矩阵
+  - 深度优先搜索
+  - 字符串
+patterns:
+  - ../../patterns/backtracking.md
+  - ../../patterns/dfs.md
 date_added: 2026-03-25
 ---
 

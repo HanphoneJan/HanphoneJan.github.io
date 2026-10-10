@@ -10,7 +10,9 @@ tags:
   - 双指针
   - 排序
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/sorting.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-09-29
 date_reviewed: []
 ---

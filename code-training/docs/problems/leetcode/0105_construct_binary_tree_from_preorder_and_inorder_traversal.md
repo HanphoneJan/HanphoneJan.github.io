@@ -9,6 +9,11 @@ tags:
   - 递归
   - 数组
   - 二叉树
+  - 哈希表
+  - 分治
+patterns:
+  - ../../patterns/hash_map.md
+  - ../../patterns/recursion.md
 date_added: 2026-03-25
 ---
 

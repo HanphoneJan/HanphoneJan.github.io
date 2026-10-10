@@ -9,7 +9,8 @@ tags:
   - 递归
   - 迭代
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/recursion.md
 date_added: 2026-03-23
 date_reviewed: []
 ---

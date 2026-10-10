@@ -8,8 +8,13 @@ tags:
   - 数组
   - 哈希表
   - 找规律
+  - 位运算
+  - 数学
+  - Floyd 判圈算法
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/hash_map.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-04-09
 date_reviewed: []
 ---

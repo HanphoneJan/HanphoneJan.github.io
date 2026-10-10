@@ -7,7 +7,10 @@ url: https://leetcode.cn/problems/remove-invalid-parentheses/
 tags:
   - 字符串
   - 回溯
-  - BFS
+  - 广度优先搜索
+patterns:
+  - ../../patterns/backtracking.md
+  - ../../patterns/bfs.md
 date_added: 2026-04-24
 ---
 

@@ -10,7 +10,8 @@ tags:
   - 链表
   - 双向链表
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/hash_map.md
 date_added: 2026-04-03
 date_reviewed: []
 ---

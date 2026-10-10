@@ -6,8 +6,10 @@ id: 102
 url: https://leetcode.cn/problems/binary-tree-level-order-traversal/
 tags:
   - 树
-  - BFS
+  - 广度优先搜索
   - 二叉树
+patterns:
+  - ../../patterns/bfs.md
 date_added: 2026-03-25
 ---
 

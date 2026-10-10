@@ -11,7 +11,7 @@
  * | 逐帧可视化 | `static/traces/<文件名>.json`（`pnpm trace:record` 产出） | 页面上没有那一节——**没有任何提示** |
  * | 自测题 | `static/quiz/bank.json` 的 `docId`（`pnpm quiz:gen` + `merge` 产出） | 页面上没有自测小节——**没有任何提示** |
  *
- * 扫的目录是 `problems/` 下面递归（182 篇题解），不含算法模式 / 代码模板 /
+ * 扫的目录是 `problems/` 下面递归（182 篇题解），不含算法模式 /
  * 数据结构那三页 —— 那三页的功能由 `check:tracers` 管。
  *
  * 新写一篇题解的 agent 很容易以为「写完就好了」，而这三个功能一个都不会自己出现。
@@ -37,7 +37,7 @@
  * 有几类题**天然**缺某些功能，不该被算成 error，所以显式排除：
  *
  * - **SQL 题**（`## 完整代码实现` 里没有 python 块）—— 运行条与录制都不适用
- * - **算法模式 / 代码模板 / 数据结构**（不在 `problems/` 下）—— 本脚本只扫题库
+ * - **算法模式 / 数据结构**（不在 `problems/` 下）—— 本脚本只扫题库
  *
  * ## 跑法
  *
@@ -326,8 +326,10 @@ function inspect(doc: {docId: string; abs: string}, bankDocIds: Set<string>): Ro
 
   // patterns 指向的文件必须真实存在（skill 明确要求，但没人查过）
   for (const rel of patterns) {
-    // frontmatter 写的是 `../../patterns/x.md`，相对 code-training/docs
-    const target = path.resolve(DOCS_ROOT, rel.replace(/^\.\.\/\.\.\//, ''));
+    // frontmatter 写的是 `../../patterns/x.md`，相对 code-training/docs。
+    // 牛客题解在 problems/nowcoder/<分类>/ 下，真实深度是三层，所以这里
+    // 剥掉**任意层** `../`，一律按「code-training/docs 下的路径」解析。
+    const target = path.resolve(DOCS_ROOT, rel.replace(/^(?:\.\.\/)+/, ''));
     if (!fs.existsSync(target)) {
       issues.push({level: 'error', text: `patterns 指向不存在的文件：${rel}`});
     }

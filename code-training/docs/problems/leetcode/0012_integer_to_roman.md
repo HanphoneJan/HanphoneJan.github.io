@@ -9,7 +9,8 @@ tags:
   - 数学
   - 字符串
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/hash_map.md
 date_added: 2026-03-20
 date_reviewed: []
 ---

@@ -8,6 +8,11 @@ tags:
   - 动态规划
   - 卡特兰数
   - 二叉搜索树
+  - 树
+  - 数学
+  - 二叉树
+patterns:
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-04-24
 ---
 

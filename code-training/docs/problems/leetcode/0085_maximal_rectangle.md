@@ -8,6 +8,10 @@ tags:
   - 数组
   - 单调栈
   - 动态规划
+  - 栈
+  - 矩阵
+patterns:
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-04-24
 ---
 

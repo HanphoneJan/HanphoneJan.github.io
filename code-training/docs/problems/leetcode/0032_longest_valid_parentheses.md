@@ -8,8 +8,10 @@ tags:
   - 字符串
   - 动态规划
   - 栈
+  - 括号序列
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dynamic_programming.md
 date_added: 2026-03-20
 date_reviewed: []
 ---

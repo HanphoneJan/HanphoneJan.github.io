@@ -9,8 +9,11 @@ tags:
   - 双指针
   - 动态规划
   - 单调栈
+  - 栈
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/dynamic_programming.md
+  - ../../patterns/two_pointers.md
 date_added: 2026-03-20
 date_reviewed: []
 ---

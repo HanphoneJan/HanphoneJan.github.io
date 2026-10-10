@@ -8,6 +8,12 @@ tags:
   - 树
   - 递归
   - 二叉树
+  - 深度优先搜索
+  - 广度优先搜索
+patterns:
+  - ../../patterns/bfs.md
+  - ../../patterns/dfs.md
+  - ../../patterns/recursion.md
 date_added: 2026-03-25
 ---
 

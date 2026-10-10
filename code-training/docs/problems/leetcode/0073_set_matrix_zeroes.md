@@ -8,6 +8,9 @@ tags:
   - 数组
   - 矩阵
   - 原地算法
+  - 哈希表
+patterns:
+  - ../../patterns/hash_map.md
 date_added: 2026-03-25
 ---
 

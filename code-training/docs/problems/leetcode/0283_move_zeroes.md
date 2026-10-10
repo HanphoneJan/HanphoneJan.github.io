@@ -7,6 +7,8 @@ url: https://leetcode.cn/problems/move-zeroes/
 tags:
   - 数组
   - 双指针
+patterns:
+  - ../../patterns/two_pointers.md
 date_added: 2026-04-09
 ---
 

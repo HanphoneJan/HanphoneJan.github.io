@@ -8,6 +8,11 @@ tags:
   - 字符串
   - 回溯
   - 递归
+  - 哈希表
+patterns:
+  - ../../patterns/backtracking.md
+  - ../../patterns/hash_map.md
+  - ../../patterns/recursion.md
 date_added: 2026-03-25
 ---
 

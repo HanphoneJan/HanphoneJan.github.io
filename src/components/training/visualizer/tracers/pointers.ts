@@ -244,7 +244,7 @@ export const binarySearch: Tracer<{nums: number[]; target: number}> = {
   defaultInput: {nums: [1, 3, 5, 7, 9, 11, 13], target: 7},
   formatInput: formatPair,
   parseInput: parseSearch,
-  relatedDocId: 'templates/binary_search_template.md',
+  relatedDocId: 'patterns/search.md',
   run({nums, target}): Frame[] {
     const b = new TraceBuilder();
     const n = nums.length;
@@ -356,7 +356,7 @@ export const lowerBound: Tracer<{nums: number[]; target: number}> = {
   defaultInput: {nums: [1, 3, 3, 5, 7, 9], target: 4},
   formatInput: formatPair,
   parseInput: parseSearch,
-  relatedDocId: 'templates/binary_search_template.md',
+  relatedDocId: 'patterns/search.md',
   run({nums, target}): Frame[] {
     const b = new TraceBuilder();
     const n = nums.length;

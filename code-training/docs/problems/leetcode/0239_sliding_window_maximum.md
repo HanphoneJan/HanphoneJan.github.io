@@ -8,6 +8,11 @@ tags:
   - 队列
   - 滑动窗口
   - 单调队列
+  - 数组
+  - 堆
+  - 区间最值查询
+patterns:
+  - ../../patterns/sliding_window.md
 date_added: 2026-04-09
 ---
 

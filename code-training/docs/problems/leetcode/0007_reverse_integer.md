@@ -6,6 +6,7 @@ id: 7
 url: https://leetcode.cn/problems/reverse-integer/
 tags:
   - 数学
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

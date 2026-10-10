@@ -9,6 +9,11 @@ tags:
   - 二分查找
   - 二叉搜索树
   - 二叉树
+  - 数组
+  - 分治
+patterns:
+  - ../../patterns/recursion.md
+  - ../../patterns/search.md
 date_added: 2026-03-25
 ---
 

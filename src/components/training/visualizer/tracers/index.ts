@@ -28,7 +28,7 @@ export const TRACERS: Array<Tracer<unknown>> = [
   gridBfs,
   climbStairs,
   zeroOneKnapsack,
-  // 树与回溯：给 dfs / backtracking / 模板 / 二叉树那几篇
+  // 树与回溯：给 dfs / backtracking / 二叉树那几篇
   treeDfs,
   subsetBacktrack,
   // 数据结构：给 hash_map / hash_table / linked_list / 并查集 / string

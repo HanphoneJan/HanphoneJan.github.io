@@ -8,7 +8,8 @@ tags:
   - 数组
   - 哈希表
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/hash_map.md
 date_added: 2026-03-20
 date_reviewed: []
 ---

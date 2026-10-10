@@ -7,6 +7,7 @@ url: https://leetcode.cn/problems/zigzag-conversion/
 tags:
   - 字符串
 topics: []
+patterns: []
 date_added: 2026-03-20
 date_reviewed: []
 ---

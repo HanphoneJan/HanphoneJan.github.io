@@ -9,7 +9,8 @@ tags:
   - 贪心
   - 模拟
 topics: []
-patterns: []
+patterns:
+  - ../../patterns/greedy.md
 date_added: 2026-09-25
 date_reviewed: []
 ---
