@@ -403,37 +403,74 @@ export default function SnippetBar({
 
       {result !== null && result.rows.length > 0 && (
         <div className={styles.results}>
-          <p className={styles.summary}>
-            {result.passCount} / {result.total} 组通过
-          </p>
+          {/*
+            只有真的判过（有期望值）才说「N / N 组通过」。
+
+            自己输参数 / stdin 的运行没有期望值可比，runner 把每一行都标成
+            pass（那是「没崩」不是「答对」）。照旧渲染的话会得到一句
+            「1 / 1 组通过」，读者以为验过了 —— 其实什么都没验。
+          */}
+          {result.rows.some((r) => r.expected !== '') && (
+            <p className={styles.summary}>
+              {result.passCount} / {result.total} 组通过
+            </p>
+          )}
           <ul className={styles.list}>
-            {result.rows.map((row, i) => (
-              <li key={i} className={styles.row}>
-                <span
-                  className={`${styles.mark} ${
-                    row.verdict === 'pass' ? styles.pass : styles.fail
-                  }`}>
-                  {row.verdict === 'pass' ? '✓' : '✗'}
-                </span>
-                <div className={styles.rowBody}>
-                  <code className={styles.call}>{row.call}</code>
-                  {row.note && <div className={styles.note}>{row.note}</div>}
-                  {row.verdict !== 'pass' && row.expected !== '' && (
-                    <div className={styles.diff}>
-                      <span className={styles.diffLabel}>期望</span>
-                      <code>{row.expected}</code>
-                      <span className={styles.diffLabel}>实际</span>
-                      <code className={styles.bad}>{row.actual}</code>
-                    </div>
+            {result.rows.map((row, i) => {
+              const judged = row.expected !== '';
+              return (
+                <li key={i} className={styles.row}>
+                  {judged && (
+                    <span
+                      className={`${styles.mark} ${
+                        row.verdict === 'pass' ? styles.pass : styles.fail
+                      }`}>
+                      {row.verdict === 'pass' ? '✓' : '✗'}
+                    </span>
                   )}
-                  {row.verdict !== 'pass' && row.reason && (
-                    <pre className={styles.reason}>
-                      <code>{row.reason}</code>
-                    </pre>
-                  )}
-                </div>
-              </li>
-            ))}
+                  <div className={styles.rowBody}>
+                    <code className={styles.call}>{row.call}</code>
+                    {row.note && <div className={styles.note}>{row.note}</div>}
+                    {/*
+                      结果永远摆出来。
+
+                      早先这一块只在 `verdict !== 'pass' && expected !== ''` 时
+                      渲染，于是有两类运行**只显示调用文本、没有任何输出**：
+                        - 自己输参数（没有期望值）—— 读者只想试一下，却不给看返回值
+                        - stdin 模式通过时 —— 只剩一句占位文案「（喂给 stdin 的输入）」
+                      而「看到代码算出了什么」正是运行条存在的全部意义。
+                      判过的样例把期望与实际并列；没判过的只标「输出」。
+                      没判过又出错（自己输的参数炸了）时不摆这块 —— 那行「输出」
+                      只会是 traceback 的最后一行，下面的完整 traceback 才是要读的。
+                    */}
+                    {(judged || row.verdict !== 'error') && (
+                      <div className={styles.diff}>
+                        {judged && (
+                          <>
+                            <span className={styles.diffLabel}>期望</span>
+                            <code>{row.expected}</code>
+                          </>
+                        )}
+                        <span className={styles.diffLabel}>
+                          {judged ? '实际' : '输出'}
+                        </span>
+                        <code
+                          className={
+                            row.verdict === 'pass' ? undefined : styles.bad
+                          }>
+                          {row.actual}
+                        </code>
+                      </div>
+                    )}
+                    {row.verdict !== 'pass' && row.reason && (
+                      <pre className={styles.reason}>
+                        <code>{row.reason}</code>
+                      </pre>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
