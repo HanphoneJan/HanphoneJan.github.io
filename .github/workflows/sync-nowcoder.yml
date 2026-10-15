@@ -38,6 +38,11 @@ jobs:
           if [ "$COOKIE_EXPIRED" != "0" ]; then
             echo "cookie_expired=true" >> "$GITHUB_OUTPUT"
           fi
+          # 网络/HTTP 错误导致判定不了:只警告,不失败(别让一次抖动逼着换 cookie)
+          COOKIE_UNKNOWN=$(grep -c "COOKIE_UNKNOWN=true" /tmp/nc-sync.log || true)
+          if [ "$COOKIE_UNKNOWN" != "0" ]; then
+            echo "::warning::无法确认 NOWCODER_COOKIE 状态(网络/HTTP 错误),本次按未失效继续。"
+          fi
           if [ -n "$(git status --porcelain)" ]; then
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
           else
