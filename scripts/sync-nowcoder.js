@@ -86,7 +86,13 @@ function normalizeLang(lang) {
 
 const DIFFICULTY_CN = { '1': 'Easy', '2': 'Medium', '3': 'Hard' };
 
-async function fetchText(url, options = {}, retries = 3) {
+/**
+ * 拉取页面,返回 { text, finalUrl }。
+ * finalUrl 是跟随重定向之后的最终地址 —— 判断「cookie 失效被踢到登录页」要用它,
+ * 只看正文的话,一个恰好长得像登录页的中间页会骗过判定。
+ * 网络错误/非 2xx 一律抛错(调用方自己决定这是不是「cookie 失效」)。
+ */
+async function fetchPage(url, options = {}, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
       const controller = new AbortController();
@@ -103,12 +109,17 @@ async function fetchText(url, options = {}, retries = 3) {
       clearTimeout(timeout);
       const text = await response.text();
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return text;
+      return { text, finalUrl: response.url || url };
     } catch (error) {
       if (i === retries - 1) throw error;
       await new Promise(r => setTimeout(r, 1500 * (i + 1)));
     }
   }
+}
+
+async function fetchText(url, options = {}, retries = 3) {
+  const { text } = await fetchPage(url, options, retries);
+  return text;
 }
 
 async function fetchJson(url, options = {}) {
@@ -413,29 +424,45 @@ function sanitizeFilename(name) {
   return name.replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim();
 }
 
-/** 校验 cookie 是否有效(通过 codeBookDetail 是否被重定向到登录页判断) */
+/** 页面是不是牛客登录页(可能经由 302 跟随而来) */
+function isLoginPage(html, finalUrl) {
+  if (/\/login(?:[?#]|$)/.test(finalUrl || '')) return true;
+  if (/<title>[^<]*登录[^<]*<\/title>/.test(html)) return true;
+  return html.includes('callBack=') && html.includes('/login');
+}
+
+/**
+ * 校验 cookie 状态,返回 'valid' | 'expired' | 'unknown'。
+ *
+ * - 'expired': 访问个人页真的被重定向/落到登录页 —— 需要换 cookie
+ * - 'unknown': 网络错误、非 2xx、超时 —— **不能当成失效**,
+ *   否则牛客抽风一次就会让 workflow 变红并让人去换一个没坏的 cookie
+ */
 async function checkCookie() {
-  const html = await fetchText(`${WWW}/profile/${NOWCODER_UID}/codeBookDetail?submissionId=0`, {
-    headers: { 'Referer': `${WWW}/users/${NOWCODER_UID}` }
-  });
-  // 失效时会跟随 302 到登录页
-  return !(/<title>[^<]*登录[^<]*<\/title>/.test(html) || html.includes('callBack=') && html.includes('/login'));
+  let page;
+  try {
+    page = await fetchPage(`${WWW}/profile/${NOWCODER_UID}/codeBookDetail?submissionId=0`, {
+      headers: { 'Referer': `${WWW}/users/${NOWCODER_UID}` }
+    });
+  } catch (error) {
+    return { status: 'unknown', reason: error.message };
+  }
+  return isLoginPage(page.text, page.finalUrl) ? { status: 'expired' } : { status: 'valid' };
 }
 
 async function main() {
   try {
     console.log('🔍 Checking nowcoder cookie validity...');
     // 提交列表接口是公开的(无需 cookie),cookie 仅用于抓取提交代码
-    let cookieValid = true;
-    try {
-      cookieValid = await checkCookie();
-    } catch {
-      cookieValid = false;
-    }
-    if (!cookieValid) {
-      console.warn('⚠️  NOWCODER_COOKIE may be expired. Code fetching will be skipped; only problem list will sync.');
-      console.warn('   Update the NOWCODER_COOKIE secret to enable code sync.');
-      console.log('COOKIE_EXPIRED=true'); // workflow 据此创建提醒 issue
+    const cookie = await checkCookie();
+    if (cookie.status === 'expired') {
+      console.warn('⚠️  NOWCODER_COOKIE 已失效(个人页被踢到登录页)。代码抓取会跳过,只同步题目列表。');
+      console.warn('   请更新仓库 secret NOWCODER_COOKIE。');
+      console.log('COOKIE_EXPIRED=true'); // workflow 据此以失败退出,私密提醒仓库 owner
+    } else if (cookie.status === 'unknown') {
+      console.warn(`⚠️  无法确认 NOWCODER_COOKIE 状态(${cookie.reason})。`);
+      console.warn('   按「未失效」继续:抓不到代码会自动降级成占位文档,不误报 cookie 过期。');
+      console.log('COOKIE_UNKNOWN=true'); // workflow 据此打一条 warning(不失败)
     } else {
       console.log('✅ Cookie is valid');
     }
