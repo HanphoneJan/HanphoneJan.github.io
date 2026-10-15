@@ -1154,3 +1154,4 @@ frontmatter），并把问题分成两级：
 - **标题匹配去重**：牛客题号会变动（如 HJ16↔HJ85），所以按**题目名**与本地文件比对（忽略空格/大小写），已存在的跳过，不重复生成。
 - **所需 secrets**：`NOWCODER_COOKIE`（完整 cookie 串）、`NOWCODER_UID`（数字用户 ID）。
 - **cookie 过期处理（牛客无自动续期）**：牛客没有力扣那样的服务器端滚动续期机制，认证 cookie 过期后必须手动重新登录更新。但提交列表接口是公开的，所以 cookie 失效时脚本**降级运行**：仍同步新题生成「代码待补充」占位文档，打印 `COOKIE_EXPIRED=true`。workflow 检测到该标记后以**失败**退出（不创建公开 issue），利用 GitHub 的 workflow 失败通知私密提醒仓库 owner 更新 secret——不会在公开仓库暴露任何信息。牛客「记住我」登录后 cookie 通常有效数个月，更新频率很低。
+- **`checkCookie()` 是三态的，别退化成布尔**：`'expired'` 只在**真的落到登录页**时返回（跟随 302 后的最终 URL 含 `/login`、或正文是登录页标题/含 `callBack=`＋`/login`），此时才打印 `COOKIE_EXPIRED=true` 让 workflow 失败；网络错误、非 2xx、超时一律是 `'unknown'`，打印 `COOKIE_UNKNOWN=true` —— workflow 只打一条 `::warning::` 然后正常跑完。**早先是「抛异常 = cookie 失效」**，牛客抽风一次就会把 workflow 弄红、还让人去换一个其实没坏的 cookie。所以 `fetchText` 旁边多了个 `fetchPage`（返回 `{text, finalUrl}`）：判定必须看**重定向后的地址**，只信正文的话一个长得像登录页的中间页就能骗过它。
