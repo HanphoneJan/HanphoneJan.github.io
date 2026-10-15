@@ -992,6 +992,28 @@ function cutAtProse(value: string): string {
  *
  * 只认成对的「输入 → 输出」，落单的丢掉。
  */
+/**
+ * 判断样例文本里有没有「省略号」，而不是「一连串点号」。
+ *
+ * 早先一律写 `includes('...')`，于是**迷宫题的网格样例被整组丢掉**：
+ * 一行 `.#...` 或 `.....` 里天然含三个连续的点，那是数据不是省略号
+ * （实测 BISHI76 迷宫寻路 / BISHI80 走迷宫 的样例就这样被吞掉，
+ * 页面上静默退化成「手动填参数」）。
+ *
+ * 判据收窄成「`...` 作为独立 token 出现」：
+ *   - 前后是空白或行首行尾（`1 2 ... 5`、单独一行 `...`）；
+ *   - 紧跟在 `[` 或 `,` 之后（`[1,2,...]`）。
+ * Unicode 省略号 `…` 没有歧义，仍然一律视为省略号。
+ * 现有的 `1 2 ...` / `3 ...` 用例照旧命中。
+ */
+function hasEllipsis(text: string): boolean {
+  return (
+    text.includes('…') ||
+    /(^|\s)\s*\.\.\.(\s|$)/m.test(text) ||
+    /[[,]\s*\.\.\./.test(text)
+  );
+}
+
 export function extractStdinSamples(
   sampleText: string | undefined,
 ): StdinSample[] {
@@ -1017,11 +1039,7 @@ export function extractStdinSamples(
     if (!stdin || !expected) {
       continue;
     }
-    if (
-      stdin.includes('...') ||
-      expected.includes('...') ||
-      expected.includes('…')
-    ) {
+    if (hasEllipsis(stdin) || hasEllipsis(expected)) {
       continue;
     }
     out.push({stdin, expected});
