@@ -2623,6 +2623,146 @@
       "source": "易错点总结 · 确保 nums1 是较短的数组"
     },
     {
+      "docId": "problems/nowcoder/美团/小美的彩带.md",
+      "source": "复杂度分析",
+      "id": "other-小美的彩带-complexity",
+      "type": "single",
+      "stem": "本题最优解「离线 + 树状数组」的时间复杂度是？",
+      "options": [
+        "O((n + q) log n)",
+        "O(q * x)"
+      ],
+      "answer": 0,
+      "explain": "离线 + 树状数组的时间复杂度是 O((n + q) log n)。表里的其他解法分别是每个区间 set 去重 O(q * x) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-小美的彩带-space",
+      "docId": "problems/nowcoder/美团/小美的彩带.md",
+      "type": "single",
+      "stem": "本题最优解「离线 + 树状数组」的空间复杂度是？",
+      "options": [
+        "O(n + q)",
+        "O(n)"
+      ],
+      "answer": 0,
+      "explain": "离线 + 树状数组的空间复杂度是 O(n + q)。每个区间 set 去重 O(n) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/美团/小美的密码.md",
+      "source": "复杂度分析",
+      "id": "other-小美的密码-complexity",
+      "type": "blank",
+      "stem": "本题最优解「分组去重 + 排序」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(总长度 + 不同长度 log)",
+      "explain": "分组去重 + 排序的时间复杂度是 O(总长度 + 不同长度 log)。"
+    },
+    {
+      "docId": "problems/nowcoder/美团/小美的排列询问.md",
+      "source": "复杂度分析",
+      "id": "other-小美的排列询问-complexity",
+      "type": "blank",
+      "stem": "本题最优解「值 → 下标 映射」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n)",
+      "explain": "值 → 下标 映射的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+    },
+    {
+      "id": "other-小美的排列询问-space",
+      "docId": "problems/nowcoder/美团/小美的排列询问.md",
+      "type": "single",
+      "stem": "本题最优解「值 → 下标 映射」的空间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(1)"
+      ],
+      "answer": 0,
+      "explain": "值 → 下标 映射的空间复杂度是 O(n)。每次线性查找 O(1) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/美团/小美的平衡矩阵.md",
+      "source": "复杂度分析",
+      "id": "other-小美的平衡矩阵-complexity",
+      "type": "single",
+      "stem": "本题最优解「二维前缀和」的时间复杂度是？",
+      "options": [
+        "O(n³)",
+        "O(n⁵)"
+      ],
+      "answer": 0,
+      "explain": "二维前缀和的时间复杂度是 O(n³)。表里的其他解法分别是暴力求和 O(n⁵) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/nowcoder/美团/小美的数组删除.md",
+      "source": "复杂度分析",
+      "id": "other-小美的数组删除-complexity",
+      "type": "single",
+      "stem": "本题最优解「后缀 DP + 单调 MEX」的时间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(n²)"
+      ],
+      "answer": 0,
+      "explain": "后缀 DP + 单调 MEX的时间复杂度是 O(n)。表里的其他解法分别是每个后缀重算 MEX O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/nowcoder/美团/小美的数组询问.md",
+      "source": "复杂度分析",
+      "id": "other-小美的数组询问-complexity",
+      "type": "single",
+      "stem": "本题最优解「预处理 + O(1) 回答」的时间复杂度是？",
+      "options": [
+        "O(n + q)",
+        "O(nq)"
+      ],
+      "answer": 0,
+      "explain": "预处理 + O(1) 回答的时间复杂度是 O(n + q)。表里的其他解法分别是每次询问重新求和 O(nq) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/nowcoder/美团/小美的修路.md",
+      "source": "复杂度分析",
+      "id": "other-小美的修路-complexity",
+      "type": "blank",
+      "stem": "本题最优解「并查集 + Kruskal」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(m log m)",
+      "explain": "并查集 + Kruskal的时间复杂度是 O(m log m)。"
+    },
+    {
+      "docId": "problems/nowcoder/美团/小美的子序列.md",
+      "source": "复杂度分析",
+      "id": "other-小美的子序列-complexity",
+      "type": "single",
+      "stem": "本题最优解「双指针贪心」的时间复杂度是？",
+      "options": [
+        "O(n · m)",
+        "O(m^n)"
+      ],
+      "answer": 0,
+      "explain": "双指针贪心的时间复杂度是 O(n · m)。表里的其他解法分别是暴力枚举 O(m^n) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-小美的子序列-space",
+      "docId": "problems/nowcoder/美团/小美的子序列.md",
+      "type": "single",
+      "stem": "本题最优解「双指针贪心」的空间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(n)"
+      ],
+      "answer": 0,
+      "explain": "双指针贪心的空间复杂度是 O(1)。暴力枚举 O(n) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/美团/小美的MT.md",
+      "source": "复杂度分析",
+      "id": "other-小美的MT-complexity",
+      "type": "blank",
+      "stem": "本题最优解「一次遍历计数」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n)",
+      "explain": "一次遍历计数的时间复杂度是 O(n)。"
+    },
+    {
       "docId": "problems/misc/adamw_bandwidth.md",
       "source": "复杂度分析",
       "id": "other-adamw_bandwidth-complexity",
