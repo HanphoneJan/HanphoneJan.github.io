@@ -2650,6 +2650,258 @@
       "explain": "BGD的时间复杂度是 O(N · m)。"
     },
     {
+      "docId": "problems/nowcoder/笔试模板必刷/BISHI131.数楼梯.md",
+      "source": "复杂度分析",
+      "id": "other-BISHI131.数楼梯-complexity",
+      "type": "single",
+      "stem": "本题最优解「滚动变量」的时间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(2^n)"
+      ],
+      "answer": 0,
+      "explain": "滚动变量的时间复杂度是 O(n)。表里的其他解法分别是朴素递归 O(2^n) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-BISHI131.数楼梯-space",
+      "docId": "problems/nowcoder/笔试模板必刷/BISHI131.数楼梯.md",
+      "type": "single",
+      "stem": "本题最优解「滚动变量」的空间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(n)"
+      ],
+      "answer": 0,
+      "explain": "滚动变量的空间复杂度是 O(1)。朴素递归 O(n)、递推数组 O(n) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/笔试模板必刷/BISHI133.最长不下降子序列.md",
+      "source": "复杂度分析",
+      "id": "other-BISHI133.最长不下降子序列-complexity",
+      "type": "single",
+      "stem": "本题最优解「贪心 + 二分」的时间复杂度是？",
+      "options": [
+        "O(n log n)",
+        "O(n²)"
+      ],
+      "answer": 0,
+      "explain": "贪心 + 二分的时间复杂度是 O(n log n)。表里的其他解法分别是O(n²) DP O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/nowcoder/笔试模板必刷/BISHI134.最大子段和.md",
+      "source": "复杂度分析",
+      "id": "other-BISHI134.最大子段和-complexity",
+      "type": "single",
+      "stem": "本题最优解「Kadane」的时间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(n²)"
+      ],
+      "answer": 0,
+      "explain": "Kadane的时间复杂度是 O(n)。表里的其他解法分别是暴力枚举 O(n²)、前缀和 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-BISHI134.最大子段和-space",
+      "docId": "problems/nowcoder/笔试模板必刷/BISHI134.最大子段和.md",
+      "type": "single",
+      "stem": "本题最优解「Kadane」的空间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(n)"
+      ],
+      "answer": 0,
+      "explain": "Kadane的空间复杂度是 O(1)。前缀和 O(n) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/笔试模板必刷/BISHI136.模板01背包.md",
+      "source": "复杂度分析",
+      "id": "other-BISHI136.模板01背包-complexity",
+      "type": "blank",
+      "stem": "本题最优解「一维滚动」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n·V)",
+      "explain": "一维滚动的时间复杂度是 O(n·V)。同一张表里其他解法也是 O(n·V)，这题的区分点不在时间。"
+    },
+    {
+      "id": "other-BISHI136.模板01背包-space",
+      "docId": "problems/nowcoder/笔试模板必刷/BISHI136.模板01背包.md",
+      "type": "single",
+      "stem": "本题最优解「一维滚动」的空间复杂度是？",
+      "options": [
+        "O(V)",
+        "O(n·V)"
+      ],
+      "answer": 0,
+      "explain": "一维滚动的空间复杂度是 O(V)。二维 DP O(n·V) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/笔试模板必刷/BISHI76.迷宫寻路.md",
+      "source": "复杂度分析",
+      "id": "other-BISHI76.迷宫寻路-complexity",
+      "type": "blank",
+      "stem": "本题最优解「BFS」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n*m)",
+      "explain": "BFS的时间复杂度是 O(n*m)。同一张表里其他解法也是 O(n*m)，这题的区分点不在时间。"
+    },
+    {
+      "docId": "problems/nowcoder/笔试模板必刷/BISHI80.走迷宫.md",
+      "source": "复杂度分析",
+      "id": "other-BISHI80.走迷宫-complexity",
+      "type": "single",
+      "stem": "本题最优解「BFS」的时间复杂度是？",
+      "options": [
+        "O(n*m)",
+        "指数级"
+      ],
+      "answer": 0,
+      "explain": "BFS的时间复杂度是 O(n*m)。表里的其他解法分别是DFS 枚举所有路径 指数级 —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/nowcoder/笔试模板必刷/BISHI82.没挡住洪水.md",
+      "source": "复杂度分析",
+      "id": "other-BISHI82.没挡住洪水-complexity",
+      "type": "single",
+      "stem": "本题最优解「BFS 连通块 + 逐格判断」的时间复杂度是？",
+      "options": [
+        "O(N^2)",
+        "O(N^4) 量级"
+      ],
+      "answer": 0,
+      "explain": "BFS 连通块 + 逐格判断的时间复杂度是 O(N^2)。表里的其他解法分别是反复扫描地图 O(N^4) 量级 —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM46.最小的K个数.md",
+      "source": "复杂度分析",
+      "id": "other-BM46.最小的K个数-complexity",
+      "type": "single",
+      "stem": "本题最优解「快速选择」的时间复杂度是？",
+      "options": [
+        "平均 O(n)",
+        "O(n log n)",
+        "O(n log k)"
+      ],
+      "answer": 0,
+      "explain": "快速选择的时间复杂度是 平均 O(n)。表里的其他解法分别是排序 O(n log n)、大顶堆 O(n log k) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-BM46.最小的K个数-space",
+      "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM46.最小的K个数.md",
+      "type": "single",
+      "stem": "本题最优解「快速选择」的空间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(n)",
+        "O(k)"
+      ],
+      "answer": 0,
+      "explain": "快速选择的空间复杂度是 O(1)。排序 O(n)、大顶堆 O(k) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM47.寻找第K大.md",
+      "source": "复杂度分析",
+      "id": "other-BM47.寻找第K大-complexity",
+      "type": "single",
+      "stem": "本题最优解「快速选择（最坏）」的时间复杂度是？",
+      "options": [
+        "O(n²)",
+        "O(n log n)",
+        "平均 O(n)"
+      ],
+      "answer": 0,
+      "explain": "快速选择（最坏）的时间复杂度是 O(n²)。表里的其他解法分别是排序 O(n log n)、快速选择 平均 O(n) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-BM47.寻找第K大-space",
+      "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM47.寻找第K大.md",
+      "type": "single",
+      "stem": "本题最优解「快速选择（最坏）」的空间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(n)"
+      ],
+      "answer": 0,
+      "explain": "快速选择（最坏）的空间复杂度是 O(1)。排序 O(n) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM57.岛屿数量.md",
+      "source": "复杂度分析",
+      "id": "other-BM57.岛屿数量-complexity",
+      "type": "blank",
+      "stem": "本题最优解「BFS」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(rows*cols)",
+      "explain": "BFS的时间复杂度是 O(rows*cols)。同一张表里其他解法也是 O(rows*cols)，这题的区分点不在时间。"
+    },
+    {
+      "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM78.打家劫舍(一).md",
+      "source": "复杂度分析",
+      "id": "other-BM78.打家劫舍(一)-complexity",
+      "type": "blank",
+      "stem": "本题最优解「滚动变量」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n)",
+      "explain": "滚动变量的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+    },
+    {
+      "id": "other-BM78.打家劫舍(一)-space",
+      "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM78.打家劫舍(一).md",
+      "type": "single",
+      "stem": "本题最优解「滚动变量」的空间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(n)"
+      ],
+      "answer": 0,
+      "explain": "滚动变量的空间复杂度是 O(1)。一维 DP 数组 O(n) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM79.打家劫舍(二).md",
+      "source": "复杂度分析",
+      "id": "other-BM79.打家劫舍(二)-complexity",
+      "type": "blank",
+      "stem": "本题最优解「拆成两个线性问题」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n)",
+      "explain": "拆成两个线性问题的时间复杂度是 O(n)。"
+    },
+    {
+      "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM80.买卖股票的最好时机(一).md",
+      "source": "复杂度分析",
+      "id": "other-BM80.买卖股票的最好时机(一)-complexity",
+      "type": "single",
+      "stem": "本题最优解「一次遍历」的时间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(n²)"
+      ],
+      "answer": 0,
+      "explain": "一次遍历的时间复杂度是 O(n)。表里的其他解法分别是双重循环 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM81.买卖股票的最好时机(二).md",
+      "source": "复杂度分析",
+      "id": "other-BM81.买卖股票的最好时机(二)-complexity",
+      "type": "blank",
+      "stem": "本题最优解「状态机 DP（持有/空仓）」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n)",
+      "explain": "状态机 DP（持有/空仓）的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+    },
+    {
+      "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM82.买卖股票的最好时机(三).md",
+      "source": "复杂度分析",
+      "id": "other-BM82.买卖股票的最好时机(三)-complexity",
+      "type": "single",
+      "stem": "本题最优解「枚举分界点」的时间复杂度是？",
+      "options": [
+        "O(n²)",
+        "O(n)"
+      ],
+      "answer": 0,
+      "explain": "枚举分界点的时间复杂度是 O(n²)。表里的其他解法分别是状态机 DP O(n) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
       "docId": "problems/nowcoder/华为机试/HJ1.字符串最后一个单词的长度.md",
       "source": "复杂度分析",
       "id": "other-HJ1.字符串最后一个单词的长度-complexity",
@@ -3409,6 +3661,133 @@
       ],
       "answer": 0,
       "explain": "空间的空间复杂度是 存储数据点和质心。指标 说明、时间 T: 迭代次数, n: 点数, k: 簇数, d: 维度 —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/输入输出练习/PIO11.多组_字符串_T组形式.md",
+      "source": "复杂度分析",
+      "id": "other-PIO11.多组_字符串_T组形式-complexity",
+      "type": "blank",
+      "stem": "本题最优解「reversed + join」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n)",
+      "explain": "reversed + join的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+    },
+    {
+      "docId": "problems/nowcoder/输入输出练习/PIO12.单组_二维字符数组.md",
+      "source": "复杂度分析",
+      "id": "other-PIO12.单组_二维字符数组-complexity",
+      "type": "blank",
+      "stem": "本题最优解「合并一次遍历」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n*m)",
+      "explain": "合并一次遍历的时间复杂度是 O(n*m)。同一张表里其他解法也是 O(n*m)，这题的区分点不在时间。"
+    },
+    {
+      "docId": "problems/nowcoder/输入输出练习/PIO13.多组_带空格的字符串_T组形式.md",
+      "source": "复杂度分析",
+      "id": "other-PIO13.多组_带空格的字符串_T组形式-complexity",
+      "type": "blank",
+      "stem": "本题最优解「去空格 + 切片倒置」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n)",
+      "explain": "去空格 + 切片倒置的时间复杂度是 O(n)。"
+    },
+    {
+      "docId": "problems/nowcoder/输入输出练习/PIO14.单组_保留小数位数.md",
+      "source": "复杂度分析",
+      "id": "other-PIO14.单组_保留小数位数-complexity",
+      "type": "single",
+      "stem": "本题最优解「格式化输出」的时间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(len)"
+      ],
+      "answer": 0,
+      "explain": "格式化输出的时间复杂度是 O(1)。表里的其他解法分别是手动字符串处理 O(len) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-PIO14.单组_保留小数位数-space",
+      "docId": "problems/nowcoder/输入输出练习/PIO14.单组_保留小数位数.md",
+      "type": "single",
+      "stem": "本题最优解「格式化输出」的空间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(len)"
+      ],
+      "answer": 0,
+      "explain": "格式化输出的空间复杂度是 O(1)。手动字符串处理 O(len) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/输入输出练习/PIO4.多组_AB_T组形式.md",
+      "source": "复杂度分析",
+      "id": "other-PIO4.多组_AB_T组形式-complexity",
+      "type": "single",
+      "stem": "本题最优解「一次性读入」的时间复杂度是？",
+      "options": [
+        "O(总字符数)",
+        "O(T)"
+      ],
+      "answer": 0,
+      "explain": "一次性读入的时间复杂度是 O(总字符数)。表里的其他解法分别是逐行读 O(T) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-PIO4.多组_AB_T组形式-space",
+      "docId": "problems/nowcoder/输入输出练习/PIO4.多组_AB_T组形式.md",
+      "type": "single",
+      "stem": "本题最优解「一次性读入」的空间复杂度是？",
+      "options": [
+        "O(总字符数)",
+        "O(1)"
+      ],
+      "answer": 0,
+      "explain": "一次性读入的空间复杂度是 O(总字符数)。逐行读 O(1) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/输入输出练习/PIO5.多组_AB_零尾模式.md",
+      "source": "复杂度分析",
+      "id": "other-PIO5.多组_AB_零尾模式-complexity",
+      "type": "single",
+      "stem": "本题最优解「一次性读入」的时间复杂度是？",
+      "options": [
+        "O(总字符数)",
+        "O(T)"
+      ],
+      "answer": 0,
+      "explain": "一次性读入的时间复杂度是 O(总字符数)。表里的其他解法分别是逐行读 + break O(T) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-PIO5.多组_AB_零尾模式-space",
+      "docId": "problems/nowcoder/输入输出练习/PIO5.多组_AB_零尾模式.md",
+      "type": "single",
+      "stem": "本题最优解「一次性读入」的空间复杂度是？",
+      "options": [
+        "O(总字符数)",
+        "O(1)"
+      ],
+      "answer": 0,
+      "explain": "一次性读入的空间复杂度是 O(总字符数)。逐行读 + break O(1) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/nowcoder/输入输出练习/PIO9.多组_二维数组_T组形式.md",
+      "source": "复杂度分析",
+      "id": "other-PIO9.多组_二维数组_T组形式-complexity",
+      "type": "blank",
+      "stem": "本题最优解「摊平累加」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(Σ n*m)",
+      "explain": "摊平累加的时间复杂度是 O(Σ n*m)。同一张表里其他解法也是 O(Σ n*m)，这题的区分点不在时间。"
+    },
+    {
+      "id": "other-PIO9.多组_二维数组_T组形式-space",
+      "docId": "problems/nowcoder/输入输出练习/PIO9.多组_二维数组_T组形式.md",
+      "type": "single",
+      "stem": "本题最优解「摊平累加」的空间复杂度是？",
+      "options": [
+        "O(总输入 token)",
+        "O(Σ n*m)"
+      ],
+      "answer": 0,
+      "explain": "摊平累加的空间复杂度是 O(总输入 token)。构造二维数组 O(Σ n*m) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
