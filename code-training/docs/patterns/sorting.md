@@ -2,601 +2,565 @@
 title: 排序
 category: 算法模式
 difficulty_range: [简单, 中等]
-last_updated: 2026-03-23
+last_updated: 2026-10-19
 ---
+
 # 排序
 
-## 排序算法对比
+## 为什么还要手写排序
 
-[十大经典排序算法总结 | JavaGuide](https://javaguide.cn/cs-basics/algorithms/10-classical-sorting-algorithms.html)
+工程代码里，`sorted()` 几乎总是最好的选择。但算法题里手写排序仍然有意义：
 
-|      排序算法      |      最好时间复杂度      |      平均时间复杂度      |      最差时间复杂度      |       空间复杂度       |      排序方式      |      稳定性      | 核心特点                                     |
-| :----------------: | :----------------------: | :----------------------: | :----------------------: | :---------------------: | :----------------: | :--------------: | :------------------------------------------- |
-|      冒泡排序      |         $O(n)$         |        $O(n^2)$        |        $O(n^2)$        |        $O(1)$        |      内部排序      |       稳定       | 仅教学用，实际不推荐                         |
-|      选择排序      |        $O(n^2)$        |        $O(n^2)$        |        $O(n^2)$        |        $O(1)$        |      内部排序      |      不稳定      | 数据移动次数少，但不稳定                     |
-|      插入排序      |         $O(n)$         |        $O(n^2)$        |        $O(n^2)$        |        $O(1)$        |      内部排序      |       稳定       | 小规模或基本有序时效率高                     |
-|      希尔排序      |      $O(n\log n)$      |      $O(n\log n)$      |        $O(n^2)$        |        $O(1)$        |      内部排序      |      不稳定      | 插入排序的改进版                             |
-| **归并排序** | **$O(n\log n)$** | **$O(n\log n)$** | **$O(n\log n)$** |   **$O(n)$**   | **外部排序** |  **稳定**  | **分治思想，性能稳定，适合链表**       |
-| **快速排序** | **$O(n\log n)$** | **$O(n\log n)$** |   **$O(n^2)$**   | **$O(\log n)$** | **内部排序** | **不稳定** | **实际最常用，原地排序，平均性能优异** |
-|  **堆排序**  | **$O(n\log n)$** | **$O(n\log n)$** | **$O(n\log n)$** |   **$O(1)$**   |      内部排序      |      不稳定      | **原地排序，适合 Top K 问题**          |
-| **计数排序** |   **$O(n+k)$**   |   **$O(n+k)$**   |   **$O(n+k)$**   |   **$O(k)$**   | **外部排序** |  **稳定**  | **非比较排序，适用于小范围整数**       |
-|       桶排序       |        $O(n+k)$        |        $O(n+k)$        |        $O(n^2)$        |       $O(n+k)$       |      外部排序      |       稳定       | 数据分布均匀时效率高                         |
-|      基数排序      |     $O(n\times k)$     |     $O(n\times k)$     |     $O(n\times k)$     |       $O(n+k)$       |      外部排序      |       稳定       | 按位排序，适用于固定位数数据                 |
+- 题目要求**利用排序过程**（链表排序、颜色分类、求逆序对）；
+- 需要 **Top K** 或**第 K 大**，全排序反而浪费；
+- 需要理解 **稳定性**，否则多关键字排序会出错；
+- 面试会问「快排最坏什么时候发生」「归并为什么稳定」。
 
-![十大排序算法对比表格图.webp](https://hanphone.top/gh/HanphoneJan/public-pictures/algorithm/%E5%8D%81%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94%E8%A1%A8%E6%A0%BC%E5%9B%BE.webp)
+先记住一张总表，后面的每一节都在解释这张表里的某一格。
 
-> **稳定**：相等元素排序后相对顺序不变。Python 的 `list.sort()` / `sorted()` 使用 Timsort（归并+插入的混合），**稳定**。
+## 排序算法总览
 
----
+| 算法 | 最好 | 平均 | 最坏 | 额外空间 | 稳定 | 核心特点 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 冒泡排序 | O(n) | O(n²) | O(n²) | O(1) | 是 | 提前退出时最好 O(n)，教学用 |
+| 选择排序 | O(n²) | O(n²) | O(n²) | O(1) | 否 | 交换次数最少（最多 n-1 次） |
+| 插入排序 | O(n) | O(n²) | O(n²) | O(1) | 是 | 近乎有序时极快，Timsort 的基本单元 |
+| 希尔排序 | O(n log n) | 取决于增量 | O(n²) | O(1) | 否 | 插入排序的分组改进 |
+| 归并排序 | O(n log n) | O(n log n) | O(n log n) | O(n) | 是 | 性能稳定，适合链表与外部排序 |
+| 快速排序 | O(n log n) | O(n log n) | O(n²) | O(log n) | 否 | 平均最快，原地排序 |
+| 堆排序 | O(n log n) | O(n log n) | O(n log n) | O(1) | 否 | 原地、最坏也有保证，适合 Top K |
+| 计数排序 | O(n + k) | O(n + k) | O(n + k) | O(k) | 是 | 非比较，要求整数范围小 |
+| 桶排序 | O(n + k) | O(n + k) | O(n²) | O(n + k) | 取决于桶内排序 | 数据均匀分布时接近线性 |
+| 基数排序 | O(d(n + b)) | O(d(n + b)) | O(d(n + b)) | O(n + b) | 是 | 按位排序，要求固定位数 |
 
-## 冒泡排序
+> `n` 是元素个数，`k` 是数值范围，`d` 是位数，`b` 是进制（十进制时 `b = 10`）。
+> 「额外空间」不含输入数组本身；快排的 `O(log n)` 是递归栈。
 
-* 外层循环：控制**要排几轮**
-* 内层循环：控制**这一轮两两比较，每轮少比较i次**
-* 交换：把大的数往后"冒泡"
+## 稳定性：为什么它不只是个名词
 
-$$
-(n-1)+(n-2)+\cdots+1 = \frac{n(n-1)}{2}
-$$
+**稳定**：排序前后，相等元素的相对顺序不变。
 
-![冒泡排序动图演示.gif](https://hanphone.top/gh/HanphoneJan/public-pictures/algorithm/%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F%E5%8A%A8%E5%9B%BE%E6%BC%94%E7%A4%BA.gif)
-仅用于教学，实际不推荐。
+假设学生记录按「班级」排序后，还想在班级内部保持「入学成绩」的顺序：
+
+```python
+students = [
+    ('A', 90), ('B', 85), ('A', 95), ('B', 88),
+]
+students.sort(key=lambda x: x[1], reverse=True)   # 先按成绩
+students.sort(key=lambda x: x[0])                 # 再按班级（稳定）
+```
+
+如果第二次排序是稳定的，同班同学会保持成绩降序；如果用了不稳定的排序，
+这个「两次排序」的技巧就失效了。Python 的 `sorted` 是稳定排序，
+所以多关键字排序可以拆成多次单关键字排序，也可以直接写
+`key=lambda x: (x[0], -x[1])`。
+
+> 归并排序稳定，快速排序和堆排序不稳定，选择排序不稳定。
+> 冒泡和插入在「严格大于才交换」的写法下稳定。
+
+## 三种 O(n²) 排序
+
+它们慢，但代码短、常数小，而且在「小规模 / 近乎有序」时经常被更高级的算法当作子过程。
+
+### 1. 冒泡排序
+
+每一轮把当前未排序部分的最大值「冒」到末尾。第 `i` 轮结束后，末尾 `i` 个元素已经有序。
 
 ```python
 def bubble_sort(nums):
     n = len(nums)
+
     for i in range(n - 1):
-        flag = False         #  初始化标志位
-        for j in range(n - i - 1):
+        swapped = False
+        # 后面 i 个已经排好，不用再比
+        for j in range(n - 1 - i):
             if nums[j] > nums[j + 1]:
                 nums[j], nums[j + 1] = nums[j + 1], nums[j]
-                flag = True  # 记录交换元素
-        if not flag: break   # 内循环未交换任何元素，则跳出
+                swapped = True
+
+        if not swapped:      # 一整轮没有交换：已经有序
+            break
 ```
 
----
+- 最好情况（已经有序）：第一轮发现没有交换，直接退出，`O(n)`。
+- 最坏情况（完全逆序）：比较次数 `(n-1) + ... + 1 = n(n-1)/2`，`O(n²)`。
+- 稳定：只有 `>` 才交换，相等元素不会越过彼此。
+
+### 2. 选择排序
+
+每一轮从未排序部分选出最小值，放到已排序部分的末尾。
+
+```python
+def selection_sort(nums):
+    n = len(nums)
+
+    for i in range(n - 1):
+        min_idx = i
+        for j in range(i + 1, n):
+            if nums[j] < nums[min_idx]:
+                min_idx = j
+        if min_idx != i:
+            nums[i], nums[min_idx] = nums[min_idx], nums[i]
+```
+
+- 比较次数永远是 `O(n²)`，与输入是否有序无关。
+- **交换次数最少**：最多 `n - 1` 次，适合「写操作很贵」的场景。
+- **不稳定**：`[2a, 2b, 1]` 第一轮把 `1` 和 `2a` 交换，得到 `[1, 2b, 2a]`，
+  两个 2 的相对顺序变了。
+
+### 3. 插入排序
+
+把当前元素插入到左边已经有序的部分中，像整理扑克牌。
+
+```python
+def insertion_sort(nums):
+    for i in range(1, len(nums)):
+        key = nums[i]
+        j = i - 1
+        while j >= 0 and nums[j] > key:   # 严格大于才后移，保证稳定
+            nums[j + 1] = nums[j]
+            j -= 1
+        nums[j + 1] = key
+```
+
+- 最好情况（已经有序）：内层循环一次都不进，`O(n)`。
+- 最坏情况（完全逆序）：每次都要移动整个前缀，`O(n²)`。
+- 稳定：相等元素不会越过彼此。
+- **实际价值**：小数组上比归并/快排更快，所以 Timsort 在 run 长度小于 64 时用插入排序。
+
+> 三者的选择：数据几乎有序 → 插入；写操作昂贵 → 选择；教学/稳定性演示 → 冒泡。
+> 真正写业务代码时，直接用 `sorted`。
 
 ## 归并排序
 
-分治策略：将数组一分为二，分别排序后合并。
-
-![归并排序动图演示.gif](https://hanphone.top/gh/HanphoneJan/public-pictures/algorithm/%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F%E5%8A%A8%E5%9B%BE%E6%BC%94%E7%A4%BA.gif)
-
-### 核心思想：先分后合
-
-归并排序的核心是**合并两个已经有序的数组**。
-
-1. **分**：将数组从中间分成两半，递归对每半排序
-2. **治**：合并两个有序数组（双指针法）
-
-**与快速排序的区别**：归并排序的"分"非常简单（直接中间劈开），但"合"需要额外工作；快速排序则相反，"分"比较复杂（要按大小重新排列），但不需要"合"。
-
-### 示例推演
-
-假设排序 `[38, 27, 43, 3]`：
-
-**第一步：分解**
+分治：把数组从中间劈开，分别排序，再合并两个有序数组。
 
 ```
 [38, 27, 43, 3]
-    /        \
-[38, 27]  [43, 3]
-  /   \     /   \
-[38] [27] [43] [3]
+      /        \
+ [38, 27]    [43, 3]
+  /   \       /   \
+[38] [27]   [43] [3]
+  \   /       \   /
+[27, 38]    [3, 43]
+      \        /
+   [3, 27, 38, 43]
 ```
-
-**第二步：合并**
-
-```
-[38] [27] → 比较 38 和 27 → [27, 38]
-[43] [3]  → 比较 43 和 3  → [3, 43]
-
-[27, 38] 和 [3, 43] 合并：
-- 27 vs 3  → 取 3,  结果: [3],      右数组剩 [43]
-- 27 vs 43 → 取 27, 结果: [3, 27],   左数组剩 [38]
-- 38 vs 43 → 取 38, 结果: [3, 27, 38], 左数组空
-- 右数组剩余 [43] 全部加入
-
-最终结果: [3, 27, 38, 43]
-```
-
-### 代码实现
 
 ```python
-def merge_sort(arr):
-    """归并排序：稳定、O(nlog n)，但需要 O(n) 额外空间"""
-    if len(arr) <= 1:
-        return arr
+def merge_sort(nums):
+    if len(nums) <= 1:
+        return nums
 
-    # 1. 分：从中间分成两半
-    mid = len(arr) // 2
-    left = merge_sort(arr[:mid])
-    right = merge_sort(arr[mid:])
-
-    # 2. 合：合并两个有序数组
+    mid = len(nums) // 2
+    left = merge_sort(nums[:mid])
+    right = merge_sort(nums[mid:])
     return merge(left, right)
 
 
-def merge(arr1, arr2):
-    """合并两个有序数组（双指针法）"""
-    result = []
+def merge(a, b):
+    out = []
     i = j = 0
 
-    # 双指针同时遍历，谁小取谁
-    while i < len(arr1) and j < len(arr2):
-        if arr1[i] <= arr2[j]:  # <= 保证稳定性
-            result.append(arr1[i])
+    while i < len(a) and j < len(b):
+        if a[i] <= b[j]:        # <= 保证稳定性
+            out.append(a[i])
             i += 1
         else:
-            result.append(arr2[j])
+            out.append(b[j])
             j += 1
 
-    # 处理剩余元素
-    result.extend(arr1[i:])
-    result.extend(arr2[j:])
-    return result
+    out.extend(a[i:])
+    out.extend(b[j:])
+    return out
 ```
 
-### 复杂度分析
+- 时间永远是 `O(n log n)`：共 `log n` 层，每层合并 `O(n)`。
+- 空间 `O(n)`：合并需要临时数组。
+- 稳定：相等时优先取左边。
+- 适合**链表**：链表归并不需要随机访问，合并时可以做到 `O(1)` 额外空间。
 
-| 指标   | 复杂度          | 说明                                     |
-| ------ | --------------- | ---------------------------------------- |
-| 时间   | $O(n \log n)$ | 每层合并工作量$O(n)$，共 $\log n$ 层 |
-| 空间   | $O(n)$        | 合并时需要临时数组                       |
-| 稳定性 | 稳定            | 相等元素保持相对顺序（<= 保证）          |
+### 链表排序（LeetCode 148）
 
----
+[148. 排序链表](../problems/leetcode/0148_sort_list.md)
+
+用快慢指针找中点，断开后分别排序，再合并两个有序链表：
+
+```python
+def sort_list(head):
+    if not head or not head.next:
+        return head
+
+    # 快慢指针找中点（slow 最终停在左半段的最后一个节点）
+    slow, fast = head, head.next
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+
+    mid = slow.next
+    slow.next = None                 # 断开
+
+    left = sort_list(head)
+    right = sort_list(mid)
+
+    dummy = ListNode(0)
+    tail = dummy
+    while left and right:
+        if left.val <= right.val:
+            tail.next = left
+            left = left.next
+        else:
+            tail.next = right
+            right = right.next
+        tail = tail.next
+
+    tail.next = left or right
+    return dummy.next
+```
+
+链表归并的递归深度是 `O(log n)`，额外空间只来自递归栈。
 
 ## 快速排序
 
-分治策略：选取基准，将数组划分为"小于基准"和"大于基准"两部分。
-
-![快速排序动图演示.gif](https://hanphone.top/gh/HanphoneJan/public-pictures/algorithm/快速排序动图演示.gif)
-
-### 核心思想：先排后分
-
-快速排序的核心是**分区**：把数组按基准值分成左右两部分。
-
-1. **选基准**：从数组选一个元素作为 pivot
-2. **分区**：重新排列，使小于 pivot 的在左，大于的在右
-3. **递归**：对左右子数组递归排序。直至子数组长度为 1 时终止递归，即可完成对整个数组的排序。
-
-**与归并排序的区别**：快速排序在递归**之前**就已经完成了排序（分区的过程就是排序），而归并排序是在递归**返回时**才进行排序（合并的过程）。
-
-### 示例推演
-
-假设排序 `[38, 27, 43, 3, 9, 82, 10]`，选最右元素 10 为 pivot：
-
-**第一步：分区过程**
-
-```
-初始: [38, 27, 43, 3, 9, 82, 10]
-       i                    pivot=10
-
-j=0: 38>10，不交换，i保持-1
-j=1: 27>10，不交换
-j=2: 43>10，不交换
-j=3: 3<=10，i++，交换 arr[0]和arr[3] → [3, 27, 43, 38, 9, 82, 10]
-j=4: 9<=10，i++，交换 arr[1]和arr[4] → [3, 9, 43, 38, 27, 82, 10]
-j=5: 82>10，不交换
-
-最后：把 pivot 放到 i+1 位置
-交换 arr[2]和arr[6] → [3, 9, 10, 38, 27, 82, 43]
-                              ↑
-                           pivot最终位置
-```
-
-**第二步：递归**
-
-```
-左半部分 [3, 9] 已有序
-右半部分 [38, 27, 82, 43] 继续排序...
-```
-
-### 代码实现
+选一个基准值 `pivot`，把数组分成「小于 pivot」和「大于等于 pivot」两部分，
+再对两部分递归。与归并相反：**快排先排好再递归，归并先递归再合并**。
 
 ```python
 import random
 
-def quick_sort(arr, left, right):
-    """快速排序：平均 O(nlog n)，原地排序"""
+def quick_sort(nums, left=0, right=None):
+    if right is None:
+        right = len(nums) - 1
     if left >= right:
         return
 
-    # 分区，获取 pivot 的最终位置
-    p = partition_random(arr, left, right)
-
-    # 递归排序左右子数组
-    quick_sort(arr, left, p - 1)
-    quick_sort(arr, p + 1, right)
+    p = partition(nums, left, right)
+    quick_sort(nums, left, p - 1)
+    quick_sort(nums, p + 1, right)
 
 
-def partition_random(arr, left, right):
-    """随机选择基准，避免最坏情况"""
-    # 随机选基准，交换到最右
-    random_idx = random.randint(left, right)
-    arr[random_idx], arr[right] = arr[right], arr[random_idx]
+def partition(nums, left, right):
+    # 随机选 pivot，避免已排序数组退化成 O(n²)
+    idx = random.randint(left, right)
+    nums[idx], nums[right] = nums[right], nums[idx]
+    pivot = nums[right]
 
-    pivot = arr[right]
-    i = left - 1  # i 指向已处理区间的最后一个位置
-
+    i = left                     # i 指向「小于区」的下一个空位
     for j in range(left, right):
-        if arr[j] <= pivot:
+        if nums[j] < pivot:
+            nums[i], nums[j] = nums[j], nums[i]
             i += 1
-            arr[i], arr[j] = arr[j], arr[i]
 
-    # pivot 放到正确位置
-    arr[i + 1], arr[right] = arr[right], arr[i + 1]
-    return i + 1
+    nums[i], nums[right] = nums[right], nums[i]
+    return i                     # pivot 的最终位置
 ```
 
-### 复杂度分析
+- 平均 `O(n log n)`，最坏 `O(n²)`：每次 pivot 都取到最大值或最小值。
+- 原地排序，额外空间是递归栈 `O(log n)`（最坏 `O(n)`）。
+- 不稳定：partition 会交换相等元素的位置。
+- **随机化很重要**：对已经有序的数组，固定取最后一个元素当 pivot 会退化成 `O(n²)`。
 
-| 情况      | 时间复杂度      | 空间复杂度    | 说明                             |
-| --------- | --------------- | ------------- | -------------------------------- |
-| 最好/平均 | $O(n \log n)$ | $O(\log n)$ | 每次分区均匀，递归深度$\log n$ |
-| 最坏      | $O(n^2)$      | $O(n)$      | 每次分区极不均匀（如数组已有序） |
-| 稳定性    | -               | -             | 不稳定（会交换相等元素的位置）   |
+### 有大量重复元素时：三路划分
 
-> **为什么选随机基准？** 避免遇到已排序数组时退化为 $O(n^2)$。随机化后期望时间复杂度为 $O(n \log n)$。
+普通 partition 把「等于 pivot」的元素都分到右边，重复元素很多时左右极不均衡。
+三路划分把它们单独放中间：
 
----
+```python
+def quick_sort_3way(nums, left=0, right=None):
+    if right is None:
+        right = len(nums) - 1
+    if left >= right:
+        return
+
+    lt, gt = partition3(nums, left, right)
+    quick_sort_3way(nums, left, lt - 1)
+    quick_sort_3way(nums, gt + 1, right)
+
+
+def partition3(nums, left, right):
+    pivot = nums[random.randint(left, right)]
+    lt, i, gt = left, left, right
+
+    while i <= gt:
+        if nums[i] < pivot:
+            nums[lt], nums[i] = nums[i], nums[lt]
+            lt += 1
+            i += 1
+        elif nums[i] > pivot:
+            nums[i], nums[gt] = nums[gt], nums[i]
+            gt -= 1
+        else:
+            i += 1
+
+    return lt, gt                # [left, lt) < pivot, [lt, gt] == pivot
+```
+
+[75. 颜色分类](../problems/leetcode/0075_sort_colors.md) 就是三路划分的特例（只有 0、1、2 三种值）。
+
+### 快速选择
+
+只关心「第 K 大」时，不需要把两边都排好，只递归包含目标下标的那一半，平均 `O(n)`。
+代码与详细分析见 [查找算法 · 快速选择](search.md)。
 
 ## 堆排序
 
-利用堆这种数据结构进行排序。堆是完全二叉树，分为大顶堆和小顶堆。
+堆是一棵完全二叉树，用数组存储：下标 `i` 的左孩子是 `2i+1`，右孩子是 `2i+2`。
+大顶堆满足「父节点 ≥ 子节点」。
 
-### 核心思想
+```python
+def heap_sort(nums):
+    n = len(nums)
 
-1. **建堆**：将无序数组构建成堆（`heapify`，O(n)）
-2. **排序**：反复将堆顶元素（最值）与末尾交换，然后对剩余元素重新调整堆
+    # 1. 建堆：从最后一个非叶节点往前下沉，O(n)
+    for i in range(n // 2 - 1, -1, -1):
+        sift_down(nums, i, n)
 
-### 复杂度分析
+    # 2. 反复把堆顶（最大值）换到末尾，再调整剩余部分
+    for end in range(n - 1, 0, -1):
+        nums[0], nums[end] = nums[end], nums[0]
+        sift_down(nums, 0, end)
 
-- 建堆：$O(n)$
-- 每次调整堆：$O(\log n)$
-- 排序总时间：$O(n\log n)$
-- 空间：$O(1)$（原地排序）
+    return nums
+
+
+def sift_down(nums, i, n):
+    while True:
+        largest = i
+        left = 2 * i + 1
+        right = 2 * i + 2
+
+        if left < n and nums[left] > nums[largest]:
+            largest = left
+        if right < n and nums[right] > nums[largest]:
+            largest = right
+
+        if largest == i:
+            break
+
+        nums[i], nums[largest] = nums[largest], nums[i]
+        i = largest
+```
+
+- 建堆是 `O(n)`，不是 `O(n log n)`：大多数节点都在底层，下沉距离很短。
+- 排序阶段 `n` 次弹出，每次 `O(log n)`，总计 `O(n log n)`。
+- 原地、最坏也有 `O(n log n)` 保证；缺点是不稳定、常数比快排大、缓存不友好。
+- Python 的 `heapq` 是小顶堆，适合「动态维护前 K 小/大」而不是完整排序：
 
 ```python
 import heapq
 
-
-def heap_sort(arr):
-    """堆排序：使用 Python 内置 heapq 模块"""
-    # 方法1：直接 heapify
-    heapq.heapify(arr)  # 原地建堆，O(n)
-    # 依次弹出堆顶，得到有序数组
-    return [heapq.heappop(arr) for _ in range(len(arr))]
-
-
-def heap_sort_manual(arr):
-    """手动实现堆排序（不使用 heapq）"""
-    n = len(arr)
-
-    # 建大顶堆（从最后一个非叶节点开始调整）
-    for i in range(n // 2 - 1, -1, -1):
-        heapify_down(arr, n, i)
-
-    # 排序：将堆顶（最大值）与末尾交换，然后调整剩余堆
-    for i in range(n - 1, 0, -1):
-        arr[0], arr[i] = arr[i], arr[0]  # 最大值放到末尾
-        heapify_down(arr, i, 0)  # 调整前 i 个元素
-
-    return arr
-
-
-def heapify_down(arr, n, i):
-    """下沉调整：将以 i 为根的子树调整为大顶堆"""
-    largest = i
-    left = 2 * i + 1   # 左子节点
-    right = 2 * i + 2  # 右子节点
-
-    # 找出根、左子、右子中的最大值
-    if left < n and arr[left] > arr[largest]:
-        largest = left
-    if right < n and arr[right] > arr[largest]:
-        largest = right
-
-    # 如果最大值不是根，交换并继续调整
-    if largest != i:
-        arr[i], arr[largest] = arr[largest], arr[i]
-        heapify_down(arr, n, largest)
+heapq.heapify(nums)                 # 原地建小顶堆，O(n)
+smallest = heapq.heappop(nums)      # 弹出最小值，O(log n)
+heapq.heappush(nums, x)             # 插入，O(log n)
 ```
 
----
+[215. 数组中的第 K 个最大元素](../problems/leetcode/0215_kth_largest_element_in_an_array.md) 可以用大小为 K 的小顶堆，时间 `O(n log k)`；
+[347. 前 K 个高频元素](../problems/leetcode/0347_top_k_frequent_elements.md) 则是「哈希计数 + 堆」。
 
-## 计数排序
+## 非比较排序
 
-非比较排序算法，适用于**数值范围较小**的整数排序。
+比较排序的下界是 `O(n log n)`。如果数据有额外结构（整数、范围小、位数固定），
+可以绕过比较，做到线性时间。
 
-### 核心思想
+### 计数排序
 
-1. **统计频率**：遍历数组，统计每个数值出现的次数
-2. **计算前缀和**：确定每个数值在结果数组中的最终位置
-3. **稳定填充**：根据计数数组，将元素放到正确位置
-
-### 适用条件
-
-- 数据是**整数**（或可以映射为整数）
-- 数据**范围不大**（$k$ 较小，最好 $k = O(n)$）
-- 需要**稳定排序**
-
-### 复杂度分析
-
-- 时间：$O(n + k)$，$n$ 是元素个数，$k$ 是数值范围
-- 空间：$O(k)$（计数数组）
-- 稳定：是
+统计每个值出现多少次，再按值从小到大展开。要求数据是**范围不大的整数**。
 
 ```python
-def counting_sort(arr):
-    """
-    计数排序：适用于小范围整数
-    时间 O(n + k)，空间 O(k)
-    """
-    if not arr:
-        return arr
+def counting_sort(nums):
+    if not nums:
+        return []
 
-    # 确定数值范围
-    min_val = min(arr)
-    max_val = max(arr)
-    k = max_val - min_val + 1  # 数值范围大小
+    lo, hi = min(nums), max(nums)
+    count = [0] * (hi - lo + 1)
 
-    # 1. 统计频率
-    count = [0] * k
-    for num in arr:
-        count[num - min_val] += 1
+    for x in nums:
+        count[x - lo] += 1
 
-    # 2. 计算前缀和（确定每个数值的结束位置）
-    # count[i] 现在表示数值 (i + min_val) 在结果中的最后一个位置 + 1
-    for i in range(1, k):
+    # 前缀和：count[i] 变成「值 <= i+lo 的元素个数」
+    for i in range(1, len(count)):
         count[i] += count[i - 1]
 
-    # 3. 稳定填充（从后往前遍历，保证稳定性）
-    result = [0] * len(arr)
-    for i in range(len(arr) - 1, -1, -1):
-        num = arr[i]
-        pos = count[num - min_val] - 1  # 该数值应该放的位置
-        result[pos] = num
-        count[num - min_val] -= 1  # 更新位置
+    out = [0] * len(nums)
+    # 从后往前填，保证稳定性
+    for x in reversed(nums):
+        count[x - lo] -= 1
+        out[count[x - lo]] = x
 
-    return result
-
-
-# 简化版（非稳定，直接按计数展开）
-def counting_sort_simple(arr):
-    """简化版计数排序：非稳定，但代码更简洁"""
-    if not arr:
-        return arr
-
-    min_val = min(arr)
-    max_val = max(arr)
-    k = max_val - min_val + 1
-
-    # 统计频率
-    count = [0] * k
-    for num in arr:
-        count[num - min_val] += 1
-
-    # 按计数展开
-    idx = 0
-    for i in range(k):
-        for _ in range(count[i]):
-            arr[idx] = i + min_val
-            idx += 1
-
-    return arr
+    return out
 ```
 
-### 计数排序的应用场景
+- 时间 `O(n + k)`，空间 `O(k)`。
+- `k` 是 `max - min + 1`。如果 `k` 远大于 `n`（例如只有 10 个数，但范围是 0 到 10^9），
+  计数数组会爆炸，不能用。
+- 用途：年龄、分数、颜色分类；也是基数排序的底层。
+
+### 桶排序
+
+把数据按范围分到若干个桶里，每个桶内部再排序，最后按桶的顺序拼接。
 
 ```python
-# 场景1：年龄排序（范围小，0-150）
-ages = [25, 18, 32, 25, 40, 18, 65]
-sorted_ages = counting_sort(ages)
+def bucket_sort(nums, bucket_count=10):
+    if len(nums) <= 1:
+        return nums[:]
 
-# 场景2：成绩排序（0-100分）
-scores = [85, 92, 78, 85, 92, 60, 100]
-sorted_scores = counting_sort(scores)
+    lo, hi = min(nums), max(nums)
+    if lo == hi:
+        return nums[:]
 
-# 场景3：配合其他排序（基数排序的底层）
-# 基数排序对每一位使用计数排序，实现 O(n*k) 的线性排序
-```
-
----
-
-## 桶排序
-
-非比较排序算法，将数据分到有限数量的桶中，每个桶再分别排序。
-
-### 核心思想
-
-1. **分桶**：根据数据的取值范围，划分为若干个桶（区间）
-2. **入桶**：将每个元素放入对应的桶中
-3. **桶内排序**：对每个非空桶内部进行排序（通常用插入排序或递归桶排序）
-4. **合并**：按顺序收集所有桶的元素
-
-**与计数排序的区别**：计数排序每个桶只存一个值的出现次数，桶排序的每个桶存放的是一个区间范围内的多个值。
-
-![桶排序示意图](https://hanphone.top/gh/HanphoneJan/public-pictures/algorithm/桶排序示意图.png)
-
-### 适用条件
-
-- 数据**分布比较均匀**（否则桶内数据量差异大）
-- 数据范围可以**合理划分**成若干个区间
-- 需要**稳定排序**时
-
-### 示例推演
-
-假设排序 `[0.42, 0.32, 0.33, 0.52, 0.37, 0.47, 0.51]`：
-
-**第一步：确定桶的数量和范围**
-
-- 数据范围：0.32 ~ 0.52
-- 创建 5 个桶，每个桶范围 0.05
-  - 桶0: [0.30, 0.35)
-  - 桶1: [0.35, 0.40)
-  - 桶2: [0.40, 0.45)
-  - 桶3: [0.45, 0.50)
-  - 桶4: [0.50, 0.55]
-
-**第二步：元素入桶**
-
-```
-0.42 → 桶2: [0.42]
-0.32 → 桶0: [0.32]
-0.33 → 桶0: [0.32, 0.33]
-0.52 → 桶4: [0.52]
-0.37 → 桶1: [0.37]
-0.47 → 桶3: [0.47]
-0.51 → 桶4: [0.52, 0.51]
-```
-
-**第三步：桶内排序**
-
-```
-桶0: [0.32, 0.33] （已有序）
-桶1: [0.37] （只有一个元素）
-桶2: [0.42] （只有一个元素）
-桶3: [0.47] （只有一个元素）
-桶4: [0.51, 0.52] → 排序后 [0.51, 0.52]
-```
-
-**第四步：合并结果**
-
-```
-[0.32, 0.33] + [0.37] + [0.42] + [0.47] + [0.51, 0.52]
-= [0.32, 0.33, 0.37, 0.42, 0.47, 0.51, 0.52]
-```
-
-### 代码实现
-
-```python
-def bucket_sort(arr, bucket_count=10):
-    """
-    桶排序：适用于数据分布均匀的情况
-    平均 O(n)，最坏 O(n^2)
-    """
-    if not arr or len(arr) <= 1:
-        return arr
-
-    # 1. 确定数据范围
-    min_val, max_val = min(arr), max(arr)
-
-    # 2. 创建空桶
     buckets = [[] for _ in range(bucket_count)]
+    for x in nums:
+        idx = min(int((x - lo) / (hi - lo) * bucket_count), bucket_count - 1)
+        buckets[idx].append(x)
 
-    # 3. 元素入桶
-    # 计算每个元素应该放入哪个桶
-    for num in arr:
-        # 映射到 [0, bucket_count-1] 的区间
-        idx = int((num - min_val) / (max_val - min_val) * (bucket_count - 1))
-        buckets[idx].append(num)
-
-    # 4. 每个桶内排序（使用插入排序或内置排序）
+    out = []
     for bucket in buckets:
-        bucket.sort()  # 小规模数据，用内置排序即可
-
-    # 5. 合并结果
-    result = []
-    for bucket in buckets:
-        result.extend(bucket)
-
-    return result
+        out.extend(sorted(bucket))
+    return out
 ```
 
-### 复杂度分析
+- 数据**均匀分布**时，每个桶约 `n / k` 个元素，总时间接近 `O(n + k)`；
+- 数据全挤在一个桶里时，退化为桶内排序，最坏 `O(n²)`；
+- 桶的数量通常取 `k ≈ n`。太多浪费空间，太少退化成普通排序。
 
-| 情况   | 时间复杂度     | 空间复杂度    | 说明                                |
-| :----- | :------------- | :------------ | :---------------------------------- |
-| 最好   | $O(n)$       | $O(n + k)$  | 数据均匀分布，每个桶内元素很少      |
-| 平均   | $O(n)$       | $O(n + k)$  | 桶的数量 $k$ 与 $n$ 同数量级时    |
-| 最坏   | $O(n^2)$     | $O(n + k)$  | 数据集中在少数桶内，退化为桶内排序  |
-| 稳定性 | 稳定           | -             | 取决于桶内排序算法（使用稳定排序）  |
+### 基数排序
 
-> **桶的数量如何选择？** 通常取 $k \approx n$，即桶的数量与元素数量相当。太多桶浪费空间，太少桶退化为普通排序。
-
-### 桶排序的应用场景
+从最低位到最高位，依次对每一位做一次**稳定**的计数排序。
+因为低位已经排好，高位排序时相同高位的元素会保持低位的相对顺序。
 
 ```python
-# 场景1：浮点数排序（范围在[0,1)之间）
-floats = [0.42, 0.32, 0.33, 0.52, 0.37]
-sorted_floats = bucket_sort(floats)
+def radix_sort(nums):
+    if not nums:
+        return []
 
-# 场景2：成绩分段排序（按10分一段）
-scores = [85, 92, 78, 85, 92, 60, 100, 73, 88]
-# 分桶：60-69, 70-79, 80-89, 90-100
+    out = nums[:]
+    exp = 1
+    while max(out) // exp > 0:
+        out = counting_sort_by_digit(out, exp)
+        exp *= 10
+    return out
 
-def bucket_sort_scores(scores):
-    """成绩按10分一段分桶排序"""
-    buckets = [[] for _ in range(10)]  # 0-9, 10-19, ..., 90-100
-    for s in scores:
-        idx = min(s // 10, 9)  # 100分放到第9个桶
-        buckets[idx].append(s)
 
-    result = []
-    for bucket in buckets:
-        bucket.sort()
-        result.extend(bucket)
-    return result
+def counting_sort_by_digit(nums, exp):
+    count = [0] * 10
+    for x in nums:
+        count[(x // exp) % 10] += 1
 
-# 场景3：外部排序（海量数据无法一次加载）
-# 将数据分桶后，每个桶可以独立加载到内存排序
+    for i in range(1, 10):
+        count[i] += count[i - 1]
+
+    out = [0] * len(nums)
+    for x in reversed(nums):
+        digit = (x // exp) % 10
+        count[digit] -= 1
+        out[count[digit]] = x
+    return out
 ```
 
----
-
-## 算法选择指南
-
-| 场景         | 推荐算法                       | 原因                                    |
-| :----------- | :----------------------------- | :-------------------------------------- |
-| 通用排序     | `list.sort()` / `sorted()` | Python 内置 Timsort，性能优异且稳定     |
-| 需要稳定排序 | 归并排序                       | $O(n\log n)$ 且稳定                   |
-| 空间敏感     | 快速排序、堆排序               | 原地排序，空间$O(\log n)$ 或 $O(1)$ |
-| 链表排序     | 归并排序                       | 不需要随机访问，空间可优化到$O(1)$    |
-| Top K 问题   | 堆排序 / 快速选择              | 堆可维护前 K 个，快速选择平均$O(n)$   |
-| 数据范围小   | 计数排序                       | $O(n + k)$，可接近线性                |
-| 部分有序数据 | 插入排序 / Timsort             | 接近$O(n)$                            |
-
----
+- 时间 `O(d × (n + 10))`，`d` 是最大位数；
+- 空间 `O(n + 10)`；
+- 只适用于非负整数（负数可以先整体平移，或按符号分组处理）；
+- 稳定：每一位的计数排序都从后往前填。
 
 ## Python 内置排序
 
-Python 的 `list.sort()` 和 `sorted()` 使用 **Timsort** 算法：
+Python 的 `list.sort()` 和 `sorted()` 使用 **Timsort**（归并 + 插入的混合）：
 
-- **混合算法**：归并排序 + 插入排序
-- **稳定性**：稳定排序（相等元素保持相对顺序）
-- **自适应**：对部分有序数据接近 $O(n)$
-- **最坏情况**：$O(n\log n)$
+- 稳定；
+- 对部分有序数据接近 `O(n)`；
+- 最坏 `O(n log n)`；
+- `key` 函数只对每个元素调用一次，结果被缓存（decorate-sort-undecorate）。
 
 ```python
-# 基础用法
-arr.sort()                          # 原地排序
-new_arr = sorted(arr)               # 返回新列表
+nums.sort()                          # 原地排序，返回 None
+arr = sorted(nums)                   # 返回新列表
+nums.sort(reverse=True)              # 降序
+words.sort(key=len)                  # 按长度
+pairs.sort(key=lambda p: (p[1], -p[0]))   # 多关键字：第二列升序，第一列降序
+```
 
-# 降序
-arr.sort(reverse=True)
+需要自定义比较逻辑时：
 
-# 按 key 排序
-arr.sort(key=lambda x: x[1])        # 按第二个元素排序
-arr.sort(key=len)                   # 按长度排序
-arr.sort(key=lambda x: (x[1], -x[0]))  # 多关键字：先按第2个升序，再按第1个降序
-
-# 自定义比较函数（Python 3 需要 cmp_to_key）
+```python
 from functools import cmp_to_key
 
 def compare(a, b):
-    """返回负数表示 a 在前，正数表示 b 在前"""
     if a[0] != b[0]:
-        return a[0] - b[0]  # 按第一个元素升序
-    return b[1] - a[1]      # 第一个相同则按第二个降序
+        return a[0] - b[0]           # 第一列升序
+    return b[1] - a[1]               # 第一列相同，第二列降序
 
-arr.sort(key=cmp_to_key(compare))
+nums.sort(key=cmp_to_key(compare))
 ```
 
----
+`cmp_to_key` 要求比较函数满足**严格弱序**：
+`compare(a, a) == 0`，且不能出现 `a < b`、`b < c` 但 `c < a` 这种循环。
+比较函数写错时，Python 不会报错，只会给出一个「看起来排过但顺序奇怪」的结果。
+
+## 怎么选排序算法
+
+| 场景 | 推荐 | 原因 |
+| --- | --- | --- |
+| 日常开发 | `sorted()` / `list.sort()` | Timsort，稳定且高度优化 |
+| 小数组（n < 64） | 插入排序 | 常数小，实际比归并/快排快 |
+| 近乎有序 | 插入排序 / Timsort | 接近 O(n) |
+| 需要稳定 | 归并排序 / Timsort | 相等元素保持原顺序 |
+| 内存敏感 | 堆排序 / 快速排序 | 原地，额外空间 O(1) / O(log n) |
+| 链表 | 归并排序 | 不需要随机访问，可做到 O(1) 额外空间 |
+| Top K / 第 K 大 | 堆 / 快速选择 | O(n log k) 或平均 O(n) |
+| 数据范围小的整数 | 计数排序 | O(n + k)，接近线性 |
+| 固定位数的整数 | 基数排序 | O(d(n + b)) |
+| 数据分布均匀的浮点数 | 桶排序 | 平均 O(n) |
+| 最坏情况也要 O(n log n) | 归并 / 堆排序 | 快排最坏会退化 |
+
+## 复杂度小结
+
+- **比较排序的下界是 `Ω(n log n)`。** 归并、快排、堆排序都达到了这个下界（快排是平均意义下）；
+  想再快，只能利用数据的额外结构，比如值域小（计数）、分布均匀（桶）、位数固定（基数）。
+- **时间与空间的取舍：** 归并稳定但要 `O(n)` 额外空间；快排原地、平均最快，但最坏会退化且不稳定；
+  堆排序最坏也有 `O(n log n)` 保证，常数更大。
+- **稳定性来自「相等时怎么处理」：** 归并的 `<=`、插入的严格 `>`、冒泡的严格 `>` 都是在保护相等元素的相对顺序；
+  选择排序的交换、快排的 partition、堆的交换则会破坏它。
+
+## 易错点
+
+- ❌ **把稳定性当成默认属性**：快排、堆排、选择排序都不稳定，多关键字排序时要用 `key` 元组或稳定排序。
+- ❌ **比较函数不满足严格弱序**：`cmp_to_key` 里出现 `<=` 返回 0 以外的值，可能得到错误的顺序。
+- ❌ **快排不随机化**：对已经有序的数组取端点做 pivot，直接退化为 `O(n²)`。
+- ❌ **快排递归深度**：最坏 `O(n)` 层，Python 递归限制约 1000，大数组可能栈溢出。
+- ❌ **归并排序忘记 `<=`**：写成 `<` 会破坏稳定性。
+- ❌ **计数排序范围过大**：`max - min` 很大时内存爆炸，应先判断 `k` 与 `n` 的关系。
+- ❌ **基数排序处理负数**：`(x // exp) % 10` 对负数的结果不是期望的十进制位，需要先平移或按符号分组。
+- ❌ **边遍历边修改列表**：排序会改变下标，遍历中 `pop` / `insert` 极易越界。
+- ❌ **把字符串当数字排序**：`sorted(['10', '2', '1'])` 得到 `['1', '10', '2']`，需要 `key=int`。
+
+## 相关题目
+
+- [148. 排序链表](../problems/leetcode/0148_sort_list.md)
+- [75. 颜色分类](../problems/leetcode/0075_sort_colors.md)
+- [215. 数组中的第 K 个最大元素](../problems/leetcode/0215_kth_largest_element_in_an_array.md)
+- [347. 前 K 个高频元素](../problems/leetcode/0347_top_k_frequent_elements.md)
+- [56. 合并区间](../problems/leetcode/0056_merge_intervals.md)
+- [406. 根据身高重建队列](../problems/leetcode/0406_queue_reconstruction_by_height.md)
+- [49. 字母异位词分组](../problems/leetcode/0049_group_anagrams.md)
+
+## 相关模式
+
+- [查找算法](search.md)：排序是二分的前提，快速选择是二分的亲戚。
+- [贪心](greedy.md)：大量贪心题的第一步是排序。
+- [双指针](two_pointers.md)：有序数组上的两数之和、去重。
+- [哈希映射](hash_map.md)：计数排序之外的另一种「按值索引」。
+- [堆与优先队列](../data-structures/stack_queue_heap_unionfind.md)：Top K 的常用工具。
 
 ## 算法可视化
 
-下面的播放器可以**改输入后重跑**：把数组换成你自己的，
-逐步看每一帧的状态怎么变。三个算法各有各的「已确定边界」：冒泡是右侧已排好的后缀，归并是左右两段各自的已合并部分，快排是 pivot 落位后的左右区间。播放器里输入一个已排序的数组，冒泡会提前结束 —— 那正是它的最好情况。
+下面有三个播放器，输入同一组数 `5,2,9,1,5,6,3`（逗号分隔），可以换成自己的数组。
+
+**冒泡排序**：右侧深色部分是「已经排好的后缀」，每一轮都在缩短。把输入改成已经有序的
+`1,2,3,4,5`，第一轮没有发生交换，算法会立刻结束 —— 这就是冒泡的最好情况 `O(n)`。
+
+**归并排序**：先一路拆到单元素，再两两合并。注意合并时总是先取较小的一方，
+相等时取左边（`<=`），这就是归并稳定的原因。
+
+**快速排序**：每一轮选一个 pivot，把小于它的放左边、大于它的放右边，pivot 落位后就不再移动。
+观察 pivot 的位置如何把数组切成两段，再分别递归。输入里有两个 `5`，
+可以留意它们相对顺序的变化 —— 快排是不稳定的。
