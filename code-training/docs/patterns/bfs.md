@@ -6,622 +6,547 @@ applicable_to:
   - 树
   - 图
   - 矩阵
-last_updated: 2026-02-25
+last_updated: 2026-10-19
 ---
-# BFS（广度优先搜索）模式
 
-## 模式概述
+# BFS（广度优先搜索）
 
-BFS 是一种图遍历算法，从起点开始，先访问所有相邻节点，再访问下一层的节点。
+## 一句话说清 BFS
 
-## 核心特点
+从起点出发，**先看完所有距离为 1 的点，再看距离为 2 的点**，像水波一样一圈一圈往外扩。
+这个「按距离分层」的顺序由**先进先出队列**保证，也是 BFS 能求最短路的根本原因。
 
-- **层序遍历**：逐层访问
-- **最短路径**：保证找到的是最短路径（无权图）
-- **使用队列**：FIFO 数据结构
+```
+起点 ──► 距离 1 的所有点 ──► 距离 2 的所有点 ──► ...
+        （同一层内部不分先后）
+```
 
-## 适用场景
+## 为什么队列能保证「第一次到达就是最短」
 
-1. **树的层序遍历**
-2. **图的最短路径**（无权图）
-3. **矩阵中的最短距离**
-4. **拓扑排序**
+BFS 有两个同时成立的性质：
 
-## 基本模板
+1. **出队顺序的距离单调不降。** 起点距离为 0；每次把邻居入队时，邻居的距离是当前点距离 + 1。
+   队列先进先出，所以距离小的点一定先出队。
+2. **同一时刻队列里的点，距离最多相差 1。** 因为只有当前层处理完，才会开始处理下一层。
 
-### 树的 BFS
+由此得到一个重要结论：**在边权都为 1 的图里，一个点第一次被访问时，走的就是最短路径。**
+之后即使还有别的路径能到达它，也不会更短，所以可以直接标记为「已访问」，不再入队。
+
+> **边权不全是 1 时，BFS 不再正确。** 例如边权有 0、2、5，先出队不代表距离更近，
+> 这时要用优先队列（Dijkstra），或者边权只有 0/1 时用双端队列的 0-1 BFS。
+
+### 为什么必须在「入队时」标记访问
+
+```python
+# 正确：入队时立刻标记
+if not visited[nr][nc]:
+    visited[nr][nc] = True
+    q.append((nr, nc))
+
+# 错误：出队时才标记
+q.append((nr, nc))
+...
+r, c = q.popleft()
+visited[r][c] = True   # 同一个格子可能已经被多个邻居重复入队
+```
+
+如果出队才标记，同一层的多个点会把自己的共同邻居反复塞进队列。
+最坏情况下一个点会被重复入队很多次，队列规模从 `O(V)` 膨胀到与边数同级甚至更大 ——
+答案看起来仍然正确，这是最隐蔽的一类超时。
+
+## 什么时候该想到 BFS
+
+| 题目信号 | 对应模型 |
+| --- | --- |
+| 「最少走几步」「最少几次操作」「最短距离」 | 无权图最短路 |
+| 「按层输出」「每一层」「右视图」 | 树的层序遍历 |
+| 「同时从多个点开始扩散」「到最近的源的距离」 | 多源 BFS |
+| 「课程先后顺序」「能否完成所有任务」 | DAG 上的拓扑排序（Kahn） |
+| 「每次只能变一个字符 / 拨一位数字」 | 状态空间搜索 |
+| 「把所有可达位置找出来」 | 连通块遍历（BFS / DFS 都可以） |
+
+**不适合 BFS 的情况：**
+
+- **带权最短路**：用 Dijkstra（优先队列），BFS 的「先到即最短」不成立。
+- **要枚举所有路径 / 所有方案**：BFS 只擅长找「第一个」，枚举要用 DFS + 回溯。
+- **只要判断连通性、且图很深**：DFS 的空间是 O(高度)，BFS 要存一整层，DFS 更省内存。
+- **需要利用子问题结果**：比如树形 DP、记忆化搜索，DFS 的后序位置更自然。
+
+## 通用模板
+
+### 模板一：树的层序遍历
 
 ```python
 from collections import deque
 
-def bfs_tree(root):
+def level_order(root):
     if not root:
         return []
-  
-    result = []
-    queue = deque([root])
-  
-    while queue:
-        level_size = len(queue)  # 当前层的节点数
-        current_level = []
-      
-        for _ in range(level_size):
-            node = queue.popleft()
-            current_level.append(node.val)
-          
-            # 将下一层节点加入队列
-            if node.left:
-                queue.append(node.left)
-            if node.right:
-                queue.append(node.right)
-      
-        result.append(current_level)
-  
-    return result
-```
 
-### 图的 BFS
-
-```python
-from collections import deque
-
-def bfs_graph(start, graph):
-    visited = set([start])
-    queue = deque([start])
-  
-    while queue:
-        node = queue.popleft()
-        process(node)  # 处理当前节点
-      
-        # 遍历所有邻居
-        for neighbor in graph[node]:
-            if neighbor not in visited:
-                visited.add(neighbor)
-                queue.append(neighbor)
-```
-
-### 矩阵的 BFS
-
-```python
-from collections import deque
-
-def bfs_matrix(matrix, start_row, start_col):
-    rows, cols = len(matrix), len(matrix[0])
-    visited = set([(start_row, start_col)])
-    queue = deque([(start_row, start_col, 0)])  # (row, col, distance)
-  
-    # 四个方向
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-  
-    while queue:
-        row, col, dist = queue.popleft()
-      
-        # 检查是否是目标
-        if is_target(row, col):
-            return dist
-      
-        # 遍历四个方向
-        for dr, dc in directions:
-            new_row, new_col = row + dr, col + dc
-          
-            # 检查边界和访问状态
-            if (0 <= new_row < rows and 
-                0 <= new_col < cols and 
-                (new_row, new_col) not in visited and
-                matrix[new_row][new_col] != obstacle):
-              
-                visited.add((new_row, new_col))
-                queue.append((new_row, new_col, dist + 1))
-  
-    return -1  # 未找到
-```
-
-## 实战案例
-
-### 案例 1：二叉树的层序遍历
-
-```python
-def levelOrder(self, root: Optional[TreeNode]) -> List[List[int]]:
-    if root is None:
-        return []
     ans = []
     q = deque([root])
+
     while q:
-        vals = []
+        level = []
+        # 关键：先记下当前层的节点数，循环中 q 的长度会变
         for _ in range(len(q)):
             node = q.popleft()
-            vals.append(node.val)
-            if node.left:  q.append(node.left)
-            if node.right: q.append(node.right)
-        ans.append(vals)
+            level.append(node.val)
+            if node.left:
+                q.append(node.left)
+            if node.right:
+                q.append(node.right)
+        ans.append(level)
+
     return ans
 ```
 
-**相关题目：**
+`for _ in range(len(q))` 是层序的灵魂：它把「当前层」和「下一层」切开。
+如果只写 `while q: node = q.popleft()`，得到的是普通的逐点遍历，分不出层。
 
-- 二叉树的层序遍历
-- N 叉树的层序遍历
-- 二叉树的右视图
-
-### 案例 2：图的最短路径
+### 模板二：图的最短路
 
 ```python
-def shortestPath(graph, start, end):
-    queue = deque([(start, 0)])
-    visited = set([start])
-  
-    while queue:
-        node, distance = queue.popleft()
-      
-        if node == end:
-            return distance
-      
-        for neighbor in graph[node]:
-            if neighbor not in visited:
-                visited.add(neighbor)
-                queue.append((neighbor, distance + 1))
-  
+from collections import deque
+
+def shortest_path(graph, start, target):
+    if start == target:
+        return 0
+
+    dist = {start: 0}
+    q = deque([start])
+
+    while q:
+        u = q.popleft()
+        for v in graph[u]:
+            if v in dist:          # 入队时就记距离，同时也当 visited 用
+                continue
+            dist[v] = dist[u] + 1
+            if v == target:        # 可以在入队时提前返回
+                return dist[v]
+            q.append(v)
+
     return -1
 ```
 
-## BFS vs DFS
+### 模板三：网格 BFS
 
-| 特性       | BFS                | DFS            |
-| ---------- | ------------------ | -------------- |
-| 数据结构   | 队列               | 栈/递归        |
-| 遍历顺序   | 逐层               | 逐深度         |
-| 最短路径   | ✅ 是              | ❌ 否          |
-| 空间复杂度 | O(w) 宽度          | O(h) 高度      |
-| 应用场景   | 最短路径、层序遍历 | 路径搜索、回溯 |
+```python
+from collections import deque
 
-## 解题步骤
+def bfs_grid(grid, start, target):
+    rows, cols = len(grid), len(grid[0])
+    dist = [[-1] * cols for _ in range(rows)]
+    sr, sc = start
+    dist[sr][sc] = 0
+    q = deque([(sr, sc)])
 
-1. **初始化队列**：将起点加入队列
-2. **初始化访问集合**：标记起点已访问
-3. **循环处理队列**：
-   - 取出队首元素
-   - 处理当前元素
-   - 将未访问的邻居加入队列
-4. **返回结果**
+    while q:
+        r, c = q.popleft()
+        if (r, c) == target:
+            return dist[r][c]
+
+        for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nr, nc = r + dr, c + dc
+            if (0 <= nr < rows and 0 <= nc < cols
+                    and grid[nr][nc] != '#'
+                    and dist[nr][nc] == -1):
+                dist[nr][nc] = dist[r][c] + 1
+                q.append((nr, nc))
+
+    return -1
+```
+
+网格题把「距离」直接存在 `dist` 里，`-1` 同时表示「没访问过」。这比另开一个 `visited` 更省事，
+也不容易漏掉标记。
+
+### 模板四：多源 BFS
+
+```python
+from collections import deque
+
+def multi_source(grid):
+    rows, cols = len(grid), len(grid[0])
+    dist = [[-1] * cols for _ in range(rows)]
+    q = deque()
+
+    # 所有源点一起入队，距离都是 0
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] == 'S':
+                dist[r][c] = 0
+                q.append((r, c))
+
+    while q:
+        r, c = q.popleft()
+        for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nr, nc = r + dr, c + dc
+            if (0 <= nr < rows and 0 <= nc < cols
+                    and grid[nr][nc] != '#'
+                    and dist[nr][nc] == -1):
+                dist[nr][nc] = dist[r][c] + 1
+                q.append((nr, nc))
+
+    return dist
+```
+
+多源 BFS 可以理解成：**建一个虚拟超级源点，到所有真实源点的边权为 0**。
+这样「到最近源点的距离」就变成了普通 BFS 的最短路。
+
+### 模板五：拓扑排序（Kahn 算法）
+
+```python
+from collections import deque
+
+def topo_sort(num_nodes, edges):
+    graph = [[] for _ in range(num_nodes)]
+    indeg = [0] * num_nodes
+
+    for u, v in edges:          # u -> v
+        graph[u].append(v)
+        indeg[v] += 1
+
+    q = deque(i for i in range(num_nodes) if indeg[i] == 0)
+    order = []
+
+    while q:
+        u = q.popleft()
+        order.append(u)
+        for v in graph[u]:
+            indeg[v] -= 1
+            if indeg[v] == 0:   # 所有前驱都处理完了，v 才能入队
+                q.append(v)
+
+    return order if len(order) == num_nodes else []   # 长度不够说明有环
+```
+
+拓扑排序是 BFS 在 DAG 上的特例：**入度为 0 = 当前可以访问**。
+队列里同时可能有多门课，它们的先后顺序不影响合法性。
+
+## 例题精讲
+
+### 例 1：二叉树的层序遍历（LeetCode 102）
+
+[102. 二叉树的层序遍历](../problems/leetcode/0102_binary_tree_level_order_traversal.md)
+
+```
+        3
+       / \
+      9   20
+         /  \
+        15   7
+```
+
+推演队列的变化：
+
+| 轮次 | 出队前队列 | 本层结果 | 入队后队列 |
+| --- | --- | --- | --- |
+| 1 | `[3]` | `[3]` | `[9, 20]` |
+| 2 | `[9, 20]` | `[9, 20]` | `[15, 7]` |
+| 3 | `[15, 7]` | `[15, 7]` | `[]` |
+
+最终 `[[3], [9, 20], [15, 7]]`。
+
+每轮开始时 `len(q)` 正好是这一层的节点数。只要在处理下一层之前把这个数字存下来，
+`for` 循环就不会被新入队的节点干扰。
+
+### 例 2：二叉树的右视图（LeetCode 199）
+
+[199. 二叉树的右视图](../problems/leetcode/0199_binary_tree_right_side_view.md)
+
+右视图就是「每一层的最后一个节点」。层序遍历时记录每层的最后一个值即可：
+
+```python
+def right_side_view(root):
+    if not root:
+        return []
+
+    ans = []
+    q = deque([root])
+
+    while q:
+        size = len(q)
+        for i in range(size):
+            node = q.popleft()
+            if i == size - 1:       # 本层最后一个
+                ans.append(node.val)
+            if node.left:
+                q.append(node.left)
+            if node.right:
+                q.append(node.right)
+
+    return ans
+```
+
+### 例 3：岛屿数量（LeetCode 200）
+
+[200. 岛屿数量](../problems/leetcode/0200_number_of_islands.md)
+
+把每个 `'1'` 看作图上的一个点，上下左右相邻的 `'1'` 之间有一条边。
+「岛屿个数」就是**连通块个数**：每遇到一个没访问过的 `'1'`，答案加一，然后用 BFS 把整块淹掉。
+
+```python
+from collections import deque
+
+def num_islands(grid):
+    if not grid or not grid[0]:
+        return 0
+
+    rows, cols = len(grid), len(grid[0])
+    count = 0
+    directions = ((1, 0), (-1, 0), (0, 1), (0, -1))
+
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] != '1':
+                continue
+
+            count += 1
+            grid[r][c] = '0'          # 入队前就标记，避免重复入队
+            q = deque([(r, c)])
+
+            while q:
+                x, y = q.popleft()
+                for dx, dy in directions:
+                    nx, ny = x + dx, y + dy
+                    if (0 <= nx < rows and 0 <= ny < cols
+                            and grid[nx][ny] == '1'):
+                        grid[nx][ny] = '0'
+                        q.append((nx, ny))
+
+    return count
+```
+
+这里直接把原矩阵的 `'1'` 改成 `'0'` 当作 visited，省掉一个二维数组。
+如果题目不允许修改输入，就用 `visited = [[False] * cols for _ in range(rows)]`。
+
+> 这道题用 DFS 也完全正确，而且代码更短。选 BFS 的好处是不受递归深度限制，
+> 在超大网格里不会爆栈；选 DFS 的好处是不用维护队列。两者复杂度相同。
+
+### 例 4：课程表（LeetCode 207）
+
+[207. 课程表](../problems/leetcode/0207_course_schedule.md)
+
+`prerequisites = [[1, 0]]` 表示「修课程 1 之前必须先修课程 0」，即一条有向边 `0 -> 1`。
+能否修完所有课，等价于**这张有向图有没有环**。
+
+Kahn 算法从入度为 0 的课开始，每修完一门就把它指向的课入度减一。
+如果最终修完的课程数等于总数，说明无环；否则剩下的课互相依赖，永远修不完。
+
+```python
+from collections import deque
+
+def can_finish(num_courses, prerequisites):
+    graph = [[] for _ in range(num_courses)]
+    indeg = [0] * num_courses
+
+    for course, pre in prerequisites:   # pre -> course
+        graph[pre].append(course)
+        indeg[course] += 1
+
+    q = deque(i for i in range(num_courses) if indeg[i] == 0)
+    finished = 0
+
+    while q:
+        u = q.popleft()
+        finished += 1
+        for v in graph[u]:
+            indeg[v] -= 1
+            if indeg[v] == 0:
+                q.append(v)
+
+    return finished == num_courses
+```
+
+**为什么「入度减到 0」可以入队？** 入度表示「还有多少门先修课没修」。
+减到 0 说明所有前置条件都满足了，这门课现在可以修 —— 这正是 BFS 的「可以访问」。
+
+### 例 5：单词接龙（LeetCode 127）
+
+每次只能改一个字母，求从 `beginWord` 到 `endWord` 的最少转换次数。
+把每个单词看成一个点，差一个字母的两个单词之间有一条边，就是标准的无权最短路。
+
+朴素做法是对每个单词，枚举它的所有邻居；更快的做法是把单词映射到「通配符模式」：
+
+```python
+from collections import defaultdict, deque
+
+def ladder_length(begin_word, end_word, word_list):
+    if end_word not in word_list:
+        return 0
+
+    # hot -> *ot, h*t, ho*
+    patterns = defaultdict(list)
+    for word in word_list:
+        for i in range(len(word)):
+            patterns[word[:i] + '*' + word[i + 1:]].append(word)
+
+    q = deque([(begin_word, 1)])
+    visited = {begin_word}
+
+    while q:
+        word, steps = q.popleft()
+        for i in range(len(word)):
+            key = word[:i] + '*' + word[i + 1:]
+            for nxt in patterns[key]:
+                if nxt == end_word:
+                    return steps + 1
+                if nxt not in visited:
+                    visited.add(nxt)
+                    q.append((nxt, steps + 1))
+
+    return 0
+```
+
+每个单词只入队一次，每个模式也只被扫描一次，总复杂度是 `O(单词数 × 单词长度)`。
 
 ## 常见变体
 
 ### 1. 多源 BFS
 
-从多个起点同时开始。
+所有源点同时入队，距离都是 0。适合「腐烂的橘子」「01 矩阵」这类**到最近源点的距离**问题。
 
 ```python
-def multi_source_bfs(sources):
-    queue = deque(sources)
-    visited = set(sources)
-  
-    while queue:
-        node = queue.popleft()
-        # 处理逻辑
+q = deque()
+for r in range(rows):
+    for c in range(cols):
+        if grid[r][c] == 2:       # 所有腐烂橘子都是源点
+            q.append((r, c, 0))
 ```
 
 ### 2. 双向 BFS
 
-从起点和终点同时搜索。
-
-### 3. 带层数的 BFS
-
-记录每个节点的层数。
+从起点和终点**同时**扩展，哪一边的当前层更小就扩展哪一边，两边相遇时结束。
 
 ```python
-while queue:
-    level_size = len(queue)
-    for _ in range(level_size):
-        # 处理当前层
-```
-
-## 时间与空间复杂度
-
-- **时间复杂度**：O(V + E)，V 是顶点数，E 是边数
-- **空间复杂度**：O(V)，队列和访问集合
-
-## 相关知识点
-
-- [树](../data-structures/tree)
-- [二叉树](../data-structures/binary_tree)
-- [图](../data-structures/graph)
-- [DFS 模式](dfs)
-
-## 练习题目
-
-**简单：**
-
-- [102. 二叉树的层序遍历](../problems/leetcode/102)
-- N 叉树的层序遍历
-
-**中等：**
-
-- 二叉树的锯齿形层序遍历
-- 腐烂的橘子
-- 岛屿数量
-
-**困难：**
-
-- 单词接龙
-- 最小基因变化
-
-## 要点总结
-
-- ✅ 使用队列实现
-- ✅ 记录访问状态避免重复
-- ✅ 适合求最短路径
-- ✅ 层序遍历是 BFS 的典型应用
-
----
-
----
-
-## 标准实现与变体
-
-### 1. 二叉树层序遍历
-
-#### Python
-
-```python
-from collections import deque
-from typing import Optional, List
-
-class TreeNode:
-    def __init__(self, val=0, left=None, right=None):
-        self.val = val
-        self.left = left
-        self.right = right
-
-def levelOrder(root: Optional[TreeNode]) -> List[List[int]]:
-    """二叉树的层序遍历"""
-    if not root:
-        return []
-  
-    result = []
-    queue = deque([root])
-  
-    while queue:
-        level_size = len(queue)  # 当前层的节点数
-        current_level = []
-  
-        # 处理当前层的所有节点
-        for _ in range(level_size):
-            node = queue.popleft()
-            current_level.append(node.val)
-      
-            # 将下一层节点加入队列
-            if node.left:
-                queue.append(node.left)
-            if node.right:
-                queue.append(node.right)
-  
-        result.append(current_level)
-  
-    return result
-```
-
-#### C++
-
-```cpp
-#include <vector>
-#include <queue>
-using namespace std;
-
-struct TreeNode {
-    int val;
-    TreeNode *left;
-    TreeNode *right;
-    TreeNode(int x) : val(x), left(NULL), right(NULL) {}
-};
-
-vector<vector<int>> levelOrder(TreeNode* root) {
-    if (!root) return {};
-  
-    vector<vector<int>> result;
-    queue<TreeNode*> q;
-    q.push(root);
-  
-    while (!q.empty()) {
-        int levelSize = q.size();
-        vector<int> currentLevel;
-  
-        for (int i = 0; i < levelSize; i++) {
-            TreeNode* node = q.front();
-            q.pop();
-            currentLevel.push_back(node->val);
-      
-            if (node->left) q.push(node->left);
-            if (node->right) q.push(node->right);
-        }
-  
-        result.push_back(currentLevel);
-    }
-  
-    return result;
-}
-```
-
-### 2. 图的 BFS
-
-#### Python
-
-```python
-from collections import deque
-from typing import Dict, List, Set
-
-def bfs_graph(graph: Dict[int, List[int]], start: int) -> List[int]:
-    """图的广度优先搜索"""
-    visited = set([start])
-    queue = deque([start])
-    result = []
-  
-    while queue:
-        node = queue.popleft()
-        result.append(node)
-  
-        # 遍历所有邻居
-        for neighbor in graph.get(node, []):
-            if neighbor not in visited:
-                visited.add(neighbor)
-                queue.append(neighbor)
-  
-    return result
-```
-
-#### 带距离的 BFS
-
-```python
-def bfs_with_distance(graph: Dict[int, List[int]], 
-                      start: int, 
-                      end: int) -> int:
-    """返回从 start 到 end 的最短距离"""
-    if start == end:
+def bidirectional(begin_word, end_word, word_list):
+    words = set(word_list)
+    if end_word not in words:
         return 0
-  
-    visited = set([start])
-    queue = deque([(start, 0)])  # (节点, 距离)
-  
-    while queue:
-        node, distance = queue.popleft()
-  
-        for neighbor in graph.get(node, []):
-            if neighbor == end:
-                return distance + 1
-      
-            if neighbor not in visited:
-                visited.add(neighbor)
-                queue.append((neighbor, distance + 1))
-  
-    return -1  # 不可达
+
+    front, back = {begin_word}, {end_word}
+    visited = {begin_word, end_word}
+    steps = 1
+
+    while front:
+        if len(front) > len(back):     # 总是扩展更小的一边
+            front, back = back, front
+
+        nxt_level = set()
+        for word in front:
+            for i in range(len(word)):
+                for ch in 'abcdefghijklmnopqrstuvwxyz':
+                    nxt = word[:i] + ch + word[i + 1:]
+                    if nxt in back:
+                        return steps + 1
+                    if nxt in words and nxt not in visited:
+                        visited.add(nxt)
+                        nxt_level.add(nxt)
+
+        front = nxt_level
+        steps += 1
+
+    return 0
 ```
 
-### 3. 矩阵的 BFS
+分支因子为 `b`、路径长度为 `d` 时，普通 BFS 要扩展约 `b^d` 个点，双向 BFS 只要约
+`2 × b^(d/2)`。**注意：只有当「从起点扩展」和「从终点反向扩展」的规则一致时才能双向**，
+有向图要额外建反图。
 
-#### Python
+### 3. 0-1 BFS
+
+边权只有 0 和 1 时，不必上 Dijkstra：用双端队列，权为 0 的边放队首，权为 1 的放队尾。
+这样队列仍然保持距离单调，复杂度是 `O(V + E)`。
 
 ```python
-from collections import deque
-from typing import List, Tuple
+def zero_one_bfs(graph, start):
+    INF = float('inf')
+    dist = [INF] * len(graph)
+    dist[start] = 0
+    dq = deque([start])
 
-def bfs_matrix(matrix: List[List[int]], 
-               start: Tuple[int, int]) -> List[List[int]]:
-    """
-    矩阵的 BFS，返回每个位置到起点的距离
-    0 表示可通过，1 表示障碍
-    """
-    if not matrix or not matrix[0]:
-        return []
-  
-    rows, cols = len(matrix), len(matrix[0])
-    distances = [[-1] * cols for _ in range(rows)]
-  
-    # 初始化
-    start_row, start_col = start
-    distances[start_row][start_col] = 0
-    queue = deque([(start_row, start_col)])
-  
-    # 四个方向：上、下、左、右
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-  
-    while queue:
-        row, col = queue.popleft()
-        current_dist = distances[row][col]
-  
-        # 遍历四个方向
-        for dr, dc in directions:
-            new_row, new_col = row + dr, col + dc
-      
-            # 检查边界、障碍和访问状态
-            if (0 <= new_row < rows and 
-                0 <= new_col < cols and 
-                matrix[new_row][new_col] == 0 and
-                distances[new_row][new_col] == -1):
-          
-                distances[new_row][new_col] = current_dist + 1
-                queue.append((new_row, new_col))
-  
-    return distances
+    while dq:
+        u = dq.popleft()
+        for v, w in graph[u]:          # w 只能是 0 或 1
+            if dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                if w == 0:
+                    dq.appendleft(v)
+                else:
+                    dq.append(v)
+
+    return dist
 ```
 
-#### C++
+### 4. 状态空间 BFS
 
-```cpp
-#include <vector>
-#include <queue>
-using namespace std;
+把「局面」编码成一个状态（元组、字符串、整数位掩码），状态之间的转移就是边。
+例如密码锁、八数码、开关灯问题。关键有三点：
 
-vector<vector<int>> bfsMatrix(vector<vector<int>>& matrix, 
-                               pair<int, int> start) {
-    if (matrix.empty() || matrix[0].empty()) return {};
-  
-    int rows = matrix.size(), cols = matrix[0].size();
-    vector<vector<int>> distances(rows, vector<int>(cols, -1));
-  
-    queue<pair<int, int>> q;
-    q.push(start);
-    distances[start.first][start.second] = 0;
-  
-    // 四个方向
-    vector<pair<int, int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-  
-    while (!q.empty()) {
-        auto [row, col] = q.front();
-        q.pop();
-        int currentDist = distances[row][col];
-  
-        for (auto [dr, dc] : directions) {
-            int newRow = row + dr;
-            int newCol = col + dc;
-      
-            if (newRow >= 0 && newRow < rows && 
-                newCol >= 0 && newCol < cols &&
-                matrix[newRow][newCol] == 0 &&
-                distances[newRow][newCol] == -1) {
-          
-                distances[newRow][newCol] = currentDist + 1;
-                q.push({newRow, newCol});
-            }
-        }
-    }
-  
-    return distances;
-}
-```
+- 状态必须能放进 `visited`（可哈希）；
+- 转移必须枚举完整；
+- 如果状态空间太大，先想有没有双向 BFS 或数学性质可用。
 
-### 4. 多源 BFS
+## 复杂度分析
 
-#### Python
+| 场景 | 时间复杂度 | 空间复杂度 | 说明 |
+| --- | --- | --- | --- |
+| 树的层序遍历 | O(n) | O(w) | n 是节点数，w 是最大层宽 |
+| 图的 BFS | O(V + E) | O(V) | 邻接表存储；每个点入队一次 |
+| 网格 BFS | O(m × n) | O(m × n) | 每个格子至多入队一次 |
+| 多源 BFS | O(m × n) | O(m × n) | 所有源点一起入队，仍是线性 |
+| 拓扑排序 | O(V + E) | O(V) | 每个点和每条边各处理一次 |
+| 双向 BFS | O(b^(d/2)) | O(b^(d/2)) | b 是分支因子，d 是最短路径长度 |
 
-```python
-from collections import deque
-from typing import List
+## 易错点
 
-def multi_source_bfs(matrix: List[List[int]]) -> List[List[int]]:
-    """
-    多源 BFS
-    从所有值为 1 的位置同时开始 BFS
-    返回每个位置到最近的 1 的距离
-    """
-    if not matrix or not matrix[0]:
-        return []
-  
-    rows, cols = len(matrix), len(matrix[0])
-    distances = [[-1] * cols for _ in range(rows)]
-    queue = deque()
-  
-    # 将所有源点加入队列
-    for i in range(rows):
-        for j in range(cols):
-            if matrix[i][j] == 1:
-                distances[i][j] = 0
-                queue.append((i, j))
-  
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-  
-    while queue:
-        row, col = queue.popleft()
-        current_dist = distances[row][col]
-  
-        for dr, dc in directions:
-            new_row, new_col = row + dr, col + dc
-      
-            if (0 <= new_row < rows and 
-                0 <= new_col < cols and 
-                distances[new_row][new_col] == -1):
-          
-                distances[new_row][new_col] = current_dist + 1
-                queue.append((new_row, new_col))
-  
-    return distances
-```
+- ❌ **出队才标记 visited**：同一层会重复入队，答案对但复杂度爆炸。正确做法是入队时立即标记。
+- ❌ **层数用错**：`for _ in range(len(q))` 里的 `len(q)` 只算一次；写成 `while q` 就分不出层。
+- ❌ **多源 BFS 只放一个源点**：把所有源点都入队、距离都设为 0，才是「同时扩散」。
+- ❌ **在带权图上用 BFS**：边权不同时「先到」不等于「最短」，要用 Dijkstra。
+- ❌ **字符串/状态没有去重**：同一个状态反复入队，队列会无限增长。
+- ❌ **网格边界写成 `<= rows`**：下标范围是 `0 .. rows-1`，越界会静默读到别的行或报错。
+- ❌ **把「步数」和「访问节点数」混在一起**：`dist` 存的是边数，不是队列里已经弹出的个数。
 
-### 5. N 叉树的层序遍历
+## 相关题目
 
-#### Python
+**入门：**
 
-```python
-from collections import deque
-from typing import List
+- [102. 二叉树的层序遍历](../problems/leetcode/0102_binary_tree_level_order_traversal.md)
+- [199. 二叉树的右视图](../problems/leetcode/0199_binary_tree_right_side_view.md)
 
-class Node:
-    def __init__(self, val=None, children=None):
-        self.val = val
-        self.children = children if children is not None else []
+**网格与连通块：**
 
-def levelOrder(root: Node) -> List[List[int]]:
-    """N 叉树的层序遍历"""
-    if not root:
-        return []
-  
-    result = []
-    queue = deque([root])
-  
-    while queue:
-        level_size = len(queue)
-        current_level = []
-  
-        for _ in range(level_size):
-            node = queue.popleft()
-            current_level.append(node.val)
-      
-            # 将所有子节点加入队列
-            for child in node.children:
-                queue.append(child)
-  
-        result.append(current_level)
-  
-    return result
-```
+- [200. 岛屿数量](../problems/leetcode/0200_number_of_islands.md)
+- [shoppee 迷宫不可达格子计数](../problems/shoppee/shoppee_maze_unreachable_count.md)
+- [shoppee 到陆地的最远距离](../problems/shoppee/shoppee_max_distance_to_land.md)
 
-### 使用说明
+**图与拓扑：**
 
-#### 何时使用 BFS？
+- [207. 课程表](../problems/leetcode/0207_course_schedule.md)
 
-1. **层序遍历**：需要按层处理节点
-2. **最短路径**：无权图中的最短路径
-3. **连通性**：判断是否连通或找到所有连通节点
-4. **最近距离**：找到最近的目标节点
+**状态空间：**
 
-#### 关键要点
+- [127. 单词接龙](https://leetcode.cn/problems/word-ladder/)
+- [752. 打开转盘锁](https://leetcode.cn/problems/open-the-lock/)
+- [433. 最小基因变化](https://leetcode.cn/problems/minimum-genetic-mutation/)
 
-1. **使用队列**：FIFO，保证层序
-2. **记录访问状态**：避免重复访问
-3. **记录层数**：使用 `len(queue)` 确定当前层大小
-4. **边界检查**：矩阵中要检查边界
+## 相关模式
 
-#### 常见错误
-
-❌ 忘记标记已访问，导致死循环
-❌ 在加入队列后才标记访问（应该加入时就标记）
-❌ 矩阵中没有检查边界
-❌ 忘记记录层数
-
-### BFS 关键点
-
-#### 1. 何时使用 BFS
-
-- ✅ 树的层序遍历
-- ✅ 图的最短路径（无权图）
-- ✅ 矩阵中的最短距离
-- ✅ 拓扑排序
-
-#### 2. 数据结构
-
-- **队列**：存储待访问的节点
-- **集合**：记录已访问的节点（避免重复）
-
-#### 3. 时间复杂度
-
-- 树/图：O(V + E)，V 是顶点数，E 是边数
-- 矩阵：O(m * n)
-
-#### 4. 空间复杂度
-
-- O(V) 或 O(m * n)，取决于队列和访问集合的大小
-
----
+- [DFS 模式](dfs.md)：同样遍历整张图，但用栈/递归，适合枚举路径与子树信息。
+- [图](../data-structures/graph.md)：邻接表、连通分量、拓扑排序的完整背景。
+- [树](../data-structures/tree.md)、[二叉树](../data-structures/binary_tree.md)：层序遍历的对象。
+- [动态规划](dynamic_programming.md)：当 BFS 的状态可以「按层递推」时，往往能写成 DP。
 
 ## 算法可视化
 
-下面的播放器可以**改输入后重跑**：把数组换成你自己的，
-逐步看每一帧的状态怎么变。「待访问队列」是 BFS 的本质：先进先出决定了扩展顺序，而顺序又决定了第一次到达某格时距离就是最短。换个有障碍的地图，能看到它绕路而不是穿墙。
+下面的播放器把网格 BFS 的**队列**画了出来：`0` 是路，`#` 是墙，从左上角走到右下角。
+输入格式是用分号分隔每一行（例如 `0,0,0;#,#,0;0,0,0`）。
+重点观察三件事：
+
+1. 队列（画面下方的 frontier）里的格子按距离排成一层一层，先出队的永远离起点更近；
+2. 一个格子第一次被访问后就被固定下来，不会再被改 —— 这就是「入队即最短」；
+3. 把墙改多、改少，路线会绕开障碍，但仍然是步数最少的那条。
+
+终点第一次出队时，note 会打出它的最短距离。BFS 不会「撞墙后回退」，
+而是把每个可达格子按层访问一次：既得到最短距离，也保证每个格子只处理一次。
