@@ -52,8 +52,8 @@ jobs:
       - name: Commit new problems
         if: steps.sync.outputs.has_changes == 'true'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "HanphoneJan"
+          git config user.email "janhizian@163.com"
           git add code-training/nowcoder/ code-training/docs/problems/nowcoder/
           git commit -m "chore: sync NowCoder progress $(date +%Y-%m-%d)"
           git push
