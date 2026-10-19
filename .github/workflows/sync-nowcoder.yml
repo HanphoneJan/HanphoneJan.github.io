@@ -52,6 +52,7 @@ jobs:
       - name: Commit new problems
         if: steps.sync.outputs.has_changes == 'true'
         run: |
+          # 用仓库所有者身份提交，避免自动同步产生 github-actions[bot] contributor
           git config user.name "HanphoneJan"
           git config user.email "janhizian@163.com"
           git add code-training/nowcoder/ code-training/docs/problems/nowcoder/
