@@ -105,7 +105,7 @@
       "url": "http://hanphone.cloud/notes/",
       "source": "main",
       "stars": 0,
-      "description": "基于 pereorga/minimalist-web-notepad 项目的 Node.js 实现，新增密��保护功能，提供极简风格的网页记事本服务。"
+      "description": "基于 pereorga/minimalist-web-notepad 项目的 Node.js 实现，新增密码保护功能，提供极简风格的网页记事本服务。"
     },
     {
       "name": "OpenWrtTrafficMonitor",
