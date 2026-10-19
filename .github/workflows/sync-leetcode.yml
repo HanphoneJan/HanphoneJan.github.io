@@ -52,6 +52,7 @@ jobs:
       - name: Commit new problems
         run: |
           if [ -n "$(git status --porcelain)" ]; then
+            # 用仓库所有者身份提交，避免自动同步产生 github-actions[bot] contributor
             git config user.name "HanphoneJan"
             git config user.email "janhizian@163.com"
             git add code-training/leetcode/ code-training/docs/problems/leetcode/
