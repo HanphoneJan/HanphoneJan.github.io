@@ -233,6 +233,9 @@ function get(url) {
     http
       .get(url, (res) => {
         let d = '';
+        // 同 fetch-projects.js：不设 UTF-8 会让跨 TCP 分块的多字节字符
+        // 变成 U+FFFD（`d += c` 对每个 Buffer 分块单独解码）。
+        res.setEncoding('utf8');
         res.on('data', (c) => (d += c));
         res.on('end', () => resolve(JSON.parse(d)));
       })

@@ -24,6 +24,12 @@ function request(url, options = {}) {
       }
     }, (res) => {
       let data = '';
+      // 🔴 必须显式设 UTF-8 解码。`data += chunk` 会对每个 Buffer 分块**单独**
+      // 解码，TCP 分块切在多字节字符中间时，那个字符会变成 U+FFFD（项目页
+      // 出现「个人博客系统���林有风」的根因：「云」= E4 BA 91 被切成
+      // E4 + BA 91 ⇒ 三个替换字符）。setEncoding 让 Node 自己处理跨块的
+      // 多字节序列，必须在消费第一个 chunk 之前调用。
+      res.setEncoding('utf8');
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
         try {
