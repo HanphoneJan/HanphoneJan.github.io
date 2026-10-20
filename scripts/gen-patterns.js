@@ -68,12 +68,16 @@ function patternsFor(tags) {
   return [...slugs].sort();
 }
 
-function renderField(slugs) {
+function renderField(slugs, ups) {
   if (slugs.length === 0) {
     return 'patterns: []';
   }
+  // 题解可能在 problems/<平台>/<子目录>/ 下，不能固定写死 '../../'。
+  // ups 是「从题解所在目录回到 docs 目录」需要向上的层数。
+  const prefix = '../'.repeat(ups);
   return (
-    'patterns:\n' + slugs.map((s) => `  - ../../patterns/${s}.md`).join('\n')
+    'patterns:\n' +
+    slugs.map((s) => `  - ${prefix}patterns/${s}.md`).join('\n')
   );
 }
 
@@ -95,7 +99,13 @@ function main() {
     if (slugs.length === 0) {
       empty++;
     }
-    const field = renderField(slugs);
+    const field = renderField(
+      slugs,
+      path
+        .relative(path.join(ROOT, 'code-training', 'docs'), path.dirname(file))
+        .split(path.sep)
+        .filter(Boolean).length,
+    );
 
     // 替换 `patterns:` 那一段（`[]` 或一个列表）；没有这个字段就插进去
     const blockRe = /^patterns:(?:[ \t]*\[\])?(?:\n(?:[ \t]*-[ \t]*.+))*$/m;
