@@ -65,6 +65,8 @@ import sys
 
 def solve():
     """读取输入并输出最大收益、总内存消耗、总算力消耗。"""
+    # 一次性读入全部整数。ACM 模式下用 buffer.read() 比逐行 input() 更快，
+    # 也不会因为行末空格或空行影响解析。
     data = sys.stdin.buffer.read().split()
     if not data:
         return
@@ -74,47 +76,72 @@ def solve():
     max_memory = int(next(it))
     max_compute = int(next(it))
 
-    # 两种资源的上限都不超过 500，二维 DP 的状态数是 (A + 1) * (B + 1)。
-    # 这里把二维表压成一维数组，减少 Python 列表的寻址开销。
+    # dp 本来是二维表：dp[a][b] 表示“内存上限为 a、算力上限为 b”时的最优分数。
+    # 为了减少 Python 嵌套列表的寻址开销，这里把它压成一维数组：
+    #   二维下标 (a, b)  ->  一维下标 a * width + b
+    # 其中 width 是一行里有多少个算力状态（b 从 0 到 max_compute）。
     width = max_compute + 1
     dp = [0] * ((max_memory + 1) * width)
 
-    # 编码参数：
-    # - small 必须严格大于“算力上限”，否则 (内存, 算力) 的进位会串位；
-    # - big 必须严格大于“所有可能方案的最大惩罚值”，否则收益差 1 可能
-    #   被资源差抵消。
-    small = max_compute + 1
-    big = max_memory * small + max_compute + 1
+    # 下面两个“单位”用来把三个目标编码成一个整数：
+    #
+    #   score = 收益 * profit_unit - 内存 * memory_unit - 算力
+    #
+    # memory_unit 必须严格大于算力上限，这样“内存多 1”造成的扣分
+    # 一定大于“算力减少最多 B”带来的补偿，保证同收益时内存优先。
+    #
+    # profit_unit 必须严格大于所有方案可能产生的最大惩罚值
+    # memory * memory_unit + compute（最多 A * memory_unit + B），
+    # 这样“收益多 1”一定大于任何资源扣分差，保证收益优先。
+    memory_unit = max_compute + 1
+    profit_unit = max_memory * memory_unit + max_compute + 1
 
     for _ in range(n):
+        # 读入当前任务：内存消耗、算力消耗、收益。
         memory = int(next(it))
         compute = int(next(it))
         profit = int(next(it))
 
-        # 单个任务就超过任一上限时，它不可能被选中，直接跳过。
+        # 如果单个任务的内存或算力已经超过上限，它不可能出现在任何合法方案里。
         if memory > max_memory or compute > max_compute:
             continue
 
-        gain = profit * big - memory * small - compute
+        # 选择当前任务，相当于在分数上加上：
+        #   收益 * profit_unit        （收益越多越好）
+        #   - 内存 * memory_unit      （内存越少越好）
+        #   - 算力                    （算力越少越好）
+        gain = profit * profit_unit - memory * memory_unit - compute
 
-        # 0/1 背包：两种容量都必须倒序枚举，保证当前任务只被使用一次。
+        # 0/1 背包的容量必须倒序枚举。
+        # 以内存 a 为例：如果从小到大枚举，dp[a - memory] 可能已经在本轮
+        # 选过当前任务，再转移就会把同一个任务选两次。
         for a in range(max_memory, memory - 1, -1):
+            # 一维数组中，容量 a 这一行的起点
             base = a * width
+            # 选当前任务之前，内存上限是 a - memory，对应上一行的起点
             prev_base = (a - memory) * width
+
+            # 算力 b 同样要倒序枚举，原因和上面的内存完全一样。
             for b in range(max_compute, compute - 1, -1):
+                # 不选当前任务时，dp[base + b] 保持原值；
+                # 选当前任务时，从“扣掉当前任务消耗”的旧状态转移过来。
                 candidate = dp[prev_base + b - compute] + gain
                 index = base + b
                 if candidate > dp[index]:
                     dp[index] = candidate
 
+    # 容量上限为 (max_memory, max_compute) 的状态，在扁平数组的最后一个位置。
     best = dp[max_memory * width + max_compute]
 
-    # score = profit * big - penalty，其中 0 <= penalty < big。
-    # 因此向上取整即可还原 profit，再反推出 penalty。
-    profit = (best + big - 1) // big
-    penalty = profit * big - best
-    memory_used = penalty // small
-    compute_used = penalty % small
+    # score = profit * profit_unit - penalty，其中 0 <= penalty < profit_unit。
+    # 因为 score 可能被 penalty 拉低，直接整除会少算 1，所以这里用向上取整。
+    profit = (best + profit_unit - 1) // profit_unit
+    penalty = profit * profit_unit - best
+
+    # penalty = 内存 * memory_unit + 算力。
+    # 因为算力 < memory_unit，所以整除得到内存，取余得到算力。
+    memory_used = penalty // memory_unit
+    compute_used = penalty % memory_unit
 
     print(profit, memory_used, compute_used)
 
