@@ -1,9 +1,7 @@
 {
   "label": "Python 与计算机基础",
-  "position": 3,
   "link": {
-    "type": "generated-index",
-    "title": "Python 与计算机基础",
-    "description": "把数据结构、操作系统、计算机网络、数据库、内存管理和编译原理这些计算机基础课，落到 Python 的运行时、标准库和应用开发里。"
+    "type": "doc",
+    "id": "Python与计算机基础/导读"
   }
 }

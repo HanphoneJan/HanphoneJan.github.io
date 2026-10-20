@@ -48,7 +48,7 @@ const ENTRIES: Array<{
     to: '/docs',
     icon: '📘',
     title: '技术文档',
-    desc: '前端、后端、嵌入式、机器学习、AI Agent 等领域系统整理的学习笔记。',
+    desc: '前端、后端、嵌入式、机器学习、AI Agent，以及 Python / Java 计算机基础系列。',
     cta: '进入文档',
   },
   {
