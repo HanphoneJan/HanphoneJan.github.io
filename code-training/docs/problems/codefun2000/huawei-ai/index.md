@@ -1,6 +1,6 @@
 ---
 title: 华为 AI 机考真题
-slug: /huawei-ai
+slug: /codefun2000/huawei-ai
 ---
 
 # 华为 AI 机考真题
