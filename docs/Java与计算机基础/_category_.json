@@ -1,0 +1,9 @@
+{
+  "label": "Java 与计算机基础",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "title": "Java 与计算机基础",
+    "description": "把数据结构、操作系统、计算机网络、数据库、JVM 内存管理和编译原理，落到 Java 的集合、线程、NIO、JDBC、GC 与字节码里。"
+  }
+}
