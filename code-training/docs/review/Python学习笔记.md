@@ -1741,7 +1741,7 @@ lock.release()
 
 #### 多核使用
 
-Python 的线程虽然是真正的线程，但解释器执行代码时，有一个 GIL 锁：Global Interpreter Lock，任何 Python 线程执行前，必须先获得 GIL 锁，然后，每执行 100 条字节码，解释器就自动释放 GIL 锁，让别的线程有机会执行。这个 GIL 全局锁实际上把所有线程的执行代码都给上了锁，所以，多线程在 Python 中只能交替执行，即使 100 个线程跑在 100 核 CPU 上，也只能用到 1 个核。GIL 是 Python 解释器设计的历史遗留问题。**Python 只能通过多进程使用多核**。
+Python 的线程虽然是真正的线程，但 CPython 默认构建有一个 GIL 锁：任何 Python 线程执行前必须先获得 GIL，同一时刻只有一个线程执行 Python 字节码。**GIL 从 Python 3.2 起按时间片切换**（默认 5ms，可用 `sys.setswitchinterval()` 调整），不是「每 100 条字节码」——后者是更早版本的机制。线程在 I/O 阻塞或 C 扩展主动释放 GIL 时，其他线程可以继续执行，所以多线程对 I/O 密集任务仍然有效；CPU 密集任务通常要用多进程。Python 3.13+ 还提供 free-threaded 构建（3.14 起官方支持），可以关闭 GIL，但需要 C 扩展配合并自行处理竞态。
 
 ## Numpy
 
