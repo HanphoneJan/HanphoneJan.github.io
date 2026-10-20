@@ -4,6 +4,6 @@
   "link": {
     "type": "generated-index",
     "title": "华为 AI 机考",
-    "description": "华为 AI 方向校招机考历史真题（CodeFun2000），只收录题面，不含题解。"
+    "description": "最近 10 场真题的 20 道编程题，只含题面与样例，不含题解。每场另有一份选择题（独立题库），标注为「模拟」的场次也未计入。"
   }
 }
