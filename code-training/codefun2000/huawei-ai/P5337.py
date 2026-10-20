@@ -81,15 +81,18 @@ def format_number(value: float) -> str:
 
 def solve():
     """读取所有输入并输出每个 batch 的滑动窗口注意力结果。"""
+    # 输入既有整数（头部 4 个参数）也有浮点数（Q/K/V），
+    # 所以先按空白切成字符串，再按需要分别转换。
     tokens = sys.stdin.buffer.read().split()
     if len(tokens) < 4:
         print(0)
         return
 
+    # 头部：batch 数、序列长度、每个 token 的维度、窗口半径
     batch_size, seq_len, d_k, window_size = map(int, tokens[:4])
 
     # 题目约束：batch_size >= 1、seq_len >= 1、d_k >= 1、
-    # 1 <= window_size <= seq_len。
+    # 1 <= window_size <= seq_len。任何一条不满足都输出 0。
     if batch_size < 1 or seq_len < 1 or d_k < 1:
         print(0)
         return
@@ -97,27 +100,32 @@ def solve():
         print(0)
         return
 
+    # 每个 batch 有 Q、K、V 三个 seq_len x d_k 矩阵，
+    # 所以总共需要 3 * batch_size * seq_len * d_k 个浮点数。
     needed = 3 * batch_size * seq_len * d_k
     if len(tokens) < 4 + needed:
         print(0)
         return
 
     pos = 4
+    # 缩放因子 1 / sqrt(d_k)，在算完点积后统一除。
     scale = math.sqrt(d_k)
     groups = []
 
     for _ in range(batch_size):
-        # 读取当前 batch 的 Q、K、V
+        # 读取当前 batch 的 Query 矩阵，形状 seq_len x d_k。
         query = []
         for _ in range(seq_len):
             query.append([float(x) for x in tokens[pos:pos + d_k]])
             pos += d_k
 
+        # 读取 Key 矩阵，形状 seq_len x d_k。
         key = []
         for _ in range(seq_len):
             key.append([float(x) for x in tokens[pos:pos + d_k]])
             pos += d_k
 
+        # 读取 Value 矩阵，形状 seq_len x d_k。
         value = []
         for _ in range(seq_len):
             value.append([float(x) for x in tokens[pos:pos + d_k]])
@@ -125,10 +133,13 @@ def solve():
 
         lines = []
         for i in range(seq_len):
+            # 位置 i 的窗口是 [i-w, i+w]。
+            # 序列两端没有位置，所以窗口要截断，而不是补零。
             left = max(0, i - window_size)
             right = min(seq_len - 1, i + window_size)
 
-            # 只计算窗口内的注意力分数
+            # 只计算窗口内的注意力分数：
+            # score = Q[i] · K[j] / sqrt(d_k)
             scores = []
             qi = query[i]
             for j in range(left, right + 1):
@@ -138,13 +149,15 @@ def solve():
                     dot += qi[t] * kj[t]
                 scores.append(dot / scale)
 
-            # 减去窗口内最大值，避免 exp 溢出
+            # 数值稳定的 Softmax：
+            # 先减去窗口内最大值，再取 exp，最后归一化。
             max_score = max(scores)
             exp_scores = [math.exp(s - max_score) for s in scores]
             total = sum(exp_scores)
             weights = [e / total for e in exp_scores]
 
-            # 用窗口内的权重对 V 加权求和
+            # 用窗口内的权重对 V 加权求和：
+            # output[t] = sum_j weight[j] * V[j][t]
             output = [0.0] * d_k
             for offset, j in enumerate(range(left, right + 1)):
                 weight = weights[offset]
