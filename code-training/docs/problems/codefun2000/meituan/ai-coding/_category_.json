@@ -1,0 +1,9 @@
+{
+  "label": "AI Coding",
+  "position": 40,
+  "link": {
+    "type": "generated-index",
+    "title": "美团 AI Coding",
+    "description": "美团机考中的 AI Coding 类型：在数据工作区里交付可运行的模型或服务，按指标与契约评测。只含题目需求与做题步骤，没有传统输入输出与样例。"
+  }
+}
