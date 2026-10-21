@@ -130,6 +130,9 @@ const config: Config = {
         {
           docs: {
             id: 'default',
+            // 顶层目录顺序写在 sidebars.ts 里（不配的话 Docusaurus 会退回
+            // 全自动侧边栏，顺序只由 sidebar_position / 目录名决定）。
+            sidebarPath: './sidebars.ts',
             editUrl: 'https://github.com/hanphonejan/HanphoneJan.github.io/edit/main/',
             showLastUpdateTime: true,
             remarkPlugins: [remarkMath],
