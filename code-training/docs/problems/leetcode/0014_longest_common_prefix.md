@@ -46,19 +46,24 @@ date_reviewed: []
 ```python
 class Solution:
     def longestCommonPrefix(self, strs: list[str]) -> str:
+        # 空数组没有公共前缀可言，防御性返回空串
         if not strs:
             return ""
 
+        # 求两个字符串的公共前缀
         def common_prefix(a: str, b: str) -> str:
             i = 0
+            # 三个条件缺一不可：两个串都还没到头，且当前字符相同
+            # 任一条件不成立，公共前缀就在 i 处终止
             while i < len(a) and i < len(b) and a[i] == b[i]:
                 i += 1
             return a[:i]
 
+        # 以第一个字符串为起点，逐个「吸收」后面的串：前缀只会越并越短
         prefix = strs[0]
         for s in strs[1:]:
             prefix = common_prefix(prefix, s)
-            if not prefix:  # 提前终止
+            if not prefix:  # 提前终止：前缀已经空了，后面再怎么并也不会变回来
                 return ""
         return prefix
 ```
@@ -74,15 +79,19 @@ class Solution:
 ```python
 class Solution:
     def longestCommonPrefix(self, strs: list[str]) -> str:
+        # 空数组直接返回空串，避免下面取 strs[0] 越界
         if not strs:
             return ""
         # 以第一个字符串为基准，逐字符比较
+        # i 是列下标（所有字符串的第 i 个字符），char 是基准串在这一列的字符
         for i, char in enumerate(strs[0]):
             for s in strs[1:]:
                 # 两种终止条件：
                 # 1. 当前字符串已到末尾（i >= len(s)）
                 # 2. 当前字符与基准字符不同
+                # 顺序不能反：先判越界再取 s[i]，靠 or 的短路避开下标错误
                 if i >= len(s) or s[i] != char:
+                    # 第 i 列已经不匹配，公共前缀就是前 i 列
                     return strs[0][:i]
         # 所有字符都匹配，第一个字符串本身就是公共前缀
         return strs[0]
@@ -103,12 +112,19 @@ from typing import List
 
 class Solution:
     def longestCommonPrefix(self, strs: List[str]) -> str:
+        # 空数组没有公共前缀，同时也避免下面取 strs[0] 越界
         if not strs:
             return ""
+        # 外层按「列」扫描：i 是字符下标，char 是第一个字符串在该列的字符
         for i, char in enumerate(strs[0]):
+            # 内层把这一列拿去和其余每个字符串比
             for s in strs[1:]:
+                # 先判 i 是否超出该串长度（更短的串会先到头），再比字符；
+                # 用 or 的短路特性保证不会先访问 s[i]
                 if i >= len(s) or s[i] != char:
+                    # 第一处不一致出现，公共前缀就定格在前 i 个字符
                     return strs[0][:i]
+        # 基准串整体都被所有串共享，它自己就是最长公共前缀
         return strs[0]
 ```
 

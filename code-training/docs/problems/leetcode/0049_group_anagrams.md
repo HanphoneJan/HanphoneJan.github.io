@@ -63,15 +63,19 @@ date_added: 2026-03-25
 class Solution:
     def groupAnagrams(self, strs: List[str]) -> List[List[str]]:
         n = len(strs)
+        # used[j] 标记第 j 个串已经归过组，避免重复处理
         used = [False] * n
         result = []
 
         for i in range(n):
+            # 已归组的串不再当新组的起点
             if used[i]:
                 continue
             group = [strs[i]]
             used[i] = True
+            # 只和后面的串比，前面的必然已经处理过
             for j in range(i + 1, n):
+                # 排序后相同即互为异位词；弊端是每个 j 都要重排一次 strs[i]
                 if not used[j] and sorted(strs[i]) == sorted(strs[j]):
                     group.append(strs[j])
                     used[j] = True
@@ -169,6 +173,7 @@ class Solution:
 ### 1. key 的生成
 
 ```python
+# join 拼出不可变字符串，哈希值稳定，才可以当字典的 key
 key = ''.join(sorted(s))  # 正确
 key = sorted(s)           # 错误，返回的是列表，不能作为字典 key
 ```
@@ -182,8 +187,10 @@ key = sorted(s)           # 错误，返回的是列表，不能作为字典 key
 ```python
 from collections import defaultdict
 
+# defaultdict(list) 让缺失的 key 自动建出空列表，省掉"先判断再初始化"
 anagrams = defaultdict(list)
 for s in strs:
+    # 排序结果相同的串必然互为异位词，天然落在同一个 key 上
     anagrams[''.join(sorted(s))].append(s)
 return list(anagrams.values())
 ```

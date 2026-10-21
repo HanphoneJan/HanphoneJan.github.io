@@ -71,22 +71,33 @@ date_reviewed: []
 ```python
 class Solution:
     def threeSumClosest(self, nums: list[int], target: int) -> int:
+        # 排序后才有「left 右移变大、right 左移变小」的单调性
         nums.sort()
+        # result 暂存当前最接近的和；min_sub 用无穷大起手，保证第一组必然更新它
         result = None
         min_sub = float('inf')
+        # 固定第一个数，后面还要留两个位置，所以枚举到倒数第三个即可
         for i in range(len(nums) - 2):
+            # 双指针在 i 右侧的区间里夹逼
             left, right = i + 1, len(nums) - 1
+            # 两指针相遇说明以 i 为固定项的组合已全部试过
             while left < right:
+                # sub 是「目标值与当前三数和的差」：正数表示和偏小，负数表示和偏大
                 sub = target - nums[i] - nums[left] - nums[right]
                 if sub == 0:
+                    # 差值 0 已是最优，不可能再有更近的和，直接返回
                     return nums[i] + nums[left] + nums[right]
+                # 只有差值绝对值更小时才更新，避免把更差的解放进来
                 if abs(sub) < min_sub:
                     min_sub = abs(sub)
                     result = nums[i] + nums[left] + nums[right]
                 if sub > 0:
+                    # 和偏小：把左指针右移，换一个更大的数
                     left += 1
                 else:
+                    # 和偏大：把右指针左移，换一个更小的数
                     right -= 1
+        # 循环至少执行过一次，result 一定已被赋值
         return result
 ```
 

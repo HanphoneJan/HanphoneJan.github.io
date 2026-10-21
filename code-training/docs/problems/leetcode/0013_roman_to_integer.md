@@ -65,18 +65,20 @@ date_reviewed: []
 ```python
 class Solution:
     def romanToInt(self, s: str) -> int:
-        # 先处理所有减法特殊情况
+        # 先处理所有减法特殊情况：把六种两字符组合单独放进一张表，命中就整体取值
         special = {"IV": 4, "IX": 9, "XL": 40, "XC": 90, "CD": 400, "CM": 900}
         roman_map = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
 
         ans = 0
         i = 0
         while i < len(s):
-            # 先尝试匹配两字符组合
+            # 先尝试匹配两字符组合：减法组合必须整体识别，否则 IV 会被当成 I + V 直接加成 6
+            # i + 1 < len(s) 保证切片至少有两个字符可取
             if i + 1 < len(s) and s[i:i+2] in special:
                 ans += special[s[i:i+2]]
                 i += 2
             else:
+                # 不是减法组合，就按单个符号正常累加
                 ans += roman_map[s[i]]
                 i += 1
         return ans
@@ -99,11 +101,13 @@ class Solution:
 ```python
 class Solution:
     def romanToInt(self, s: str) -> int:
+        # 符号到数值的映射，查表代替一长串 if/elif
         roman_map = {"M": 1000, "D": 500, "C": 100, "L": 50, "X": 10, "V": 5, "I": 1}
         ans = 0
         n = len(s)
         for i in range(n):
             # 当前符号值小于右侧符号值，说明是减法组合，减去当前值
+            # i + 1 < n 让最后一个字符（没有右侧）必然走加法分支，不必单独处理
             if i + 1 < n and roman_map[s[i]] < roman_map[s[i + 1]]:
                 ans -= roman_map[s[i]]
             else:
@@ -118,10 +122,14 @@ class Solution:
 ```python
 class Solution:
     def romanToInt(self, s: str) -> int:
+        # 七个基本符号对应的数值，用字典把「字符 → 数值」固定下来
         roman_map = {"M": 1000, "D": 500, "C": 100, "L": 50, "X": 10, "V": 5, "I": 1}
         ans = 0
         n = len(s)
+        # 从左到右扫一遍，每个字符只看它和右边邻居的大小关系
         for i in range(n):
+            # 比右侧小说明构成减法组合（如 IV、CM），当前值要先减去，右侧的大值稍后自然加上
+            # i + 1 < n 是为最后一个字符兜底：它没有右侧，必然走加法分支
             if i + 1 < n and roman_map[s[i]] < roman_map[s[i + 1]]:
                 ans -= roman_map[s[i]]
             else:

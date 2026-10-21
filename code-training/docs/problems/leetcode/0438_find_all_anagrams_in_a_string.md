@@ -66,11 +66,14 @@ class Solution:
     def findAnagrams(self, s: str, p: str) -> List[int]:
         k = len(p)
         n = len(s)
+        # 异位词排序后完全相同，所以拿 p 排序后的结果当标准答案
         std = sorted(p)
         ans = []
         
+        # i 是子串左端，最多取到 n - k，保证右端 i + k 不越界
         for i in range(n - k + 1):
             substr = s[i:i + k]
+            # 逐个子串排序后比较，写法最直观但每次都要重排
             if sorted(substr) == std:
                 ans.append(i)
         
@@ -94,21 +97,27 @@ from collections import Counter
 
 class Solution:
     def findAnagrams(self, s: str, p: str) -> List[int]:
+        # 目标频率固定不变，窗口频率随滑动增减
         cnt_p = Counter(p)
         cnt_s = Counter()
         ans = []
         k = len(p)
         
         for right, c in enumerate(s):
+            # 右端点进来，窗口长度加一
             cnt_s[c] += 1
+            # 由右端点反推左端点，窗口填满后长度正好是 k
             left = right - k + 1
             
+            # 窗口还没铺满 k 个字符，不可能是答案
             if left < 0:
                 continue
             
+            # 两个计数器相等即字符种类和数量都一样，就是异位词
             if cnt_s == cnt_p:
                 ans.append(left)
             
+            # 检查完再把左端点移出，为下一轮腾位置
             cnt_s[s[left]] -= 1
         
         return ans
@@ -123,11 +132,13 @@ class Solution:
 ```python
 class Solution:
     def findAnagrams(self, s: str, p: str) -> List[int]:
+        # n 既是要匹配的串长，也是固定的窗口长度
         m, n = len(s), len(p)
+        # s 比 p 还短，窗口根本铺不开
         if m < n:
             return []
         
-        cnt = [0] * 26  # 差值数组
+        cnt = [0] * 26  # 差值数组：正数表示 p 多，负数表示窗口里多
         
         # 初始化：p 中的字符加 1，s 中前 n 个字符减 1
         for i in range(n):
@@ -135,6 +146,7 @@ class Solution:
             cnt[ord(s[i]) - ord('a')] -= 1
         
         ans = []
+        # 26 个字母差值全为 0，说明首窗口就是 p 的异位词
         if self.all_zero(cnt):
             ans.append(0)
         
@@ -143,12 +155,14 @@ class Solution:
             cnt[ord(s[i]) - ord('a')] -= 1      # 右边进入
             cnt[ord(s[i - n]) - ord('a')] += 1  # 左边离开
             
+            # 同样以「全零」为匹配判据，起始下标是 i - n + 1
             if self.all_zero(cnt):
                 ans.append(i - n + 1)
         
         return ans
     
     def all_zero(self, cnt):
+        # 只要有一个字母的数量对不上，就不是异位词
         return all(c == 0 for c in cnt)
 ```
 
@@ -247,6 +261,7 @@ left = right - k + 1
 # 检查窗口是否已满
 if left < 0:
     continue
+# 负下标会从 s 末尾取值，计数被减错，所以窗口没铺满时要先跳过
 ```
 
 ### 2. Counter 比较的时机
@@ -256,13 +271,14 @@ if left < 0:
 if cnt_s == cnt_p:
     ans.append(left)
 cnt_s[s[left]] -= 1
+# 写反了会把「移出 left 之后」的窗口当成答案，记录的起始下标整体错位
 ```
 
 ### 3. 字符计数为 0 的处理
 
 ```python
 # Counter 中计数为 0 的键不会被删除
-# 但这不影响比较结果
+# 但这不影响比较结果：Python 3.10 起 Counter 相等比较会把缺失的键当成 0
 ```
 
 ---
@@ -276,6 +292,7 @@ cnt_s[s[left]] -= 1
 ### 2. 如果要求返回所有异位词本身？
 
 ```python
+# 起始下标已知，切片就能取回每个异位词本身
 return [s[i:i+k] for i in ans]
 ```
 

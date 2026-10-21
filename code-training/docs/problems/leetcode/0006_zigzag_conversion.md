@@ -72,33 +72,42 @@ Z 字形排列的规律是：字符按照一个固定的"之"字形路径填入�
 
 ```python
 def convert(s: str, numRows: int) -> str:
+    # 只有一行时不存在「之」字折返，原样返回（同时避免下面 (numRows - 1) 为 0 时的除零）
     if numRows == 1:
         return s
-    # 构建足够宽的矩阵
+    # 构建足够宽的矩阵：一个完整周期跨越 numRows - 1 列（一列直落 + numRows-2 列斜升）
     n = len(s)
     cycle = 2 * (numRows - 1)
+    # 字符总数除以周期长得到完整周期数，+1 是给不满的最后一个周期留位置，再乘以每周期列数
     num_cols = (n // cycle + 1) * (numRows - 1)
     grid = [[''] * num_cols for _ in range(numRows)]
 
+    # row 是当前行，col 是当前列，going_down 标记是否正处于「向下直落」阶段
     row, col = 0, 0
     going_down = True
     for ch in s:
+        # 先落格，再决定下一步往哪走
         grid[row][col] = ch
         if going_down:
+            # 已经触底：这一步之后改为斜向上，行号减一、列号加一
             if row == numRows - 1:
                 going_down = False
                 row -= 1
                 col += 1
             else:
+                # 还在直落阶段：同一列向下走一行
                 row += 1
         else:
+            # 斜向上走到顶：改为向下，行号加一
             if row == 0:
                 going_down = True
                 row += 1
             else:
+                # 斜向上途中：行号减一、列号加一
                 row -= 1
                 col += 1
 
+    # 按行优先顺序摊平，空字符串不影响结果
     return ''.join(ch for row in grid for ch in row)
 ```
 

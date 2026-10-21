@@ -73,22 +73,33 @@ date_reviewed: []
 ```python
 class Solution:
     def decodeString(self, s: str) -> str:
+        # 栈里存 (外层已解码的串, 待重复次数)，每遇到 [ 就压一层
         stack = []
+        # 数字可能有多位，要边读边累加
         num = 0
+        # res 是「当前层」已经解码出来的内容
         res = ''
         
+        # 逐字符扫描，每种字符对应一个动作
         for c in s:
             if c.isdigit():
+                # 连续数字按十进制累加，否则 "12" 会被读成 1 和 2
                 num = num * 10 + int(c)
             elif c == '[':
+                # 进入子问题前，先把外层的进度和重复次数存起来
                 stack.append((res, num))
+                # 新的一层从空串、次数 0 开始
                 res, num = '', 0
             elif c == ']':
+                # 出栈恢复外层状态，repeat 是这段子串要重复的次数
                 prev_res, repeat = stack.pop()
+                # 子串重复后接回外层已解码的部分
                 res = prev_res + res * repeat
             else:
+                # 普通字母直接拼到当前层
                 res += c
         
+        # 扫完时栈必为空，res 就是完整结果
         return res
 ```
 
@@ -106,22 +117,32 @@ class Solution:
 class Solution:
     def decodeString(self, s: str) -> str:
         def dfs(i):
+            # 从位置 i 开始解码，返回 (解码结果, 停下来的下标)
             res = ''
+            # num 记录最近读到的重复次数
             num = 0
+            # 一路向右扫，遇到 ] 或字符串结尾就返回
             while i < len(s):
                 if s[i].isdigit():
+                    # 多位数字按十进制累加
                     num = num * 10 + int(s[i])
                 elif s[i] == '[':
+                    # 递归解码括号内部，返回的新下标要接住
                     sub, i = dfs(i + 1)
+                    # 括号内容重复后接上，次数清空给下一段用
                     res += sub * num
                     num = 0
                 elif s[i] == ']':
+                    # 当前层结束，把结果和 ] 的位置一起交回上层
                     return res, i
                 else:
+                    # 普通字母直接追加
                     res += s[i]
+                # 各分支统一前进一步；[ 分支返回时停在 ] 上，正好跳过它
                 i += 1
             return res, i
         
+        # 只关心解码后的字符串，下标用不上
         return dfs(0)[0]
 ```
 
@@ -224,6 +245,7 @@ class Solution:
 num = int(c)  # 遇到 '1' 就认为是 1
 
 # 正确
+# 遇到 "12" 时先得到 1，再算 1*10+2 得到 12
 num = num * 10 + int(c)  # 连续数字要累加
 ```
 
@@ -233,9 +255,11 @@ num = num * 10 + int(c)  # 连续数字要累加
 
 ```python
 # 设计一：存储 (字符串, 数字) 元组
+# 元组把两种状态绑在一起，出栈时不会错位
 stack.append((current_str, repeat_count))
 
 # 设计二：统一存储字符串，数字也作为字符串
+# 取出时还要再 int() 还原成次数
 stack.append(str(num))
 ```
 
@@ -243,6 +267,7 @@ stack.append(str(num))
 
 ```python
 # 遇到 ']' 时返回
+# 递归的出口：括号闭合就交回上层，由上层继续推进下标
 if s[i] == ']':
     return res, i  # 返回结果和当前位置
 ```

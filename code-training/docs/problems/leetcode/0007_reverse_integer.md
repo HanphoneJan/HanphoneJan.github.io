@@ -64,9 +64,13 @@ x = 123
 
 ```python
 def reverse(x: int) -> int:
+    # 先把符号摘下来，后面只反转绝对值，避免负号和数字混在一起处理
     sign = -1 if x < 0 else 1
+    # abs(x) 转成字符串后逆序，得到「数字字符反过来」的文本
     x_str = str(abs(x))[::-1]
+    # 再把符号乘回去；前导零会被 int() 自动丢掉
     result = sign * int(x_str)
+    # 反转后可能超出 32 位有符号整数范围，按题意返回 0
     if result < -2**31 or result > 2**31 - 1:
         return 0
     return result

@@ -64,11 +64,14 @@ date_reviewed: []
 
 ```python
 def hasCycle(head):
+    # 存已经走过的节点引用，用集合保证查找是 O(1)
     visited = set()
     while head:
+        # 又走到走过的节点，说明指针绕回来了，存在环
         if head in visited:
             return True
         visited.add(head)
+        # 不断后移，没有环时最终会走到 None 退出循环
         head = head.next
     return False
 ```

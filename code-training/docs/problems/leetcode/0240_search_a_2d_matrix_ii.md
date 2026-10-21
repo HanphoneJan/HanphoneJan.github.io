@@ -76,11 +76,14 @@ date_added: 2026-04-09
 
 ```python
 def searchMatrix_brute(matrix, target):
+    # 行数、列数分开取，后面两层循环要把整个矩阵走一遍
     m, n = len(matrix), len(matrix[0])
     for i in range(m):
         for j in range(n):
             if matrix[i][j] == target:
+                # 命中就立刻返回，不必再比较剩下的元素
                 return True
+    # 全部走完都没命中，说明目标不存在
     return False
 ```
 
@@ -93,12 +96,16 @@ def searchMatrix_brute(matrix, target):
 对每一行进行二分查找。
 
 ```python
+# bisect_left 返回第一个 >= target 的下标，正好用来做存在性判断
 import bisect
 
 def searchMatrix_binary_search(matrix, target):
     m, n = len(matrix), len(matrix[0])
+    # 逐行二分：每一行都有序，行内定位只需要 O(log n)
     for i in range(m):
+        # 这一行里第一个不小于 target 的位置
         idx = bisect.bisect_left(matrix[i], target)
+        # 先防越界，再确认该位置的值真的等于 target
         if idx < n and matrix[i][idx] == target:
             return True
     return False
@@ -249,12 +256,14 @@ class Solution:
 ### 2. 边界条件
 
 ```python
+# x 只增、y 只减，所以越出下边界或左边界就说明搜完了
 while x < m and y >= 0:  # 注意边界是 < m 和 >= 0
 ```
 
 ### 3. 移动方向的判断
 
 ```python
+# 从右上角出发，向左一定变小、向下一定变大，移动方向是唯一的
 if matrix[x][y] > target:
     y -= 1   # 当前值太大，向左（减小）
 else:

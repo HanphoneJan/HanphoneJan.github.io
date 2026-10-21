@@ -51,11 +51,15 @@ from itertools import permutations
 
 class Solution:
     def nextPermutation(self, nums: List[int]) -> None:
+        # 生成全部排列并去重排序，就得到了字典序序列
         perms = sorted(set(permutations(nums)))
+        # 当前排列在序列中的位置，它的下一个位置就是答案
         idx = perms.index(tuple(nums))
+        # 切片赋值才能原地改写，让调用方看到 nums 真的变了
         if idx + 1 < len(perms):
             nums[:] = list(perms[idx + 1])
         else:
+            # 当前已是最大排列，回绕到字典序最小（升序）
             nums[:] = list(perms[0])
 ```
 

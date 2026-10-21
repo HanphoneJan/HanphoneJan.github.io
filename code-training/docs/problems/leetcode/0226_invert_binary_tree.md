@@ -61,9 +61,12 @@ date_reviewed: []
 
 ```python
 def invertTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+    # 空节点没有左右子树可换，直接返回
     if not root:
         return None
+    # 复制一份当前节点，原树保持不动
     new_root = TreeNode(root.val)
+    # 左孩子接「翻转后的右子树」、右孩子接「翻转后的左子树」，这就是翻转
     new_root.left = self.invertTree(root.right)
     new_root.right = self.invertTree(root.left)
     return new_root
@@ -77,14 +80,17 @@ def invertTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
 
 ```python
 def invertTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+    # 递归出口：空节点无处可翻，原样返回
     if not root:
         return None
     # 先递归翻转
+    # 两个结果必须先存下来：一旦改写 root.left，就再也找不到原来的左子树
     left = self.invertTree(root.left)
     right = self.invertTree(root.right)
     # 再交换
     root.left = right
     root.right = left
+    # 当前节点已翻转完，返回给父节点接链
     return root
 ```
 
@@ -182,6 +188,7 @@ class Solution:
 
 **错误**：
 ```python
+# 子树确实已经原地翻好，但本函数返回 None，父节点接不到它
 self.invertTree(root.left)
 self.invertTree(root.right)
 # 没有 return root
@@ -189,6 +196,7 @@ self.invertTree(root.right)
 
 **正确**：
 ```python
+# 翻转虽然是原地改指针，但调用方要靠返回值接住这棵子树
 return root  # 必须返回根节点
 ```
 
@@ -198,11 +206,13 @@ return root  # 必须返回根节点
 
 ```python
 # 方案一：先递归，后交换
+# 拿到的是两棵已经翻转好的子树，最后对调它们的位置
 left = self.invertTree(root.left)
 right = self.invertTree(root.right)
 root.left, root.right = right, left
 
 # 方案二：先交换，后递归
+# 交换后 root.left 已经是原右子树，对它递归同样能翻转
 root.left, root.right = root.right, root.left
 self.invertTree(root.left)
 self.invertTree(root.right)
@@ -211,6 +221,7 @@ self.invertTree(root.right)
 ### 3. 空节点处理
 
 ```python
+# 空节点上取 .left / .right 会报错，先挡住；返回 None 而不是 root
 if not root:
     return None  # 不是 return root
 ```

@@ -61,11 +61,15 @@ date_reviewed: []
 class Solution:
     def dailyTemperatures(self, temperatures: List[int]) -> List[int]:
         n = len(temperatures)
+        # 默认 0 表示「后面不会再升高」，找不到更高温度时正好保留这个值
         ans = [0] * n
         
+        # 以每一天为起点，向右找第一个更暖的日子
         for i in range(n):
+            # 从 i + 1 开始，只看「下一个」及更后面，不必回头看
             for j in range(i + 1, n):
                 if temperatures[j] > temperatures[i]:
+                    # 天数之差就是等待天数，找到即停，保证是最近的一天
                     ans[i] = j - i
                     break
         
@@ -100,8 +104,10 @@ class Solution:
         for i, t in enumerate(temperatures):
             # 当前温度是栈中某些天的「下一个更高温度」
             while st and t > temperatures[st[-1]]:
+                # 栈顶那天等到了：最近的一个更高温度就是今天，结算后弹出
                 j = st.pop()
                 ans[j] = i - j
+            # 当前这天还没等到更高的温度，入栈继续等
             st.append(i)
         
         return ans
@@ -118,15 +124,19 @@ class Solution:
         ans = [0] * n
         st = []
         
+        # 从右往左扫，处理 i 时它右边所有天的答案都已经算过
         for i in range(n - 1, -1, -1):
             t = temperatures[i]
             # 弹出温度小于等于当前温度的元素
+            # 它们不比当前天更暖又更远，永远不可能是当前天或更左边那天的答案
             while st and t >= temperatures[st[-1]]:
                 st.pop()
             
+            # 弹完之后栈顶就是右边第一个比今天暖和的日子
             if st:
                 ans[i] = st[-1] - i
             
+            # 今天入栈，成为左边那些天的一个候选
             st.append(i)
         
         return ans
@@ -215,6 +225,7 @@ while st and t > temperatures[st[-1]]:
 
 # 注意：找「下一个更大元素」用单调递减栈
 # 找「下一个更小元素」用单调递增栈
+# 栈里留下的都是还没等到更高温度的天，从栈底到栈顶越来越冷
 ```
 
 ### 2. 等号的处理
@@ -225,12 +236,14 @@ while st and t > temperatures[st[-1]]:
 
 # 如果题目要求「大于等于」，用 >=
 while st and t >= temperatures[st[-1]]:
+# 本题要「更高」，相等不算更高，所以从左扫时用 >
 ```
 
 ### 3. 答案的初始化
 
 ```python
 ans = [0] * n  # 默认为 0，表示后面没有更高的温度
+# 这样最后一个元素和所有「之后不会升温」的位置都不用额外处理
 ```
 
 ---

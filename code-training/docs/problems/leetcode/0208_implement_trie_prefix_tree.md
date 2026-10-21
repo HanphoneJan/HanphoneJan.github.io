@@ -63,13 +63,16 @@ Trie 是一种**树形数据结构**，用于高效地存储和检索字符串�
 用哈希表存储所有单词，搜索时遍历所有单词检查。
 
 ```python
+# 用两个集合分别存「完整单词」和「所有前缀」，查询退化成集合判存
 class Trie:
     def __init__(self):
         self.words = set()
+        # 代价在这里：每个单词的每个前缀都要单独存一份
         self.prefixes = set()
 
     def insert(self, word: str) -> None:
         self.words.add(word)
+        # 依次切出 word[:1]、word[:2] … word 本身，全部塞进前缀集合
         for i in range(len(word)):
             self.prefixes.add(word[:i+1])
 ```
@@ -83,9 +86,11 @@ class Trie:
 每个节点用字典存储子节点，适用于字符集较大的情况。
 
 ```python
+# 链表式 Trie 的节点：子节点放在字典里，用到哪个字符才建哪个分支
 class TrieNode:
     def __init__(self):
         self.children = {}  # 字典存储子节点
+        # 只有恰好在这里结束的单词才算存在，路径中间的节点不算
         self.is_end = False
 ```
 
@@ -218,6 +223,7 @@ def insert(self, word: str) -> None:
     for c in word:
         # ... 遍历
         cur = cur.son[idx]
+    # 停在最后一个字符的节点上标记结束，search 才能分清「前缀」和「完整单词」
     cur.end = True  # 必须标记！
 ```
 
@@ -226,9 +232,11 @@ def insert(self, word: str) -> None:
 ```python
 def search(self, word: str) -> bool:
     node = self._find(word)
+    # 路径通还不够，要确认单词正好在这里结束，否则 "app" 会匹配上 "apple"
     return node is not None and node.end  # 必须检查 end
 
 def startsWith(self, prefix: str) -> bool:
+    # 前缀只要求这段路径存在，不关心它是不是词尾
     return self._find(prefix) is not None  # 不需要检查 end
 ```
 
@@ -236,9 +244,10 @@ def startsWith(self, prefix: str) -> bool:
 
 ```python
 # 正确：小写字母转索引
+# 26 个字母按 'a'..'z' 依次映射到 0..25，正好是 son 数组的下标
 idx = ord(c) - ord('a')  # 'a' -> 0, 'b' -> 1, ...
 
-# 如果是大写字母或其他字符，需要调整
+# 遇到大写字母或数字，这个差值会变成负数，映射就错了，那种情况要改用字典存子节点
 ```
 
 ---

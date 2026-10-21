@@ -55,21 +55,25 @@ date_reviewed: []
 ```python
 class Solution:
     def diameterOfBinaryTree(self, root: Optional[TreeNode]) -> int:
+        # 空树没有边，直径是 0
         if not root:
             return 0
         
-        # 经过根节点的直径
+        # 经过根节点的直径：左右两边各自往下能走多远，加起来就是穿过根的边数
         through_root = self.depth(root.left) + self.depth(root.right)
         # 左子树的直径
         left_dia = self.diameterOfBinaryTree(root.left)
         # 右子树的直径
         right_dia = self.diameterOfBinaryTree(root.right)
         
+        # 最长的路径可能在根上，也可能完全落在某一棵子树里，三者取最大
         return max(through_root, left_dia, right_dia)
     
     def depth(self, node):
+        # depth 返回以 node 为根的子树高度（节点数），空树高度为 0
         if not node:
             return 0
+        # 取更深的那边，再加上自己这一层
         return max(self.depth(node.left), self.depth(node.right)) + 1
 ```
 
@@ -89,14 +93,20 @@ class Solution:
 ```python
 class Solution:
     def diameterOfBinaryTree(self, root: Optional[TreeNode]) -> int:
+        # 用实例属性保存全局最大直径，递归过程中随时更新
         self.ans = 0
         
+        # dfs(node) 返回以 node 为根的子树高度（节点数）
         def dfs(node):
+            # 空子树高度为 0，同时让下面的加法自动处理「只有一侧孩子」的情况
             if not node:
                 return 0
+            # 先拿到左右两边的高度，这一步是后序遍历的顺序
             left = dfs(node.left)
             right = dfs(node.right)
+            # 经过当前节点的路径边数恰是左右高度之和，试着刷新答案
             self.ans = max(self.ans, left + right)
+            # 但父节点只能沿一侧往下延伸，所以返回较高的那边再 +1
             return max(left, right) + 1
         
         dfs(root)
@@ -205,6 +215,7 @@ return max(left, right) + 1
 
 # 但更新答案时用的是边数（深度之和）
 self.ans = max(self.ans, left + right)
+# 两者不能混用：返回值要往上传给父节点，答案只在当前节点结算一次
 ```
 
 ### 3. 空节点的处理
@@ -212,6 +223,7 @@ self.ans = max(self.ans, left + right)
 ```python
 if not node:
     return 0  # 空节点的深度为 0
+# 不用 -1：这样叶子节点算出的 left + right 正好是 0，直径的边数直接成立
 ```
 
 ---

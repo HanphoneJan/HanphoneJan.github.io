@@ -44,17 +44,22 @@ date_reviewed: []
 ```python
 class Solution:
     def isPalindrome(self, x: int) -> bool:
+        # 负数带负号，倒序读一定不同，先排除
         if x < 0:
             return False
         digits = []
         n = x
+        # 用取余取末位、整除去掉末位的方式把每一位拆出来
+        # 循环条件 n > 0 让 0 本身得到空列表，后面按空列表判为回文，符合题意
         while n > 0:
             digits.append(n % 10)
             n //= 10
         # digits 是从低位到高位的顺序
         # 判断是否回文：digits[i] 应等于 digits[len-1-i]
         length = len(digits)
+        # 只需比较前一半：对称性保证后一半会自动对上
         for i in range(length // 2):
+            # 一旦有一对不对称就不可能是回文，可以立刻返回
             if digits[i] != digits[length - 1 - i]:
                 return False
         return True
@@ -111,8 +116,11 @@ class Solution:
         if x < 0 or (x % 10 == 0 and x != 0):
             return False
 
+        # reversed_half 装「已经反转的末几位」，x 不断被削掉末位，剩下的就是前半段
         reversed_half = 0
+        # 当反转结果还没有追上剩余部分时，说明还没走到中点，继续翻
         while x > reversed_half:
+            # 把当前末位接到反转结果末尾，同时把该位从 x 上削掉
             reversed_half = reversed_half * 10 + x % 10
             x //= 10
 
@@ -132,13 +140,17 @@ class Solution:
 ```python
 class Solution:
     def isPalindrome(self, x: int) -> bool:
+        # 负数的负号只在最左边，倒过来读不同，直接排除
         if x < 0:
             return False
         s = str(x)
+        # 只需比较前一半与后一半的对称位置，mid 就是需要比较的次数
         mid = len(s) // 2
         for i in range(mid):
+            # len(s) - 1 - i 是从右往左数第 i 个位置，i 递增时两指针自然向中间靠拢
             if s[i] != s[len(s) - 1 - i]:
                 return False
+        # 全部对称，是回文数；mid = 0 的单个数字不进循环，直接返回 True
         return True
 ```
 

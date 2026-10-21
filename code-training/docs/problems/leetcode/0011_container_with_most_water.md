@@ -55,9 +55,13 @@ class Solution:
     def maxArea(self, height: List[int]) -> int:
         n = len(height)
         max_area = 0
+        # 枚举左边界
         for i in range(n):
+            # 右边界只取 i 之后，保证每个线对只被算一次
             for j in range(i + 1, n):
+                # 宽度是两条线的水平距离
                 width = j - i
+                # 高度只能取较矮的那条，水会从短边溢出
                 current_height = min(height[i], height[j])
                 max_area = max(max_area, width * current_height)
         return max_area
@@ -92,16 +96,21 @@ class Solution:
 ```python
 class Solution:
     def maxArea(self, height: List[int]) -> int:
+        # 从最宽的一对开始：宽度取到最大，之后每移动一步宽度只会减少
         left = 0
         right = len(height) - 1
         max_area = 0
+        # 两指针相遇时所有「可能更优」的组合都已被检查过
         while left < right:
             width = right - left
+            # 高度由较矮的一侧决定
             current_height = min(height[left], height[right])
             max_area = max(max_area, width * current_height)
             if height[left] < height[right]:
+                # 以这根矮线为端点的组合都不会更大：宽度只会缩小，高度又超不过它
                 left += 1   # 左边更短，移动左指针
             else:
+                # 右侧更矮（或等高）：丢弃右侧不会损失最优解
                 right -= 1  # 右边更短（或相等），移动右指针
         return max_area
 ```

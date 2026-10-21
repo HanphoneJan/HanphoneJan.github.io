@@ -57,14 +57,19 @@ date_reviewed: []
 对于第 i 间房屋，递归考虑偷或不偷：
 
 ```python
+# 从最后一间往前倒推：每间房只有「偷」和「不偷」两种走法
 def rob(self, nums: List[int]) -> int:
+    # dfs(i) 表示只看下标 0..i 这些房子能偷到的最高金额
     def dfs(i):
+        # 没有房子可偷，金额为 0 —— 这也是递归的出口
         if i < 0:
             return 0
         # 选择1：偷第i间，则不能偷第i-1间
         # 选择2：不偷第i间
+        # 两者取大者，就是 dfs(i) 的答案
         return max(dfs(i - 2) + nums[i], dfs(i - 1))
 
+    # 从最后一间开始向下推，问题逐步缩小到只考虑前几间
     return dfs(len(nums) - 1)
 ```
 
@@ -77,16 +82,21 @@ def rob(self, nums: List[int]) -> int:
 ```python
 def rob(self, nums: List[int]) -> int:
     n = len(nums)
+    # 下标只到 n-1，缓存开 n 格就够；金额非负，用 -1 表示「还没算过」
     memo = [-1] * n
 
     def dfs(i):
+        # 边界：已经越过第一间房，没有可偷的，金额记 0
         if i < 0:
             return 0
+        # 算过就直接取缓存，正是这一步把指数级搜索压成 O(n)
         if memo[i] != -1:
             return memo[i]
+        # 两种选择取大者，先写进缓存再返回，同一个 i 只算一次
         memo[i] = max(dfs(i - 2) + nums[i], dfs(i - 1))
         return memo[i]
 
+    # 入口仍是「考虑所有房子」的那个下标
     return dfs(n - 1)
 ```
 

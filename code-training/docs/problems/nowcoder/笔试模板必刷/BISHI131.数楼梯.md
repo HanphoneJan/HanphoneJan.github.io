@@ -103,8 +103,10 @@ f(n) = f(n-1) + f(n-2)
 
 ```python
 def f(n):
+    # 边界：1 阶只有"迈 1 阶"一种，2 阶有 1+1 与 2 两种
     if n <= 2:
         return n
+    # 最后一步只能迈 1 阶或 2 阶，两类走法不重叠，所以直接相加
     return f(n - 1) + f(n - 2)
 ```
 
@@ -117,7 +119,9 @@ def f(n):
 
 ```python
 a, b = 1, 1
+# (a, b) 始终是相邻两项；循环 n 轮就是把窗口右移 n 格
 for _ in range(n):
+    # 右边先算完再赋值，所以 a 取旧 b、b 取旧 a+b，不会互相覆盖
     a, b = b, (a + b) % MOD
 # 循环结束后 a 就是答案
 ```
@@ -141,7 +145,7 @@ def solve() -> None:
     if not data:
         return
     n = int(data[0])
-    a, b = 1, 1  # a = f(1), b = f(2)；滚动到 a = f(n+1)
+    a, b = 1, 1  # 初始是 (f(0), f(1))；循环 n 轮后 a 就是 f(n)
     for _ in range(n):
         a, b = b, (a + b) % MOD
     sys.stdout.write(str(a % MOD) + "\n")

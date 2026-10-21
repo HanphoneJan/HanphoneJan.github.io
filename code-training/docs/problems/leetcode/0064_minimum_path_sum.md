@@ -53,11 +53,15 @@ class Solution:
     def minPathSum(self, grid: List[List[int]]) -> int:
         m, n = len(grid), len(grid[0])
 
+        # dfs(i, j) = 从 (i, j) 走到右下角的最小路径和
         def dfs(i, j):
+            # 先判终点：走到终点后只剩当前格子的值，无需再分方向
             if i == m - 1 and j == n - 1:
                 return grid[i][j]
+            # 越界的方向走不通，返回 inf 让 min 主动放弃这一支
             if i >= m or j >= n:
                 return float('inf')
+            # 向下或向右任选其一，取两条路里更小的那个，再加上当前格
             return grid[i][j] + min(dfs(i + 1, j), dfs(i, j + 1))
 
         return dfs(0, 0)
@@ -201,15 +205,19 @@ dp[2][2] = min(dp[1][2], dp[2][1]) + 1 = min(6, 8) + 1 = 7
 ```python
 def minPathSum(self, grid):
     m, n = len(grid), len(grid[0])
+    # 一维 dp：滚动保存「当前行」每个位置的最小路径和
     dp = [0] * n
     dp[0] = grid[0][0]
 
+    # 第一行只能一路从左边过来，先单独铺好第一行
     for j in range(1, n):
         dp[j] = dp[j-1] + grid[0][j]
 
     for i in range(1, m):
+        # 第一列上方没有格子，只能从上面下来，直接累加
         dp[0] += grid[i][0]
         for j in range(1, n):
+            # 此刻 dp[j] 还是上一行的值（从上方来），dp[j-1] 已是本行新值（从左方来）
             dp[j] = min(dp[j], dp[j-1]) + grid[i][j]
 
     return dp[-1]

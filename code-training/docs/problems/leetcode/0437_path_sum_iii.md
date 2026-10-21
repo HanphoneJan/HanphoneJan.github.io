@@ -62,6 +62,7 @@ date_reviewed: []
 ```python
 class Solution:
     def pathSum(self, root: Optional[TreeNode], targetSum: int) -> int:
+        # 空树没有任何路径
         if not root:
             return 0
         
@@ -73,9 +74,12 @@ class Solution:
     def countFromRoot(self, node, remain):
         if not node:
             return 0
+        # count 统计「以传入节点为起点」的路径条数
         count = 0
+        # remain 被扣到 0 说明当前节点正好收尾，路径可以停在任意节点，不必是叶子
         if node.val == remain:
             count += 1
+        # 继续往下延伸：目标余额扣掉当前节点的值，交给左右孩子
         count += self.countFromRoot(node.left, remain - node.val)
         count += self.countFromRoot(node.right, remain - node.val)
         return count
@@ -105,22 +109,28 @@ from collections import defaultdict
 
 class Solution:
     def pathSum(self, root: Optional[TreeNode], targetSum: int) -> int:
+        # cnt[prefix] 记录「从根走到当前节点这条链上」各前缀和出现过几次
         cnt = defaultdict(int)
         cnt[0] = 1  # 前缀和为 0 的路径有 1 条
         ans = 0
         
         def dfs(node, curr_sum):
             nonlocal ans
+            # 空节点不用统计，直接返回
             if not node:
                 return
             
+            # 前缀和沿根到当前节点的路径累加
             curr_sum += node.val
+            # 以当前节点为终点：前面出现过几次 curr_sum - targetSum，就有几条路径
             ans += cnt[curr_sum - targetSum]
             
+            # 把自己的前缀和登记进表，供孩子节点当「祖先」用
             cnt[curr_sum] += 1
             dfs(node.left, curr_sum)
             dfs(node.right, curr_sum)
-            cnt[curr_sum] -= 1  # 回溯
+            # 回溯必须减 1：离开这棵子树后，它上面这些前缀和不该再参与统计
+            cnt[curr_sum] -= 1
         
         dfs(root, 0)
         return ans
@@ -227,7 +237,7 @@ class Solution:
 ```python
 # 必须初始化 cnt[0] = 1
 cnt = defaultdict(int)
-cnt[0] = 1  # 表示从根节点到当前节点的路径和恰好等于 targetSum
+cnt[0] = 1  # 空路径：让「路径正好从根节点开始」这种情况也能被统计到
 ```
 
 ### 2. 回溯的时机
@@ -238,6 +248,7 @@ cnt[curr_sum] += 1
 dfs(node.left, curr_sum)
 dfs(node.right, curr_sum)
 cnt[curr_sum] -= 1  # 回溯时必须减 1
+# 少了这一句，左子树的前缀和会漏到右子树，路径会跨过当前节点被误算
 ```
 
 ### 3. 前缀和的计算顺序
@@ -249,6 +260,7 @@ curr_sum += node.val
 ans += cnt[curr_sum - targetSum]
 # 最后将当前前缀和加入哈希表
 cnt[curr_sum] += 1
+# 顺序写反会把自己也当成祖先，targetSum 为 0 时会凭空多算一条
 ```
 
 ---

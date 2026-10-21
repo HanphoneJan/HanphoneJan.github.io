@@ -73,7 +73,9 @@ date_added: 2026-04-09
 def maxSlidingWindow_brute(nums, k):
     n = len(nums)
     result = []
+    # 长度为 k 的窗口左端点最多到 n-k，再往后就凑不满 k 个元素
     for i in range(n - k + 1):
+        # 用窗口第一个元素作为比较起点，省去用 -inf 初始化
         window_max = nums[i]
         for j in range(i, i + k):
             window_max = max(window_max, nums[j])
@@ -95,17 +97,23 @@ from heapq import heappush, heappop
 def maxSlidingWindow_heap(nums, k):
     n = len(nums)
     result = []
+    # 存 (-值, 下标)：Python 只有小顶堆，取负号后才等价于大顶堆
     max_heap = []  # 存储 (-值, 下标)
     
     for i in range(n):
+        # 每个元素都先入堆；旧元素不急着删，等它爬到堆顶再判断
         heappush(max_heap, (-nums[i], i))
         
         # 移除窗口外的元素
+        # 窗口左端是 i-k+1，下标 <= i-k 说明已经滑出窗口
+        # 只清理堆顶：堆顶是当前最大值，它出窗才会影响答案
         while max_heap[0][1] <= i - k:
             heappop(max_heap)
         
         # 窗口形成后开始记录答案
+        # i 从 0 数，走到 k-1 时窗口才凑满 k 个元素
         if i >= k - 1:
+            # 堆顶存的是负值，取负还原成真实最大值
             result.append(-max_heap[0][0])
     
     return result
@@ -224,6 +232,7 @@ class Solution:
 
 ```python
 # 正确：存储下标
+# 下标既能反查元素值，又能和窗口左端点比较，判断是否已滑出
 q.append(i)
 if q[0] < left:  # 通过下标判断是否滑出
     q.popleft()
@@ -243,6 +252,7 @@ if q[0] < left:  # 通过下标判断是否滑出
 
 ```python
 if left >= 0:  # 窗口已形成
+    # 窗口左端点 left 正好可以当答案数组的下标
     ans[left] = nums[q[0]]
 ```
 

@@ -51,7 +51,9 @@ date_reviewed: []
 from collections import Counter
 
 def singleNumber(nums):
+    # 一次性统计每个数字出现的次数，键是数字、值是次数
     cnt = Counter(nums)
+    # 次数为 1 的那个键就是答案
     for k, v in cnt.items():
         if v == 1:
             return k
@@ -67,9 +69,12 @@ def singleNumber(nums):
 ```python
 def singleNumber(nums):
     nums.sort()
+    # 排序后相同的数一定相邻，按「每两个一组」检查
     for i in range(0, len(nums) - 1, 2):
+        # 组内不相等，说明前一个没有配对，它就是只出现一次的数
         if nums[i] != nums[i + 1]:
             return nums[i]
+    # 前面都成对，答案只能是最后剩下的那个（数组长度必为奇数）
     return nums[-1]
 ```
 
@@ -87,8 +92,10 @@ def singleNumber(nums):
 
 ```python
 def singleNumber(nums):
+    # 0 是异或的单位元：0 ^ a = a，所以从 0 起手不改变结果
     x = 0
     for num in nums:
+        # 异或满足交换律、结合律，成对的数会两两抵消成 0
         x ^= num
     return x
 ```

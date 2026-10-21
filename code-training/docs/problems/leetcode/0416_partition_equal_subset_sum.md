@@ -62,20 +62,27 @@ date_reviewed: []
 class Solution:
     def canPartition(self, nums: List[int]) -> bool:
         total = sum(nums)
+        # 总和是奇数时两半不可能相等，直接排除，省掉整棵搜索树
         if total % 2:
             return False
+        # 只需要凑出一半，另一半自然就是剩下的数
         target = total // 2
         n = len(nums)
 
+        # backtrack(i, current_sum)：考虑第 i 个数时，手里已选出 current_sum 的和
         def backtrack(i, current_sum):
+            # 恰好凑满，说明找到了一个合法的子集
             if current_sum == target:
                 return True
+            # 已经超出目标（数都是正数，继续加只会更大）或没数可选了
             if current_sum > target or i >= n:
                 return False
             # 选或不选第 i 个数
+            # 两条分支任意一条成功即可，所以用 or 连接并短路
             return backtrack(i + 1, current_sum + nums[i]) or \
                    backtrack(i + 1, current_sum)
 
+        # 从第 0 个数、和为 0 开始搜索
         return backtrack(0, 0)
 ```
 
@@ -93,19 +100,25 @@ from functools import cache
 class Solution:
     def canPartition(self, nums: List[int]) -> bool:
         total = sum(nums)
+        # 奇数总和无法平分，先挡住，避免后面白算
         if total % 2:
             return False
         target = total // 2
         n = len(nums)
 
+        # dfs(i, remain)：从第 i 个数开始选，还能不能恰好凑出 remain
         @cache
         def dfs(i, remain):
+            # 剩余额度为 0，这条路走通了
             if remain == 0:
                 return True
+            # 额度变负（负数不能再加回来）或已经没数可选
             if remain < 0 or i >= n:
                 return False
+            # 选第 i 个数就扣掉它的值，不选就跳过；任一成功即可
             return dfs(i + 1, remain - nums[i]) or dfs(i + 1, remain)
 
+        # 从第 0 个数开始，凑出 target 即可
         return dfs(0, target)
 ```
 
@@ -128,18 +141,24 @@ dp[j] = dp[j] or dp[j - nums[i]]
 class Solution:
     def canPartition(self, nums: List[int]) -> bool:
         total = sum(nums)
+        # 总和为奇数时不存在平分方案
         if total % 2:
             return False
 
         target = total // 2
+        # dp[j] 表示能否凑出和为 j；和为 0 天然成立，其余先当作凑不出
         dp = [True] + [False] * target
 
         for num in nums:
+            # 倒序：保证 dp[j - num] 还是「上一轮」的旧值，
+            # 即本轮不会重复使用 num（0/1 背包的关键）
             for j in range(target, num - 1, -1):
                 dp[j] = dp[j] or dp[j - num]
+            # 提前收工：目标已经可达，后面的数不用再看
             if dp[target]:
                 return True
 
+        # 所有数都用完仍没凑出 target
         return dp[target]
 ```
 
@@ -227,7 +246,7 @@ class Solution:
 ### 1. 总和为奇数的判断
 
 ```python
-# 必须先判断总和是否为奇数
+# 必须先判断总和是否为奇数：两半都是整数和，奇数不可能平分
 if sum(nums) % 2:
     return False
 ```
@@ -240,6 +259,7 @@ for j in range(target, num - 1, -1):
     dp[j] = dp[j] or dp[j - num]
 
 # 正序遍历会导致重复计算（完全背包）
+# 因为正序时 dp[j - num] 已被本轮更新过，同一个 num 可能被用多次
 ```
 
 ### 3. 递归的边界条件
@@ -250,6 +270,7 @@ if remain == 0:      # 先判断是否凑出目标
     return True
 if remain < 0:       # 再判断是否超出
     return False
+# 顺序很关键：先认下「已经凑满」，再排除「走不通」，否则成功的一层会被误判
 ```
 
 ---
