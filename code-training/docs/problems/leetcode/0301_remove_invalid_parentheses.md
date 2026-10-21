@@ -60,27 +60,23 @@ date_added: 2026-04-24
 - 遇到 `'('`，`lremove++`
 - 遇到 `')'`：如果 `lremove > 0`，说明有匹配的 `'('`，`lremove--`；否则 `rremove++`
 
-例如 `"()())()"`：
-- `(`: lremove=1
-- `)`: lremove=0
-- `(`: lremove=1
-- `)`: lremove=0
-- `)`: rremove=1
-- `(`: lremove=1
-- `)`: lremove=0
+例如 `"()())()"`，从左到右扫一遍：
 
-需要删除 1 个左括号和 0 个右括号... 等等，让我重新算：
+- 遇到 `'('`：暂时多出一个左括号，`lremove += 1`
+- 遇到 `')'`：若 `lremove > 0`，说明它能和之前多出的左括号配对，`lremove -= 1`；否则这个右括号没人配，`rremove += 1`
 
-实际：`"()())()"`
-- `(`: lremove=1
-- `)`: lremove=0 (匹配)
-- `(`: lremove=1
-- `)`: lremove=0 (匹配)
-- `)`: rremove=1 (多余的右括号)
-- `(`: lremove=1
-- `)`: lremove=0 (匹配)
+| 下标 | 字符 | lremove | rremove | 说明 |
+|------|------|---------|---------|------|
+| 0 | `(` | 1 | 0 | 多出一个左括号 |
+| 1 | `)` | 0 | 0 | 与下标 0 的左括号配对 |
+| 2 | `(` | 1 | 0 | 多出一个左括号 |
+| 3 | `)` | 0 | 0 | 与下标 2 的左括号配对 |
+| 4 | `)` | 0 | 1 | 没有左括号可配，右括号多余 |
+| 5 | `(` | 1 | 1 | 多出一个左括号 |
+| 6 | `)` | 0 | 1 | 与下标 5 的左括号配对 |
 
-结果：lremove=0, rremove=1
+结果：`lremove = 0`、`rremove = 1`，即只需删掉 1 个右括号。
+扫完之后剩下的 `lremove` 就是多余的左括号数，两者合起来就是最少要删的括号数。
 
 ### 第三步：回溯法
 
@@ -100,30 +96,39 @@ date_added: 2026-04-24
 class Solution:
     def removeInvalidParentheses(self, s: str) -> List[str]:
         def isValid(s):
+            # 合法判定：任意前缀中右括号不能多于左括号，最终数量必须相等
             count = 0
             for c in s:
                 if c == '(':
                     count += 1
                 elif c == ')':
                     count -= 1
+                    # 前缀已经失衡，后面再多左括号也救不回来
                     if count < 0:
                         return False
             return count == 0
 
+        # ans 收集本层的所有合法串，同层意味着删掉的括号数相同
         ans = []
         currSet = set([s])
 
+        # 逐层扩展：第 k 层是删掉 k 个括号后的所有可能串
         while True:
+            # 本层可能不止一个合法答案，全部都要留下
             for ss in currSet:
                 if isValid(ss):
                     ans.append(ss)
+            # 第一次出现合法串，删除数就是最少的，直接返回整层
             if len(ans) > 0:
                 return ans
             nextSet = set()
             for ss in currSet:
+                # 只删括号，字母一个都不能动
                 for i in range(len(ss)):
                     if ss[i] == '(' or ss[i] == ')':
+                        # 用集合去重：不同的删法可能得到同一个串
                         nextSet.add(ss[:i] + ss[i+1:])
+            # 本层没有答案，带着删除数加一的所有结果进入下一层
             currSet = nextSet
 ```
 

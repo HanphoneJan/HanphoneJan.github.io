@@ -56,13 +56,18 @@ date_reviewed: []
 ```python
 class Solution:
     def generateTrees(self, n: int) -> List[Optional[TreeNode]]:
+        # build 返回「用 [lo, hi] 这些值能拼出的所有子树」，列表每一项是一棵子树的根
         def build(lo: int, hi: int) -> List[Optional[TreeNode]]:
+            # 空区间也有一种结构：空子树。返回 [] 会让外层的配对循环直接变空
             if lo > hi:
                 return [None]
             res = []
+            # 区间内每个值都当一次根，根不同则树一定不同
             for root_val in range(lo, hi + 1):
+                # BST 性质定死取值范围：左子树只能用比根小的，右子树只能用比根大的
                 left_trees = build(lo, root_val - 1)
                 right_trees = build(root_val + 1, hi)
+                # 左、右子树任取一种配对，就得到一棵完整的树
                 for left in left_trees:
                     for right in right_trees:
                         node = TreeNode(root_val)
@@ -71,6 +76,7 @@ class Solution:
                         res.append(node)
             return res
 
+        # 题面约定 n = 0 时返回空列表，而不是含一个空子树的 [None]
         if n == 0:
             return []
         return build(1, n)
@@ -93,13 +99,18 @@ class TreeNode:
 
 class Solution:
     def generateTrees(self, n: int) -> List[Optional[TreeNode]]:
+        # build 返回「用 [lo, hi] 这些值能拼出的所有子树」
         def build(lo: int, hi: int) -> List[Optional[TreeNode]]:
+            # 空区间代表没有子节点，返回 [None] 让外层还有一次配对机会
             if lo > hi:
                 return [None]
             res = []
+            # 逐个值当根：根不同，左右子树的划分就不同，结构必然不同
             for root_val in range(lo, hi + 1):
+                # 左子树只取小于根的值，右子树只取大于根的值，保证 BST 性质
                 left_trees = build(lo, root_val - 1)
                 right_trees = build(root_val + 1, hi)
+                # 左右各选一种，笛卡尔积就是当前根下的全部结构
                 for left in left_trees:
                     for right in right_trees:
                         node = TreeNode(root_val)
@@ -108,6 +119,7 @@ class Solution:
                         res.append(node)
             return res
 
+        # 题目要求 n = 0 返回空列表，这不是「空子树」那种情况
         if n == 0:
             return []
         return build(1, n)

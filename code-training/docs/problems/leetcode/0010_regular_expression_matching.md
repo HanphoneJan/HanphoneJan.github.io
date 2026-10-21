@@ -68,18 +68,20 @@ date_reviewed: []
 ```python
 class Solution:
     def isMatch(self, s: str, p: str) -> bool:
+        # match(i, j)：s 从 i 开始的后缀能否被 p 从 j 开始的后缀完整匹配
         def match(i, j):
-            # 终止条件：p 已用完
+            # 终止条件：p 已用完，此时 s 也必须同时用完才算匹配成功
             if j == len(p):
                 return i == len(s)
-            # 当前字符是否匹配
+            # 当前字符是否匹配：i 越界时 s 已没有字符可用，直接判不匹配
             first_match = i < len(s) and (p[j] == '.' or p[j] == s[i])
-            # p 的下一个字符是否是 '*'
+            # p 的下一个字符是否是 '*'，决定 p[j] 是单独一个字符还是 x* 组合
             if j + 1 < len(p) and p[j + 1] == '*':
-                # 选择1：x* 匹配0次（跳过 x*）
-                # 选择2：x* 匹配1次（需要当前字符匹配）
+                # 选择1：x* 匹配0次（跳过 x*），s 不动
+                # 选择2：x* 匹配1次（需要当前字符匹配），s 前进一位而 p 停在原处，让 * 继续吃字符
                 return match(i, j + 2) or (first_match and match(i + 1, j))
             else:
+                # 普通字符（或 '.'）：当前位对上后双方同时前进一位
                 return first_match and match(i + 1, j + 1)
 
         return match(0, 0)
@@ -94,18 +96,26 @@ class Solution:
 ```python
 class Solution:
     def isMatch(self, s: str, p: str) -> bool:
+        # 只用到「缓存」这一个装饰器，就近导入，读代码时不必回文件顶部找
         from functools import lru_cache
 
+        # maxsize=None 表示缓存不设上限：状态总数只有 (m+1)*(n+1)，不必淘汰
         @lru_cache(maxsize=None)
         def match(i, j):
+            # p 用完时，s 也必须用完；这一条是整棵递归树的收敛点
             if j == len(p):
                 return i == len(s)
+            # 当前位能否匹配，注意 i 越界（s 已空）时一律为 False
             first_match = i < len(s) and (p[j] == '.' or p[j] == s[i])
+            # 遇到 x* 才有两条分支；同一个 (i, j) 只算一次，之后再走到这里直接取缓存
             if j + 1 < len(p) and p[j + 1] == '*':
+                # 匹配0次：直接跳过 x*；匹配多次：消费一个字符后 p 不动
                 return match(i, j + 2) or (first_match and match(i + 1, j))
             else:
+                # 无 * 时只有一条路：对上了就双方各前进一位
                 return first_match and match(i + 1, j + 1)
 
+        # 从两个字符串的开头开始匹配
         return match(0, 0)
 ```
 
@@ -166,26 +176,37 @@ class Solution:
     def isMatch(self, s: str, p: str) -> bool:
         m, n = len(s), len(p)
 
+        # 判断 s 的第 i 个字符与 p 的第 j 个字符能否匹配（i、j 都是 1 起始）
         def matches(i: int, j: int) -> bool:
+            # i == 0 表示 s 已没有字符，任何模式字符都无从对应，返回 False
+            # 这个判断同时挡住了 dp[-1]：i = 0 时不会去取上一行
             if i == 0:
                 return False
+            # '.' 可以顶替任意单个字符
             if p[j - 1] == '.':
                 return True
             return s[i - 1] == p[j - 1]
 
+        # dp[i][j]：s 的前 i 个字符能否被 p 的前 j 个字符完整匹配
+        # 行列都多留一格，让空串、空前缀也有位置可放
         dp = [[False] * (n + 1) for _ in range(m + 1)]
         dp[0][0] = True
 
+        # i 从 0 开始，是为了先算完「空串 s 匹配若干 x*」这一行，后面才能直接引用
         for i in range(m + 1):
             for j in range(1, n + 1):
                 if p[j - 1] == "*":
+                    # 选项 A：x* 一个都不匹配，整对跳过，于是看同一行的前两列
                     dp[i][j] |= dp[i][j - 2]          # '*' 匹配0次
+                    # 选项 B：x* 再多吃一个 s[i-1]，p 停在原处（* 仍可继续吃），所以列不变
                     if matches(i, j - 1):
                         dp[i][j] |= dp[i - 1][j]      # '*' 匹配1次或多次
                 else:
+                    # 普通字符或 '.'：当前两位对上，就回到左上格 dp[i-1][j-1]
                     if matches(i, j):
                         dp[i][j] |= dp[i - 1][j - 1]  # 普通字符逐一匹配
 
+        # 整串 s 对整串 p 的结果
         return dp[m][n]
 ```
 

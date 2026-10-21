@@ -64,8 +64,11 @@ date_reviewed: []
 最直观的写法是逐行读：
 
 ```python
+# 第一行只给出组数，先单独把它读掉
 t = int(input())
+# 组数已知，循环次数就是 t，不需要去探测输入是否结束
 for _ in range(t):
+    # 每组固定一行两个整数，split 之后正好解包成 a、b
     a, b = map(int, input().split())
     print(a + b)
 ```
@@ -78,6 +81,7 @@ for _ in range(t):
 更快的做法是把整段输入一次性读成 token 列表，再用一个下标 `idx` 往后推进：
 
 ```python
+# 一次读完并按空白切成 token，后面用下标往后推进，比逐行 input() 少很多开销
 data = sys.stdin.read().split()
 ```
 

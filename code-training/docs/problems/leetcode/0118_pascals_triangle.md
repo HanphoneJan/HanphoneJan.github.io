@@ -54,12 +54,16 @@ date_reviewed: []
 
 ```python
 def generate(numRows):
+    # 行数非正时没有任何一行可生成
     if numRows <= 0:
         return []
     triangle = []
     for i in range(numRows):
+        # 第 i 行有 i+1 个数，先开好长度
         row = [0] * (i + 1)
+        # 首尾固定为 1，它们没有「左上 + 右上」两个来源
         row[0] = row[-1] = 1
+        # 只有中间元素需要由上一行相加得到
         for j in range(1, i):
             row[j] = triangle[i-1][j-1] + triangle[i-1][j]
         triangle.append(row)
@@ -76,7 +80,9 @@ def generate(numRows):
 def generate(numRows):
     triangle = []
     for i in range(numRows):
+        # 先全部填 1：首尾正好就是 1，中间的 1 稍后会被真正的值覆盖
         row = [1] * (i + 1)
+        # 只改中间；j 停在 i-1，因为最后一格是右边界不必算
         for j in range(1, i):
             row[j] = triangle[i-1][j-1] + triangle[i-1][j]
         triangle.append(row)
@@ -90,7 +96,9 @@ def generate(numRows):
 可以用列表推导式写得更加简洁：
 
 ```python
+# 一次性把每行都铺成 1，首尾元素就此定好
 c = [[1] * (i + 1) for i in range(numRows)]
+# 从第 3 行（下标 2）起才有中间元素需要计算
 for i in range(2, numRows):
     for j in range(1, i):
         c[i][j] = c[i - 1][j - 1] + c[i - 1][j]
@@ -196,6 +204,7 @@ j 的循环范围必须是 `range(1, i)`，不能是 `range(1, i+1)`，否则会
 def getRow(rowIndex):
     row = [1] * (rowIndex + 1)
     for i in range(2, rowIndex + 1):
+        # 必须从右往左更新：row[j-1] 还是上一行的值，从左往右会被本轮覆盖
         for j in range(i - 1, 0, -1):
             row[j] += row[j - 1]
     return row

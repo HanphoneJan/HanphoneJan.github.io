@@ -61,8 +61,10 @@ date_added: 2026-03-25
 ```python
 class Solution:
     def climbStairs(self, n: int) -> int:
+        # f(0) = f(1) = 1：地面和只有 1 阶都只有一种走法
         if n <= 1:
             return 1
+        # 最后一步要么从 n-1 跨 1 阶，要么从 n-2 跨 2 阶，两类互不重叠所以相加
         return self.climbStairs(n - 1) + self.climbStairs(n - 2)
 ```
 
@@ -156,6 +158,7 @@ class Solution:
 ### 2. 滚动数组的更新顺序
 
 ```python
+# 先把新值算出来，否则 f0 被覆盖后 f(n-2) 就丢了
 new_f = f1 + f0  # 先计算新值
 f0 = f1          # 再更新 f0
 f1 = new_f       # 最后更新 f1

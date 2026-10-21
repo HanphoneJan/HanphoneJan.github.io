@@ -71,8 +71,10 @@ Yes
 
 ```python
 def dfs(x, y):
+    # 三个出口缺一不可：出界、撞墙、走回已访问的格子
     if 越界 or 是墙 or 已访问:
         return
+    # 先标记再递归：若先递归后标记，相邻格子会互相回访形成死循环
     mark(x, y)
     dfs(x + 1, y); dfs(x - 1, y); dfs(x, y + 1); dfs(x, y - 1)
 ```

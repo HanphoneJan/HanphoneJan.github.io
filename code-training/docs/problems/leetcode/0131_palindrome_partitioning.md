@@ -150,9 +150,12 @@ class Solution:
 用 `t == t[::-1]` 简洁直观。对于大规模数据，可用 DP 预处理：
 
 ```python
+# dp[i][j] 表示子串 s[i:j+1] 是否是回文，默认全部判否
 dp = [[False] * n for _ in range(n)]
+# 从后往前填：算 dp[i][j] 要用到 dp[i+1][j-1]，后者下标更大，必须先算出来
 for i in range(n - 1, -1, -1):
     for j in range(i, n):
+        # 首尾相同、且去掉首尾后仍是回文；长度 ≤ 3 时去掉首尾只剩 0 或 1 个字符，必为回文
         if s[i] == s[j] and (j - i <= 2 or dp[i + 1][j - 1]):
             dp[i][j] = True
 ```

@@ -69,12 +69,17 @@ date_reviewed: []
 ```python
 def wordBreak(s, wordDict):
     word_set = set(wordDict)
+    # dfs(start) 表示 s[start:] 这一段能否被完整拆开
     def dfs(start):
+        # 已经走到串尾，说明前面的切分全部命中，成功
         if start == len(s):
             return True
+        # 枚举这一刀切在哪里：end 是开区间右端，所以取到 len(s)
         for end in range(start + 1, len(s) + 1):
+            # 当前这一段在字典里，且剩下的部分也能拆开，就成功
             if s[start:end] in word_set and dfs(end):
                 return True
+        # 所有切法都不行
         return False
     return dfs(0)
 ```
@@ -90,10 +95,12 @@ from functools import lru_cache
 
 def wordBreak(s, wordDict):
     word_set = set(wordDict)
+    # 同一个 start 会从不同切分路径重复到达，缓存后只算一次
     @lru_cache
     def dfs(start):
         if start == len(s):
             return True
+        # 从 start 往后逐字符扩出一个候选词，逐个试
         for end in range(start + 1, len(s) + 1):
             if s[start:end] in word_set and dfs(end):
                 return True
@@ -113,9 +120,12 @@ dp[i] = any(dp[j] and s[j:i] in word_set for j in range(i))
 ```python
 def wordBreak(s, wordDict):
     word_set = set(wordDict)
+    # dp[i] 表示前缀 s[:i] 能否被完整拆开，长度 n+1 覆盖空前缀
     dp = [False] * (len(s) + 1)
+    # 空前缀不需要任何单词，作为递推的起点
     dp[0] = True
     for i in range(1, len(s) + 1):
+        # 枚举最后一段的起点 j：s[:j] 能拆开，且 s[j:i] 是字典词
         for j in range(i):
             if dp[j] and s[j:i] in word_set:
                 dp[i] = True

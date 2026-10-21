@@ -115,6 +115,7 @@ date_reviewed: []
 ```python
 # 枚举 0..2^n-1 的所有子集，逐一模拟
 for mask in range(1 << n):
+    # mask 的第 i 位为 1 表示在第 i 站加油
     fuel = startFuel
     prev = 0
     ok = True
@@ -144,11 +145,16 @@ for mask in range(1 << n):
 def min_refuel_stops_dp(L, startFuel, stations):
     n = len(stations)
     dp = [0] * (n + 1)
+    # dp[0]：一次都不加油时能开到的最远距离，就是初始油量
     dp[0] = startFuel
     for i in range(n):
+        # 上界取 i：处理前 i 站时最多只可能加过 i 次油
+        # 倒序遍历 k：保证本轮读到的是"还没考虑第 i 站"的旧值，避免同一站被加两次
         for k in range(i, -1, -1):
             if dp[k] >= stations[i][0]:          # 能开到第 i 站
+                # 在 i 站加一次油，续航从 dp[k] 延长到 dp[k] + f_i
                 dp[k + 1] = max(dp[k + 1], dp[k] + stations[i][1])
+    # 从小到大找第一个能到终点的 k，就是最少加油次数
     for k in range(n + 1):
         if dp[k] >= L:
             return k

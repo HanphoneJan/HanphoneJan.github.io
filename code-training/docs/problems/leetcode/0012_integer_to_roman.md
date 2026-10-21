@@ -80,11 +80,14 @@ date_reviewed: []
 ```python
 class Solution:
     def intToRoman(self, num: int) -> str:
+        # 四张表的下标就是该位上的数字（0~9），值是对应的罗马写法
+        # 千位最多到 3，所以表只到 "MMM"；百、十、个位都包含 4/9 的减法特例
         thousands = ["", "M", "MM", "MMM"]
         hundreds  = ["", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM"]
         tens      = ["", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC"]
         ones      = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"]
 
+        # 依次取出千位（num // 1000）、百位（先 % 1000 去掉千位再 // 100）、十位、个位
         return (thousands[num // 1000] +
                 hundreds[num % 1000 // 100] +
                 tens[num % 100 // 10] +
@@ -100,12 +103,16 @@ class Solution:
 ```python
 class Solution:
     def intToRoman(self, num: int) -> str:
+        # 值与符号一一对应，且 values 严格递减：这样从左往右扫就是「每次尽量用最大的值」
+        # 六个减法特例必须按降序插进列表（如 CM 排在 D 前），否则 900 会被拆成 D + CD 这种非法写法
         values  = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1]
         symbols = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"]
         ans = []
         for i in range(len(values)):
             count = num // values[i]   # 当前值能用几次
+            # 例如 count = 3 时一次拼出 "MMM"，比循环 append 更简洁
             ans.append(symbols[i] * count)  # 拼接对应次数的符号
+            # 把已经表示出来的部分从 num 中扣掉，剩下的交给更小的值，循环结束时 num 必为 0
             num -= values[i] * count   # 减去已表示的部分
         return "".join(ans)
 ```

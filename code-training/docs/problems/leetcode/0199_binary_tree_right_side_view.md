@@ -66,10 +66,12 @@ date_reviewed: []
 用 DFS 遍历整棵树，记录每个节点所在的深度。对于每个深度，保留最后访问到的节点值。
 
 ```python
+# DFS 走完整棵树，用 depth 记层号：最右边看到的就是该层最后被访问的节点
 def rightSideView(self, root: Optional[TreeNode]) -> List[int]:
     result = []
 
     def dfs(node, depth):
+        # 空节点直接返回，不占任何一层
         if not node:
             return
         # 如果是该深度第一次访问，添加新元素
@@ -78,9 +80,11 @@ def rightSideView(self, root: Optional[TreeNode]) -> List[int]:
             result.append(node.val)
         else:
             result[depth] = node.val
+        # 先左后右：右子节点后访问，所以会覆盖左子节点留在这一层的值
         dfs(node.left, depth + 1)
         dfs(node.right, depth + 1)
 
+    # 根节点在第 0 层
     dfs(root, 0)
     return result
 ```
@@ -96,14 +100,18 @@ def rightSideView(self, root: Optional[TreeNode]) -> List[int]:
     result = []
 
     def dfs(node, depth):
+        # 走到空节点就回退，不产生任何记录
         if not node:
             return
+        # 先右后左时，每层第一次到这个深度的一定是最右侧的节点
+        # 只在第一次填，后面的（更靠左的）直接跳过
         if depth == len(result):
             result.append(node.val)
         # 先右后左
         dfs(node.right, depth + 1)
         dfs(node.left, depth + 1)
 
+    # 从根的第 0 层开始
     dfs(root, 0)
     return result
 ```
@@ -209,6 +217,7 @@ class Solution:
 **正确**：在出队时判断是否是当前层最后一个
 
 ```python
+# current_level_size 在进入循环前就固定下来，这一层新加的孩子不会算进来
 for i in range(current_level_size):
     node = queue.popleft()
     if i == current_level_size - 1:  # 正确：判断是否是最后一个
@@ -222,7 +231,7 @@ for i in range(current_level_size):
 dfs(node.right, depth + 1)
 dfs(node.left, depth + 1)
 
-# 先左后右：需要覆盖，每层保留最后访问的
+# 先左后右：右节点后访问，得用「覆盖」保住这一层最后一个
 dfs(node.left, depth + 1)
 dfs(node.right, depth + 1)
 ```
@@ -230,6 +239,7 @@ dfs(node.right, depth + 1)
 ### 3. 空树处理
 
 ```python
+# 空树没有层，返回空列表；题目约定的返回类型是 List[int]，不是 None
 if not root:
     return []  # 不是 return None
 ```
@@ -243,6 +253,7 @@ if not root:
 与右视图类似，每层取第一个节点即可：
 
 ```python
+# 左视图只要每层出队的第一个节点，所以判断条件换成 i == 0
 if i == 0:  # 第一个节点
     result.append(node.val)
 ```

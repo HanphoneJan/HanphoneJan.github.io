@@ -61,9 +61,12 @@ class Solution:
         n = len(nums)
         ans = 0
         
+        # 枚举子数组的左端点 i，右端点 j 从 i 一路右移
         for i in range(n):
+            # 每换一个左端点，和都要从 0 重新累计
             s = 0
             for j in range(i, n):
+                # 边扩边加，省掉对每个子数组重新求和的 O(n)
                 s += nums[j]
                 if s == k:
                     ans += 1
@@ -89,13 +92,18 @@ from collections import defaultdict
 
 class Solution:
     def subarraySum(self, nums: List[int], k: int) -> int:
+        # cnt[sum] 记录「前缀和等于 sum」出现过多少次
         cnt = defaultdict(int)
+        # 空前缀：让「从下标 0 开始的子数组」也能被算到
         cnt[0] = 1
         ans = curr_sum = 0
         
         for x in nums:
+            # 前缀和加上当前元素，得到以 x 结尾位置的前缀和
             curr_sum += x
+            # 前面每出现一次 curr_sum - k，就对应一个以 x 结尾、和为 k 的子数组
             ans += cnt[curr_sum - k]
+            # 统计完自己才入表，避免把长度 0 的子数组算进去
             cnt[curr_sum] += 1
         
         return ans
@@ -131,7 +139,7 @@ class Solution:
     """
     def subarraySum(self, nums: List[int], k: int) -> int:
         cnt = defaultdict(int)  # 记录前缀和出现的次数
-        cnt[0] = 1              # 前缀和为 0 的子数组有 1 个
+        cnt[0] = 1              # 空前缀：前缀和 0 出现过 1 次
         ans = 0                 # 和为 k 的子数组个数
         curr_sum = 0            # 当前前缀和
 
@@ -189,8 +197,9 @@ class Solution:
 cnt = defaultdict(int)
 cnt[0] = 1
 
-# 原因：前缀和为 curr_sum 的子数组本身可能就是答案
+# 原因：curr_sum == k 时要靠 cnt[0] 记上从下标 0 开始的那一段
 # 例如 nums = [3], k = 3，curr_sum = 3，需要 cnt[0] = 1
+# 少了这一条，所有从下标 0 开始的子数组都会被漏算
 ```
 
 ### 2. 更新顺序
@@ -201,6 +210,7 @@ ans += cnt[curr_sum - k]
 cnt[curr_sum] += 1
 
 # 如果先更新再查询，会把自己也算进去
+# 那样 curr_sum - k == curr_sum（即 k == 0）时会凭空多出一条空子数组
 ```
 
 ### 3. 滑动窗口的误用
@@ -208,6 +218,7 @@ cnt[curr_sum] += 1
 ```python
 # 错误：尝试用滑动窗口
 # 原因：数组中有负数，无法确定指针移动方向
+# 窗口和不再随指针单调变化，右移左指针也可能让和变大，缩窗口的判据失效
 ```
 
 ---

@@ -79,9 +79,11 @@ date_added: 2026-04-09
 def findDuplicate_brute(nums):
     n = len(nums)
     for i in range(n):
+        # 只和后面的元素比较，保证每一对只比一次
         for j in range(i + 1, n):
             if nums[i] == nums[j]:
                 return nums[i]
+    # 题目保证有重复，走到这里说明输入不合法
     return -1
 ```
 
@@ -95,19 +97,25 @@ def findDuplicate_brute(nums):
 
 ```python
 def findDuplicate_binary_search(nums):
+    # 二分的是「值」不是下标：n+1 个数、值域 [1, n]
     left, right = 1, len(nums) - 1
     
+    # 左闭右闭区间，left == right 时区间里只剩一个候选值
     while left < right:
         mid = (left + right) // 2
+        # 统计 <= mid 的个数：正常最多只有 mid 个
         count = sum(1 for x in nums if x <= mid)
         
         if count > mid:
+            # 个数超标，说明重复数落在左半边
             # 重复数在 [left, mid] 中
             right = mid
         else:
+            # 否则重复数在右半边，mid 可以排除
             # 重复数在 [mid+1, right] 中
             left = mid + 1
     
+    # 区间收敛到一个值，它就是重复数
     return left
 ```
 
@@ -190,7 +198,7 @@ class Solution:
                 break
 
         # 阶段二：找环的入口（重复数）
-        # 数学结论：从起点和相遇点各走一步，再次相遇即为环入口
+        # 数学结论：两个指针同步每次走 1 步，相遇处就是环入口
         head = 0
         while slow != head:
             slow = nums[slow]   # 从相遇点出发，每次 1 步
@@ -280,6 +288,7 @@ head = 0, slow = 4
 
 **正确做法：** 选择 0 作为起点。
 ```python
+# 0 只是链表的入口，元素值域从 1 开始，所以 0 不会在环上
 slow = fast = 0
 ```
 
@@ -289,11 +298,13 @@ slow = fast = 0
 
 **正确做法：**
 ```python
+# 连取两次值：先得到下一个节点，再得到再下一个，才是走两步
 fast = nums[nums[fast]]  # 走 2 步
 ```
 
 **错误做法：**
 ```python
+# 错在把「下标加 1」当成了「沿链表走一步」
 fast = nums[fast + 1]    # 错误！不是简单的加 1
 ```
 
@@ -301,6 +312,7 @@ fast = nums[fast + 1]    # 错误！不是简单的加 1
 
 **正确做法：**
 ```python
+# 一个指针回到起点，另一个留在相遇点，两者速度相同
 head = 0  # 从起点出发
 while slow != head:  # slow 从相遇点出发
     slow = nums[slow]

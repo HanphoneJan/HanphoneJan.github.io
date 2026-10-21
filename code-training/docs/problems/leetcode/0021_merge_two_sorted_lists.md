@@ -54,6 +54,7 @@ date_reviewed: []
 ```python
 class Solution:
     def mergeTwoLists(self, list1, list2):
+        # 先把两条链的值全部收集起来，节点本身不再复用
         vals = []
         while list1:
             vals.append(list1.val)
@@ -61,11 +62,12 @@ class Solution:
         while list2:
             vals.append(list2.val)
             list2 = list2.next
-        vals.sort()
+        vals.sort()                      # 放弃已有的有序信息，整体重排
+        # 哑节点起头，让"往尾巴上挂节点"这一个动作贯穿始终
         dummy = ListNode(0)
         cur = dummy
         for v in vals:
-            cur.next = ListNode(v)
+            cur.next = ListNode(v)       # 每个值都重新建节点，占额外空间
             cur = cur.next
         return dummy.next
 ```
@@ -84,11 +86,14 @@ class Solution:
 ```python
 class Solution:
     def mergeTwoLists(self, list1, list2):
+        # 递归出口：一条链空了，另一条剩下的部分本身有序，整段接上
         if not list1:
             return list2
         if not list2:
             return list1
+        # 谁的头更小，谁就当合并结果的头；剩下的交给子问题
         if list1.val <= list2.val:
+            # 用 <= 让相等时优先取 list1，结果稳定
             list1.next = self.mergeTwoLists(list1.next, list2)
             return list1
         else:

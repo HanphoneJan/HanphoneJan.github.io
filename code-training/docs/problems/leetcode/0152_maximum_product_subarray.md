@@ -51,13 +51,18 @@ date_reviewed: []
 枚举所有子数组，计算乘积：
 
 ```python
+# 枚举所有子数组：外层定起点、内层向右扩展，边乘边更新答案
 def maxProduct(nums):
     n = len(nums)
+    # 子数组至少要含一个数，所以单个元素也是候选，用它作初值
     ans = nums[0]
     for i in range(n):
+        # prod 表示「从 i 到当前 j」这一段连续子数组的乘积
         prod = 1
         for j in range(i, n):
+            # 每往右走一步就多乘一个元素，得到一个新的子数组
             prod *= nums[j]
+            # nums[i..j] 这一段已经乘出来了，用它更新答案
             ans = max(ans, prod)
     return ans
 ```
@@ -164,6 +169,7 @@ class Solution:
 ### 3. 同时更新
 
 ```python
+# 右边两个表达式先全部读完再赋值，所以 min 用到的仍是上一轮的 f_max
 f_max, f_min = max(...), min(...)
 ```
 

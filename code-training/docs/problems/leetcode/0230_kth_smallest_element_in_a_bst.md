@@ -56,13 +56,17 @@ date_reviewed: []
 ```python
 def kthSmallest(self, root: Optional[TreeNode], k: int) -> int:
     result = []
+    # 中序遍历：左 -> 根 -> 右；BST 上按这个顺序取出来正好是升序
     def inorder(node):
+        # 空节点没有可记录的值，直接回退
         if not node:
             return
         inorder(node.left)
+        # 左子树全部走完才记录当前节点，顺序才不会乱
         result.append(node.val)
         inorder(node.right)
     inorder(root)
+    # 第 k 小从 1 开始数，落到下标上要减 1
     return result[k - 1]
 ```
 
@@ -74,18 +78,24 @@ def kthSmallest(self, root: Optional[TreeNode], k: int) -> int:
 
 ```python
 def kthSmallest(self, root: Optional[TreeNode], k: int) -> int:
+    # 计数要跨递归层累加，用实例属性；写成外层局部变量就得加 nonlocal 才能改
     self.count = 0
     self.result = 0
 
+    # 返回 True 表示已经找到，上层据此立刻收手、不再往下遍历
     def dfs(node):
+        # 空节点返回 False：这一支没有找到
         if not node:
             return False
+        # 左子树里已经找到，就没必要再看当前节点和右子树
         if dfs(node.left):
             return True
+        # 左子树已经数完，当前节点就是中序里的下一个，计数加一
         self.count += 1
         if self.count == k:
             self.result = node.val
             return True
+        # 还没数够 k 个，答案只可能在右子树里
         return dfs(node.right)
 
     dfs(root)
@@ -195,11 +205,13 @@ class Solution:
 
 ```python
 # 错误：遍历完整棵树
+# 不管找没找到都继续走，目标早就命中了还在白白遍历
 inorder(node.left)
 result.append(node.val)  # 继续遍历
 inorder(node.right)
 
 # 正确：找到就返回
+# 用返回值把「已找到」的信号一路往上送，每层都能提前结束
 if dfs(node.left):
     return True
 # ...

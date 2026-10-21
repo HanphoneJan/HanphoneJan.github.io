@@ -89,12 +89,17 @@ exection -> execution (插入 'u')
 用 `@cache` 装饰器缓存递归结果，避免重复计算。
 
 ```python
+# 同一组 (i, j) 会从多条路径到达，缓存后每个状态只算一次
 @cache
 def dfs(i: int, j: int) -> int:
+    # word1 用完，只能把 word2 剩下的 j+1 个字符全插进去
     if i < 0: return j + 1
+    # word2 用完，只能把 word1 剩下的 i+1 个字符全删掉
     if j < 0: return i + 1
+    # 末尾字符相同，这一步不花代价，直接对齐到前一位
     if s[i] == t[j]:
         return dfs(i - 1, j - 1)
+    # 删除 s[i]、插入 t[j]、把 s[i] 换成 t[j]，三选一后代价加 1
     return min(dfs(i - 1, j), dfs(i, j - 1), dfs(i - 1, j - 1)) + 1
 ```
 
@@ -221,6 +226,7 @@ class Solution:
 ### 1. 下标对应关系
 
 ```python
+# dp 多留了一行一列表示空串，所以长度 i 对应最后一个字符 word1[i-1]
 # dp[i][j] 对应 word1[i-1] 和 word2[j-1]
 if word1[i - 1] == word2[j - 1]:
     dp[i][j] = dp[i - 1][j - 1]
@@ -239,10 +245,10 @@ for i in range(1, n + 1):
 ### 3. 空间优化的对角线保存
 
 ```python
-pre = f[0]  # 先保存
-f[0] += 1   # 再更新
+pre = f[0]  # 先保存对角线：上一行 f[0]，即 dp[i-1][0]
+f[0] += 1   # 再更新本行 f[0]（第一列只能删，长度即 i）
 for j, y in enumerate(word2):
-    tmp = f[j + 1]  # 保存当前值
+    tmp = f[j + 1]  # 保存当前值，它就是下一格要用的对角线
     # 计算 f[j+1]
     pre = tmp  # 更新对角线供下一轮使用
 ```

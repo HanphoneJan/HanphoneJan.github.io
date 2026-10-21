@@ -75,6 +75,7 @@ n×m 的矩阵）。但只要记住「先读元数据，再读数据」的节奏
 最直观的写法是把矩阵真的存进二维列表：
 
 ```python
+# 真把矩阵存成二维列表：外层重复 n 行，内层每行读 m 个元素
 grid = [[int(input()) for _ in range(m)] for _ in range(n)]
 ```
 
@@ -87,8 +88,10 @@ grid = [[int(input()) for _ in range(m)] for _ in range(n)]
 
 ```python
 total = 0
+# 一个 n×m 矩阵在 token 序列里就是连续的 n*m 个数，摊平后按个数累加即可
 for _ in range(n * m):
     total += int(data[idx])
+    # 取完一个就前进一位，下一轮读到的才是下一个元素
     idx += 1
 ```
 

@@ -58,12 +58,18 @@ date_added: 2026-04-24
 ```python
 class Solution:
     def countBits(self, n: int) -> List[int]:
+        # 对 0..n 的每个数单独数一遍 1 的个数
         ans = []
         for i in range(n + 1):
+            # 每个数都从零开始重新计数
             count = 0
+            # 用副本 x 逐位右移，i 本身要留给下一轮
             x = i
+            # 每轮检查最低位，然后整体右移一位
             while x:
+                # x & 1 取出最低位，是 1 就让计数加一
                 count += x & 1
+                # 右移丢掉刚检查过的最低位
                 x >>= 1
             ans.append(count)
         return ans

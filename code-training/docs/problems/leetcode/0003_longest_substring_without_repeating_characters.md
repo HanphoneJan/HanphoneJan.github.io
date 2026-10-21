@@ -67,12 +67,17 @@ class Solution:
         n = len(s)
         max_len = 0
 
+        # 枚举子串的起点 i，逐个起点向后扩展
         for i in range(n):
+            # seen 只记录「以 i 为起点」这段子串里出现过的字符，所以每个起点都要重新建
             seen = set()
+            # 从 i 开始向右扩展，一旦重复就停在当前字符（该字符不能算进来）
             for j in range(i, n):
+                # 遇到重复字符，以 i 为起点的子串再长也不可能合法，换下一个起点
                 if s[j] in seen:
                     break
                 seen.add(s[j])
+                # 当前子串是 s[i..j]，长度是 j - i + 1
                 max_len = max(max_len, j - i + 1)
 
         return max_len
@@ -196,10 +201,10 @@ class Solution:
 ### 1. 左边界更新要取 max
 
 ```python
-# 错误写法
+# 错误写法：无条件赋值，左边界可能被推回左边，窗口里会重新混进已排除的重复字符
 left = hash_dict[s[i]]
 
-# 正确写法
+# 正确写法：只在重复字符落在窗口内时才移动左边界
 if left < hash_dict[s[i]]:
     left = hash_dict[s[i]]
 ```
@@ -209,6 +214,8 @@ if left < hash_dict[s[i]]:
 ### 2. 窗口长度的计算
 
 ```python
+# left 停在重复字符的下标上（而不是它的下一个位置），
+# 所以新窗口是 (left, i]，元素个数正好是 i - left，写成 i - left + 1 会多算一个
 ans = i - left  # 不是 i - left + 1
 ```
 
@@ -234,19 +241,21 @@ ans = i - left  # 不是 i - left + 1
 
 ```python
 def sliding_window(s):
+    # left 是窗口左边界，right 是窗口右边界，窗口对应 s[left..right]
     left = 0
+    # window 记录窗口内每个字符的出现次数，用来判断「收缩条件是否成立」
     window = {}
     for right in range(len(s)):
-        # 扩大窗口，加入 s[right]
+        # 扩大窗口，加入 s[right]；默认值 0 表示这个字符还没进过窗口
         window[s[right]] = window.get(s[right], 0) + 1
 
-        # 收缩窗口的条件
+        # 收缩窗口的条件：窗口不合法（或需要更短的窗口）时，从左端逐个吐出字符
         while 需要收缩:
-            # 移除 s[left]
+            # 移除 s[left]，随后左边界右移一格
             window[s[left]] -= 1
             left += 1
 
-        # 更新结果
+        # 此时窗口合法，用它更新答案；顺序不能反，先收缩再统计才对应「合法窗口」
         update_result()
 ```
 

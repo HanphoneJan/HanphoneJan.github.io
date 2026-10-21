@@ -72,9 +72,12 @@ date_reviewed: []
 同样可以先把整段输入读成 token 列表，再用 `i` 两两推进：
 
 ```python
+# i + 1 < len(data) 保证还剩至少两个 token，否则凑不齐一组 a b
 while i + 1 < len(data):
     a, b = int(data[i]), int(data[i + 1])
+    # 这一对已经读完，先把游标挪两位，无论是否结尾都不会重复读
     i += 2
+    # 两个都为 0 才算结尾；单独的 0 5 仍要按普通数据计算
     if a == 0 and b == 0:
         break
     ...

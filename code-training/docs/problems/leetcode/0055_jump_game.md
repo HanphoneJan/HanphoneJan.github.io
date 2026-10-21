@@ -153,6 +153,7 @@ class Solution:
 ### 1. 循环终止条件
 
 ```python
+# 从左到右逐格推进：能走到 i，说明 i 左边的位置都已经确认可达
 for i in range(n):      # 遍历到 n-1
     if i > max_reach:   # 检查当前位置是否可达
         return False
@@ -163,6 +164,7 @@ for i in range(n):      # 遍历到 n-1
 ### 2. 提前退出
 
 ```python
+# 一旦最远可达位置越过终点，后面还有没有落脚点都无所谓了
 if max_reach >= n - 1:
     return True
 ```
@@ -172,6 +174,7 @@ if max_reach >= n - 1:
 ### 3. 边界情况
 
 ```python
+# 长度为 0 或 1 时起点就是终点，「不动」也算到达
 if n <= 1:
     return True
 ```
@@ -181,6 +184,7 @@ if n <= 1:
 ### 4. 更新顺序
 
 ```python
+# 顺序不能反：先确认 i 本身能走到，再用它去扩展可达范围
 if i > max_reach:       # 先检查是否可达
     return False
 max_reach = max(...)    # 再更新最远位置
@@ -197,10 +201,13 @@ max_reach = max(...)    # 再更新最远位置
 ```python
 def canJumpDP(self, nums: List[int]) -> bool:
     n = len(nums)
+    # dp[i] 表示下标 i 是否能由起点走到
     dp = [False] * n
+    # 起点天然可达，作为递推的基准
     dp[0] = True
 
     for i in range(1, n):
+        # 枚举所有可能跳到 i 的起点 j，找到任意一个就够了
         for j in range(i):
             if dp[j] and j + nums[j] >= i:
                 dp[i] = True

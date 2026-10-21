@@ -56,8 +56,10 @@ date_reviewed: []
 ```python
 def productExceptSelf(self, nums: List[int]) -> List[int]:
     n = len(nums)
+    # 乘法要用 1 初始化，用 0 的话后面怎么乘都是 0
     answer = [1] * n
     for i in range(n):
+        # 对每个位置 i，再去遍历其余所有位置
         for j in range(n):
             if i != j:
                 answer[i] *= nums[j]
@@ -169,7 +171,9 @@ class Solution:
 
 ```python
 # 后缀积计算，从 n-2 开始
+# 起点是 n-2：最后一格右边没有元素，answer[n-1] 保持初始值 1 即可
 for i in range(n - 2, -1, -1):
+    # 逆序递推：后一格的后缀积再乘上后一格元素，就是当前格的后缀积
     answer[i] = answer[i + 1] * nums[i + 1]
 
 # answer[n-1] 保持为 1（右边没有元素）
@@ -179,6 +183,7 @@ for i in range(n - 2, -1, -1):
 
 ```python
 # 先使用 pre 计算 answer[i]，再更新 pre
+# 顺序不能反：此时 pre 不含 nums[i]，正是题面要的「除自己以外」
 answer[i] *= pre
 pre *= nums[i]  # 下一个位置的前缀积包含当前元素
 ```

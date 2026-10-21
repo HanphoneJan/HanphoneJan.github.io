@@ -54,30 +54,40 @@ date_added: 2026-04-24
 **思路**：枚举每个位置作为正方形的左上角，然后尝试扩展边长，检查正方形内是否全为 `'1'`。
 
 ```python
+# 以 (i,j) 为左上角，边长从 1 开始往上试，能撑到多大就记多大
 class Solution:
     def maximalSquare(self, matrix: List[List[str]]) -> int:
+        # m 是行数，n 是列数，后面判断扩张是否越界都靠它们
         m, n = len(matrix), len(matrix[0])
+        # 边长初值为 0：矩阵全是 '0' 时答案就是 0
         ans = 0
         for i in range(m):
             for j in range(n):
+                # 左上角本身是 '0'，以它为起点的正方形一定不成立
                 if matrix[i][j] == '0':
                     continue
                 # 尝试扩展边长
+                # 这一格已知是 '1'，所以边长至少是 1
                 k = 1
+                # 要从 k 扩到 k+1，需要右边多一列、下边多一行，先看有没有越界
                 while i + k < m and j + k < n:
                     # 检查新增的行和列是否全为 '1'
                     valid = True
+                    # 新增的是一列：列下标固定为 j+k，逐行往下看
                     for x in range(i, i + k + 1):
                         if matrix[x][j + k] == '0':
                             valid = False
                             break
+                    # 新增的是一行：行下标固定为 i+k，逐列往右看
                     for y in range(j, j + k + 1):
                         if matrix[i + k][y] == '0':
                             valid = False
                             break
+                    # 只要新增的边上出现一个 '0'，再大的正方形也不可能成立
                     if not valid:
                         break
                     k += 1
+                # 这个起点能撑到的最大边长为 k，面积是边长的平方
                 ans = max(ans, k * k)
         return ans
 ```
@@ -94,27 +104,39 @@ class Solution:
 - 从矩形中取正方形：边长 = min(高, 宽)
 
 ```python
+# 每行都当成柱状图的底边：先算出每列向上的连续 '1' 高度，再求这块柱状图里最大的正方形
 class Solution:
     def largestRectangleArea(self, heights: List[int]) -> int:
+        # 单调递增栈（存下标）：-1 当左端哨兵，算宽度时不必特判空栈
         st = [-1]
         ans = 0
+        # right 既是当前柱子的下标，也是被弹栈柱子的右边界
         for right, h in enumerate(heights):
+            # 遇到更矮的柱子，栈顶那根就再也没法往右延伸了，弹出来结算
             while len(st) > 1 and heights[st[-1]] >= h:
                 i = st.pop()
+                # 弹完之后的新栈顶，就是 i 左边第一根更矮的柱子
                 left = st[-1]
+                # 两根更矮柱子之间是 i 能横向覆盖的宽度
                 w = right - left - 1
+                # 矩形里截最大的正方形，边长取「高度、宽度」中较小者
                 side = min(heights[i], w)
                 ans = max(ans, side * side)
+            # 等高时先弹左边那根（右边的覆盖范围更大），再把当前下标入栈
             st.append(right)
         return ans
 
     def maximalSquare(self, matrix: List[List[str]]) -> int:
         n = len(matrix[0])
+        # 末尾多留一格 0 当右端哨兵，最后几根柱子才会被弹栈结算
         heights = [0] * (n + 1)
         ans = 0
+        # 每读一行，就相当于把柱状图的底边下移一层
         for row in matrix:
             for j, c in enumerate(row):
+                # 这一格是 '1' 就接着上一行的高度往上垒，是 '0' 就断掉归零
                 heights[j] = 0 if c == '0' else heights[j] + 1
+            # 每一行的柱状图都单独求一次，取历史最优
             ans = max(ans, self.largestRectangleArea(heights))
         return ans
 ```

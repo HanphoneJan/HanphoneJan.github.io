@@ -73,7 +73,9 @@ class Solution:
         # 统计频率
         freq_map = Counter(nums)
         # 按频率降序排序，取前 k 个
+        # key 用负频率省掉 reverse=True；x[1] 就是出现次数
         sorted_items = sorted(freq_map.items(), key=lambda x: -x[1])
+        # 切片取前 k 个，只保留元素本身
         return [num for num, _ in sorted_items[:k]]
 ```
 
@@ -95,14 +97,19 @@ from collections import Counter
 class Solution:
     def topKFrequent(self, nums: List[int], k: int) -> List[int]:
         freq_map = Counter(nums)
+        # 堆里放 (频率, 元素)，堆顶是这 k 个里频率最小的那个
         heap = []
         
+        # 只遍历出现过的元素，而不是原数组
         for num, freq in freq_map.items():
             if len(heap) < k:
+                # 还没满 k 个，直接入堆
                 heapq.heappush(heap, (freq, num))
             elif freq > heap[0][0]:
+                # 比堆顶更频繁就替换堆顶，堆里始终是当前前 k 高
                 heapq.heapreplace(heap, (freq, num))
         
+        # 题目允许任意顺序，直接按堆内顺序取出元素
         return [num for _, num in heap]
 ```
 
@@ -123,20 +130,26 @@ from collections import Counter
 class Solution:
     def topKFrequent(self, nums: List[int], k: int) -> List[int]:
         cnt = Counter(nums)
+        # 桶下标就是频率，长度要开到最大频率才能直接按下标存取
         max_cnt = max(cnt.values())
         
         # 桶排序：下标是频率，值是该频率的元素列表
+        # 长度取 max_cnt+1，下标才能直接取到 max_cnt
         buckets = [[] for _ in range(max_cnt + 1)]
         for num, freq in cnt.items():
+            # 同一频率可能对应多个元素，所以每个桶是列表
             buckets[freq].append(num)
         
         # 从高频率往低频率收集
         ans = []
         for freq in range(max_cnt, 0, -1):
+            # 同一频率的元素一次全收，可能一次就超过 k 个
             ans.extend(buckets[freq])
             if len(ans) >= k:
+                # 已经够 k 个，截断返回，低频的不用再看
                 return ans[:k]
         
+        # 兜底返回，正常流程在前面就已经返回
         return ans[:k]
 ```
 
@@ -234,19 +247,23 @@ class Solution:
 
 ```python
 # heapreplace: 先替换堆顶，再调整堆
+# 已经确认新元素比堆顶更大，替换堆顶最省事
 heapq.heapreplace(heap, (freq, num))  # 推荐
 
 # heappushpop: 先入堆新元素，再弹出堆顶
-heapq.heappushpop(heap, (freq, num))  # 不推荐，多一次操作
+# 这里已知新元素比堆顶大，两者结果相同，只是多一次堆顶比较
+heapq.heappushpop(heap, (freq, num))  # 不推荐，多一次比较
 ```
 
 ### 3. Counter 的使用技巧
 
 ```python
 # 获取频率最高的 k 个元素（面试时可能被禁止）
+# 一行就能写完，但面试通常要求手写堆或桶排序
 Counter(nums).most_common(k)
 
 # 遍历频率字典
+# items() 直接给出 (元素, 出现次数) 对
 for num, freq in freq_map.items():
     pass
 ```
@@ -264,6 +281,7 @@ for num, freq in freq_map.items():
 堆解法的结果是无序的，如果需要有序，可以对结果再排序：
 ```python
 result = [num for _, num in heap]
+# 堆内顺序本身是乱的，要按频率降序输出就得再排一次
 result.sort(key=lambda x: -freq_map[x])
 ```
 

@@ -65,9 +65,10 @@ date_reviewed: []
 ```python
 class Solution:
     def search(self, nums: List[int], target: int) -> int:
+        # 逐个比较：旋转只打乱了先后顺序，扫到 target 时的下标就是答案
         for i in range(len(nums)):
             if nums[i] == target:
-                return i
+                return i   # 元素互不相同，第一次命中就是唯一解
         return -1
 ```
 

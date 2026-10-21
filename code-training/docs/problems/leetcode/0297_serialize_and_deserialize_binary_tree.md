@@ -63,25 +63,34 @@ date_added: 2026-04-24
 class Codec:
     def serialize(self, root):
         def dfs(node):
+            # 前序遍历：先记自己，再递归左右子树
             if not node:
+                # 空节点也必须写下 "null"，否则树的结构信息会丢失
                 res.append("null")
                 return
+            # 先写当前节点，写的顺序决定了反序列化时怎么读
             res.append(str(node.val))
             dfs(node.left)
             dfs(node.right)
+        # res 定义在 dfs 外面，递归过程中持续往里追加
         res = []
+        # 从根开始走完整棵树
         dfs(root)
         return ",".join(res)
 
     def deserialize(self, data):
         def dfs():
+            # 迭代器保证每次只取下一个值，不会重复读同一个
             val = next(vals)
             if val == "null":
+                # "null" 代表空子树，直接返回 None
                 return None
             node = TreeNode(int(val))
+            # 先建左子树再建右子树，与序列化时的写入顺序一致
             node.left = dfs()
             node.right = dfs()
             return node
+        # 按逗号切开，用迭代器顺序读取
         vals = iter(data.split(","))
         return dfs()
 ```

@@ -58,8 +58,11 @@ date_reviewed: []
 ```python
 class Solution:
     def isValid(self, s: str) -> bool:
+        # 反复消去相邻的成对括号：能消完说明嵌套与类型都对
         while "()" in s or "[]" in s or "{}" in s:
+            # 一轮只删掉最内层，外层括号要等下一轮才变得相邻
             s = s.replace("()", "").replace("[]", "").replace("{}", "")
+        # 还有残留，说明有多余括号或类型不匹配
         return s == ""
 ```
 
@@ -82,14 +85,19 @@ class Solution:
 ```python
 class Solution:
     def isValid(self, s: str) -> bool:
+        # 栈里放"还没闭合的左括号"，栈顶就是最近的那个
         stack = []
+        # 右括号到左括号的映射，把三分支判断压成一次查表
         pair_map = {')': '(', ']': '[', '}': '{'}
         for char in s:
             if char in '([{':
+                # 左括号入栈，等一个同类型的右括号来闭合
                 stack.append(char)
             else:
+                # 栈空说明没有左括号可配；短路求值保证这时不会 pop
                 if not stack or stack.pop() != pair_map[char]:
                     return False
+        # 栈非空说明还有左括号没等到右括号
         return len(stack) == 0
 ```
 

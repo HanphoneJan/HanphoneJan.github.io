@@ -87,9 +87,13 @@ date_reviewed: []
 
 ```python
 for i in range(n):
+    # 只取 A[i] 自己也是一条合法子序列，长度至少为 1
     dp[i] = 1
+    # 候选前缀只能来自 i 之前，因为子序列必须保持原数组的相对顺序
     for j in range(i):
+        # 不下降允许相等，所以判等用 <=；严格上升才写 <
         if A[j] <= A[i]:
+            # 接在「以 j 结尾」的最优解后面，长度加一
             dp[i] = max(dp[i], dp[j] + 1)
 ```
 

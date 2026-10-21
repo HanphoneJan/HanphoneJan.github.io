@@ -103,6 +103,7 @@ l2: 3 -> 1
 
 ```python
 def MergeList(self, l1, l2):
+    # 先把两条链表的节点值全部倒进数组，链表自带的有序信息就此丢失
     vals = []
     while l1:
         vals.append(l1.val)
@@ -111,6 +112,7 @@ def MergeList(self, l1, l2):
         vals.append(l2.val)
         l2 = l2.next
     vals.sort()          # 直接排序得到升序
+    # 用哑节点起头，逐个值新建节点串成一条新链表（原节点全部丢弃）
     dummy = ListNode(0)
     cur = dummy
     for v in vals:
@@ -130,10 +132,12 @@ def MergeList(self, l1, l2):
 
 ```python
 def MergeList(self, l1, l2):
+    # 降序变升序只能靠反转；两条各自反转后，问题退化为"合并两个升序链表"
     l1 = self._reverse(l1)   # 降序 -> 升序
     l2 = self._reverse(l2)
     dummy = ListNode(0)
     cur = dummy
+    # 两条都非空时，比较各自头节点，取更小的接在结果末尾
     while l1 and l2:
         if l1.val <= l2.val:     # 取较小头
             cur.next = l1
@@ -142,6 +146,7 @@ def MergeList(self, l1, l2):
             cur.next = l2
             l2 = l2.next
         cur = cur.next
+    # 循环结束时必有一条已空，把另一条剩下的整段直接接上
     cur.next = l1 if l1 else l2
     return dummy.next
 ```

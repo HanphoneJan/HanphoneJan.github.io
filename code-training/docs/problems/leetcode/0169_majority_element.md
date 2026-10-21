@@ -58,9 +58,12 @@ date_reviewed: []
 ```python
 from collections import Counter
 
+# 一次遍历把「元素 -> 出现次数」记进哈希表，再挑出次数超过一半的那个
 def majorityElement(nums):
     cnt = Counter(nums)
+    # Counter 已经帮我们合并了相同元素，这里只需逐个检查不同的值
     for k, v in cnt.items():
+        # 必须严格大于 ⌊n/2⌋ 才算多数元素
         if v > len(nums) // 2:
             return k
 ```
@@ -73,8 +76,11 @@ def majorityElement(nums):
 排序后，中间位置 `n // 2` 的元素一定是多数元素：
 
 ```python
+# 排序会让相同的元素挤在一起，多数元素必然覆盖数组的中位位置
 def majorityElement(nums):
+    # 原地升序排序，不额外申请数组
     nums.sort()
+    # 出现次数超过一半，无论它从哪一侧开始，下标 n//2 一定落在它内部
     return nums[len(nums) // 2]
 ```
 

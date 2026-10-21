@@ -65,17 +65,22 @@ date_reviewed: []
 ```python
 class Solution:
     def mergeKLists(self, lists):
+        # 空数组没有可合并的链表
         if not lists:
             return None
+        # 以第一条链为累积结果，之后逐条并进来
         result = lists[0]
         for i in range(1, len(lists)):
+            # 每轮 result 都在变长，后半段的合并代价越来越高
             result = self.mergeTwoLists(result, lists[i])
         return result
 
     def mergeTwoLists(self, l1, l2):
+        # 哑节点统一挂接动作，省掉"第一个节点"的特判
         dummy = ListNode(0)
         cur = dummy
         while l1 and l2:
+            # 取两条链中较小的头节点接入，保证结果升序
             if l1.val <= l2.val:
                 cur.next = l1
                 l1 = l1.next
@@ -83,6 +88,7 @@ class Solution:
                 cur.next = l2
                 l2 = l2.next
             cur = cur.next
+        # 一条链耗尽后，另一条剩下的部分直接整段接上
         cur.next = l1 if l1 else l2
         return dummy.next
 ```
@@ -116,13 +122,16 @@ class Solution:
     def mergeKLists(self, lists):
         if not lists:
             return None
+        # 每轮把链表数量减半：log k 轮后只剩一条
         while len(lists) > 1:
             merged = []
+            # 步长 2，相邻两条配成一对
             for i in range(0, len(lists), 2):
                 l1 = lists[i]
+                # 奇数个时最后一条没有搭档，用 None 合并不影响结果
                 l2 = lists[i + 1] if i + 1 < len(lists) else None
                 merged.append(self.mergeTwoLists(l1, l2))
-            lists = merged
+            lists = merged          # 本轮结果成为下一轮的输入
         return lists[0]
 
     def mergeTwoLists(self, l1, l2):

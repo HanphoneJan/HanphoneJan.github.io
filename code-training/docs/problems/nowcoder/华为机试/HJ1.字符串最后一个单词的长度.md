@@ -82,7 +82,9 @@ Hello World
 
 ```python
 def last_word_split(line):
+    # split() 不传参数，会自动按连续空白切分并丢掉首尾空格
     words = line.split()
+    # 全空格输入会得到空列表，这时直接返回 0，避免 words[-1] 报错
     return len(words[-1]) if words else 0
 ```
 
@@ -95,7 +97,9 @@ def last_word_split(line):
 ```python
 def last_word(line):
     line = line.strip()  # 去除首尾空格
+    # count 记录已经数到的字符数，最后就是答案
     count = 0
+    # 从最后一个字符往前扫：先数单词，遇到空格就说明单词已经数完
     for ch in reversed(line):
         if ch == ' ':
             break
@@ -181,6 +185,7 @@ if __name__ == "__main__":
 ```python
 # 错误：没有 strip，末尾空格会导致错误
 for ch in reversed(line):  # 如果 line 末尾有空格，会先遇到空格
+# 一进循环就 break，count 停在 0，答案会直接错成 0
 ```
 
 **解决**：先用 `strip()` 去除首尾空格。
@@ -191,6 +196,7 @@ for ch in reversed(line):  # 如果 line 末尾有空格，会先遇到空格
 
 ```python
 return len(words[-1]) if words else 0
+# words 为空时 words[-1] 会抛 IndexError，所以必须先判空
 ```
 
 ### 3. 混淆 `strip()` 和 `rstrip()`
