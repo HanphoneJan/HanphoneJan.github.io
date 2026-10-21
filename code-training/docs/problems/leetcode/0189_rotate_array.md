@@ -61,13 +61,18 @@ date_reviewed: []
 每次将数组最后一个元素取出，所有元素右移一位，再将取出的元素放到首位。重复 k 次。
 
 ```python
+# 每次只把数组右移一位，重复 k 次；k 接近 n 时退化成 O(n^2)
 def rotate(self, nums: List[int], k: int) -> None:
     n = len(nums)
+    # 转 n 次等于回到原样，先取模把 k 压到 [0, n)
     k %= n
     for _ in range(k):
+        # 末尾元素会被前面的值覆盖，先单独存下来
         last = nums[-1]
+        # 从右往左倒着搬：读到的 nums[i-1] 还是原值，不会先被覆盖
         for i in range(n - 1, 0, -1):
             nums[i] = nums[i - 1]
+        # 空出来的第一个位置放刚才存下的末尾元素
         nums[0] = last
 ```
 
@@ -78,11 +83,14 @@ def rotate(self, nums: List[int], k: int) -> None:
 创建一个新数组，直接按轮转后的位置放置元素。
 
 ```python
+# 借一块同样大的空间，直接按轮转后的最终下标摆放，省掉逐个移动
 def rotate(self, nums: List[int], k: int) -> None:
     n = len(nums)
+    # 同样先把 k 归一到 [0, n)
     k %= n
     temp = nums[:]  # 复制原数组
     for i in range(n):
+        # 原下标 i 的元素要往后挪 k 位；% n 让越过末尾的部分回到开头
         nums[(i + k) % n] = temp[i]
 ```
 
@@ -197,7 +205,7 @@ class Solution:
 **正确**：`k %= n`，因为轮转 n 次等于原数组。
 
 ```python
-# 错误
+# 错误：不取模，k > n 时翻转下标就越界了
 k = k  # 当 k > n 时会出错
 
 # 正确
@@ -209,8 +217,10 @@ k %= n  # 处理 k > n 的情况
 翻转区间 `[left, right]` 是闭区间，双指针相遇时停止。
 
 ```python
+# 闭区间 [left, right]：相遇时只剩一个元素，不用再和自己交换
 while left < right:  # 不是 <=
     nums[left], nums[right] = nums[right], nums[left]
+    # 换完两端就向中间收拢一格，区间逐步缩小
     left += 1
     right -= 1
 ```
@@ -229,6 +239,7 @@ while left < right:  # 不是 <=
 ```python
 def rotate_left(nums, k):
     n = len(nums)
+    # 向左转 k 位等于向右转 n-k 位；先对 k 取模，n-k 才不会为负或超过 n
     rotate_right(nums, n - k % n)
 ```
 

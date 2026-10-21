@@ -2557,6 +2557,32 @@
       "source": "易错点总结 · 返回的是索引，不是数值"
     },
     {
+      "docId": "problems/leetcode/1480_running_sum_of_1d_array.md",
+      "source": "复杂度分析",
+      "id": "leetcode-1480-complexity",
+      "type": "single",
+      "stem": "本题最优解「递推」的时间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(n²)"
+      ],
+      "answer": 0,
+      "explain": "递推的时间复杂度是 O(n)。表里的其他解法分别是暴力 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "leetcode-1480-space",
+      "docId": "problems/leetcode/1480_running_sum_of_1d_array.md",
+      "type": "single",
+      "stem": "本题最优解「递推」的空间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(1)"
+      ],
+      "answer": 0,
+      "explain": "递推的空间复杂度是 O(n)。原地累加 O(1) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
       "id": "leetcode-2-carry-quotient",
       "docId": "problems/leetcode/0002_add_two_numbers.md",
       "type": "judge",
@@ -3802,6 +3828,444 @@
       "answer": 0,
       "explain": "空间的空间复杂度是 存储数据点和质心。指标 说明、时间 T: 迭代次数, n: 点数, k: 簇数, d: 维度 —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5311.md",
+      "source": "复杂度分析",
+      "id": "other-P5311-complexity",
+      "type": "single",
+      "stem": "本题最优解「二维 DP + 整数编码」的时间复杂度是？",
+      "options": [
+        "O(nAB)",
+        "O(2^n \\cdot n)"
+      ],
+      "answer": 0,
+      "explain": "二维 DP + 整数编码的时间复杂度是 O(nAB)。表里的其他解法分别是暴力枚举子集 O(2^n \\cdot n) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5311-space",
+      "docId": "problems/codefun2000/huawei-ai/P5311.md",
+      "type": "single",
+      "stem": "本题最优解「二维 DP + 整数编码」的空间复杂度是？",
+      "options": [
+        "O(AB)",
+        "O(n)"
+      ],
+      "answer": 0,
+      "explain": "二维 DP + 整数编码的空间复杂度是 O(AB)。暴力枚举子集 O(n) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5312.md",
+      "source": "复杂度分析",
+      "id": "other-P5312-complexity",
+      "type": "single",
+      "stem": "本题最优解「总计」的时间复杂度是？",
+      "options": [
+        "O(S\\cdot N\\cdot R(F+R)+A\\cdot N^2Q+NAQR+NRC)",
+        "时间复杂度",
+        "O(S\\cdot N\\cdot(dR+R^2))",
+        "O(A\\cdot N^2\\cdot Q)",
+        "O(N\\cdot AQ\\cdot R)",
+        "O(N\\cdot R\\cdot C)"
+      ],
+      "answer": 0,
+      "explain": "总计的时间复杂度是 O(S\\cdot N\\cdot R(F+R)+A\\cdot N^2Q+NAQR+NRC)。表里的其他解法分别是模块 时间复杂度、双向 RNN O(S\\cdot N\\cdot(dR+R^2))、多头注意力 O(A\\cdot N^2\\cdot Q)、残差投影 O(N\\cdot AQ\\cdot R)、输出层 O(N\\cdot R\\cdot C) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5312-space",
+      "docId": "problems/codefun2000/huawei-ai/P5312.md",
+      "type": "single",
+      "stem": "本题最优解「总计」的空间复杂度是？",
+      "options": [
+        "O(NR+ANQ)",
+        "空间复杂度",
+        "O(NR)",
+        "O(ANQ)",
+        "O(NC)"
+      ],
+      "answer": 0,
+      "explain": "总计的空间复杂度是 O(NR+ANQ)。模块 空间复杂度、双向 RNN O(NR)、多头注意力 O(ANQ)、残差投影 O(NR)、输出层 O(NC) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5337.md",
+      "source": "复杂度分析",
+      "id": "other-P5337-complexity",
+      "type": "single",
+      "stem": "本题最优解「滑动窗口注意力」的时间复杂度是？",
+      "options": [
+        "O(B\\cdot N\\cdot(2w+1)\\cdot d_k)",
+        "O(B\\cdot N^2\\cdot d_k)"
+      ],
+      "answer": 0,
+      "explain": "滑动窗口注意力的时间复杂度是 O(B\\cdot N\\cdot(2w+1)\\cdot d_k)。表里的其他解法分别是完整注意力 O(B\\cdot N^2\\cdot d_k) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5337-space",
+      "docId": "problems/codefun2000/huawei-ai/P5337.md",
+      "type": "single",
+      "stem": "本题最优解「滑动窗口注意力」的空间复杂度是？",
+      "options": [
+        "O(B\\cdot N\\cdot d_k)",
+        "O(B\\cdot N^2)"
+      ],
+      "answer": 0,
+      "explain": "滑动窗口注意力的空间复杂度是 O(B\\cdot N\\cdot d_k)。完整注意力 O(B\\cdot N^2) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5338.md",
+      "source": "复杂度分析",
+      "id": "other-P5338-complexity",
+      "type": "single",
+      "stem": "本题最优解「逐元素输出」的时间复杂度是？",
+      "options": [
+        "O(mn)",
+        "O(nk+mnk)"
+      ],
+      "answer": 0,
+      "explain": "逐元素输出的时间复杂度是 O(mn)。表里的其他解法分别是反量化为浮点再矩阵乘 O(nk+mnk)、按列量化 + 整数点积 O(nk+mnk) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5338-space",
+      "docId": "problems/codefun2000/huawei-ai/P5338.md",
+      "type": "single",
+      "stem": "本题最优解「逐元素输出」的空间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(mk+nk)"
+      ],
+      "answer": 0,
+      "explain": "逐元素输出的空间复杂度是 O(1)。反量化为浮点再矩阵乘 O(mk+nk)、按列量化 + 整数点积 O(mk+nk) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5346.md",
+      "source": "复杂度分析",
+      "id": "other-P5346-complexity",
+      "type": "single",
+      "stem": "本题最优解「按资源 DP + 整数编码（本题）」的时间复杂度是？",
+      "options": [
+        "O(nC)",
+        "O(2^n\\cdot n)"
+      ],
+      "answer": 0,
+      "explain": "按资源 DP + 整数编码（本题）的时间复杂度是 O(nC)。表里的其他解法分别是枚举所有选择 O(2^n\\cdot n) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5346-space",
+      "docId": "problems/codefun2000/huawei-ai/P5346.md",
+      "type": "single",
+      "stem": "本题最优解「按资源 DP + 整数编码（本题）」的空间复杂度是？",
+      "options": [
+        "O(C)",
+        "O(n)"
+      ],
+      "answer": 0,
+      "explain": "按资源 DP + 整数编码（本题）的空间复杂度是 O(C)。枚举所有选择 O(n) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5347.md",
+      "source": "复杂度分析",
+      "id": "other-P5347-complexity",
+      "type": "single",
+      "stem": "本题最优解「预处理 + 前缀和（本题）」的时间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(n^2+nw)"
+      ],
+      "answer": 0,
+      "explain": "预处理 + 前缀和（本题）的时间复杂度是 O(n)。表里的其他解法分别是完全按定义（阶段一逐点扫描 + 阶段二逐位置重扫窗口） O(n^2+nw) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5412.md",
+      "source": "复杂度分析",
+      "id": "other-P5412-complexity",
+      "type": "single",
+      "stem": "本题最优解「一次全排序（本题）」的时间复杂度是？",
+      "options": [
+        "O(T\\log T)",
+        "O\\!\\left(\\binom{T-LH}{\\text{extra}}\\cdot \\text{extra}\\right)",
+        "O(\\text{extra}\\cdot T)",
+        "O(T\\log \\text{extra})"
+      ],
+      "answer": 0,
+      "explain": "一次全排序（本题）的时间复杂度是 O(T\\log T)。表里的其他解法分别是枚举组合 O\\!\\left(\\binom{T-LH}{\\text{extra}}\\cdot \\text{extra}\\right)、逐轮线性扫描 O(\\text{extra}\\cdot T)、小根堆部分选择 O(T\\log \\text{extra}) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5412-space",
+      "docId": "problems/codefun2000/huawei-ai/P5412.md",
+      "type": "single",
+      "stem": "本题最优解「一次全排序（本题）」的空间复杂度是？",
+      "options": [
+        "O(T)",
+        "O(\\text{extra})"
+      ],
+      "answer": 0,
+      "explain": "一次全排序（本题）的空间复杂度是 O(T)。枚举组合 O(\\text{extra})、小根堆部分选择 O(\\text{extra}) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5458.md",
+      "source": "复杂度分析",
+      "id": "other-P5458-complexity",
+      "type": "single",
+      "stem": "本题最优解「固定形状下」的时间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(seq^2d_{model}+seq\\cdot d_{model}^2)",
+        "O(h\\cdot seq^2\\cdot d_k)=O(seq^2d_{model})"
+      ],
+      "answer": 0,
+      "explain": "固定形状下的时间复杂度是 O(1)。表里的其他解法分别是直译通用矩阵乘法 O(seq^2d_{model}+seq\\cdot d_{model}^2)、消掉单位矩阵、按区间切头 O(h\\cdot seq^2\\cdot d_k)=O(seq^2d_{model}) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5458-space",
+      "docId": "problems/codefun2000/huawei-ai/P5458.md",
+      "type": "single",
+      "stem": "本题最优解「固定形状下」的空间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(seq\\cdot d_{model})"
+      ],
+      "answer": 0,
+      "explain": "固定形状下的空间复杂度是 O(1)。直译通用矩阵乘法 O(seq\\cdot d_{model})、消掉单位矩阵、按区间切头 O(seq\\cdot d_{model}) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5459.md",
+      "source": "复杂度分析",
+      "id": "other-P5459-complexity",
+      "type": "single",
+      "stem": "本题最优解「每轮重算全部候选」的时间复杂度是？",
+      "options": [
+        "O(N\\cdot K\\cdot L\\cdot I)",
+        "O(N\\cdot K\\cdot 2^L\\cdot L)",
+        "单次分裂 O(L\\cdot I)"
+      ],
+      "answer": 0,
+      "explain": "每轮重算全部候选的时间复杂度是 O(N\\cdot K\\cdot L\\cdot I)。表里的其他解法分别是枚举所有二分 O(N\\cdot K\\cdot 2^L\\cdot L)、2-means 近似二分 单次分裂 O(L\\cdot I) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5459-space",
+      "docId": "problems/codefun2000/huawei-ai/P5459.md",
+      "type": "single",
+      "stem": "本题最优解「每轮重算全部候选」的空间复杂度是？",
+      "options": [
+        "O(L+K)",
+        "O(L)"
+      ],
+      "answer": 0,
+      "explain": "每轮重算全部候选的空间复杂度是 O(L+K)。枚举所有二分 O(L)、2-means 近似二分 O(L) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5467.md",
+      "source": "复杂度分析",
+      "id": "other-P5467-complexity",
+      "type": "single",
+      "stem": "本题最优解「按感受野模拟（只维护前 T 大）」的时间复杂度是？",
+      "options": [
+        "O\\!\\left(L\\cdot\\lvert C_i\\rvert\\cdot D\\right)",
+        ":---",
+        "O(L^2D+L^2\\log L)",
+        "O\\!\\left(L\\cdot\\lvert C_i\\rvert\\cdot D+L\\cdot\\lvert C_i\\rvert\\log\\lvert C_i\\rvert\\right)"
+      ],
+      "answer": 0,
+      "explain": "按感受野模拟（只维护前 T 大）的时间复杂度是 O\\!\\left(L\\cdot\\lvert C_i\\rvert\\cdot D\\right)。表里的其他解法分别是:--- :---、完整注意力矩阵 O(L^2D+L^2\\log L)、按感受野模拟（排序取前 T） O\\!\\left(L\\cdot\\lvert C_i\\rvert\\cdot D+L\\cdot\\lvert C_i\\rvert\\log\\lvert C_i\\rvert\\right) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5467-space",
+      "docId": "problems/codefun2000/huawei-ai/P5467.md",
+      "type": "single",
+      "stem": "本题最优解「按感受野模拟（只维护前 T 大）」的空间复杂度是？",
+      "options": [
+        "O(LD)",
+        ":---",
+        "O(L^2)"
+      ],
+      "answer": 0,
+      "explain": "按感受野模拟（只维护前 T 大）的空间复杂度是 O(LD)。:--- :---、完整注意力矩阵 O(L^2) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5468.md",
+      "source": "复杂度分析",
+      "id": "other-P5468-complexity",
+      "type": "single",
+      "stem": "本题最优解「二分答案 + 贪心校验」的时间复杂度是？",
+      "options": [
+        "O(N\\log\\sum f)",
+        ":---",
+        "O\\!\\left(\\binom{N-1}{K-1}\\cdot N\\right)",
+        "O(KN^2)"
+      ],
+      "answer": 0,
+      "explain": "二分答案 + 贪心校验的时间复杂度是 O(N\\log\\sum f)。表里的其他解法分别是:--- :---、枚举所有切点 O\\!\\left(\\binom{N-1}{K-1}\\cdot N\\right)、动态规划 O(KN^2) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5468-space",
+      "docId": "problems/codefun2000/huawei-ai/P5468.md",
+      "type": "single",
+      "stem": "本题最优解「二分答案 + 贪心校验」的空间复杂度是？",
+      "options": [
+        "O(N)",
+        ":---",
+        "O(K)"
+      ],
+      "answer": 0,
+      "explain": "二分答案 + 贪心校验的空间复杂度是 O(N)。:--- :---、枚举所有切点 O(K) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5567.md",
+      "source": "复杂度分析",
+      "id": "other-P5567-complexity",
+      "type": "single",
+      "stem": "本题最优解「区间代价（递推 + 前缀和）+ 分段 DP」的时间复杂度是？",
+      "options": [
+        "O(N^2\\cdot MaxMem)",
+        "O(2^{N-1}\\cdot N)",
+        "O(N^3+N^2\\cdot MaxMem)"
+      ],
+      "answer": 0,
+      "explain": "区间代价（递推 + 前缀和）+ 分段 DP的时间复杂度是 O(N^2\\cdot MaxMem)。表里的其他解法分别是枚举所有 Checkpoint 子集 O(2^{N-1}\\cdot N)、区间代价（三重循环）+ 分段 DP O(N^3+N^2\\cdot MaxMem) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5567-space",
+      "docId": "problems/codefun2000/huawei-ai/P5567.md",
+      "type": "single",
+      "stem": "本题最优解「区间代价（递推 + 前缀和）+ 分段 DP」的空间复杂度是？",
+      "options": [
+        "O(N\\cdot MaxMem+N^2)",
+        "O(N)"
+      ],
+      "answer": 0,
+      "explain": "区间代价（递推 + 前缀和）+ 分段 DP的空间复杂度是 O(N\\cdot MaxMem+N^2)。枚举所有 Checkpoint 子集 O(N) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5568.md",
+      "source": "复杂度分析",
+      "id": "other-P5568-complexity",
+      "type": "single",
+      "stem": "本题最优解「二分答案 + 对称去重 + 失败记忆」的时间复杂度是？",
+      "options": [
+        "O(\\log S\\cdot M)",
+        "O(k^n\\cdot k)",
+        "O(\\log S\\cdot k^n)"
+      ],
+      "answer": 0,
+      "explain": "二分答案 + 对称去重 + 失败记忆的时间复杂度是 O(\\log S\\cdot M)。表里的其他解法分别是枚举全部 k^n 种分配 O(k^n\\cdot k)、二分答案 + 朴素回溯判定 O(\\log S\\cdot k^n) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5568-space",
+      "docId": "problems/codefun2000/huawei-ai/P5568.md",
+      "type": "single",
+      "stem": "本题最优解「二分答案 + 对称去重 + 失败记忆」的空间复杂度是？",
+      "options": [
+        "O(n+k+M)",
+        "O(n+k)"
+      ],
+      "answer": 0,
+      "explain": "二分答案 + 对称去重 + 失败记忆的空间复杂度是 O(n+k+M)。枚举全部 k^n 种分配 O(n+k)、二分答案 + 朴素回溯判定 O(n+k) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5612.md",
+      "source": "复杂度分析",
+      "id": "other-P5612-complexity",
+      "type": "single",
+      "stem": "本题最优解「总计」的时间复杂度是？",
+      "options": [
+        "O(iter\\cdot(nkd+n\\,d\\log n))",
+        "时间复杂度",
+        "O(n\\cdot k\\cdot d) 每轮",
+        "O(n\\cdot d\\log n) 每轮",
+        "O(k\\cdot d) 每轮"
+      ],
+      "answer": 0,
+      "explain": "总计的时间复杂度是 O(iter\\cdot(nkd+n\\,d\\log n))。表里的其他解法分别是步骤 时间复杂度、分配 O(n\\cdot k\\cdot d) 每轮、更新 O(n\\cdot d\\log n) 每轮、变化量 O(k\\cdot d) 每轮 —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5612-space",
+      "docId": "problems/codefun2000/huawei-ai/P5612.md",
+      "type": "single",
+      "stem": "本题最优解「总计」的空间复杂度是？",
+      "options": [
+        "O(n\\cdot d+k\\cdot d)",
+        "空间复杂度",
+        "O(n)",
+        "O(n\\cdot d)",
+        "O(k\\cdot d)"
+      ],
+      "answer": 0,
+      "explain": "总计的空间复杂度是 O(n\\cdot d+k\\cdot d)。步骤 空间复杂度、分配 O(n)、更新 O(n\\cdot d)、变化量 O(k\\cdot d) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5613.md",
+      "source": "复杂度分析",
+      "id": "other-P5613-complexity",
+      "type": "single",
+      "stem": "本题最优解「拼接输出」的时间复杂度是？",
+      "options": [
+        "O\\left(n\\,h_qd_v\\right)",
+        "时间复杂度",
+        "O\\left(n\\left(h_qd_k+h_{kv}(d_k+d_v)\\right)\\right)",
+        "O(n^2d_k)",
+        "O(n^2)",
+        "O(n^2d_v)",
+        "O\\left(h_qn^2(d_k+d_v)\\right)"
+      ],
+      "answer": 0,
+      "explain": "拼接输出的时间复杂度是 O\\left(n\\,h_qd_v\\right)。表里的其他解法分别是步骤 时间复杂度、按列拆头 O\\left(n\\left(h_qd_k+h_{kv}(d_k+d_v)\\right)\\right)、单头打分与缩放 O(n^2d_k)、单头 softmax O(n^2)、单头加权求和 O(n^2d_v)、全部 h_q 个头 O\\left(h_qn^2(d_k+d_v)\\right) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5613-space",
+      "docId": "problems/codefun2000/huawei-ai/P5613.md",
+      "type": "single",
+      "stem": "本题最优解「拼接输出」的空间复杂度是？",
+      "options": [
+        "O\\left(n\\,h_qd_v\\right)",
+        "空间复杂度",
+        "同左",
+        "O(n^2)",
+        "O(n)",
+        "O(nd_v)",
+        "O\\left(n^2+n\\,h_qd_v\\right)"
+      ],
+      "answer": 0,
+      "explain": "拼接输出的空间复杂度是 O\\left(n\\,h_qd_v\\right)。步骤 空间复杂度、按列拆头 同左、单头打分与缩放 O(n^2)、单头 softmax O(n)、单头加权求和 O(nd_v)、全部 h_q 个头 O\\left(n^2+n\\,h_qd_v\\right) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5916.md",
+      "source": "复杂度分析",
+      "id": "other-P5916-complexity",
+      "type": "single",
+      "stem": "本题最优解「本题实现（融合 + 单次累加）」的时间复杂度是？",
+      "options": [
+        "O(m\\cdot n)",
+        "O(m\\cdot n^2)"
+      ],
+      "answer": 0,
+      "explain": "本题实现（融合 + 单次累加）的时间复杂度是 O(m\\cdot n)。表里的其他解法分别是暴力：逐位置重算 energy O(m\\cdot n^2) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5917.md",
+      "source": "复杂度分析",
+      "id": "other-P5917-complexity",
+      "type": "single",
+      "stem": "本题最优解「：精确分数 + 严格下降剪枝」的时间复杂度是？",
+      "options": [
+        "O(F\\cdot V\\cdot N^2)",
+        "O(F\\cdot V_{\\text{all}}\\cdot N^2\\cdot K)"
+      ],
+      "answer": 0,
+      "explain": "：精确分数 + 严格下降剪枝的时间复杂度是 O(F\\cdot V\\cdot N^2)。表里的其他解法分别是暴力：每类别重扫 + 全局候选 O(F\\cdot V_{\\text{all}}\\cdot N^2\\cdot K) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/nowcoder/输入输出练习/PIO11.多组_字符串_T组形式.md",

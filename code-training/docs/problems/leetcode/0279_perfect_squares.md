@@ -62,16 +62,22 @@ date_added: 2026-04-09
 from collections import deque
 
 def numSquares_bfs(n):
+    # 候选平方数只枚举到 sqrt(n)，更大的平方数一加就超过 n
     squares = [i * i for i in range(1, int(n**0.5) + 1)]
+    # 从「和为 0、用了 0 个数」出发，BFS 首次到达 n 的步数就是最少个数
     queue = deque([(0, 0)])  # (当前和, 步数)
     visited = {0}
     
     while queue:
+        # 队列按步数从少到多展开，先搜到的方案一定用数最少
         cur, steps = queue.popleft()
+        # 每一层都尝试再加一个完全平方数
         for sq in squares:
             nxt = cur + sq
             if nxt == n:
+                # 这一步也算进答案，所以要 +1
                 return steps + 1
+            # 超过 n 的和降不回来；已访问过的和不必重复入队
             if nxt < n and nxt not in visited:
                 visited.add(nxt)
                 queue.append((nxt, steps + 1))
@@ -94,15 +100,20 @@ def numSquares_bfs(n):
 from functools import cache
 from math import inf, isqrt
 
+# 同一组 (i, j) 会被反复求解，缓存后只算一次
 @cache
 def dfs(i, j):
+    # 边界：没有平方数可选时，也只有 j 为 0 才算凑成功
     if i == 0:
         return inf if j else 0
+    # i*i 已经超过 j，这一种根本放不下，只能不选
     if j < i * i:
         return dfs(i - 1, j)
+    # 两种选择取小：不选 i*i，或者选一个 i*i 再继续凑 j-i*i
     return min(dfs(i - 1, j), dfs(i, j - i * i) + 1)
 
 def numSquares(n):
+    # 平方数最多用到 isqrt(n)，它的平方仍不超过 n
     return dfs(isqrt(n), n)
 ```
 
@@ -263,6 +274,7 @@ j = 12: f[12] = min(3, f[3] + 1) = 3     # 12 = 4 + 4 + 4（不变）
 
 **错误做法（01 背包）：**
 ```python
+# 倒序是 01 背包的写法：每个平方数最多用一次，本题允许重复使用，所以不对
 for i in range(1, isqrt(n) + 1):
     for j in range(n, i*i - 1, -1):  # 倒序
         f[j] = min(f[j], f[j - i*i] + 1)
@@ -270,6 +282,7 @@ for i in range(1, isqrt(n) + 1):
 
 **正确做法（完全背包）：**
 ```python
+# 正序时 f[j-i*i] 这一格可能刚用过 i*i，同一平方数才能重复选
 for i in range(1, isqrt(n) + 1):
     for j in range(i*i, n + 1):  # 正序，可以重复选
         f[j] = min(f[j], f[j - i*i] + 1)
@@ -278,6 +291,7 @@ for i in range(1, isqrt(n) + 1):
 ### 2. 初始化值
 
 ```python
+# inf 表示「暂时凑不出来」，后面取 min 时会被真实方案覆盖
 f = [0] + [inf] * n  # f[0] = 0，其余为无穷大
 ```
 
@@ -285,6 +299,7 @@ f = [0] + [inf] * n  # f[0] = 0，其余为无穷大
 
 外层循环是完全平方数，内层循环是目标值：
 ```python
+# 顺序不能换：外层先定用哪个平方数、内层再扫目标值，才是完全背包
 for i in range(1, isqrt(n) + 1):      # 完全平方数
     for j in range(i*i, n + 1):        # 目标值
         f[j] = min(f[j], f[j - i*i] + 1)
@@ -319,13 +334,16 @@ for i in range(1, isqrt(n) + 1):      # 完全平方数
 ```python
 from math import inf, isqrt
 
+# n 的上限只有 10^4，可以一次把整张表算好
 N = 10000
 f = [0] + [inf] * N
+# 转移和单次求解完全一样，只是把范围开到上限
 for i in range(1, isqrt(N) + 1):
     for j in range(i * i, N + 1):
         f[j] = min(f[j], f[j - i * i] + 1)
 
 class Solution:
     def numSquares(self, n: int) -> int:
+        # 表已经算好，每次查询都是 O(1)
         return f[n]
 ```

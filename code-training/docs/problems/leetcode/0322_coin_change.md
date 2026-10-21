@@ -76,22 +76,29 @@ date_added: 2026-04-09
 from math import inf
 
 def coinChange_brute(coins, amount):
+    # 大面额先试，更容易早点凑出较少硬币数，剪枝才有效
     coins.sort(reverse=True)
+    # res 记录当前最优解，inf 表示还没找到可行方案
     res = inf
 
     def dfs(start, count, remaining):
+        # 内层函数要改写外层的 res，必须声明 nonlocal
         nonlocal res
         if remaining < 0:
+            # 面额超了，这条路走不通
             return
         if count >= res:  # 剪枝
             return
         if remaining == 0:
+            # 正好凑满，更新当前最优
             res = min(res, count)
             return
+        # 从 start 开始选，允许同一枚硬币反复使用
         for i in range(start, len(coins)):
             dfs(i, count + 1, remaining - coins[i])
 
     dfs(0, 0, amount)
+    # 始终是 inf 说明凑不出来，按题意返回 -1
     return -1 if res == inf else int(res)
 ```
 
@@ -273,6 +280,7 @@ cur=11: f[11] = min(6, f[6]+1) = 3     # 11 = 5 + 5 + 1
 
 **错误做法（01 背包）：**
 ```python
+# 倒序保证每枚硬币最多用一次，这是 01 背包，凑不出「无限次使用」
 for coin in coins:
     for cur in range(amount, coin - 1, -1):  # 倒序
         f[cur] = min(f[cur], f[cur - coin] + 1)
@@ -280,6 +288,7 @@ for coin in coins:
 
 **正确做法（完全背包）：**
 ```python
+# 正序时 f[cur-coin] 可能刚用过当前硬币，同一枚硬币才能重复选
 for coin in coins:
     for cur in range(coin, amount + 1):  # 正序，可以重复选
         f[cur] = min(f[cur], f[cur - coin] + 1)
@@ -288,17 +297,20 @@ for coin in coins:
 ### 2. 初始化值
 
 ```python
+# 金额 0 不需要任何硬币，这个初值必须单独留出来
 f = [0] + [inf] * amount  # f[0] = 0，其余为无穷大
 ```
 
 **错误做法：**
 ```python
+# 错在把 f[0] 也设成了 inf，之后任何转移都推不出有限值
 f = [inf] * (amount + 1)  # 错误！f[0] 应该是 0
 ```
 
 ### 3. 无解情况
 
 ```python
+# 仍是 inf 说明这个金额凑不出来，按题意返回 -1
 ans = f[amount]
 return ans if ans < inf else -1  # 注意返回 -1
 ```
@@ -307,12 +319,15 @@ return ans if ans < inf else -1  # 注意返回 -1
 
 外层循环硬币，内层循环金额：
 ```python
+# 内层金额正序：f[cur-coin] 可能刚用过当前硬币，同一枚硬币才能重复选
 for coin in coins:              # 硬币
     for cur in range(coin, amount + 1):  # 金额
         f[cur] = min(f[cur], f[cur - coin] + 1)
 ```
 
-如果反过来，会变成排列问题（顺序不同算不同方案）。
+本题只求「最少硬币数」，内外层两种顺序都能得到正确答案。
+循环顺序真正影响结果的是**求方案数**的题（如零钱兑换 II）：外层硬币、内层金额
+才不会把 `{1,2}` 和 `{2,1}` 重复计数；反过来就成了排列问题。
 
 ---
 
@@ -328,9 +343,12 @@ for coin in coins:              # 硬币
 
 ```python
 def change(amount: int, coins: List[int]) -> int:
+    # 这里 f[c] 存方案数：凑出 0 有 1 种（什么都不选），其余先记 0
     f = [1] + [0] * amount
+    # 外层固定硬币顺序，{1,2} 和 {2,1} 只会被算成同一种组合
     for coin in coins:
         for cur in range(coin, amount + 1):
+            # 方案数用加法累加：用上这枚硬币的方案数叠加到原有方案上
             f[cur] += f[cur - coin]
     return f[amount]
 ```
@@ -349,24 +367,30 @@ from math import inf
 
 def coinChange_with_path(coins, amount):
     f = [0] + [inf] * amount
+    # parent[c] 记录凑出金额 c 时最后用的那枚硬币
     parent = [-1] * (amount + 1)  # 记录用了哪个硬币
 
+    # 转移和求最少个数完全一样，只是额外记下每个金额是从哪枚硬币来的
     for coin in coins:
         for cur in range(coin, amount + 1):
+            # 只有严格更优才覆盖，保证记下的是最优方案的路径
             if f[cur - coin] + 1 < f[cur]:
                 f[cur] = f[cur - coin] + 1
                 parent[cur] = coin
 
     if f[amount] == inf:
+        # 无解时没有路径可回溯
         return -1, []
 
     # 重建路径
     path = []
     cur = amount
     while cur > 0:
+        # 每轮减去最后用的那枚硬币，往回走到 0
         path.append(parent[cur])
         cur -= parent[cur]
 
+    # path 是倒序的，本题只关心数量，不要求输出顺序
     return f[amount], path
 ```
 

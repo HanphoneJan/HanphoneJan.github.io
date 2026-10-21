@@ -65,16 +65,20 @@ class Solution:
                     count += 1
                 else:
                     count -= 1
+                # 任意前缀里右括号多于左括号，整串已经不可能合法
                 if count < 0:
                     return False
+            # 收尾必须恰好配平
             return count == 0
 
         ans = []
         # 生成所有 2^(2n) 种组合
+        # 用位掩码枚举：第 i 位为 1 放 '('，为 0 放 ')'
         for bits in range(1 << (2 * n)):
             s = ''
             for i in range(2 * n):
                 s += '(' if (bits >> i) & 1 else ')'
+            # 只有通过合法性检查的串才收进答案
             if is_valid(s):
                 ans.append(s)
         return ans

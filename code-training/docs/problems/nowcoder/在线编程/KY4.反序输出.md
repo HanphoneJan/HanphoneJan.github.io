@@ -64,7 +64,9 @@ Python 切片 `[::-1]` 一步完成反转，最简洁高效：
 
 ```python
 for line in sys.stdin:
+    # 一行一个用例，读到文件末尾循环自动结束
     s = line.rstrip('\n')
+    # 只去掉行尾换行符：留着它会被一起反序，跑到输出行首
     print(s[::-1])
 ```
 
@@ -79,8 +81,11 @@ import sys
 
 
 def solve():
+    # 用例组数未知，一行一组，一直读到文件结束
     for line in sys.stdin:
+        # 先去掉 Unix 的换行 '\n'，再去掉 Windows 的回车 '\r'
         s = line.rstrip('\n').rstrip('\r')
+        # 步长 -1 从末尾往前走，逐字符取出即得反序字符串
         print(s[::-1])
 
 

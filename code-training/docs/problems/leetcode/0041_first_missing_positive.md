@@ -67,8 +67,10 @@ date_reviewed: []
 ```python
 class Solution:
     def firstMissingPositive(self, nums: List[int]) -> int:
+        # 集合只回答"某个数出现过没有"，与顺序无关
         num_set = set(nums)
         i = 1
+        # 从 1 往上试，第一个不在集合里的数就是答案
         while i in num_set:
             i += 1
         return i
@@ -122,13 +124,16 @@ class Solution:
         # 第一步：整理数组，把每个数放到它应该在的位置
         for i in range(size):
             # nums[i] 应该放到下标 nums[i]-1 处
+            # 越界的数不参与整理；目标位置已有同值就停，避免两数来回换
             while 1 <= nums[i] <= size and nums[i] != nums[nums[i] - 1]:
                 j = nums[i] - 1
+                # 换过来的新数可能还要继续送，所以是 while 不是 if
                 nums[i], nums[j] = nums[j], nums[i]
         # 第二步：找第一个不满足 nums[i]==i+1 的位置
         for i in range(size):
             if nums[i] != i + 1:
                 return i + 1
+        # 1~size 全部在位，缺失的第一个正整数就是 size+1
         return size + 1
 ```
 

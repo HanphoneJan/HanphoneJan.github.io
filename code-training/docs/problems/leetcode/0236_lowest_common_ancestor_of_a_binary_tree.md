@@ -65,10 +65,13 @@ date_reviewed: []
 
 ```python
 def lowestCommonAncestor(self, root, p, q):
+    # 根节点没有父节点，先把它记成 None
     parent = {root: None}
     stack = [root]
+    # 只要求 p、q 都进了表就够，不必把整棵树都走完
     while p not in parent or q not in parent:
         node = stack.pop()
+        # 往下走一层的同时，顺手记下孩子的父节点是谁
         if node.left:
             parent[node.left] = node
             stack.append(node.left)
@@ -76,11 +79,13 @@ def lowestCommonAncestor(self, root, p, q):
             parent[node.right] = node
             stack.append(node.right)
 
+    # 从 p 一路爬到根，沿途每个节点（含 p 自己）都是 p 的祖先
     ancestors = set()
     while p:
         ancestors.add(p)
         p = parent[p]
 
+    # 让 q 也往上爬，第一次撞上的祖先就是深度最大的公共祖先
     while q not in ancestors:
         q = parent[q]
     return q
@@ -172,6 +177,7 @@ class Solution:
 ### 1. 终止条件
 
 ```python
+# 三种情况都归结为「返回当前节点」：空节点、遇到 p、遇到 q
 if not root or root == p or root == q:
     return root
 ```
@@ -182,10 +188,12 @@ if not root or root == p or root == q:
 
 ```python
 # 简洁写法
+# 只有一边非空就返回那一边：两个目标都落在同一侧子树里
 return left if left else right
 
 # 等价于
 if left and right:
+    # 左右各找到一个，说明两个目标在此分叉，当前节点就是最近公共祖先
     return root
 if left:
     return left
@@ -197,10 +205,13 @@ return right
 如果是二叉搜索树，可以利用大小关系：
 
 ```python
+# 两个目标值都小于当前节点，LCA 只可能在左子树
 if p.val < root.val > q.val:
     return self.lowestCommonAncestor(root.left, p, q)
+# 两个目标值都大于当前节点，LCA 只可能在右子树
 if p.val > root.val < q.val:
     return self.lowestCommonAncestor(root.right, p, q)
+# 一大一小分居两侧（或当前节点就是 p/q），当前节点即 LCA
 return root
 ```
 

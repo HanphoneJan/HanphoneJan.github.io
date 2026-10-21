@@ -59,10 +59,15 @@ class Solution:
     def countSubstrings(self, s: str) -> int:
         n = len(s)
         ans = 0
+        # 中心共 2n-1 个：n 个单字符中心 + n-1 个字符之间的空隙中心
         for i in range(2 * n - 1):
+            # 偶数 i 对应单字符中心，奇数 i 对应空隙中心，两种中心统一成一组左右指针
             l, r = i // 2, (i + 1) // 2
+            # 顺着中心向两侧比对，只要还相等，就多出一条回文子串
             while l >= 0 and r < n and s[l] == s[r]:
+                # 能进入本轮，说明这一层是回文；长度 1、2 的回文也由此计入
                 ans += 1
+                # 左右同步外扩一格，去看更长的一层
                 l -= 1
                 r += 1
         return ans

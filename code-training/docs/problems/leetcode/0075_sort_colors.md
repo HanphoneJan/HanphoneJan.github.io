@@ -55,10 +55,13 @@ date_added: 2026-03-25
 ```python
 class Solution:
     def sortColors(self, nums: List[int]) -> None:
+        # 颜色值恰好是 0/1/2，可以直接当下标用
         count = [0, 0, 0]
+        # 第一遍：数出每种颜色有多少个
         for num in nums:
             count[num] += 1
 
+        # 第二遍：按 0、1、2 的顺序回填，天然就是有序的
         idx = 0
         for i in range(3):
             for j in range(count[i]):

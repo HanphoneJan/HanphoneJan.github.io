@@ -57,18 +57,22 @@ date_added: 2026-04-09
 ```python
 def moveZeroes_brute(nums):
     n = len(nums)
+    # 借一个临时数组存结果，最后再整体倒回 nums
     result = []
     
     # 先复制非零元素
+    # 按原顺序追加，非零元素之间的相对次序因此不会变
     for num in nums:
         if num != 0:
             result.append(num)
     
     # 再填充零
+    # 缺几个就补几个 0，保证长度和原数组一致
     while len(result) < n:
         result.append(0)
     
     # 复制回原数组
+    # 题目要求原地修改，只能逐位写回 nums
     for i in range(n):
         nums[i] = result[i]
 ```
@@ -84,15 +88,19 @@ def moveZeroes_brute(nums):
 ```python
 def moveZeroes_two_pass(nums):
     n = len(nums)
+    # left 是下一个非零元素该落的位置，也等于已写入的非零个数
     left = 0
     
     # 第一遍：将非零元素移到前面
+    # 用赋值而不是交换：i 扫过的旧值之后会被覆盖，不用保留
     for i in range(n):
         if nums[i] != 0:
+            # 非零才写；零被跳过，相当于被后面的元素挤到了末尾
             nums[left] = nums[i]
             left += 1
     
     # 第二遍：填充零
+    # left 之后都是多出来的空位，补 0 就能保持非零元素的顺序
     for i in range(left, n):
         nums[i] = 0
 ```
@@ -250,11 +258,13 @@ fast=4: nums[4]=12, 非零，交换 nums[2] 和 nums[4]
 
 **两次遍历法使用赋值：**
 ```python
+# 两次遍历只要最终结果，被覆盖的旧值不再需要
 nums[left] = nums[i]  # 赋值
 ```
 
 **快慢指针法使用交换：**
 ```python
+# 一次遍历必须交换：慢指针位置上的零要被换到后面，不能直接覆盖
 nums[slow], nums[fast] = nums[fast], nums[slow]  # 交换
 ```
 
@@ -263,6 +273,7 @@ nums[slow], nums[fast] = nums[fast], nums[slow]  # 交换
 **正确做法：** 只有在发生交换/赋值后才移动慢指针。
 
 ```python
+# 交换完才把 slow 后移，slow 之前始终是已就位的非零元素
 if nums[fast] != 0:
     nums[slow], nums[fast] = nums[fast], nums[slow]
     slow += 1  # 只有交换后才移动
@@ -298,6 +309,7 @@ if nums[fast] != 0:
 解法相同，只需修改判断条件：
 ```python
 def moveNegatives(nums):
+    # 框架和「移动零」完全一样，只把判定条件换成「小于 0」
     slow = 0
     for fast in range(len(nums)):
         if nums[fast] < 0:  # 负数移到前面
@@ -310,15 +322,20 @@ def moveNegatives(nums):
 将数组分成三部分（红、白、蓝），需要三个指针：
 ```python
 def sortColors(nums):
+    # 三段区间：[0, red) 是 0，[red, white) 是 1，(blue, n-1] 是 2
     red, white, blue = 0, 0, len(nums) - 1
+    # white 是当前待判定的位置，blue 之后都已确定是 2
     while white <= blue:
         if nums[white] == 0:
+            # 换来的值一定是 1，所以 red 和 white 一起后移
             nums[red], nums[white] = nums[white], nums[red]
             red += 1
             white += 1
         elif nums[white] == 1:
+            # 本来就是 1，white 直接后移
             white += 1
         else:
+            # 换来的值还没检查过，white 不能动，只收缩右端
             nums[white], nums[blue] = nums[blue], nums[white]
             blue -= 1
 ```

@@ -53,13 +53,17 @@ date_reviewed: []
 def longestConsecutive(nums):
     if not nums:
         return 0
+    # 先排序去重：重复值会让「差 1」判断失败，把当前连续段截断
     nums = sorted(set(nums))
+    # 非空数组至少有一个数，长度下限是 1
     ans = 1
     cur = 1
     for i in range(1, len(nums)):
+        # 相邻两数正好差 1，当前连续段延长
         if nums[i] == nums[i-1] + 1:
             cur += 1
             ans = max(ans, cur)
+        # 断开了，从当前这个数重新开始一段
         else:
             cur = 1
     return ans
@@ -76,12 +80,15 @@ def longestConsecutive(nums):
 
 ```python
 def longestConsecutive(nums):
+    # 集合只用来做 O(1) 的「这个数在不在」查询
     st = set(nums)
     ans = 0
     for x in st:
+        # 从 x 开始一直往上找 x+1、x+2……
         y = x + 1
         while y in st:
             y += 1
+        # 循环停下时 y 是第一个不在集合里的数，所以长度是 y - x
         ans = max(ans, y - x)
     return ans
 ```

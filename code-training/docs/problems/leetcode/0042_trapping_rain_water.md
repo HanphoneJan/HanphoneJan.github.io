@@ -69,9 +69,11 @@ class Solution:
     def trap(self, height: List[int]) -> int:
         n = len(height)
         ans = 0
+        # 逐列计算：每列的存水量由左右两侧的最高柱决定
         for i in range(n):
             left_max = max(height[:i+1])   # 左侧（含自身）最大值
             right_max = max(height[i:])    # 右侧（含自身）最大值
+            # 两侧都含自身，保证 min 不小于 height[i]，差不会为负
             ans += min(left_max, right_max) - height[i]
         return ans
 ```
@@ -97,16 +99,19 @@ class Solution:
         # 从左到右，计算每个位置的前缀最大值
         pre_max[0] = height[0]
         for i in range(1, n):
+            # 前一位的最大值已经算好，只需与当前柱子比一次
             pre_max[i] = max(pre_max[i-1], height[i])
 
         # 从右到左，计算每个位置的后缀最大值
         suf_max[n-1] = height[n-1]
         for i in range(n-2, -1, -1):
+            # 方向相反，递推关系与左侧完全对称
             suf_max[i] = max(suf_max[i+1], height[i])
 
         # 计算每个位置的存水量
         ans = 0
         for i in range(n):
+            # 较矮的那面墙决定水位，再减去柱子自身高度
             ans += min(pre_max[i], suf_max[i]) - height[i]
         return ans
 ```
@@ -135,17 +140,22 @@ class Solution:
 ```python
 class Solution:
     def trap(self, height: List[int]) -> int:
+        # 三个量都从 0 起：指针还没走动，见过的最高墙自然是 0
         ans = pre_max = suf_max = 0
         left, right = 0, len(height) - 1
+        # 相向收缩，每轮只处理较矮的那一侧
         while left < right:
             pre_max = max(pre_max, height[left])
             suf_max = max(suf_max, height[right])
+            # 左侧墙更矮：left 处的水位已被 pre_max 唯一定下
             if pre_max < suf_max:
                 ans += pre_max - height[left]
                 left += 1
             else:
+                # 对称地，右侧墙更矮，right 处由 suf_max 决定
                 ans += suf_max - height[right]
                 right -= 1
+        # 两指针相遇的位置是最高处之一，水量为 0，不必再算
         return ans
 ```
 

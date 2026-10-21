@@ -64,14 +64,17 @@ date_reviewed: []
 
 ```python
 def sortList(head):
+    # 先把所有值搬到数组里，链表的指针关系暂时不用管
     vals = []
     cur = head
     while cur:
         vals.append(cur.val)
         cur = cur.next
     vals.sort()
+    # 用哑节点省掉「第一个节点怎么接」的特判
     dummy = ListNode()
     cur = dummy
+    # 按排好序的值逐个数重建节点
     for v in vals:
         cur.next = ListNode(v)
         cur = cur.next
@@ -188,9 +191,7 @@ class Solution:
 - 段1：`[4]`, 段2：`[2]` -> 合并为 `[2, 4]`
 - 段3：`[1]`, 段4：`[3]` -> 合并为 `[1, 3]`
 
-链表变为：`[2, 4, 1, 3]` -> 不对，实际上合并后链表是 `[2, 4, 1, 3]` 按段排列。
-
-准确地说，合并后是：`2 -> 4 -> 1 -> 3`
+链表变为：`2 -> 4 -> 1 -> 3`
 
 **step = 2**：把每 2 个节点当作一段，两两合并
 - 段1：`[2, 4]`, 段2：`[1, 3]` -> 合并为 `[1, 2, 3, 4]`

@@ -59,7 +59,9 @@ date_reviewed: []
 ```python
 def maxProfit(prices):
     n = len(prices)
+    # 利润初值取 0：题目允许「不交易」，亏钱的买卖不该被选
     ans = 0
+    # 枚举买入日 i；最后一个位置没有未来可卖，所以内层从 i+1 开始
     for i in range(n):
         for j in range(i + 1, n):
             ans = max(ans, prices[j] - prices[i])
@@ -76,11 +78,14 @@ def maxProfit(prices):
 ```python
 def maxProfit(prices):
     n = len(prices)
+    # 少于两天没法「先买后卖」，利润只能是 0
     if n <= 1:
         return 0
     ans = 0
+    # pre_min 是今天之前出现过的最低价，也就是最优买入价
     pre_min = prices[0]
     for i in range(1, n):
+        # 先用昨天的低价算今天卖出的收益，再用今天价格去更新最低价
         ans = max(ans, prices[i] - pre_min)
         pre_min = min(pre_min, prices[i])
     return ans

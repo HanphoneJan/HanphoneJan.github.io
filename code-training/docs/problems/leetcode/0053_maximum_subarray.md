@@ -171,6 +171,7 @@ class Solution:
 ### 1. 初始值设置
 
 ```python
+# 用首元素而非 0 起手：数组可能全是负数，从 0 起手会得到错误答案
 current_sum = max_sum = nums[0]
 ```
 不要初始化为0，因为数组可能全是负数。
@@ -178,6 +179,7 @@ current_sum = max_sum = nums[0]
 ### 2. 决策逻辑
 
 ```python
+# 只有负数才值得重开；等于 0 时延续不亏，还能保住更长的子数组
 if current_sum < 0:      # 不是 <= 0
     current_sum = nums[i]
 ```
@@ -186,12 +188,14 @@ if current_sum < 0:      # 不是 <= 0
 ### 3. 遍历范围
 
 ```python
+# 下标 0 已在初始化时用掉，从 1 开始，避免把 nums[0] 加两次
 for i in range(1, n):   # 从1开始，0已经初始化
 ```
 
 ### 4. 更新顺序
 
 ```python
+# 顺序不能反：必须先用新的 current_sum 去刷新 max_sum
 current_sum = ...        # 先更新当前值
 max_sum = max(max_sum, current_sum)  # 再更新最大值
 ```
@@ -205,6 +209,7 @@ max_sum = max(max_sum, current_sum)  # 再更新最大值
 ```python
 def maxSubArrayWithRange(self, nums):
     current_sum = max_sum = nums[0]
+    # 子数组至少含一个元素，初始区间就是 nums[0]
     start = end = temp_start = 0
 
     for i in range(1, len(nums)):
@@ -214,11 +219,13 @@ def maxSubArrayWithRange(self, nums):
         else:
             current_sum += nums[i]
 
+        # 只有刷新了全局最大值，才把"当前段"的起点转正为 start
         if current_sum > max_sum:
             max_sum = current_sum
             start = temp_start
             end = i
 
+    # 返回 (最大和, 起点下标, 终点下标)
     return max_sum, start, end
 ```
 

@@ -63,10 +63,14 @@ date_reviewed: []
 class Solution:
     def twoSum(self, nums: List[int], target: int) -> List[int]:
         n = len(nums)
+        # 枚举第一个数的下标 i
         for i in range(n):
+            # 第二个数只在 i 之后取，避免同一对数字被正反各算一次，也自然满足「元素不能重复使用」
             for j in range(i + 1, n):
+                # 和为目标值即为答案，题目保证有且仅有一组解，可以直接返回
                 if nums[i] + nums[j] == target:
                     return [i, j]
+        # 走到这里说明没有解；题目保证有解，返回值只为让函数在所有分支上都有返回
         return []
 ```
 
@@ -81,20 +85,26 @@ class Solution:
 ```python
 class Solution:
     def twoSum(self, nums: List[int], target: int) -> List[int]:
-        # 记录原始索引
+        # 记录原始索引：排序会打乱位置，而题目要返回的是原数组的下标，所以把「值 + 原下标」一起存
         indexed_nums = [(num, i) for i, num in enumerate(nums)]
-        # 按数值排序
+        # 按数值排序，让双指针的「左小右大」成立
         indexed_nums.sort(key=lambda x: x[0])
 
+        # 从两端开始：宽度最大的一对先试起
         left, right = 0, len(indexed_nums) - 1
+        # 每轮至少移动一根指针，相遇即说明所有候选都已验证完毕
         while left < right:
             current_sum = indexed_nums[left][0] + indexed_nums[right][0]
             if current_sum == target:
+                # 命中，返回两个数的原始下标
                 return [indexed_nums[left][1], indexed_nums[right][1]]
             elif current_sum < target:
+                # 和偏小：右端已是最大值仍不够，只能把左端换大一点
                 left += 1
             else:
+                # 和偏大：同理只能把右端换小一点
                 right -= 1
+        # 无解时返回空列表，保持返回值类型一致
         return []
 ```
 
@@ -219,17 +229,19 @@ if __name__ == "__main__":
 
 **错误写法**：先存入当前数，再查表
 ```python
-# 错误！
-hashtable[num] = i  # 先存
-if target - num in hashtable:  # 再查
+# 错误！存入和查询的顺序反了
+hashtable[num] = i  # 先把自己存进表
+# 再查补数：若 2 * num == target，查到的正是刚刚存下的自己，同一个元素被用了两次
+if target - num in hashtable:
     ...
 ```
 
 **正确写法**：先查表，再存数
 ```python
-# 正确！
-if target - num in hashtable:  # 先查
+# 正确！查的是「之前出现过」的数，天然满足 i != j
+if target - num in hashtable:  # 先查：表中只有 i 之前的元素
     ...
+# 查完再存自己，当前元素留给后面的元素去配对
 hashtable[num] = i  # 再存
 ```
 

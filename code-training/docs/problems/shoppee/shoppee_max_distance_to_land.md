@@ -114,13 +114,16 @@ grid = [[0, 0, 0], [0, 0, 0]]
 ```python
 def maxDistance(self, grid):
     m, n = len(grid), len(grid[0])
+    # 先把所有陆地坐标收集起来，后面每个海洋格子都要和它们逐个比距离
     lands = [(i, j) for i in range(m) for j in range(n) if grid[i][j] == 1]
+    # 没有陆地，或全是陆地，都不存在"海洋到陆地"的距离
     if not lands or len(lands) == m * n:
         return -1
     ans = -1
     for i in range(m):
         for j in range(n):
             if grid[i][j] == 0:
+                # 只能上下左右走，最短步数就是行列差之和（曼哈顿距离）
                 d = min(abs(i - x) + abs(j - y) for x, y in lands)
                 ans = max(ans, d)
     return ans

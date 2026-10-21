@@ -77,6 +77,7 @@ medianFinder.findMedian(); // 返回 2.0
 使用数组存储所有元素，查询时排序后取中位数。
 
 ```python
+# 只用列表存下所有元素，插入时不做任何预处理
 class MedianFinderBrute:
     def __init__(self):
         self.nums = []
@@ -85,10 +86,13 @@ class MedianFinderBrute:
         self.nums.append(num)
 
     def findMedian(self) -> float:
+        # 每次查询前现排序：插入便宜，查询很贵
         self.nums.sort()
         n = len(self.nums)
         if n % 2 == 1:
+            # 奇数个，正中间那个就是中位数
             return float(self.nums[n // 2])
+        # 偶数个，取中间两个的平均；除 2.0 保证结果是浮点
         return (self.nums[n // 2 - 1] + self.nums[n // 2]) / 2.0
 ```
 
@@ -101,6 +105,7 @@ class MedianFinderBrute:
 维护一个有序列表，插入时使用二分查找定位。
 
 ```python
+# insort 先用二分找位置，再就地插入
 import bisect
 
 class MedianFinderSorted:
@@ -108,12 +113,15 @@ class MedianFinderSorted:
         self.nums = []
 
     def addNum(self, num: int) -> None:
+        # 插入时要搬移后面的元素，所以仍是 O(n)
         bisect.insort(self.nums, num)  # O(n) 插入
 
     def findMedian(self) -> float:
         n = len(self.nums)
         if n % 2 == 1:
+            # 列表始终有序，中间位置直接读
             return float(self.nums[n // 2])
+        # 偶数个：中间两个的平均
         return (self.nums[n // 2 - 1] + self.nums[n // 2]) / 2.0
 ```
 
@@ -274,6 +282,7 @@ A 比 B 多 1 个（2 个 vs 1 个）
 
 **正确做法：** 大顶堆用负数模拟。
 ```python
+# heapq 只提供小顶堆，存负值才能让堆顶变成最大值
 heappush(self.B, -num)    # 存入负数
 -num = heappop(self.B)     # 取出后取反
 ```
@@ -282,6 +291,7 @@ heappush(self.B, -num)    # 存入负数
 
 **正确做法：**
 ```python
+# 合法状态只有两种：两堆等大，或 A 比 B 多一个，用大小是否相同即可区分
 if len(self.A) != len(self.B):
     # A 多一个，新元素处理后要平衡
     heappush(self.B, -heappushpop(self.A, num))
@@ -297,6 +307,7 @@ else:
 ### 4. 中位数计算
 
 ```python
+# 奇数个时中位数就是 A 的堆顶
 if len(self.A) != len(self.B):
     return float(self.A[0])           # 奇数个
 else:
@@ -320,24 +331,31 @@ else:
 ```python
 class MedianFinder:
     def __init__(self):
+        # 值域只有 0..100，用计数数组代替排序，桶下标就是元素值
         self.count = [0] * 101
+        # 总个数用于判断奇偶、定位中位数名次
         self.total = 0
 
     def addNum(self, num: int) -> None:
+        # 插入只做一次计数，代价 O(1)
         self.count[num] += 1
         self.total += 1
 
     def findMedian(self) -> float:
         # 通过前缀和找到中位数位置
+        # 中位数在升序序列中的名次（从 1 数起），向上取整
         mid = (self.total + 1) // 2
         cumsum = 0
+        # 桶下标天然有序，累加到 mid 就锁定了中位数所在的值
         for i in range(101):
             cumsum += self.count[i]
             if cumsum >= mid:
                 if self.total % 2 == 1:
+                    # 奇数个：第 mid 个值就是答案
                     return float(i)
                 # 找第二个中位数
                 if cumsum > mid:
+                    # 第 mid 个和第 mid+1 个都落在 i 这个桶里
                     return float(i)
                 # 第二个中位数在后面的桶
                 for j in range(i + 1, 101):

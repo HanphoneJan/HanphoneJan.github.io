@@ -75,10 +75,14 @@ Day 7: [0, 0, 1, 1, 0, 0, 0, 0]
 ```python
 class Solution:
     def prisonAfterNDays(self, cells: List[int], n: int) -> List[int]:
+        # 老老实实一天一天往前推，n 有多大就循环多少次
         for _ in range(n):
+            # 新状态先全置 0，首尾两间自然就是 0，不用单独处理
             new_cells = [0] * 8
+            # 只有中间 6 间有两个邻居，才能套规则
             for i in range(1, 7):
                 new_cells[i] = 1 if cells[i-1] == cells[i+1] else 0
+            # 新状态覆盖旧状态，进入下一天
             cells = new_cells
         return cells
 ```
@@ -100,29 +104,38 @@ class Solution:
 class Solution:
     def prisonAfterNDays(self, cells: List[int], n: int) -> List[int]:
         def next_day(curr_cells):
+            # 新状态初始全 0：首尾两间永远为 0，省去单独判断
             next_cells = [0] * 8
+            # 只有 1..6 这几间有两个邻居，才可能变成 1
             for i in range(1, 7):
                 next_cells[i] = 1 if curr_cells[i-1] == curr_cells[i+1] else 0
             return next_cells
 
+        # seen[状态] = 第一次遇到它时「还剩多少天」
         seen = {}
 
         while n > 0:
+            # 列表不能当字典的键，先转成元组
             state = tuple(cells)
 
             if state in seen:
                 # 发现循环
+                # 两次遇到同一状态相隔的天数就是周期长度
                 cycle_length = seen[state] - n
+                # 完整周期可以直接跳过，只留余数继续模拟
                 n %= cycle_length
                 break
 
+            # 记下这个状态出现在「还剩 n 天」的时刻，供下次相遇时算周期
             seen[state] = n
 
             if n >= 1:
+                # 走一天：天数减一，状态翻新
                 n -= 1
                 cells = next_day(cells)
 
         # 继续模拟剩余天数
+        # 此时 n 已经小于一个周期，逐天模拟不会慢
         while n > 0:
             cells = next_day(cells)
             n -= 1
@@ -227,6 +240,7 @@ class Solution:
 next_cells = [0] * 8  # 直接初始化为 0
 for i in range(1, 7):  # 只处理中间 6 间
     ...
+# 范围必须卡在 1..6：cells[-1] 会绕到末尾，cells[8] 直接越界
 ```
 
 ### 2. 状态变化规则
@@ -235,6 +249,7 @@ for i in range(1, 7):  # 只处理中间 6 间
 # 两个相邻房间状态相同，则变为占用(1)
 # 否则变为空(0)
 next_cells[i] = 1 if curr_cells[i-1] == curr_cells[i+1] else 0
+# 比的是左右两个邻居，不是自己，写错成 curr_cells[i] 结果就完全不同
 ```
 
 ### 3. 循环检测的时机
@@ -245,6 +260,7 @@ if state in seen:
     cycle_length = seen[state] - n
     ...
 seen[state] = n  # 记录当前状态
+# 顺序反了周期会算成 0，取余直接除零报错
 ```
 
 ---

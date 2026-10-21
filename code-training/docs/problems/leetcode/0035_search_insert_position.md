@@ -57,9 +57,11 @@ date_added: 2026-03-25
 ```python
 class Solution:
     def searchInsert(self, nums: List[int], target: int) -> int:
+        # 第一个 >= target 的位置，就是 target 该待的地方
         for i in range(len(nums)):
             if nums[i] >= target:
                 return i
+        # 全都比 target 小，插到末尾
         return len(nums)
 ```
 
@@ -72,9 +74,9 @@ class Solution:
 - 如果没找到，循环结束时 `left` 指向的位置就是插入位置
 
 **为什么返回 left？**
-- 循环不变式：`nums[0..left-1] < target`，`nums[right+1..n-1] >= target`
-- 当循环结束时，`left = right + 1`
-- `left` 就是第一个大于等于 target 的位置
+- 循环不变式：`nums[0..left-1] < target`，`nums[right..n-1] >= target`
+- 当循环结束时，`left == right`，区间收缩到同一个点
+- 这个点就是第一个大于等于 target 的位置
 
 **算法步骤**：
 1. 初始化 `left = 0, right = n`
@@ -101,11 +103,11 @@ class Solution:
     二分查找的变体：
     - 如果找到 target，返回其索引
     - 如果没找到，left 指向的位置就是应该插入的位置
-      （因为循环结束时，left 是第一个大于 target 的位置）
+      （因为循环结束时，left 是第一个 >= target 的位置）
 
     为什么返回 left？
-    循环不变式：nums[0..left-1] < target，nums[right+1..n-1] >= target
-    当循环结束时，left = right + 1，left 就是插入位置
+    循环不变式：nums[0..left-1] < target，nums[right..n-1] >= target
+    当循环结束时，left == right，两者都停在第一个 >= target 的位置
 
     时间复杂度：O(log n)
     空间复杂度：O(1)
@@ -133,9 +135,10 @@ class Solution:
 
 | 步骤 | left | right | mid | nums[mid] | 操作 |
 |------|------|-------|-----|-----------|------|
-| 1 | 0 | 3 | 1 | 3 | 3 > 2，right = 0 |
-| 2 | 0 | 0 | 0 | 1 | 1 < 2，left = 1 |
-| 3 | 1 | 0 | - | - | left > right，结束 |
+| 1 | 0 | 4 | 2 | 5 | 5 >= 2，right = 2 |
+| 2 | 0 | 2 | 1 | 3 | 3 >= 2，right = 1 |
+| 3 | 0 | 1 | 0 | 1 | 1 < 2，left = 1 |
+| 4 | 1 | 1 | - | - | left == right，结束 |
 
 返回 `left = 1`
 
@@ -145,10 +148,9 @@ class Solution:
 
 | 步骤 | left | right | mid | nums[mid] | 操作 |
 |------|------|-------|-----|-----------|------|
-| 1 | 0 | 3 | 1 | 3 | 3 < 7，left = 2 |
-| 2 | 2 | 3 | 2 | 5 | 5 < 7，left = 3 |
-| 3 | 3 | 3 | 3 | 6 | 6 < 7，left = 4 |
-| 4 | 4 | 3 | - | - | left > right，结束 |
+| 1 | 0 | 4 | 2 | 5 | 5 < 7，left = 3 |
+| 2 | 3 | 4 | 3 | 6 | 6 < 7，left = 4 |
+| 3 | 4 | 4 | - | - | left == right，结束 |
 
 返回 `left = 4`
 
@@ -167,14 +169,26 @@ class Solution:
 
 ## 易错点总结
 
-### 1. 循环结束时返回 left，不是 right
+### 1. 右边界初始化与循环写法要自洽
+
+本题用**左闭右开**写法：`right = n`，循环条件 `left < right`，收缩时 `right = mid`。
+循环收在 `left == right` 处，这个下标就是第一个 `>= target` 的位置：
 
 ```python
-return left  # 正确
-return right # 错误
+# 左闭右开：left 是候选答案，right 是「取不到」的上界
+left, right = 0, n
+while left < right:
+    mid = left + (right - left) // 2
+    if nums[mid] >= target:
+        right = mid
+    else:
+        left = mid + 1
+return left  # 此时 left == right，就是插入位置
 ```
 
-因为循环结束时 `left = right + 1`，`left` 才是第一个大于 target 的位置。
+如果改成闭区间 `right = n - 1`、`while left <= right`，循环结束时 `left = right + 1`，
+返回的仍然是 `left`，但中间所有边界都要跟着改。**两种写法不能混用**，
+混用才会出现少算一格或多算一格。
 
 ### 2. 注意边界条件
 
@@ -185,6 +199,7 @@ return right # 错误
 ### 3. mid 的计算
 
 ```python
+# 等价于 (left + right) // 2，但避免两数先相加时溢出
 mid = left + (right - left) // 2  # 防止溢出
 ```
 

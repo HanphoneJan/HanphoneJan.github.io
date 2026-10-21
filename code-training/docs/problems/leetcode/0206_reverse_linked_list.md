@@ -56,19 +56,24 @@ date_reviewed: []
 遍历链表，将所有节点值存入栈，然后创建新链表。
 
 ```python
+# 先把所有值按顺序压栈，再逐个弹出重建，借栈实现「后进先出」的倒序
 def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
     stack = []
     cur = head
+    # 一路走到链表末尾，值依次入栈，最后一个值位于栈顶
     while cur:
         stack.append(cur.val)
         cur = cur.next
 
+    # 哑节点统一「往尾部接新节点」的写法，省掉第一个节点的特判
     dummy = ListNode(0)
     cur = dummy
+    # 出栈顺序正好与原链表相反，接出来的新链表就是反转结果
     while stack:
         cur.next = ListNode(stack.pop())
         cur = cur.next
 
+    # dummy 本身不是结果，真正的头是它的下一个节点
     return dummy.next
 ```
 
@@ -79,14 +84,20 @@ def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
 递归到链表末尾，返回时反转指针。
 
 ```python
+# 递归到链表末尾，再把指针一层层掉头
 def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    # 递归出口：空链表或只有一个节点，反转后还是它自己
     if not head or not head.next:
         return head
 
+    # 先让子链表彻底反转，拿回新的头节点（原链表的尾节点）
     new_head = self.reverseList(head.next)
+    # 让原来的后一个节点指回当前节点，这一段的指针就掉头了
     head.next.next = head
+    # head 现在是新链表的尾节点，必须断开原来的后继，否则首尾相连成环
     head.next = None
 
+    # 整条链已经反转完，新头节点一直向上传递
     return new_head
 ```
 
@@ -207,12 +218,14 @@ cur = None
 
 **错误**：
 ```python
+# 顺序反了：还没保存后继就改 next，后面整条链再也找不回来
 cur.next = pre   # 断链了！
 cur = cur.next   # 错误！cur.next 已经是 pre 了
 ```
 
 **正确**：
 ```python
+# 先存后退：nxt 必须在 cur.next 被改写之前拿到
 nxt = cur.next   # 先保存
 cur.next = pre   # 再反转
 cur = nxt        # 移动到保存的 next
@@ -227,7 +240,9 @@ cur = nxt        # 移动到保存的 next
 ### 3. 递归法忘记断开原指针
 
 ```python
+# 让后一个节点指回当前节点，就完成了这一段的掉头
 head.next.next = head
+# 当前节点成为新的尾节点，next 必须置空，否则两端互指形成环
 head.next = None  # 必须断开，否则形成环
 ```
 

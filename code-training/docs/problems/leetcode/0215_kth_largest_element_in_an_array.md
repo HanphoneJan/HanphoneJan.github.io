@@ -54,8 +54,10 @@ date_reviewed: []
 ### 第二步：暴力解法 - 完全排序
 
 ```python
+# 完全排序后按下标取：第 k 大就是升序里倒数第 k 个元素
 def findKthLargest(self, nums: List[int], k: int) -> int:
     nums.sort()
+    # 用 n-k 而不是 k-1，因为「第 k 大」是从大往小数
     return nums[len(nums) - k]
 ```
 
@@ -66,12 +68,16 @@ def findKthLargest(self, nums: List[int], k: int) -> int:
 维护一个大小为 k 的最小堆，堆顶就是第 k 大的元素。
 
 ```python
+# 只保留「目前最大的 k 个数」，堆顶就是这 k 个里最小的那个，即第 k 大
 def findKthLargest(self, nums: List[int], k: int) -> int:
     min_heap = []
     for num in nums:
+        # 先入堆，让每个数都有机会参与「前 k 大」的竞争
         heapq.heappush(min_heap, num)
+        # 超过 k 个就把最小的挤出去，堆永远只有 k 个元素
         if len(min_heap) > k:
             heapq.heappop(min_heap)
+    # 剩下的这 k 个元素中，最小的那个正是第 k 大
     return min_heap[0]
 ```
 
@@ -162,7 +168,7 @@ pivot 位置: 3
 pivot 位置: 5（相对于原数组是 5）
 ```
 
-`5 == 4`？不对，相对于当前子数组。实际位置是 5，大于 4，在左半部分。
+`5 > 4`（target_index），目标在左半部分继续。
 
 **第3轮 partition**（在 [5] 中）：
 ```
@@ -199,10 +205,13 @@ T(n) = n + n/2 + n/4 + ... = 2n = O(n)
 
 ```python
 if i == target_index:
+    # pivot 已经落到最终位置，正好是目标下标，直接返回
     return nums[i]
 if i > target_index:  # 注意是 > 不是 <
+    # pivot 在目标右侧，答案只可能在左半区间
     right = i - 1
 else:
+    # 反之答案在右半区间，每轮丢掉一半，所以平均是 O(n)
     left = i + 1
 ```
 

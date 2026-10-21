@@ -52,14 +52,17 @@ date_reviewed: []
 ```python
 def isPalindrome(self, head: Optional[ListNode]) -> bool:
     values = []
+    # 链表只能顺着走，先把值全部抄进数组，换成能两头随机访问的结构
     while head:
         values.append(head.val)
         head = head.next
 
+    # 两根指针从两端向中间夹，任何一对不相等就不是回文
     left, right = 0, len(values) - 1
     while left < right:
         if values[left] != values[right]:
             return False
+        # 比完一对同时内收一格，相遇就说明全部检查完毕
         left += 1
         right -= 1
     return True
@@ -73,15 +76,21 @@ def isPalindrome(self, head: Optional[ListNode]) -> bool:
 
 ```python
 def isPalindrome(self, head: Optional[ListNode]) -> bool:
+    # front 从头往后走，始终指向「本次该和回程节点配对」的前半部分节点
     self.front = head
 
+    # 递归先一路走到链表末尾，回程时 node 自然就是由尾到头的顺序
     def check(node):
+        # 越过最后一个节点，说明尾部已全部比对通过
         if not node:
             return True
+        # 先让更深一层把尾部比完，任何一处不等都要立刻失败
         if not check(node.next):
             return False
+        # 此时 node 从后往前、front 从前往后，正好是首尾相对的一对
         if self.front.val != node.val:
             return False
+        # 这一对匹配成功，front 前进一位，留给下一层回程继续比
         self.front = self.front.next
         return True
 
@@ -211,6 +220,7 @@ class Solution:
 **偶数长度链表**：快慢指针返回后半部分的第一个节点。
 
 ```python
+# fast 每次走两格、slow 每次走一格，fast 到头时 slow 正好停在中间
 while fast and fast.next:
     slow = slow.next
     fast = fast.next.next
@@ -221,12 +231,14 @@ while fast and fast.next:
 
 ```python
 # 比较完后恢复链表（面试时询问是否需要）
+# h2 是反转后那半段的头，再反转一次就把指针方向还原回去
 self.reverseList(h2)
 ```
 
 ### 3. 空链表处理
 
 ```python
+# 空链表和单节点都不存在需要对称比较的位置，直接算回文
 if not head or not head.next:
     return True  # 空链表或单节点都是回文
 ```

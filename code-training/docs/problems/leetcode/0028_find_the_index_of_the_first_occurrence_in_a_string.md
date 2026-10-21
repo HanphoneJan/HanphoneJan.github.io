@@ -66,15 +66,21 @@ date_reviewed: []
 ```python
 class Solution:
     def strStr(self, haystack: str, needle: str) -> int:
+        # 先取好两个长度，循环里反复用到
         length = len(haystack)
         window = len(needle)
+        # 空模式串在任意位置都算匹配，按题意返回 0
         if window == 0:
             return 0
+        # 长串比模式还短，任何窗口都装不下它
         if length < window:
             return -1
+        # left 是窗口起点；右端 left+window 最远取到 length，不能越界
         for left in range(0, length - window + 1):
+            # 整窗比较交给切片，比较在 C 层完成，比手写逐字符快
             if needle == haystack[left:left + window]:
                 return left
+        # 所有窗口都比过，说明 needle 不在 haystack 中
         return -1
 ```
 

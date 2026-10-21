@@ -66,16 +66,19 @@ class Solution:
                     count += 1
                 else:
                     count -= 1
+                    # 任何前缀出现右括号更多，这一段就不可能合法
                     if count < 0:
                         return False
+            # 收尾必须刚好配平
             return count == 0
 
         n = len(s)
         res = 0
         for i in range(n):
+            # 固定起点 i，再枚举所有可能的终点 j
             for j in range(i + 2, n + 1, 2):  # 有效括号长度必须为偶数
                 if is_valid(s[i:j]):
-                    res = max(res, j - i)
+                    res = max(res, j - i)   # 区间长度 = 终点 - 起点
         return res
 ```
 
@@ -115,17 +118,24 @@ class Solution:
 class Solution:
     def longestValidParentheses(self, s: str) -> int:
         n = len(s)
+        # 空串没有任何有效括号
         if n == 0:
             return 0
+        # dp[i]：以 s[i] 结尾的最长有效括号长度
         dp = [0] * n
         res = 0
+        # 从 1 开始：下标 0 没有左邻字符，配不成一对
         for i in range(1, n):
             if s[i] == ')':
                 if s[i - 1] == '(':
+                    # 直接配对，再拼上 i-2 结尾的那一段
                     dp[i] = (dp[i - 2] if i >= 2 else 0) + 2
                 elif dp[i - 1] > 0:
+                    # dp[i-1] 为 0 时 k 正好落在 i-1 的 ')' 上，配不成，直接跳过
+                    # 跳过 i-1 结尾的整段，看它左边是不是待配对的 '('
                     k = i - dp[i - 1] - 1
                     if k >= 0 and s[k] == '(':
+                        # 配对成功后，k 左边紧邻的有效段也要接上
                         dp[i] = dp[i - 1] + 2 + (dp[k - 1] if k >= 1 else 0)
                 res = max(res, dp[i])
         return res
