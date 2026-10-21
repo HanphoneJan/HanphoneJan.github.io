@@ -1,0 +1,9 @@
+{
+  "label": "华为非 AI 机考",
+  "position": 20,
+  "link": {
+    "type": "generated-index",
+    "title": "华为非 AI 机考",
+    "description": "最近 7 场真题中的 20 道编程题，只含题面与样例，不含题解。"
+  }
+}
