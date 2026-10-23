@@ -150,6 +150,10 @@ React root 里：
 - **`star: false`**：站点没有「星标文章」，关掉那个空页面。
 - **`sidebar: { '/': false }`**：归档页不属于任何板块，没有兜底空侧栏时
   主题会为 200 多个标签页各打一条 `missing its sidebar config` 警告。
+- **归档右侧面板切换**：主题的 `InfoList` 用 `DropTransition` 包住
+  「文章 / 分类 / 标签 / 时间轴」四个面板，但切换时旧面板的 leave 过渡
+  经常不结束，旧内容留在 DOM 里、新面板停在 `opacity: 0`，右侧会整块变高。
+  `index.scss` 里按当前激活图标只 `display` 对应的 wrapper；那条规则别删。
 - **旧的 `/code-training/tags`、`/code-training/category/*` 保留。**
   它们是已经上线过的 URL（板块落地页正文直接链过去），与全站归档
   是两套入口，不要为了「统一」删掉。
