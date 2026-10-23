@@ -17,6 +17,14 @@
   line-height: 1.75;
 }
 
+// 桌面端导航栏略矮一点（主题默认 3.75rem，根字号 17px 下是 63.75px）。
+// 只改桌面端，移动端仍用主题的 --navbar-mobile-height。
+@media (min-width: 960px) {
+  :root {
+    --navbar-height: 3.5rem;
+  }
+}
+
 // 顶部导航栏：默认是 `0 2px 8px` 的投影，偏重。
 // 压成一条几乎看不见的分隔线 + 极浅的阴影，滚动时仍有层次但不抢内容。
 .vp-navbar {
@@ -41,19 +49,37 @@
   max-width: 100%;
 }
 
-// stars / projects 这两页原来是整宽布局的独立页面。
-// 现在作为 React 孤岛挂在正文里，宽度跟随正文栏。
+// stars / projects 这两页是整宽布局的独立页面。
+// `.react-wide` 是挂载点本身，先让它撑满正文栏。
 .react-wide {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
 }
 
-// stars / projects 的 React 页面自带标题，与正文的 h1 重复，
-// 藏掉它自己的那个，保留主题的页面标题。
-.react-stars h1,
-.react-projects h1 {
+// 默认正文栏只有 --content-width（约 780px），桌面端两侧浪费很多空间；
+// 用 frontmatter.containerClass 挂上的类放宽正文栏，并藏掉主题页面标题
+// （这两页的 React 头部自带 h1，保留一个就够，也少占一行高度）。
+.stars-page [vp-content]:not(.custom),
+.projects-page [vp-content]:not(.custom) {
+  max-width: 100%;
+  padding-inline: 0;
+}
+
+.stars-page .vp-page-title,
+.projects-page .vp-page-title {
   display: none;
+}
+
+.stars-page .vp-page-meta,
+.projects-page .vp-page-meta {
+  max-width: 100%;
+}
+
+// 宽屏下让出一点边距，卡片网格自己决定列数。
+.stars-page .container,
+.projects-page .container {
+  width: 100%;
 }
 
 // ============================================
@@ -178,7 +204,7 @@ html.layout-hidden {
 
 
 // ============================================
-// 首页：沿用迁移前 Docusaurus 的设计（src/pages/index.tsx）
+// 首页：沿用迁移前 Docusaurus 的设计（HomePage.vue 的 CSS Module）
 // ============================================
 
 // 旧首页自带 hero，主题的 hero 藏掉
@@ -211,4 +237,54 @@ html.layout-hidden {
 // `.vp-navbar .vp-action` 是 `margin: 0 !important`，需要更高一层的选择器。
 .vp-navbar .vp-navbar-end .navbar-home-item {
   margin-inline-end: 0.25rem !important;
+}
+
+
+// ============================================
+// 归档页（/article/、/category/*、/tag/*、/timeline/）
+// ============================================
+
+// 「全部 / 星标」切换里的「星标」是主题硬编码的，站点没有星标文章
+// （theme.ts 的 blog.star = false），但它仍会渲染成一个空标签。
+// 只藏第二项，不要把整个切换条藏掉。
+.vp-article-type-wrapper .vp-article-type:nth-child(2) {
+  display: none;
+}
+
+
+// ============================================
+// 导航栏：站点名与搜索框
+// ============================================
+
+// 主题默认站点名是 1.25rem + 40px 行高，比导航项（.875rem）大一圈；
+// 中文又落在 `--vp-font` 的 Noto Serif SC 上，和「首页 / 文档」的无衬线
+// 字不在同一条视觉线上。搜索框则干脆没有 font-family，用的是浏览器默认
+// Arial。这里统一成与导航项一致的字体/字号，并用 flex 保证垂直居中。
+$navbar-font: system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB',
+  'Microsoft YaHei', 'Noto Sans CJK SC', 'WenQuanYi Micro Hei', sans-serif;
+
+.vp-navbar {
+  .vp-brand {
+    display: inline-flex;
+    align-items: center;
+    height: var(--navbar-line-height);
+  }
+
+  // 导航项比主题默认的 .875rem 稍大一点
+  .vp-nav-links {
+    font-size: 0.9375rem;
+  }
+
+  .vp-site-name {
+    font-family: $navbar-font;
+    // 站名比导航项再小一点：品牌靠左侧 logo + 位置区分，不靠字号
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 2rem;
+  }
+
+  .search-box input {
+    font-family: $navbar-font;
+    font-size: 0.9375rem;
+  }
 }

@@ -10,7 +10,7 @@ import './styles/index.scss'
 import 'register-service-worker'
 import { defineClientConfig } from 'vuepress/client'
 
-import HomeMount from './components/HomeMount.vue'
+import HomePage from './components/HomePage.vue'
 import LayoutToggle from './components/LayoutToggle.vue'
 import NavbarHomeLink from './components/NavbarHomeLink.vue'
 import NoVisStepsMount from './components/NoVisStepsMount.vue'
@@ -36,7 +36,7 @@ export default defineClientConfig({
     app.component('TracerVisualizerMount', TracerVisualizerMount)
     app.component('StarsMount', StarsMount)
     app.component('ProjectsMount', ProjectsMount)
-    app.component('HomeMount', HomeMount)
+    app.component('HomePage', HomePage)
   },
   // 沉浸阅读模式的悬浮按钮（桌面端），见 LayoutToggle.vue
   rootComponents: [LayoutToggle, NavbarHomeLink],

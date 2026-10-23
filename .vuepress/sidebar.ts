@@ -57,8 +57,8 @@ const DIR_LABELS: Record<string, string> = {
   codefun2000: 'CodeFun2000',
   leetcode: 'LeetCode',
   nowcoder: 'Nowcoder',
-  sf: 'Shoppee 笔试题',
-  shoppee: 'Shoppee',
+  sf: '顺丰科技',
+  shoppee: 'Shopee',
   misc: '其它',
 }
 

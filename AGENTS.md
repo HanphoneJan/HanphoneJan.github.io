@@ -38,7 +38,7 @@ pnpm sync:pyodide     # Download the 12.9MB Pyodide runtime into static/pyodide/
 ### 目录
 
 ```
-index.md                    # 首页（home: true；内容由 HomeMount 挂旧版 React 首页）
+index.md                    # 首页（home: true；内容由 HomePage.vue 服务端渲染）
 stars.md / projects.md      # 两个 React 孤岛页面
 docs/                       # 主文档：/docs/**
 code-training/docs/         # 算法训练：/code-training/**
@@ -51,10 +51,10 @@ code-training/docs/         # 算法训练：/code-training/**
   plugins/                  # 构建期插件：permalink / 组件注入 / 分类页
   data/training-data.ts     # 构建期汇总题库、轨迹、样例、知识图谱
   markdown/                 # markdown-it 规则（转义散落尖括号）
-  components/*.vue          # React 孤岛壳子 + 首页 HomeMount + 沉浸阅读 LayoutToggle + 导航图标
+  components/*.vue          # 首页 HomePage + React 孤岛壳子 + 沉浸阅读 LayoutToggle + 导航图标
   styles/                   # config.scss / palette.scss / index.scss
 src/components/             # 交互件（React：Pyodide 运行条、算法播放器、自测）
-src/pages/index|stars|projects/  # 整页 React 组件（首页 / Stars / 项目，通过孤岛挂载）
+src/pages/stars|projects/   # 整页 React 组件（Stars / 项目，通过孤岛挂载）
 src/vuepress/               # React 孤岛的挂载器 + Docusaurus API 替身
 ```
 
@@ -110,12 +110,70 @@ React root 里：
 `.vuepress/plugins/catalogs.ts` 在 `onInitialized` 里 `createPage` 出来。
 它们出现在板块落地页的正文链接里，不生成就是 404。
 
+### 归档：分类 / 标签 / 时间轴
+
+除了上面两个板块内的旧页面，全站还有一套「博客式」归档：
+
+| 页面 | 内容 |
+|---|---|
+| `/article/` | 全部文章（450 篇，每页 10 条，按日期倒序） |
+| `/category/` + `/category/<slug>/` | 分类地图与单分类下的文章 |
+| `/tag/` + `/tag/<slug>/` | 标签地图与单标签下的文章 |
+| `/timeline/` | 按年月分组的时间轴 |
+
+这四类页面由 **hope 的 blog 插件**生成（`theme.ts` 的 `plugins.blog`），
+不是我们的 `createPage`：这正是 JavaGuide 那套 `/category/`、`/tag/`、
+`/timeline/` 的来源。站点仍然**没有博客正文板块** —— 插件只负责归档，
+真正写文章的地方是 hanphone.cn。
+
+数据链路是两段：
+
+1. `.vuepress/taxonomy.ts` 定口径：**位置决定分类，关键词决定标签，
+   frontmatter 优先**。`docs/前端/Vue基础.md` → 分类「前端」+ 标签「Vue」；
+   `problems/leetcode/1.md` → 分类取 `platform`（LeetCode / NowCoder / 顺丰科技…，
+   缺失时回退目录名）+ 题解自己的 `tags`；日期取 `date` > `date_added` >
+   `last_updated`，都没有时交给 `@vuepress/plugin-git` 的首次提交时间。
+2. `.vuepress/plugins/taxonomy.ts` 在 `extendsPageOptions` 里把
+   `category` / `tags` / `date` 写进 frontmatter —— 这是 blog 插件
+   读取之前唯一能改的接缝。**页面文件一行都没改。**
+
+几个不要顺手改的地方：
+
+- **归档页是目录形式（`/timeline/` → `timeline/index.html`），不是 `.html`。**
+  它们不经过 `paths.ts`，也不要给它们补 `.html`；GitHub Pages 对目录会
+  自动找 `index.html`。`paths.ts` 只管 `docs/**` 与 `code-training/docs/**`。
+- **文章筛选只看两个内容目录**（`theme.ts` 的 `isArchivePage`）。
+  `stars.md` / `projects.md` / `index.md` 是 React 孤岛与首页，不该进归档；
+  生成页（`/code-training/category/*`）没有 `filePathRelative`，自然被排除。
+- **`excerpt: false`**：600 页全抽摘要会让构建多做一遍正文渲染，归档页
+  只要标题、日期、分类/标签。
+- **`star: false`**：站点没有「星标文章」，关掉那个空页面。
+- **`sidebar: { '/': false }`**：归档页不属于任何板块，没有兜底空侧栏时
+  主题会为 200 多个标签页各打一条 `missing its sidebar config` 警告。
+- **旧的 `/code-training/tags`、`/code-training/category/*` 保留。**
+  它们是已经上线过的 URL（板块落地页正文直接链过去），与全站归档
+  是两套入口，不要为了「统一」删掉。
+- **时间轴依赖 git 历史**：CI 的 `actions/checkout` 必须 `fetch-depth: 0`
+  （两个部署 workflow 都是），浅克隆会让所有页面挤在同一天。
+- **没有 H1 的同步笔记用文件名兜底标题**：`docs/` 里不少文件从笔记同步来，
+  既没有 `frontmatter.title` 也没有 `# 标题`，页面上原本标题为空、
+  时间轴上就是一条空白。`plugins/taxonomy.ts` 统一用文件名兜底
+  （`intro` / `index` 例外，它们靠正文 H1）。
+
+**给一篇文章改分类/标签**：优先在 frontmatter 写 `tags`（写了就完全取代
+自动推导，题解就是这条路）；分类由目录决定，改目录才有意义。要调整关键词
+规则就改 `.vuepress/taxonomy.ts` 的 `DOC_TAG_RULES`，改完跑一遍
+`pnpm test:taxonomy`（11 项断言，钉住分类/标签/日期口径）。
+
 ### 外观（首页 / 字体 / 沉浸阅读）
 
-- 首页沿用迁移前的设计：`src/pages/index.tsx` + `index.module.css` 原样恢复，
-  由 `HomeMount.vue` 挂成 React 孤岛；`index.md` 只留 `home: true`，
-  主题 hero 用 CSS 藏掉。统计数来自注入的 `doc-permalinks` / `vis-traces` /
-  `self-test` 清单。
+- 首页沿用迁移前的设计，但实现换成了 **Vue SFC 服务端渲染**
+  （`.vuepress/components/HomePage.vue`，样式是原 `index.module.css` 搬过去的
+  CSS Module）。**不要改回 React 孤岛**：React 要等 app bundle 下载并执行完
+  才在 `onMounted` 里挂载，首屏（尤其慢网络）只剩导航栏，看起来像首页没加载。
+  现在标题、入口卡片、数字条都在 SSR 产物里；数字仍来自注入的
+  `doc-permalinks` / `vis-traces` / `self-test` 清单，构建期真算。
+  `index.md` 只留 `home: true` + `<HomePage />`，主题 hero 用 CSS 藏掉。
 - 字体与 JavaGuide 同一套栈（`palette.scss` 的 `$vp-font`），
   >=960px 根字号 17px；导航栏阴影压到几乎不可见。
 - 沉浸阅读是 `LayoutToggle.vue` 的显式开关（`html.layout-hidden`），
@@ -126,13 +184,26 @@ React root 里：
 - 导航栏不再有「GitHub / 个人主页」文字项；个人主页是右侧的图标链接
   （`NavbarHomeLink.vue` 在挂载后插进 `.vp-navbar-end`），GitHub 仓库图标
   由 `repo` 配置提供。
+- **stars / projects 是整宽页面**：`stars.md` / `projects.md` 的
+  `containerClass` 挂 `stars-page` / `projects-page`，`index.scss` 里把
+  `[vp-content]` 放宽到 100% 并去掉主题页面标题（React 头部自带 h1，
+  只保留一个）。桌面端卡片网格 4 列，卡片内边距/行高都收紧过；
+  改这两页布局时不要把这些覆盖掉。
+- **导航栏站点名与搜索框单独统一了字体**：主题默认站点名是 `1.25rem` +
+  40px 行高（中文落到 `--vp-font` 的衬线字体，比导航项大一圈），搜索框则
+  没有 `font-family`、用浏览器默认 Arial。`index.scss` 里把两者都改成
+  与导航项同一套无衬线栈；桌面导航高度压到 `3.5rem`，导航项 `0.9375rem`，
+  站点名反而更小（`0.8125rem`，靠 logo 和位置区分），搜索框与导航项同字号。
+  改导航栏样式时别把这几条覆盖掉。
 
 ### 已知的取舍
 
 - **PWA**：用 `@vuepress/plugin-pwa`，只 precache 外壳（2.5MB），页面/图片/
   轨迹走运行时缓存。`register-service-worker` 必须静态 import 一次（见
   `.vuepress/README.md` 的 PWA 一节），否则动态 import 落在 load 之后会
-  静默不注册。
+  静默不注册。**HTML 的 `NetworkFirst` 不能设 `networkTimeoutSeconds`**：
+  超时回退的旧 HTML 指向已删除的哈希 chunk，会卡在
+  `Failed to fetch dynamically imported module`。
 - **`check:vis --all` 的页面发现标记改成 `data-vis="recorded"`**：播放器是
   React 孤岛，`id="visualizer"` 要等客户端挂载才有。
 - **`.vuepress/styles/index.scss` 不会自动加载**（hope rc.110 的 `userStyle`
@@ -227,7 +298,6 @@ classic preset 里的 `blog` 选项、导航栏「博客」项、`src/theme/Blog
 
 ### Custom pages
 
-- `src/pages/index.tsx` — Landing page
 - `src/pages/stars/index.tsx` — GitHub Stars showcase with search, tag filter, sort, card/list views
 - `src/pages/projects/index.tsx` — GitHub projects showcase with search, sort, card/list views
 - `src/components/GiscusComments.tsx` — Giscus comment widget, used in swizzled theme components
