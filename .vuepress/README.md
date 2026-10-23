@@ -82,7 +82,7 @@ problems/nowcoder/华为机试/HJ48.从…节点.md (id: HJ48)  -> /code-trainin
   加一条 `--vp-c-divider` 分隔线。
 - **导航栏字体**：`theme.ts` 的 `navbarTitle: 'MapleField'` 只替换导航栏
   wordmark，中文站名仍在 `<title>` / 首页 / 页脚。`index.scss` 把字体统一
-  设在 `.vp-navbar` 上（路由、wordmark、搜索框共用），搜索框显式
+  设在 `.vp-navbar` 上并复用 `--vp-font`（系统字体、衬线优先），搜索框显式
   `font-family: inherit`；桌面导航高度 `3.5rem`、导航项 `0.9375rem`、
   wordmark `1rem`。
 - **Giscus 字体**：评论在 iframe 里，站点 CSS 改不到。`static/giscus/`
