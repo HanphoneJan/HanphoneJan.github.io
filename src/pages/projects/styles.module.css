@@ -548,27 +548,28 @@
   flex-wrap: wrap;
 }
 
-.cardSource {
+.cardDocLink {
   display: inline-flex;
-  align-self: flex-start;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.25rem 0.55rem;
-  border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 6px;
-  color: var(--ifm-font-color-base);
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1.2;
+  align-self: center;
+  justify-content: center;
+  margin-inline-start: auto;
+  padding: 0.15rem;
+  border-radius: 4px;
+  color: var(--ifm-color-emphasis-500);
+  line-height: 1;
   text-decoration: none;
-  transition: all 0.15s ease;
-  min-height: 26px;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
-.cardSource:hover {
-  border-color: var(--ifm-color-primary);
-  background: var(--ifm-color-primary-contrast-background);
+.cardDocLink .iconSmall {
+  width: 0.95em;
+  height: 0.95em;
+}
+
+.cardDocLink:hover {
   color: var(--ifm-color-primary);
+  background: var(--ifm-color-primary-contrast-background);
 }
 
 /* ----- 空状态 ----- */
@@ -854,10 +855,6 @@
     gap: 0.75rem;
   }
 
-  .cardSource {
-    min-height: 44px;
-  }
-
   /* 分区 */
   .section {
     margin-bottom: 1.5rem;
@@ -963,7 +960,7 @@
   .viewBtn,
   .clearBtn,
   .listItemLink,
-  .cardSource,
+  .cardDocLink,
   .sortSelect {
     cursor: default;
     -webkit-tap-highlight-color: transparent;
@@ -972,7 +969,7 @@
   .viewBtn:active,
   .clearBtn:active,
   .listItemLink:active,
-  .cardSource:active {
+  .cardDocLink:active {
     transform: scale(0.95);
   }
 }
@@ -1019,7 +1016,7 @@
     border: 1px solid #ddd;
   }
 
-  .cardSource,
+  .cardDocLink,
   .listItemLink,
   .viewToggle,
   .sortSection,
