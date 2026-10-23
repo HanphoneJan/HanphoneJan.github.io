@@ -83,6 +83,10 @@ export const trainingPlugin = (app: App) => {
         const hasRunnableSamples =
           py && (py.samples.length > 0 || py.stdinSamples.length > 0)
 
+        // 有些文档自己写了 `## 相关题目`（221 篇，含全部模式页）。
+        // 那种情况不再注入知识图谱组件，否则页面上会出现两个同名小节。
+        let hasRelatedHeading = false
+
         for (const token of tokens) {
           output.push(token)
 
@@ -116,6 +120,9 @@ export const trainingPlugin = (app: App) => {
           ) {
             const inline = output[output.length - 2]
             const title = inline?.type === 'inline' ? inline.content.trim() : ''
+            if (title === '相关题目') {
+              hasRelatedHeading = true
+            }
             if (title === '完整代码实现') {
               const entry = data.traces[docId]
               if (entry) {
@@ -145,7 +152,7 @@ export const trainingPlugin = (app: App) => {
             )}" />`,
           )
         }
-        if ((data.byPattern[docId] ?? []).length > 0) {
+        if (!hasRelatedHeading && (data.byPattern[docId] ?? []).length > 0) {
           tail.push(
             `<PatternGraphMount doc-id="${escapeAttr(docId)}" />`,
           )
