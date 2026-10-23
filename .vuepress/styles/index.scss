@@ -293,14 +293,9 @@ html.layout-hidden {
 // ============================================
 
 // 导航栏里的站点名、路由、搜索框必须用同一套字体。
-// 主题默认站点名 1.25rem + 40px 行高，中文落到 `--vp-font` 的衬线字体；
-// 搜索框则完全没有 font-family，用浏览器默认 Arial —— 三者会各不相同。
-// 这里在 `.vp-navbar` 上统一字体，子元素只负责字号/行高。
-$navbar-font: system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB',
-  'Microsoft YaHei', 'Noto Sans CJK SC', 'WenQuanYi Micro Hei', sans-serif;
-
+// 直接复用正文的 `--vp-font`（系统字体、衬线优先），子元素只负责字号/行高。
 .vp-navbar {
-  font-family: $navbar-font;
+  font-family: var(--vp-font);
 
   .vp-brand {
     display: inline-flex;

@@ -100,8 +100,9 @@ main .gsc-loading-image {
 /* docs.hanphone.cn：让 Giscus iframe 使用与正文一致的字体 */
 body,
 body *:not(pre):not(code):not(kbd):not(samp) {
-  font-family: Georgia, -apple-system, "Nimbus Roman No9 L", "PingFang SC",
-    "Hiragino Sans GB", "Noto Serif SC", "Microsoft Yahei",
+  font-family: Georgia, "Nimbus Roman No9 L", "Songti SC", "Noto Serif CJK SC",
+    "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", -apple-system,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     "WenQuanYi Micro Hei", sans-serif !important;
 }
 

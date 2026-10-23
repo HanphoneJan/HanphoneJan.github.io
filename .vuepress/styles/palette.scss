@@ -4,8 +4,12 @@
 $content-width: 780px;
 $sidebar-width: 280px;
 
-// 字体栈对齐 JavaGuide：西文优先 Georgia（衬线），中文走系统的
-// 苹方 / 冬青黑 / 思源宋体 / 雅黑。不加载任何 Web Font —— 国内访问
-// Google Fonts 会被墙，之前踩过 FOUT 的坑。
-$vp-font: 'Georgia, -apple-system, "Nimbus Roman No9 L", "PingFang SC", "Hiragino Sans GB", "Noto Serif SC", "Microsoft Yahei", "WenQuanYi Micro Hei", sans-serif';
+// 只用系统字体，不加载任何 Web Font —— 国内访问 Google Fonts 会被墙，
+// 之前踩过 FOUT 的坑。
+//
+// **衬线优先**：西文先 Georgia / Nimbus Roman，中文先 macOS/iOS 的
+// Songti SC、Linux/Android 的 Noto Serif CJK、Windows 的 SimSun（宋体），
+// 这些系统字体都缺席时才回落到苹方 / 雅黑 / Noto Sans。
+// 手机没装任何衬线中文字体时仍会显示无衬线，这是系统字体方案的上限。
+$vp-font: 'Georgia, "Nimbus Roman No9 L", "Songti SC", "Noto Serif CJK SC", "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif';
 $vp-font-heading: $vp-font;

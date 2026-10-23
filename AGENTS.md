@@ -203,9 +203,10 @@ React root 里：
   改这两页布局时不要把这些覆盖掉。
 - **导航栏是英文 wordmark + 统一字体**：`theme.ts` 的 `navbarTitle:
   'MapleField'` 只改导航栏标题，中文站名仍保留在 `<title>` / 首页 / 页脚。
-  `index.scss` 把字体统一设在 `.vp-navbar` 上（路由、wordmark、搜索框共用），
-  搜索框再显式 `font-family: inherit`；桌面导航高度压到 `3.5rem`，导航项
-  `0.9375rem`，wordmark `1rem`。改导航栏样式时别把这几条覆盖掉。
+  `index.scss` 把字体统一设在 `.vp-navbar` 上并直接复用 `--vp-font`
+  （系统字体、衬线优先；搜索框显式 `font-family: inherit`）；桌面导航高度
+  压到 `3.5rem`，导航项 `0.9375rem`，wordmark `1rem`。改导航栏样式时别把
+  这几条覆盖掉。
 - **Giscus 评论字体**：评论在 iframe 里，外站 CSS 进不去。`static/giscus/`
   下的 `light.css` / `dark.css` 是 hope 模板主题 CSS + 末尾字体覆盖，
   `theme.ts` 的 `lightTheme` / `darkTheme` 指向线上绝对地址；升级 hope 时
