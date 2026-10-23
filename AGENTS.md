@@ -121,6 +121,8 @@ React root 里：
 - 沉浸阅读是 `LayoutToggle.vue` 的显式开关（`html.layout-hidden`），
   不用 hope 的 `focus`（那是滚动自动隐藏，不能手动进出）。
   移动端无按钮、窄屏强制退出。
+- 状态栏 theme-color 跟随主题（浅白 / 深黑）：静态白 + 首屏脚本按系统偏好
+  改黑 + MutationObserver 跟随手动切换（head 按 name 去重，不能写两条 media）。
 - 导航栏不再有「GitHub / 个人主页」文字项；个人主页是右侧的图标链接
   （`NavbarHomeLink.vue` 在挂载后插进 `.vp-navbar-end`），GitHub 仓库图标
   由 `repo` 配置提供。
