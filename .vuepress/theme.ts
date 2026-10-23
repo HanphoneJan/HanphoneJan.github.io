@@ -91,7 +91,8 @@ export default hopeTheme({
      *
      * `excerpt: false` 是必要的：600 多页全部抽摘要会让构建多做一遍
      * 正文渲染，而归档页只需要标题 + 日期 + 分类/标签。
-     * `star: false` 关掉「星标文章」—— 站点没有这个分类。
+     * `star: '/star/'` 开启星标页；没有页面写 `star` frontmatter 时，
+     * 归档侧栏和标签会被 CSS 自动隐藏，不会出现「星标 为空」。
      */
     blog: {
       filter: isArchivePage,
@@ -102,9 +103,7 @@ export default hopeTheme({
       tag: '/tag/',
       tagItem: '/tag/:name/',
       timeline: '/timeline/',
-      // BlogOptions 的类型里 star 是 string，但插件运行时把 falsy 路径
-      // 当作「不生成这个页面」。
-      star: false as unknown as string,
+      star: '/star/',
     },
     // 图片点击放大（PhotoSwipe：滚轮缩放 / 拖拽 / 手势）
     photoSwipe: true,

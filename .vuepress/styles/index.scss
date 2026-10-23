@@ -244,10 +244,18 @@ html.layout-hidden {
 // 归档页（/article/、/category/*、/tag/*、/timeline/）
 // ============================================
 
-// 「全部 / 星标」切换里的「星标」是主题硬编码的，站点没有星标文章
-// （theme.ts 的 blog.star = false），但它仍会渲染成一个空标签。
-// 只藏第二项，不要把整个切换条藏掉。
-.vp-article-type-wrapper .vp-article-type:nth-child(2) {
+// 没有星标文章时，主题会在归档侧栏显示「星标 为空」，
+// 并在「全部 / 星标」切换里保留一个空的星标标签。
+// 站点默认没有星标；有页面写了 `star` 之后 empty 节点消失，这两处自动出现。
+.vp-star-article-empty {
+  display: none;
+}
+
+.vp-star-article-wrapper:has(.vp-star-article-empty) hr {
+  display: none;
+}
+
+.vp-blog:has(.vp-star-article-empty) .vp-article-type-wrapper .vp-article-type:nth-child(2) {
   display: none;
 }
 
