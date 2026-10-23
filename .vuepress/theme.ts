@@ -119,6 +119,11 @@ export default hopeTheme({
       category: 'Docs Comments',
       categoryId: process.env.GISCUS_CATEGORY_ID || 'DIC_kwDOQn_P0s4C3pOL',
       lang: 'zh-CN',
+      // Giscus 在 iframe 里，外站样式进不去；用自定义主题 CSS 把它的
+      // font-family 改成与正文一致（文件在 static/giscus/，已带 GitHub 主题
+      // 的完整变量，只在末尾追加字体规则）。Giscus 要求 https 绝对地址。
+      lightTheme: 'https://docs.hanphone.cn/giscus/light.css',
+      darkTheme: 'https://docs.hanphone.cn/giscus/dark.css',
     },
     // PWA：可安装 + Service Worker 预缓存静态资源。
     // 12.9MB 的 Pyodide 运行时会被 maxSize 自动排除（它本来就靠运行时的

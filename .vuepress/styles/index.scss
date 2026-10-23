@@ -292,14 +292,16 @@ html.layout-hidden {
 // 导航栏：站点名与搜索框
 // ============================================
 
-// 主题默认站点名是 1.25rem + 40px 行高，比导航项（.875rem）大一圈；
-// 中文又落在 `--vp-font` 的 Noto Serif SC 上，和「首页 / 文档」的无衬线
-// 字不在同一条视觉线上。搜索框则干脆没有 font-family，用的是浏览器默认
-// Arial。这里统一成与导航项一致的字体/字号，并用 flex 保证垂直居中。
+// 导航栏里的站点名、路由、搜索框必须用同一套字体。
+// 主题默认站点名 1.25rem + 40px 行高，中文落到 `--vp-font` 的衬线字体；
+// 搜索框则完全没有 font-family，用浏览器默认 Arial —— 三者会各不相同。
+// 这里在 `.vp-navbar` 上统一字体，子元素只负责字号/行高。
 $navbar-font: system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB',
   'Microsoft YaHei', 'Noto Sans CJK SC', 'WenQuanYi Micro Hei', sans-serif;
 
 .vp-navbar {
+  font-family: $navbar-font;
+
   .vp-brand {
     display: inline-flex;
     align-items: center;
@@ -312,7 +314,6 @@ $navbar-font: system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB',
   }
 
   .vp-site-name {
-    font-family: $navbar-font;
     // 站名比导航项再小一点：品牌靠左侧 logo + 位置区分，不靠字号
     font-size: 0.8125rem;
     font-weight: 500;
@@ -320,7 +321,8 @@ $navbar-font: system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB',
   }
 
   .search-box input {
-    font-family: $navbar-font;
+    // 表单控件默认不继承字体，必须显式写 inherit，否则会退回 Arial
+    font-family: inherit;
     font-size: 0.9375rem;
   }
 }
