@@ -42,7 +42,7 @@ const PLATFORM_LABELS: Record<string, string> = {
   codefun2000: 'CodeFun2000',
   shoppee: 'Shopee',
   sf: '顺丰科技',
-  misc: '其它',
+  misc: 'misc',
 }
 
 /** 模式页 -> 规范标签（词表见 scripts/tag-vocabulary.js） */

@@ -42,7 +42,7 @@ const PLATFORM_LABELS: Record<string, string> = {
   codefun2000: 'CodeFun2000',
   shoppee: 'Shopee',
   sf: '顺丰科技',
-  misc: '其它',
+  misc: 'misc',
 }
 
 function walk(dir: string): string[] {
