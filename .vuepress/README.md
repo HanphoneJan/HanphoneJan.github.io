@@ -120,6 +120,10 @@ Vue 页面
 | `## 完整代码实现` 标题之后 | `RecordedVisualizerMount`（或 `NoVisStepsMount`） |
 | 正文末尾 | `TracerVisualizerMount`、`PatternGraphMount`、`SelfTestMount` |
 
+`PatternGraphMount` 只在文档**没有自己写** `## 相关题目` 时注入 ——
+现有 11 篇模式页都手写了这一节，所以页面上看到的通常是手写列表，
+不会出现两个同名小节。
+
 数据由 `.vuepress/data/training-data.ts` 在构建期算好：复用旧的
 `plugins/py-samples` 抽取函数、`vis-traces` 的 adapter 选型、题库清单、
 `patterns` 反向索引。**只把「模式 -> 相关题目」这一张表**用 Vite `define`
