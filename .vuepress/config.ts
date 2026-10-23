@@ -38,6 +38,13 @@ export default defineUserConfig({
     '技术文档与算法训练场：前端、后端、嵌入式、机器学习、AI Agent，以及可运行、可回放的算法题解。',
 
   head: [
+    // 沉浸阅读：首屏前就把上次的状态贴到 <html> 上，避免刷新时先闪一下
+    // 导航栏/侧边栏（LayoutToggle.vue 负责按钮与切换）。
+    [
+      'script',
+      {},
+      `try{if(window.innerWidth>=960&&localStorage.getItem('hanphone-layout-hidden')==='true'){document.documentElement.classList.add('layout-hidden')}}catch(e){}`,
+    ],
     // 域名重定向：www.hanphone.top → hanphone.cn
     [
       'script',

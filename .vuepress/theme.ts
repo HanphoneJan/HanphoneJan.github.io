@@ -9,6 +9,7 @@ const sourceDir = path.resolve(__dirname, '..')
 export default hopeTheme({
   hostname: 'https://docs.hanphone.cn',
   logo: '/img/logo.svg',
+  logoDark: '/img/logo-dark.svg',
   favicon: '/img/favicon.ico',
   repo: 'https://github.com/HanphoneJan/HanphoneJan.github.io',
 
@@ -17,8 +18,9 @@ export default hopeTheme({
 
   // JavaGuide 那套「干净」的观感：纯内容、无边框装饰
   pure: true,
-  // 沉浸模式（正文聚焦、隐藏侧边栏）—— 右侧工具栏上的切换按钮
-  focus: true,
+  // 不用 hope 的自动 focus：它是「滚动进正文后自动隐藏」，
+  // 读者没法主动进入/退出。沉浸阅读由 LayoutToggle.vue 的显式开关负责。
+  focus: false,
   fullscreen: true,
   print: false,
   breadcrumb: false,
