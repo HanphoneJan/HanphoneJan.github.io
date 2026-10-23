@@ -24,7 +24,7 @@ slug: /
 
 | 板块 | 说明 |
 |------|------|
-| [题目库](/code-training/category/题库) | 按平台分类的算法题解，包含完整思路、代码和复杂度分析 |
+| [题库](/code-training/category/题库) | 按平台分类的算法题解，包含完整思路、代码和复杂度分析 |
 | [机器学习](/code-training/category/机器学习) | Jupyter Notebooks 转换的机器学习深度笔记 |
 | [数据结构](/code-training/category/数据结构) | 数据结构分类的知识体系梳理 |
 | [算法模式](/code-training/category/算法模式) | 通用解题套路、思维框架，以及每个模式的标准实现 |
