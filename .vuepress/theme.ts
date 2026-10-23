@@ -147,7 +147,9 @@ export default hopeTheme({
       },
       manifest: {
         name: '寒枫的开荒地',
-        short_name: '寒枫',
+        // 安装到桌面时优先用 short_name，之前只写「寒枫」，
+        // 应用列表里跟站点名对不上
+        short_name: '寒枫的开荒地',
         description: '技术文档与算法训练场：前端、后端、嵌入式、机器学习、AI Agent。',
         lang: 'zh-CN',
         theme_color: '#ffffff',
