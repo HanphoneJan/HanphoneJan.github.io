@@ -56,9 +56,9 @@
 .container {
   position: relative;
   z-index: 1;
-  max-width: 1200px;
+  max-width: 1560px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 4rem;
+  padding: 1.5rem 1.5rem 3rem;
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
@@ -68,9 +68,9 @@
 .header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--ifm-color-emphasis-200);
 }
 
@@ -78,17 +78,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   background: var(--ifm-color-primary-contrast-background);
   color: var(--ifm-color-primary);
   flex-shrink: 0;
 }
 
 .iconDecorative {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.25rem;
+  height: 1.25rem;
   animation: sparkle 3s ease-in-out infinite;
 }
 
@@ -103,9 +103,9 @@
 }
 
 .title {
-  font-size: clamp(1.125rem, 3vw, 1.5rem);
+  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
   font-weight: 700;
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.15rem;
   color: var(--ifm-heading-color);
   letter-spacing: -0.02em;
 }
@@ -113,7 +113,7 @@
 .subtitle {
   margin: 0;
   color: var(--ifm-color-emphasis-600);
-  font-size: clamp(0.8rem, 2vw, 0.9rem);
+  font-size: clamp(0.78rem, 1.8vw, 0.85rem);
   font-weight: 400;
 }
 
@@ -616,15 +616,17 @@
 .cardContainer {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  gap: 0.75rem;
+  align-items: start;
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  padding: 1.25rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--ifm-color-emphasis-200);
-  border-radius: 12px;
+  border-radius: 10px;
+  line-height: 1.45;
   background: var(--ifm-background-surface-color);
   transition: all 0.2s ease;
   position: relative;
@@ -658,7 +660,7 @@
 }
 
 .cardHeader {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   min-width: 0;
 }
 
@@ -669,11 +671,11 @@
 .cardName {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.3rem;
   font-weight: 600;
   color: var(--ifm-link-color);
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   flex-wrap: wrap;
   word-break: break-word;
   overflow-wrap: break-word;
@@ -697,11 +699,10 @@
 }
 
 .cardDesc {
-  margin: 0 0 1rem;
+  margin: 0 0 0.5rem;
   color: var(--ifm-color-emphasis-600);
-  font-size: 0.9rem;
-  line-height: 1.6;
-  flex: 1;
+  font-size: 0.82rem;
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -710,33 +711,33 @@
 
 .cardMeta {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
   flex-wrap: wrap;
 }
 
 .cardTags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem;
-  margin-bottom: 1rem;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
 }
 
 .cardReadme {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.625rem;
+  gap: 0.35rem;
+  padding: 0.4rem;
   border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 8px;
+  border-radius: 7px;
   color: var(--ifm-font-color-base);
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 500;
+  line-height: 1.2;
   text-decoration: none;
   transition: all 0.15s ease;
-  margin-top: auto;
-  min-height: 40px;
+  min-height: 32px;
 }
 
 .cardReadme:hover {
@@ -794,11 +795,11 @@
 /* 超大屏幕 (1440px+) */
 @media (min-width: 1440px) {
   .container {
-    padding: 2.5rem 2rem 4rem;
+    padding: 1.5rem 2rem 3rem;
   }
 
   .cardContainer {
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   }
 }
 

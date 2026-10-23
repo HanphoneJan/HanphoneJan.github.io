@@ -72,7 +72,7 @@ jobs:
         # `pnpm build` 只保证「渲染了 N 页」，不保证这些页**挂在预期的 URL 上**。
         # 迁移时踩过一次：page.path 少了 `.html` 后缀 → 452 页全部渲染成 404，
         # 构建依然成功、Pyodide 护栏也通过，只有读者会看到「页面不存在」。
-        # 这里显式挡住三件事：首页/两个板块根在、且不是 404 页。
+        # 这里显式挡住：首页/两个板块根/归档页都在、且不是 404 页。
         run: |
           for f in index.html docs.html code-training.html; do
             if [ ! -f ".vuepress/dist/$f" ]; then
@@ -90,8 +90,18 @@ jobs:
               exit 1
             fi
           done
+          for f in article/index.html category/index.html tag/index.html timeline/index.html; do
+            if [ ! -f ".vuepress/dist/$f" ]; then
+              echo "::error::归档页 .vuepress/dist/$f 不存在 —— 检查 .vuepress/theme.ts 的 plugins.blog 与 plugins/taxonomy.ts"
+              exit 1
+            fi
+          done
           if [ ! -f ".vuepress/dist/code-training/problems/leetcode/1.html" ]; then
             echo "::error::题解页 URL 不对（应为 /code-training/problems/leetcode/1.html）"
+            exit 1
+          fi
+          if ! grep -q 'class="home-mount"><main' .vuepress/dist/index.html; then
+            echo "::error::首页没有服务端渲染内容 —— 又变回客户端挂载了？慢网络下会空白（见 .vuepress/components/HomePage.vue）"
             exit 1
           fi
 

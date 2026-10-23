@@ -13,6 +13,15 @@ export default navbar([
       { text: '复习系统', link: '/code-training/category/复习系统' },
     ],
   },
+  {
+    text: '归档',
+    children: [
+      { text: '全部文章', link: '/article/' },
+      { text: '分类', link: '/category/' },
+      { text: '标签', link: '/tag/' },
+      { text: '时间轴', link: '/timeline/' },
+    ],
+  },
   { text: 'Stars', link: '/stars' },
   { text: '项目', link: '/projects' },
 ])

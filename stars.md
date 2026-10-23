@@ -1,5 +1,6 @@
 ---
 title: GitHub Stars
+containerClass: stars-page
 toc: false
 sidebar: false
 pageInfo: false
