@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Layout from '@theme/Layout';
 import styles from './styles.module.css';
+import starsJson from '@site/data/github-stars.json';
+import starTagsJson from '@site/data/star-tags.json';
 
 // 类型定义
 interface Repository {
@@ -366,21 +368,9 @@ function RepoCard({ repo, tags, isPinned }: RepoCardProps) {
 
 export default function StarsPage(): React.ReactElement {
   // 加载数据
-  const starsData: StarsData = useMemo(() => {
-    try {
-      return require('@site/data/github-stars.json');
-    } catch {
-      return { lastUpdated: '', count: 0, repositories: [] };
-    }
-  }, []);
+  const starsData: StarsData = starsJson as unknown as StarsData;
 
-  const tagConfig: TagConfig = useMemo(() => {
-    try {
-      return require('@site/data/star-tags.json');
-    } catch {
-      return { version: 1, lastUpdated: '', tags: {}, pinned: [] };
-    }
-  }, []);
+  const tagConfig: TagConfig = starTagsJson as unknown as TagConfig;
 
   // 视图模式（从 localStorage 读取）
   const [viewMode, setViewMode] = useState<ViewMode>('card');

@@ -1,0 +1,42 @@
+@use './infima-compat';
+
+/**
+ * 站点级样式补充。
+ *
+ * 只放「主题不该管」的东西：React 交互件的挂载点间距。
+ * 其余配色 / 间距都走 palette.scss 的变量，别在这里硬编码颜色。
+ */
+
+// React 交互件（运行条 / 播放器 / 自测 / 相关题目）的挂载点。
+// 组件在客户端挂载，SSR 时这里是个空 div —— 不能给它高度，
+// 否则未挂载前会空出一块。
+.react-mount {
+  display: block;
+}
+
+// 运行条紧贴代码块下沿，视觉上算同一个块
+.react-mount:has(> div[class*='bar']) {
+  margin-top: -1rem;
+}
+
+// 图片放大后不要撑破阅读区
+.vp-page img {
+  max-width: 100%;
+}
+
+
+// stars / projects 这两页原来是整宽布局的独立页面。
+// 现在作为 React 孤岛挂在正文里，宽度跟随正文栏 —— 它们的 CSS 用了
+// `max-width: 1200px; width: 100%`，只要父级不定宽就不会溢出。
+.react-wide {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+// stars / projects 的 React 页面自带标题，与正文的 h1 重复，
+// 藏掉它自己的那个，保留主题的页面标题。
+.react-stars h1,
+.react-projects h1 {
+  display: none;
+}
