@@ -66,6 +66,27 @@ jobs:
             exit 1
           fi
 
+      - name: Verify key routes are real pages
+        # `pnpm build` 只保证「渲染了 N 页」，不保证这些页**挂在预期的 URL 上**。
+        # 迁移时踩过一次：page.path 少了 `.html` 后缀 → 452 页全部渲染成 404，
+        # 构建依然成功、Pyodide 护栏也通过，只有读者会看到「页面不存在」。
+        # 这里显式挡住三件事：首页/两个板块根在、且不是 404 页。
+        run: |
+          for f in index.html docs.html code-training.html; do
+            if [ ! -f ".vuepress/dist/$f" ]; then
+              echo "::error::.vuepress/dist/$f 不存在 —— 路由生成有问题"
+              exit 1
+            fi
+            if grep -q 'vp-page not-found' ".vuepress/dist/$f"; then
+              echo "::error::.vuepress/dist/$f 渲染成了 404 页 —— 检查 .vuepress/paths.ts"
+              exit 1
+            fi
+          done
+          if [ ! -f ".vuepress/dist/code-training/problems/leetcode/1.html" ]; then
+            echo "::error::题解页 URL 不对（应为 /code-training/problems/leetcode/1.html）"
+            exit 1
+          fi
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

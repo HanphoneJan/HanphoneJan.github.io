@@ -1,3 +1,9 @@
+/**
+ * ⚠️ 迁移到 VuePress 后，本文件的**默认导出（Docusaurus 插件）已不再被调用**。
+ * 只有 `SelfTestData` 类型还在用；题库清单在
+ * `.vuepress/data/training-data.ts` 里读取，注入位置见 `.vuepress/plugins/training.ts`。
+ */
+
 import fs from 'fs';
 import path from 'path';
 // 迁移到 VuePress 后，这些文件只作为**纯数据 / 抽取函数**的宿主，

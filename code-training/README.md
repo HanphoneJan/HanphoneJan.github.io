@@ -31,50 +31,42 @@
 
 ```
 code-training/
-├── docs/                          # 文档内容（Docusaurus 源文件）
+├── docs/                          # 文档内容（由根目录的 VuePress 站点消费）
 │   ├── problems/                  # 题解文档
-│   │   └── leetcode/              # LeetCode 题解（120+ 道）
+│   │   └── leetcode/              # LeetCode 题解
 │   ├── data-structures/           # 数据结构（8 个）
-│   ├── patterns/                  # 算法模式 + 标准实现（11 个）
+│   ├── patterns/                  # 算法模式 + 标准实现
 │   ├── review/                    # 复习系统
 │   └── resources.md               # 学习资源汇总
 │
-├── leetcode/                      # LeetCode 刷题代码（128+ 文件）
+├── leetcode/                      # LeetCode 刷题代码
 │   └── 1.two-sum.py
 │
-├── src/                           # Docusaurus 主题覆盖和组件
-│   ├── components/                # React 组件（GiscusComments 等）
-│   ├── theme/                     # 主题覆盖（DocItem Layout 等）
-│   ├── types/                     # TypeScript 类型声明
-│   └── css/                       # 样式文件
-│
-├── static/                        # 静态资源
-├── .github/workflows/             # CI 工作流
-├── docusaurus.config.ts           # Docusaurus 配置
-├── sidebars.ts                    # 侧边栏配置
+├── nowcoder/ codefun2000/ ...     # 其它平台的刷题代码
 ├── AGENTS.md                      # 算法文档撰写规范
-├── DEPLOYMENT.md                  # 部署说明
 └── README.md                      # 本文件
 ```
+
+侧边栏、URL、构建与部署都由仓库根目录的 VuePress 站点统一管理
+（`.vuepress/sidebar.ts` 会按 frontmatter 里的 `sidebar_position` /
+`id` / `slug` 现场生成侧边栏与 permalink），这里不再有独立的
+`src/`、`static/`、`docusaurus.config.ts` 或 `sidebars.ts`。
 
 ## 快速开始
 
 ### 本地开发
 
+在**仓库根目录**执行（`code-training/` 不是独立站点）：
+
 ```bash
-# 安装依赖
 pnpm install
-
-# 启动开发服务器
-pnpm start
-# 访问 http://localhost:3001
-
-# 构建生产版本
-pnpm build
-
-# 预览构建结果
-pnpm serve
+pnpm start        # http://localhost:3001/code-training/
+pnpm build        # 产物在 .vuepress/dist/
+pnpm serve        # 预览构建结果
 ```
+
+新题解放进 `docs/problems/...` 后会自动出现在侧边栏，URL 按
+`<平台目录>/<frontmatter.id 或文件名>.html` 生成。
 
 ### 添加新题目
 

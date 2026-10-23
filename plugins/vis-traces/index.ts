@@ -1,4 +1,10 @@
 /**
+ * ⚠️ 迁移到 VuePress 后，本文件的**默认导出（Docusaurus 插件）已不再被调用**。
+ * 只有 `VisTraceEntry` / `VisTracesData` 两个类型还在被组件引用；
+ * 实际的轨迹扫描与 adapter 选型搬到了 `.vuepress/data/training-data.ts`。
+ */
+
+/**
  * 把录制好的轨迹塞进 globalData，供题解页内嵌可视化。
  *
  * ## 只发清单，不发帧
