@@ -59,7 +59,7 @@ const DIR_LABELS: Record<string, string> = {
   nowcoder: 'Nowcoder',
   sf: '顺丰科技',
   shoppee: 'Shopee',
-  misc: '其它',
+  misc: 'misc',
 }
 
 const collator = new Intl.Collator('zh-Hans-CN', { numeric: true })
