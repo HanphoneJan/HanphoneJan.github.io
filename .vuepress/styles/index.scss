@@ -205,20 +205,10 @@ html.layout-hidden {
 }
 
 
-// 导航栏右侧的「个人主页」图标（与 GitHub 仓库图标同一套观感）
-.navbar-home-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  margin-right: 0.15rem;
-  border-radius: 50%;
-  color: var(--vp-c-text-mute);
-  transition: color 0.2s ease, background 0.2s ease;
-}
-
-.navbar-home-icon:hover {
-  color: var(--vp-c-accent);
-  background: var(--vp-c-bg-alt);
+// 导航栏右侧的「个人主页」图标。
+// 尺寸/颜色/内边距全部交给主题的 `.vp-action-link`（与 GitHub 仓库图标同一套），
+// 这里只补一件事：和下一个图标之间的水平间距。
+// `.vp-navbar .vp-action` 是 `margin: 0 !important`，需要更高一层的选择器。
+.vp-navbar .vp-navbar-end .navbar-home-item {
+  margin-inline-end: 0.25rem !important;
 }
