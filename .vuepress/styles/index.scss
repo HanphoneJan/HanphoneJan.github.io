@@ -260,6 +260,34 @@ html.layout-hidden {
 }
 
 
+// 主题的 InfoList 在切换「文章 / 分类 / 标签 / 时间轴」时用
+// DropTransition 包裹条件内容，但旧面板的 leave 过渡经常不结束：
+// 旧面板留在 DOM 里、新面板停在 opacity:0，右侧会突然变高一大截。
+// 这里直接按当前激活的图标只显示对应面板，过渡交给主题以外不再参与。
+.vp-blog-infos {
+  > .vp-star-article-wrapper,
+  > .vp-category-wrapper,
+  > .vp-tag-wrapper,
+  > .timeline-list-wrapper {
+    display: none;
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  &:has(.vp-blog-type-button:nth-child(1) .vp-blog-type-icon-wrapper.active)
+    > .vp-star-article-wrapper,
+  &:has(.vp-blog-type-button:nth-child(2) .vp-blog-type-icon-wrapper.active)
+    > .vp-category-wrapper,
+  &:has(.vp-blog-type-button:nth-child(3) .vp-blog-type-icon-wrapper.active)
+    > .vp-tag-wrapper,
+  &:has(.vp-blog-type-button:nth-child(4) .vp-blog-type-icon-wrapper.active)
+    > .timeline-list-wrapper {
+    display: block;
+  }
+}
+
+
 // ============================================
 // 导航栏：站点名与搜索框
 // ============================================
