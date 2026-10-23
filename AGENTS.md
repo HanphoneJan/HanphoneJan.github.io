@@ -112,8 +112,10 @@ React root 里：
 
 ### 已知的取舍
 
-- **PWA 暂时没了**：Docusaurus 的 `plugin-pwa` 没有对应迁移。manifest 还在
-  `static/`，但没有 Service Worker。
+- **PWA**：用 `@vuepress/plugin-pwa`，只 precache 外壳（2.5MB），页面/图片/
+  轨迹走运行时缓存。`register-service-worker` 必须静态 import 一次（见
+  `.vuepress/README.md` 的 PWA 一节），否则动态 import 落在 load 之后会
+  静默不注册。
 - **`check:vis --all` 的页面发现标记改成 `data-vis="recorded"`**：播放器是
   React 孤岛，`id="visualizer"` 要等客户端挂载才有。
 - **`.vuepress/styles/index.scss` 不会自动加载**（hope rc.110 的 `userStyle`
