@@ -7,6 +7,7 @@ import { legacyPathFor } from './paths.js'
 import { markdownEnhancePlugin } from './plugins/markdown-enhance.js'
 import { trainingPlugin } from './plugins/training.js'
 import { catalogsPlugin } from './plugins/catalogs.js'
+import { taxonomyPlugin } from './plugins/taxonomy.js'
 
 const __dirname = getDirname(import.meta.url)
 
@@ -148,7 +149,13 @@ export default defineUserConfig({
     '!**/node_modules/**',
   ],
 
-  plugins: [legacyPermalinks, markdownEnhancePlugin, trainingPlugin, catalogsPlugin],
+  plugins: [
+    legacyPermalinks,
+    markdownEnhancePlugin,
+    trainingPlugin,
+    catalogsPlugin,
+    taxonomyPlugin,
+  ],
 
   shouldPrefetch: false,
   shouldPreload: false,

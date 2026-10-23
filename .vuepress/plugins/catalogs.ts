@@ -40,8 +40,8 @@ const PLATFORM_LABELS: Record<string, string> = {
   leetcode: 'LeetCode',
   nowcoder: 'Nowcoder',
   codefun2000: 'CodeFun2000',
-  shoppee: 'Shoppee',
-  sf: 'Shoppee 笔试题',
+  shoppee: 'Shopee',
+  sf: '顺丰科技',
   misc: '其它',
 }
 

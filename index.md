@@ -8,4 +8,4 @@ head:
 footer: 技术文档与算法训练场
 ---
 
-<HomeMount />
+<HomePage />

@@ -21,6 +21,7 @@
 | 图片放大 | 无 | PhotoSwipe（`plugins.photoSwipe`） |
 | 沉浸模式 | 无 | hope `focus`（滚动进正文后自动隐藏导航/侧栏） |
 | PWA | `@docusaurus/plugin-pwa`（全量 precache） | `@vuepress/plugin-pwa`（只 precache 外壳 2.5MB + 运行时缓存） |
+| 归档 | 仅 code-training 的分类/标签页 | `/article/`、`/category/`、`/tag/`、`/timeline/`（hope blog 插件） |
 | 部署 | 上传 `build/` | 上传 `.vuepress/dist/` |
 
 ## 内容一行没改
@@ -65,17 +66,29 @@ problems/nowcoder/华为机试/HJ48.从…节点.md (id: HJ48)  -> /code-trainin
 
 ## 外观与阅读体验
 
-- **首页**：**沿用迁移前 Docusaurus 的那套设计** —— `src/pages/index.tsx` +
-  `index.module.css` 原样恢复，由 `.vuepress/components/HomeMount.vue` 挂成
-  React 孤岛。`index.md` 只留 `home: true`，主题自带的 hero 用 CSS 藏掉
-  （旧首页自带 hero）。统计数字取自注入的 `doc-permalinks` / `vis-traces` /
-  `self-test` 三张清单，构建期真算，内容增删会自动跟着变。
+- **首页**：沿用迁移前 Docusaurus 的设计，但实现是 **Vue SFC 服务端渲染** ——
+  `.vuepress/components/HomePage.vue`（样式是原 `index.module.css` 搬过去的
+  CSS Module），`index.md` 只留 `home: true` + `<HomePage />`，主题自带的
+  hero 用 CSS 藏掉（首页自带 hero）。统计数字取自注入的 `doc-permalinks` /
+  `vis-traces` / `self-test` 三张清单，构建期真算，内容增删会自动跟着变。
+  **不要改回 React 孤岛**：实测慢网络下 app bundle 没下载完时，React 版
+  首页只显示导航栏，读者会以为「首页内容没加载」；Vue SSR 的内容直接在
+  HTML 里，和 JS 无关。
 - **字体**：`.vuepress/styles/palette.scss` 的 `$vp-font` / `$vp-font-heading`
   与 JavaGuide 用同一套栈（Georgia + 苹方/思源宋体/雅黑，不加载 Web Font）；
   `index.scss` 里把 >=960px 的根字号提到 17px（JavaGuide 是 16px），
   正文行高 1.75。
 - **导航栏阴影**：hope 默认 `0 2px 8px`，这里压成 `0 1px 2px rgb(0 0 0/4%)`
   加一条 `--vp-c-divider` 分隔线。
+- **导航栏字体**：站点名主题默认 `1.25rem` + 40px 行高（中文落到
+  `--vp-font` 的衬线字体），搜索框没有 `font-family`、用浏览器默认 Arial。
+  `index.scss` 里统一成导航项的无衬线栈；桌面导航高度 `3.5rem`、导航项
+  `0.9375rem`，站点名更小（`0.8125rem`），搜索框与导航项同字号。
+  改导航栏时不要只改一边。
+- **stars / projects 整宽布局**：两个 md 的 `containerClass` 分别挂
+  `stars-page` / `projects-page`；`index.scss` 把 `[vp-content]` 的
+  `--content-width` 限制放开并去掉主题页面标题（React 头部自带 h1）。
+  卡片网格在桌面端 4 列，卡片内边距和行高都收紧过。
 - **状态栏颜色**（移动端浏览器 / PWA）：浅色 `#ffffff`、深色 `#1b1b1f`。
   VuePress 的 head 去重按 `<meta name>` 判重，**写两条带 media 的
   theme-color 会丢掉第二条**；所以是「一条静态白 + 首屏脚本按系统偏好改黑
@@ -141,6 +154,43 @@ Vue 页面
 Docusaurus 自动生成的。VuePress 不会生成，而板块落地页的正文直接链到它们，
 所以 `.vuepress/plugins/catalogs.ts` 在 `onInitialized` 里自己 `createPage`。
 
+### 4. 归档页：分类 / 标签 / 时间轴
+
+`/article/`、`/category/`、`/tag/`、`/timeline/` 不在上面那套 `createPage` 里，
+而是 **hope blog 插件**生成的（`theme.ts` 的 `plugins.blog`）。JavaGuide 的
+同名页面就是这套东西 —— 所以观感、分页、右侧的作者/计数面板都是现成的，
+不用自己写。
+
+站点仍然没有博客正文板块：插件只负责归档，`isArchivePage` 把文章限定在
+`docs/` 与 `code-training/docs/`，`stars.md` / `projects.md` / 首页都不进。
+
+分类/标签/日期的口径只有一处（`.vuepress/taxonomy.ts`）：
+
+| 维度 | 规则 |
+|---|---|
+| 分类 | 取目录：`docs/前端/...` → 前端；题解取 `platform`（缺失回退目录名） |
+| 标签 | frontmatter `tags` 优先；没有时按标题关键词（`DOC_TAG_RULES`）推导 |
+| 日期 | `date` > `date_added` > `last_updated`；都没有用 git 首次提交时间 |
+
+`.vuepress/plugins/taxonomy.ts` 在 `extendsPageOptions` 里把这些写进
+frontmatter。**必须在这个钩子做**：blog 插件的 `extendsPage` 读
+`frontmatter.category/tags/date` 生成 `routeMeta`，而 `extendsPageOptions`
+是页面创建之前唯一能改 frontmatter 的接缝。
+
+两个容易忽略的点：
+
+- 归档页是**目录形式**（`/timeline/` → `timeline/index.html`），不经过
+  `paths.ts`，也别给它补 `.html`。GitHub Pages 会自动找 `index.html`。
+- 从笔记同步来的 `docs/**` 里有不少文件**既没有 `title` 也没有 H1**，
+  页面标题原本是空字符串，时间轴上就是一条空白。`taxonomy.ts` 统一用
+  文件名兜底（`intro` / `index` 例外，它们靠正文 H1）。
+
+`theme.ts` 里三个非默认选项都不是随手写的：`excerpt: false`（600 页不抽摘要）、
+`star: false`（没有星标文章）、`sidebar: { '/': false }`（归档页不属于任何
+板块，兜底空侧栏，否则每个标签页都会打一条 missing sidebar 警告）。
+
+改推导规则后跑 `pnpm test:taxonomy`（11 项纯函数断言，钉住分类/标签/日期）。
+
 ## 踩过的坑（都不要再踩）
 
 ### Vue 模板会解析正文里的尖括号
@@ -204,6 +254,13 @@ oxc: { jsx: { runtime: 'automatic' } }
   首次安装要下 42MB —— 文档站不需要「一次装完所有页面」。其余资源走
   Workbox 运行时缓存：页面 `NetworkFirst`、JS/CSS `StaleWhileRevalidate`、
   图片 `CacheFirst`、轨迹 JSON 与题库单独分桶。
+- **HTML 的 `NetworkFirst` 不能设 `networkTimeoutSeconds`。** 设了之后
+  Workbox 在超时（原来的 3 秒）就回退到缓存 HTML，而 HTML 引用的
+  `assets/app-<hash>.js` 每次部署都会换名 —— 旧 HTML 指向的 chunk 已不存在，
+  页面会卡在 `Failed to fetch dynamically imported module`。首页曾经因此
+  「首次进入只有导航栏」：React 首页本来就靠 JS 挂载，chunk 拉不到就是空白。
+  现在网络慢也等真实 HTML，只有真正离线才用缓存；缓存名改成 `html-v2`，
+  让旧缓存失效一次。
 - **`register-service-worker` 必须在 `load` 之前求值**。这个包的模块顶层就
   挂了 `addEventListener('load')`，而插件是在 `onMounted` 里**动态 import**
   它的；动态 import 落到 load 之后，那个 Promise 永远不会 resolve，

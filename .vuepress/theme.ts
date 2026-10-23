@@ -6,6 +6,29 @@ import { docsSidebar, trainingSidebar } from './sidebar.js'
 const __dirname = getDirname(import.meta.url)
 const sourceDir = path.resolve(__dirname, '..')
 
+/**
+ * 博客插件只负责**分类 / 标签 / 时间轴 / 文章列表**四类归档页面，
+ * 不引入博客正文板块（真正写文章的地方是 hanphone.cn）。
+ *
+ * JavaGuide 的 `/category/`、`/tag/`、`/timeline/` 就是 hope 的这套东西，
+ * 而它们只统计「文章」：默认过滤掉了没有 `filePathRelative` 的生成页
+ * （`/code-training/category/*`、`/code-training/tags` 那些）与首页。
+ * 这里再收窄到两个内容目录，`stars.md` / `projects.md` 两个 React 孤岛
+ * 就不会混进文章列表。
+ *
+ * 分类 / 标签 / 日期由 `.vuepress/plugins/taxonomy.ts` 在页面创建前写进
+ * frontmatter，见那个文件头。
+ */
+const CONTENT_PREFIXES = ['docs/', 'code-training/docs/']
+
+const isArchivePage = (page: {
+  filePathRelative?: string | null
+  frontmatter: Record<string, unknown>
+}): boolean =>
+  Boolean(page.filePathRelative) &&
+  CONTENT_PREFIXES.some((prefix) => page.filePathRelative!.startsWith(prefix)) &&
+  !page.frontmatter.home
+
 export default hopeTheme({
   hostname: 'https://docs.hanphone.cn',
   logo: '/img/logo.svg',
@@ -32,10 +55,15 @@ export default hopeTheme({
     '/docs.html': docsSidebar(sourceDir),
     '/code-training/': trainingSidebar(sourceDir),
     '/code-training.html': trainingSidebar(sourceDir),
+    // 归档页（/article/、/category/*、/tag/*、/timeline/）不属于任何
+    // 板块，没有 sidebar 配置时主题会为 200 多个标签页各打一条
+    // "missing its sidebar config" 警告。给一个兜底空侧栏即可。
+    '/': false,
   },
 
-  // 每页正文信息：作者、分类、标签、字数、阅读时间
-  pageInfo: ['Author', 'Category', 'Tag', 'Word', 'ReadingTime'],
+  // 每页正文信息：日期、分类、标签、字数、阅读时间。
+  // 分类与标签会链接到下面 blog 插件生成的 `/category/<名>/`、`/tag/<名>/`。
+  pageInfo: ['Date', 'Category', 'Tag', 'Word', 'ReadingTime'],
 
   footer: '寒枫的开荒地 · 技术文档与算法训练场',
   displayFooter: true,
@@ -56,6 +84,28 @@ export default hopeTheme({
   },
 
   plugins: {
+    /**
+     * 归档：`/article/` 文章列表、`/category/` 分类、`/tag/` 标签、
+     * `/timeline/` 时间轴。站点**没有博客正文板块**，这里只用它的
+     * 归档能力（JavaGuide 的这三类页面也是这么来的）。
+     *
+     * `excerpt: false` 是必要的：600 多页全部抽摘要会让构建多做一遍
+     * 正文渲染，而归档页只需要标题 + 日期 + 分类/标签。
+     * `star: false` 关掉「星标文章」—— 站点没有这个分类。
+     */
+    blog: {
+      filter: isArchivePage,
+      excerpt: false,
+      article: '/article/',
+      category: '/category/',
+      categoryItem: '/category/:name/',
+      tag: '/tag/',
+      tagItem: '/tag/:name/',
+      timeline: '/timeline/',
+      // BlogOptions 的类型里 star 是 string，但插件运行时把 falsy 路径
+      // 当作「不生成这个页面」。
+      star: false as unknown as string,
+    },
     // 图片点击放大（PhotoSwipe：滚轮缩放 / 拖拽 / 手势）
     photoSwipe: true,
     // 本地搜索。用 @vuepress/plugin-search 而不是 slimsearch：
@@ -101,8 +151,14 @@ export default hopeTheme({
               request.destination === 'document',
             handler: 'NetworkFirst' as const,
             options: {
-              cacheName: 'html',
-              networkTimeoutSeconds: 3,
+              // 不要写 `networkTimeoutSeconds`。写了之后 Workbox 在 3 秒内
+              // 拿不到网络响应就回退到缓存里的 HTML；而 HTML 引用的
+              // `assets/app-<hash>.js` 是**带构建哈希**的 —— 部署一次就换名，
+              // 旧缓存 HTML 指向的 chunk 已经不存在，整站会卡在
+              // `Failed to fetch dynamically imported module`（首页尤其明显：
+              // 内容原本全靠 JS 挂载，页面上只剩导航栏）。
+              // 不设超时 = 网络慢也等真实的 HTML，只有真正离线才用缓存。
+              cacheName: 'html-v2',
               expiration: {maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30},
             },
           },
@@ -178,8 +234,7 @@ export default hopeTheme({
         '/docs/前端/HTML+CSS+JS': '/docs/前端/HTML_CSS_JS',
       },
     },
-    // 没有博客
-    blog: false,
+    // 没有博客板块（归档用的 blog 插件在上面单独配置）
     catalog: false,
     feed: false,
     copyright: false,
