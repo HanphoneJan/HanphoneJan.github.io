@@ -211,6 +211,35 @@ oxc: { jsx: { runtime: 'automatic' } }
   `.vuepress/client.ts` 里静态 `import 'register-service-worker'` 了一次，
   并在 `package.json` 里把它提成直接依赖。
 
+## 依赖版本与升级
+
+当前**精确锁定**（`package.json` 里是固定版本，不是 `^`）：
+
+| 包 | 版本 |
+|---|---|
+| `vuepress` / `@vuepress/bundler-vite` / `@vuepress/core` | `2.0.0-rc.28` |
+| `vuepress-theme-hope` | `2.0.0-rc.110` |
+| `@vuepress/plugin-pwa` / `-search` / `-markdown-math` / `-photo-swipe` | `2.0.0-rc.128` |
+| `vue` | `^3.5.44` |
+| `react` / `react-dom` | `^19.0.0` |
+
+**为什么没「升到稳定版」**：VuePress 2 到目前**没有 stable 发布** —— npm 上
+`vuepress` 的 `latest` 仍然是 `1.9.10`（v1），2.x 只挂在 `next` 标签
+（当前 `2.0.0-rc.31`）。也就是说 rc 就是 v2 的正式形态，没有可以「等」的
+稳定版。hope 的 `latest` 已经是 `2.0.0-rc.110`，我们用的就是它。
+
+升级时注意：
+
+1. `@vuepress/*` 的 rc 版本之间 **peer 依赖咬得很死**（hope rc.110 要求
+   helper/plugin 的 rc.128 一批），不要单独升某一个包；
+2. 一次把 `vuepress` + `bundler` + `core` + 全部 `@vuepress/plugin-*`
+   升到同一批版本，再 `pnpm install`；
+3. 我们的代码依赖了几处内部行为（`inferRoutePath` 自动补 `.html`、
+   `extendsPageOptions` 改写 `page.path`、hope 的 `userStyle` 缺口），
+   升 rc 前必须在分支上跑一遍：
+   `pnpm build` / `pnpm typecheck` / `pnpm check:docs` /
+   `pnpm check:vis` / `pnpm check:vis --tracers`。
+
 ## 还没做完 / 已知缺失
 
 - **`pnpm check:vis --all`**：页面发现标记改成 `data-vis="recorded"`
@@ -221,8 +250,6 @@ oxc: { jsx: { runtime: 'automatic' } }
 - **`plugins/*` 目录**是 Docusaurus 插件的壳子，现在只有 `py-samples` 的
   抽取函数、以及几个纯类型还在被引用。后续可以把抽取逻辑搬到
   `.vuepress/data/` 下，再删掉整个目录。
-- **`src/pages/index.tsx`** 已删除（首页换成 hope 的 project home 布局）。
-  旧的 hero + 卡片 + 统计设计还在 git 历史里，想要可以按 Vue 重写。
 
 ## 怎么加东西
 

@@ -38,7 +38,7 @@ pnpm sync:pyodide     # Download the 12.9MB Pyodide runtime into static/pyodide/
 ### 目录
 
 ```
-index.md                    # 首页（hope 的 project home 布局）
+index.md                    # 首页（home: true；内容由 HomeMount 挂旧版 React 首页）
 stars.md / projects.md      # 两个 React 孤岛页面
 docs/                       # 主文档：/docs/**
 code-training/docs/         # 算法训练：/code-training/**
@@ -51,10 +51,10 @@ code-training/docs/         # 算法训练：/code-training/**
   plugins/                  # 构建期插件：permalink / 组件注入 / 分类页
   data/training-data.ts     # 构建期汇总题库、轨迹、样例、知识图谱
   markdown/                 # markdown-it 规则（转义散落尖括号）
-  components/*.vue          # React 孤岛壳子 + 首页 HomeSections + 沉浸阅读 LayoutToggle
+  components/*.vue          # React 孤岛壳子 + 首页 HomeMount + 沉浸阅读 LayoutToggle + 导航图标
   styles/                   # config.scss / palette.scss / index.scss
 src/components/             # 交互件（React：Pyodide 运行条、算法播放器、自测）
-src/pages/stars|projects/   # 两个整页的 React 组件（通过孤岛挂载）
+src/pages/index|stars|projects/  # 整页 React 组件（首页 / Stars / 项目，通过孤岛挂载）
 src/vuepress/               # React 孤岛的挂载器 + Docusaurus API 替身
 ```
 
