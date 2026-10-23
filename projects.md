@@ -1,6 +1,7 @@
 ---
 title: 我的项目
 containerClass: projects-page
+externalLinkIcon: false
 toc: false
 sidebar: false
 pageInfo: false
