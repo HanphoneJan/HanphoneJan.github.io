@@ -47,7 +47,7 @@ export default defineUserConfig({
     ['meta', { name: 'robots', content: 'all' }],
     ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
     ['meta', { name: 'mobile-web-app-capable', content: 'yes' }],
-    ['meta', { name: 'theme-color', content: '#1b1b1d' }],
+    ['meta', { name: 'theme-color', content: '#2563eb' }],
   ],
 
   bundler: viteBundler({

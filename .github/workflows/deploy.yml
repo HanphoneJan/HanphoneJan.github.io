@@ -82,6 +82,12 @@ jobs:
               exit 1
             fi
           done
+          for f in service-worker.js manifest.webmanifest; do
+            if [ ! -f ".vuepress/dist/$f" ]; then
+              echo "::error::.vuepress/dist/$f 不存在 —— PWA 没构建出来"
+              exit 1
+            fi
+          done
           if [ ! -f ".vuepress/dist/code-training/problems/leetcode/1.html" ]; then
             echo "::error::题解页 URL 不对（应为 /code-training/problems/leetcode/1.html）"
             exit 1
