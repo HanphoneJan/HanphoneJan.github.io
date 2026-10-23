@@ -80,11 +80,11 @@ problems/nowcoder/华为机试/HJ48.从…节点.md (id: HJ48)  -> /code-trainin
   正文行高 1.75。
 - **导航栏阴影**：hope 默认 `0 2px 8px`，这里压成 `0 1px 2px rgb(0 0 0/4%)`
   加一条 `--vp-c-divider` 分隔线。
-- **导航栏字体**：站点名主题默认 `1.25rem` + 40px 行高（中文落到
-  `--vp-font` 的衬线字体），搜索框没有 `font-family`、用浏览器默认 Arial。
-  `index.scss` 里把字体统一设在 `.vp-navbar` 上，搜索框显式
-  `font-family: inherit`；桌面导航高度 `3.5rem`、导航项 `0.9375rem`，
-  站点名更小（`0.8125rem`）。
+- **导航栏字体**：`theme.ts` 的 `navbarTitle: 'MapleField'` 只替换导航栏
+  wordmark，中文站名仍在 `<title>` / 首页 / 页脚。`index.scss` 把字体统一
+  设在 `.vp-navbar` 上（路由、wordmark、搜索框共用），搜索框显式
+  `font-family: inherit`；桌面导航高度 `3.5rem`、导航项 `0.9375rem`、
+  wordmark `1rem`。
 - **Giscus 字体**：评论在 iframe 里，站点 CSS 改不到。`static/giscus/`
   下的 `light.css` / `dark.css` 是 hope 模板主题 CSS + 末尾字体覆盖，
   `theme.ts` 的 `lightTheme` / `darkTheme` 指向线上绝对 URL。升级 hope 时
