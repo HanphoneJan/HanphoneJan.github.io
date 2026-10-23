@@ -1,11 +1,28 @@
 @use './infima-compat';
 
 /**
- * 站点级样式补充。
- *
- * 只放「主题不该管」的东西：React 交互件的挂载点间距。
- * 其余配色 / 间距都走 palette.scss 的变量，别在这里硬编码颜色。
+ * 站点级样式补充。配色一律走主题变量（--vp-c-*），别在这里硬编码。
  */
+
+// JavaGuide 的正文是 16px；这里再大一档：17px。
+// 用根字号而不是给每个元素改，代码块、侧栏、目录会一起等比放大。
+@media (min-width: 960px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+// 正文行高稍微松一点，长文更好读
+#markdown-content {
+  line-height: 1.75;
+}
+
+// 顶部导航栏：默认是 `0 2px 8px` 的投影，偏重。
+// 压成一条几乎看不见的分隔线 + 极浅的阴影，滚动时仍有层次但不抢内容。
+.vp-navbar {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%) !important;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
 
 // React 交互件（运行条 / 播放器 / 自测 / 相关题目）的挂载点。
 // 组件在客户端挂载，SSR 时这里是个空 div —— 不能给它高度，
@@ -24,10 +41,8 @@
   max-width: 100%;
 }
 
-
 // stars / projects 这两页原来是整宽布局的独立页面。
-// 现在作为 React 孤岛挂在正文里，宽度跟随正文栏 —— 它们的 CSS 用了
-// `max-width: 1200px; width: 100%`，只要父级不定宽就不会溢出。
+// 现在作为 React 孤岛挂在正文里，宽度跟随正文栏。
 .react-wide {
   width: 100%;
   max-width: 100%;
@@ -39,4 +54,124 @@
 .react-stars h1,
 .react-projects h1 {
   display: none;
+}
+
+// ============================================
+// 沉浸阅读模式（与 JavaGuide 的 layout-hidden 对齐）
+// 由 .vuepress/components/LayoutToggle.vue 切换 html.layout-hidden
+// ============================================
+
+.vp-navbar,
+.vp-sidebar,
+.vp-page,
+.theme-container .vp-page {
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease,
+    margin 0.3s ease,
+    padding 0.3s ease,
+    width 0.3s ease;
+}
+
+html.layout-hidden {
+  // 顶部导航
+  .vp-navbar {
+    transform: translateY(-100%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  // 左侧边栏
+  .vp-sidebar {
+    transform: translateX(-100%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+
+  .toggle-sidebar-wrapper,
+  .vp-sidebar-mask {
+    display: none !important;
+  }
+
+  .vp-sidebar-wrapper,
+  .sidebar-wrapper {
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  // 右侧目录
+  .vp-toc-placeholder,
+  .toc-wrapper,
+  .vp-toc,
+  aside.vp-toc,
+  .toc {
+    display: none !important;
+    width: 0 !important;
+  }
+
+  // 主体：去掉侧栏/目录占位，正文居中加宽
+  .theme-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .theme-container .vp-page {
+    // 关键：padding 与 width:100% 同时给会溢出（content-box），
+    // 实测把 1440 的视口撑成 1576，正文因此不在正中。
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    width: auto !important;
+    margin: 0 !important;
+    padding: 1rem 2rem 3rem !important;
+  }
+
+  // 正文本身不铺满 1440 屏（一行 80+ 个汉字很难读），
+  // 给一个 1000px 的上限并居中 —— 这是与 JavaGuide 唯一的有意偏差。
+  // 真正限宽的是 `[vp-content]`（一个属性，不是 class —— 写成 .vp-content
+  // 匹配不到，沉浸模式下正文就一直是 780px 宽）
+  .theme-hope-content,
+  .vp-page-content,
+  .vp-content,
+  [vp-content],
+  #markdown-content {
+    box-sizing: border-box !important;
+    max-width: 1000px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+
+  .vp-page-container,
+  .theme-container > main {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    max-width: 100% !important;
+  }
+
+  @media (min-width: 960px) {
+    .theme-container .vp-page {
+      padding: 1rem 3rem 4rem !important;
+    }
+  }
+
+  @media (min-width: 1440px) {
+    .theme-container .vp-page {
+      padding: 1rem 4rem 4rem !important;
+    }
+  }
+}
+
+
+// hero 标题原本是蓝紫渐变，观感偏「产品落地页」，与 JavaGuide 的
+// 素净标题不一致。改成实色。
+.vp-hero-title {
+  background: none !important;
+  -webkit-text-fill-color: currentcolor !important;
+  color: var(--vp-c-text) !important;
 }
