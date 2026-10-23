@@ -92,6 +92,10 @@ problems/nowcoder/华为机试/HJ48.从…节点.md (id: HJ48)  -> /code-trainin
   `externalLinkIcon: false`，否则主题自动加的外链 ↗ 会和卡片标题里的
   图标重复。Stars / 项目卡片标题都跳 GitHub 仓库，文档入口是 meta 行
   末尾的书籍小图标（列表视图是右侧「文档」按钮）。
+- **归档右侧面板切换**：主题 `InfoList` 的 `DropTransition` 在切换
+  「文章 / 分类 / 标签 / 时间轴」时旧面板的 leave 过渡不结束，旧内容会
+  留在 DOM 里、新面板停在 `opacity: 0`。`index.scss` 里改成按当前激活
+  图标只显示对应 wrapper；那条规则不要删。
 - **状态栏颜色**（移动端浏览器 / PWA）：浅色 `#ffffff`、深色 `#1b1b1f`。
   VuePress 的 head 去重按 `<meta name>` 判重，**写两条带 media 的
   theme-color 会丢掉第二条**；所以是「一条静态白 + 首屏脚本按系统偏好改黑
