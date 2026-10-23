@@ -90,7 +90,8 @@ problems/nowcoder/华为机试/HJ48.从…节点.md (id: HJ48)  -> /code-trainin
   `--content-width` 限制放开并去掉主题页面标题（React 头部自带 h1）。
   卡片网格在桌面端 4 列，卡片内边距和行高都收紧过。两个 md 还设了
   `externalLinkIcon: false`，否则主题自动加的外链 ↗ 会和卡片标题里的
-  图标重复。Stars 卡片的「查看文档」入口收成了 meta 行末尾的书籍小图标。
+  图标重复。Stars / 项目卡片标题都跳 GitHub 仓库，文档入口是 meta 行
+  末尾的书籍小图标（列表视图是右侧「文档」按钮）。
 - **状态栏颜色**（移动端浏览器 / PWA）：浅色 `#ffffff`、深色 `#1b1b1f`。
   VuePress 的 head 去重按 `<meta name>` 判重，**写两条带 media 的
   theme-color 会丢掉第二条**；所以是「一条静态白 + 首屏脚本按系统偏好改黑
