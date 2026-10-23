@@ -34,6 +34,8 @@ export default hopeTheme({
   logo: '/img/logo.svg',
   logoDark: '/img/logo-dark.svg',
   favicon: '/img/favicon.ico',
+  // 导航栏用英文 wordmark；中文站名仍保留在 <title>、首页 hero 和页脚里。
+  navbarTitle: 'MapleField',
   repo: 'https://github.com/HanphoneJan/HanphoneJan.github.io',
 
   // 旧站点是深色优先、跟随系统
