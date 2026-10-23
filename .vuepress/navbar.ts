@@ -15,6 +15,4 @@ export default navbar([
   },
   { text: 'Stars', link: '/stars' },
   { text: '项目', link: '/projects' },
-  { text: 'GitHub', link: 'https://github.com/hanphonejan' },
-  { text: '个人主页', link: 'https://hanphone.cn' },
 ])
