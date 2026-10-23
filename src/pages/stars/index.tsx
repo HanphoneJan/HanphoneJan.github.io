@@ -340,6 +340,16 @@ function RepoCard({ repo, tags, isPinned }: RepoCardProps) {
           <IconCalendar />
           {formatDate(repo.updatedAt)}
         </span>
+        <a
+          href={readmeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.cardDocLink}
+          title="查看文档"
+          aria-label="查看文档"
+        >
+          <IconBook />
+        </a>
       </div>
 
       {tags.length > 0 && (
@@ -352,16 +362,6 @@ function RepoCard({ repo, tags, isPinned }: RepoCardProps) {
           )}
         </div>
       )}
-
-      <a
-        href={readmeUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={styles.cardReadme}
-      >
-        <IconBook />
-        <span>查看文档</span>
-      </a>
     </article>
   );
 }
