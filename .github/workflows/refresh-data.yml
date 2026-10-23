@@ -63,15 +63,15 @@ jobs:
         # 上面的坑不会让 build 失败，只会让线上静默 404。这里显式挡住：
         # 产物里没有运行时就直接判失败，而不是发布一个按钮坏掉的站点。
         run: |
-          if [ ! -f build/pyodide/pyodide.mjs ]; then
-            echo "::error::build/pyodide/pyodide.mjs 不存在 —— 运行时没进构建产物，线上「▶ 运行」会 404"
+          if [ ! -f .vuepress/dist/pyodide/pyodide.mjs ]; then
+            echo "::error::.vuepress/dist/pyodide/pyodide.mjs 不存在 —— 运行时没进构建产物，线上「▶ 运行」会 404"
             exit 1
           fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './build'
+          path: './.vuepress/dist'
 
       - name: Deploy to GitHub Pages
         id: deployment
