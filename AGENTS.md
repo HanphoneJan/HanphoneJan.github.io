@@ -112,14 +112,18 @@ React root 里：
 
 ### 外观（首页 / 字体 / 沉浸阅读）
 
-- 首页 = hope 的 hero（`index.md` 的 frontmatter）+ `HomeSections.vue`
-  （统计 / 入口卡片 / 差异化能力）。统计数来自 `__SITE_STATS__`，
-  由 `plugins/training.ts` 在构建期算好注入。
+- 首页沿用迁移前的设计：`src/pages/index.tsx` + `index.module.css` 原样恢复，
+  由 `HomeMount.vue` 挂成 React 孤岛；`index.md` 只留 `home: true`，
+  主题 hero 用 CSS 藏掉。统计数来自注入的 `doc-permalinks` / `vis-traces` /
+  `self-test` 清单。
 - 字体与 JavaGuide 同一套栈（`palette.scss` 的 `$vp-font`），
   >=960px 根字号 17px；导航栏阴影压到几乎不可见。
 - 沉浸阅读是 `LayoutToggle.vue` 的显式开关（`html.layout-hidden`），
   不用 hope 的 `focus`（那是滚动自动隐藏，不能手动进出）。
   移动端无按钮、窄屏强制退出。
+- 导航栏不再有「GitHub / 个人主页」文字项；个人主页是右侧的图标链接
+  （`NavbarHomeLink.vue` 在挂载后插进 `.vp-navbar-end`），GitHub 仓库图标
+  由 `repo` 配置提供。
 
 ### 已知的取舍
 

@@ -175,3 +175,50 @@ html.layout-hidden {
   -webkit-text-fill-color: currentcolor !important;
   color: var(--vp-c-text) !important;
 }
+
+
+// ============================================
+// 首页：沿用迁移前 Docusaurus 的设计（src/pages/index.tsx）
+// ============================================
+
+// 旧首页自带 hero，主题的 hero 藏掉
+.vp-project-home .vp-hero-info-wrapper {
+  display: none;
+}
+
+// 旧首页是整宽布局：hero 铺满、内容区在 React 里按 1100px 居中
+.vp-project-home [vp-content],
+.vp-project-home #markdown-content {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.home-mount {
+  width: 100%;
+}
+
+// 旧首页的分节标题是素净的 h2；主题给正文 h2 加了下边框，首页里去掉
+.vp-project-home #markdown-content h2 {
+  border-bottom: none;
+}
+
+
+// 导航栏右侧的「个人主页」图标（与 GitHub 仓库图标同一套观感）
+.navbar-home-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-right: 0.15rem;
+  border-radius: 50%;
+  color: var(--vp-c-text-mute);
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.navbar-home-icon:hover {
+  color: var(--vp-c-accent);
+  background: var(--vp-c-bg-alt);
+}

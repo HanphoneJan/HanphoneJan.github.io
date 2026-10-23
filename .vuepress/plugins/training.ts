@@ -47,18 +47,16 @@ export const trainingPlugin = (app: App) => {
     // 题库、轨迹帧仍然按需 fetch，不进主 bundle。
     define: () => {
       const data = trainingData(sourceDir)
-      // 首页要显示的三个数字，构建期真算：题解数 / 有轨迹的篇数 / 有自测题篇数
-      const problems = Object.keys(data.permalinks).filter((key) =>
-        key.startsWith('problems/'),
-      ).length
       return {
         __SITE_DATA__: JSON.stringify({
           'pattern-graph': { byPattern: data.byPattern },
-        }),
-        __SITE_STATS__: JSON.stringify({
-          problems,
-          animations: Object.keys(data.traces).length,
-          selfTests: data.selfTest.size,
+          // 首页要的三个数字。只发「清单」：vis-traces 只需要条数，
+          // 不发每篇的源码；题库只发 docId。
+          'doc-permalinks': {map: data.permalinks},
+          'vis-traces': {
+            entries: new Array(Object.keys(data.traces).length).fill(null),
+          },
+          'self-test': {docIds: [...data.selfTest]},
         }),
       }
     },

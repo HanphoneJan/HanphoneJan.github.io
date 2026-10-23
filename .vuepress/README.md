@@ -65,10 +65,11 @@ problems/nowcoder/华为机试/HJ48.从…节点.md (id: HJ48)  -> /code-trainin
 
 ## 外观与阅读体验
 
-- **首页**：`index.md` 只保留 hope 的 hero（`home: true`），下面的统计、入口卡片、
-  差异化能力由 `.vuepress/components/HomeSections.vue` 渲染。数字来自
-  `.vuepress/plugins/training.ts` 注入的 `__SITE_STATS__`（构建期真算，
-  题解数 / 有轨迹的篇数 / 有自测题的篇数），内容增删会自动跟着变。
+- **首页**：**沿用迁移前 Docusaurus 的那套设计** —— `src/pages/index.tsx` +
+  `index.module.css` 原样恢复，由 `.vuepress/components/HomeMount.vue` 挂成
+  React 孤岛。`index.md` 只留 `home: true`，主题自带的 hero 用 CSS 藏掉
+  （旧首页自带 hero）。统计数字取自注入的 `doc-permalinks` / `vis-traces` /
+  `self-test` 三张清单，构建期真算，内容增删会自动跟着变。
 - **字体**：`.vuepress/styles/palette.scss` 的 `$vp-font` / `$vp-font-heading`
   与 JavaGuide 用同一套栈（Georgia + 苹方/思源宋体/雅黑，不加载 Web Font）；
   `index.scss` 里把 >=960px 的根字号提到 17px（JavaGuide 是 16px），
