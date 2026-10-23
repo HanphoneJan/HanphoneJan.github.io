@@ -20,6 +20,7 @@
 | 数学 | `remark-math` + `rehype-katex` | `@vuepress/plugin-markdown-math`（KaTeX） |
 | 图片放大 | 无 | PhotoSwipe（`plugins.photoSwipe`） |
 | 沉浸模式 | 无 | hope `focus`（滚动进正文后自动隐藏导航/侧栏） |
+| PWA | `@docusaurus/plugin-pwa`（全量 precache） | `@vuepress/plugin-pwa`（只 precache 外壳 2.5MB + 运行时缓存） |
 | 部署 | 上传 `build/` | 上传 `.vuepress/dist/` |
 
 ## 内容一行没改
@@ -163,10 +164,27 @@ oxc: { jsx: { runtime: 'automatic' } }
 `sidebar` 的键是路径前缀。`page.path` 变成 `/docs.html` 之后，只配 `/docs/`
 会报 `missing its sidebar config`，两个键都要给。
 
+## PWA
+
+`plugins.pwa` 已启用，构建产物里有 `manifest.webmanifest` 与 `service-worker.js`，
+首屏加载后自动注册并接管页面。
+
+两个刻意的取舍：
+
+- **只 precache 应用外壳**（`index.html` / `404.html` / `app-*.js` / `style-*.css`，
+  约 2.5MB）。默认行为会把 622 个页面 chunk（39MB）全部塞进 precache，
+  首次安装要下 42MB —— 文档站不需要「一次装完所有页面」。其余资源走
+  Workbox 运行时缓存：页面 `NetworkFirst`、JS/CSS `StaleWhileRevalidate`、
+  图片 `CacheFirst`、轨迹 JSON 与题库单独分桶。
+- **`register-service-worker` 必须在 `load` 之前求值**。这个包的模块顶层就
+  挂了 `addEventListener('load')`，而插件是在 `onMounted` 里**动态 import**
+  它的；动态 import 落到 load 之后，那个 Promise 永远不会 resolve，
+  Service Worker 静默不注册（本机 headless 稳定复现）。所以
+  `.vuepress/client.ts` 里静态 `import 'register-service-worker'` 了一次，
+  并在 `package.json` 里把它提成直接依赖。
+
 ## 还没做完 / 已知缺失
 
-- **PWA**：`static/manifest.webmanifest` 还在，但没有 Service Worker。
-  要补得装 `@vuepress/plugin-pwa`。
 - **`pnpm check:vis --all`**：页面发现标记改成 `data-vis="recorded"`
   （React 孤岛，`id="visualizer"` 要等挂载后才有），服务器换成
   `python3 -m http.server`。**抽样模式（92 项）与 `--tracers`（86 项）

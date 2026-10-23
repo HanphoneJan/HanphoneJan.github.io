@@ -69,6 +69,99 @@ export default hopeTheme({
       categoryId: process.env.GISCUS_CATEGORY_ID || 'DIC_kwDOQn_P0s4C3pOL',
       lang: 'zh-CN',
     },
+    // PWA：可安装 + Service Worker 预缓存静态资源。
+    // 12.9MB 的 Pyodide 运行时会被 maxSize 自动排除（它本来就靠运行时的
+    // fetch + Cache API 缓存，见 pyrunner/runtime.ts）；622 个 HTML 页面
+    // 也不进预缓存（cacheHTML: false），否则首次安装要下几十 MB。
+    // 读者离线时能打开首页与已访问过的页面，其余请求走网络。
+    pwa: {
+      showInstall: false,
+      themeColor: '#2563eb',
+      update: 'available',
+      maxSize: 2048,
+      cacheHTML: false,
+      cacheImage: false,
+      // 默认的 precache 会把 **622 个页面 chunk（39MB）** 全塞进来，
+      // 首次安装要下 42MB —— 文档站不需要「一次装完所有页面」。
+      // 这里只预缓存应用外壳（约 2.5MB），其余按需缓存：
+      // 访问过的页面离线可看，没访问过的走网络。
+      generateSWConfig: {
+        globPatterns: [
+          'index.html',
+          '404.html',
+          'assets/app-*.js',
+          'assets/style-*.css',
+          'img/**/*.svg',
+        ],
+        runtimeCaching: [
+          {
+            urlPattern: ({request}: {request: Request}) =>
+              request.destination === 'document',
+            handler: 'NetworkFirst' as const,
+            options: {
+              cacheName: 'html',
+              networkTimeoutSeconds: 3,
+              expiration: {maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30},
+            },
+          },
+          {
+            urlPattern: ({request}: {request: Request}) =>
+              request.destination === 'script' ||
+              request.destination === 'style',
+            handler: 'StaleWhileRevalidate' as const,
+            options: {
+              cacheName: 'assets',
+              expiration: {maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 60},
+            },
+          },
+          {
+            urlPattern: ({request}: {request: Request}) =>
+              request.destination === 'image',
+            handler: 'CacheFirst' as const,
+            options: {
+              cacheName: 'images',
+              expiration: {maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 90},
+            },
+          },
+          {
+            // 逐帧可视化轨迹：一篇一个 json，点开时才 fetch
+            urlPattern: /\/traces\/.*\.json$/,
+            handler: 'CacheFirst' as const,
+            options: {
+              cacheName: 'traces',
+              expiration: {maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 180},
+            },
+          },
+          {
+            // 自测题库：一次下载，全站复用
+            urlPattern: /\/quiz\/.*\.json$/,
+            handler: 'StaleWhileRevalidate' as const,
+            options: {cacheName: 'quiz'},
+          },
+        ],
+      },
+      apple: {
+        icon: '/img/pwa/apple-touch-icon.png',
+        statusBarColor: 'black-translucent',
+      },
+      manifest: {
+        name: '寒枫的开荒地',
+        short_name: '寒枫',
+        description: '技术文档与算法训练场：前端、后端、嵌入式、机器学习、AI Agent。',
+        lang: 'zh-CN',
+        theme_color: '#2563eb',
+        background_color: '#ffffff',
+        display: 'standalone',
+        orientation: 'any',
+        categories: ['education', 'books', 'productivity'],
+        icons: [
+          {src: '/img/pwa/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any'},
+          {src: '/img/pwa/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any'},
+          {src: '/img/pwa/maskable-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable'},
+          {src: '/img/pwa/maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable'},
+        ],
+      },
+    },
     seo: {},
     sitemap: { changefreq: 'weekly' },
     // 旧地址：板块落地页从 /docs/intro 搬到 /docs，外链不能断
