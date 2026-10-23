@@ -1,5 +1,6 @@
 ---
 _synced: true
+star: 1
 ---
 LLM大模型，最重要的就是了解Transformer！！！论文：[Attention Is All You Need](https://arxiv.org/pdf/1706.03762)
 **Transformer是首个完全基于自注意力机制、不使用RNN或CNN的序列建模模型，编码器-解码器架构目的是机器翻译。**
