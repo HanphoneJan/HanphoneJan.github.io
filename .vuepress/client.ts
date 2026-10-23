@@ -40,4 +40,42 @@ export default defineClientConfig({
   },
   // 沉浸阅读模式的悬浮按钮（桌面端），见 LayoutToggle.vue
   rootComponents: [LayoutToggle, NavbarHomeLink],
+
+  /**
+   * 状态栏颜色跟随主题。
+   *
+   * - 无 JS 时：`config.ts` 里两条带 `media` 的 theme-color 按系统偏好生效
+   * - 站点内手动切换主题时：hope 会改 `<html data-theme>`，这里在 document
+   *   末尾维护一条**没有 media** 的 theme-color —— 浏览器取最后一条匹配的，
+   *   于是它总能盖住系统那两条。
+   */
+  setup() {
+    if (typeof document === 'undefined') return
+
+    const COLORS = {light: '#ffffff', dark: '#1b1b1f'}
+    let dynamic = [...document.querySelectorAll('meta[name="theme-color"]')].find(
+      (el) => !el.hasAttribute('media'),
+    )
+    if (!dynamic) {
+      dynamic = document.createElement('meta')
+      dynamic.setAttribute('name', 'theme-color')
+      document.head.appendChild(dynamic)
+    }
+
+    const apply = (): void => {
+      const root = document.documentElement
+      const attr = root.getAttribute('data-theme')
+      // data-theme 还没贴上来时（首屏 hydration 之前）按系统偏好兜底
+      const dark = attr
+        ? attr === 'dark' || root.classList.contains('dark')
+        : window.matchMedia('(prefers-color-scheme: dark)').matches
+      dynamic!.setAttribute('content', dark ? COLORS.dark : COLORS.light)
+    }
+
+    apply()
+    new MutationObserver(apply).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'class'],
+    })
+  },
 })
