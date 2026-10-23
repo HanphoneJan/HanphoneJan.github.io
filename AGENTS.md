@@ -188,7 +188,8 @@ React root 里：
   `containerClass` 挂 `stars-page` / `projects-page`，`index.scss` 里把
   `[vp-content]` 放宽到 100% 并去掉主题页面标题（React 头部自带 h1，
   只保留一个）。桌面端卡片网格 4 列，卡片内边距/行高都收紧过；
-  改这两页布局时不要把这些覆盖掉。
+  两个 md 还设了 `externalLinkIcon: false`，否则主题会给每个外链自动加
+  ↗，和卡片标题里自带的图标重复。改这两页布局时不要把这些覆盖掉。
 - **导航栏站点名与搜索框单独统一了字体**：主题默认站点名是 `1.25rem` +
   40px 行高（中文落到 `--vp-font` 的衬线字体，比导航项大一圈），搜索框则
   没有 `font-family`、用浏览器默认 Arial。`index.scss` 里把两者都改成
