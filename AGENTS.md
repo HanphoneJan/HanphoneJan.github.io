@@ -201,12 +201,11 @@ React root 里：
   ↗，和卡片标题里自带的图标重复。Stars / 项目卡片的标题都跳 GitHub 仓库，
   文档入口收成了 meta 行末尾的书籍小图标（列表视图里是右侧「文档」按钮）；
   改这两页布局时不要把这些覆盖掉。
-- **导航栏站点名与搜索框单独统一了字体**：主题默认站点名是 `1.25rem` +
-  40px 行高（中文落到 `--vp-font` 的衬线字体，比导航项大一圈），搜索框则
-  没有 `font-family`、用浏览器默认 Arial。`index.scss` 里把字体统一设在
-  `.vp-navbar` 上（路由、站名、搜索框共用），搜索框再显式
-  `font-family: inherit`；桌面导航高度压到 `3.5rem`，导航项 `0.9375rem`，
-  站点名更小（`0.8125rem`）。改导航栏样式时别把这几条覆盖掉。
+- **导航栏是英文 wordmark + 统一字体**：`theme.ts` 的 `navbarTitle:
+  'MapleField'` 只改导航栏标题，中文站名仍保留在 `<title>` / 首页 / 页脚。
+  `index.scss` 把字体统一设在 `.vp-navbar` 上（路由、wordmark、搜索框共用），
+  搜索框再显式 `font-family: inherit`；桌面导航高度压到 `3.5rem`，导航项
+  `0.9375rem`，wordmark `1rem`。改导航栏样式时别把这几条覆盖掉。
 - **Giscus 评论字体**：评论在 iframe 里，外站 CSS 进不去。`static/giscus/`
   下的 `light.css` / `dark.css` 是 hope 模板主题 CSS + 末尾字体覆盖，
   `theme.ts` 的 `lightTheme` / `darkTheme` 指向线上绝对地址；升级 hope 时

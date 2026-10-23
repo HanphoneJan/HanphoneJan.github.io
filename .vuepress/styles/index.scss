@@ -314,9 +314,9 @@ $navbar-font: system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB',
   }
 
   .vp-site-name {
-    // 站名比导航项再小一点：品牌靠左侧 logo + 位置区分，不靠字号
-    font-size: 0.8125rem;
-    font-weight: 500;
+    // 英文 wordmark 可以比中文站名大一点，也更接近导航项字号
+    font-size: 1rem;
+    font-weight: 600;
     line-height: 2rem;
   }
 
