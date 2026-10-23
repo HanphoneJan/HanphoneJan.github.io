@@ -1,3 +1,12 @@
+/**
+ * ⚠️ 迁移到 VuePress 后，本文件的**默认导出（Docusaurus 插件）已不再被调用**。
+ * 现在被使用的是具名导出的纯函数：`pythonBlock` / `section` /
+ * `extractSignature` / `extractDocSamples` / `extractDocStdinSamples` /
+ * `crossCheckEntryName`，以及几个类型。
+ * 真正的构建期接线在 `.vuepress/data/training-data.ts`。
+ * 保留默认导出只是为了避免大改历史文件；将来可以整体搬进 `.vuepress/data/`。
+ */
+
 import fs from 'fs';
 import path from 'path';
 // 迁移到 VuePress 后，这些文件只作为**纯数据 / 抽取函数**的宿主，

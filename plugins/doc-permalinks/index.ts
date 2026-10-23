@@ -1,3 +1,9 @@
+/**
+ * ⚠️ 迁移到 VuePress 后，本文件的**默认导出（Docusaurus 插件）已不再被调用**。
+ * 只有 `DocPermalinkData` 类型还在被引用；真实映射由 `.vuepress/paths.ts`
+ * 在构建期直接写入 `page.path`。
+ */
+
 import path from 'path';
 // 迁移到 VuePress 后，这些文件只作为**纯数据 / 抽取函数**的宿主，
 // 默认导出的 Docusaurus 插件已经不再使用。这里用最小本地类型，
