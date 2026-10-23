@@ -54,7 +54,18 @@ export default defineUserConfig({
     ['meta', { name: 'robots', content: 'all' }],
     ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
     ['meta', { name: 'mobile-web-app-capable', content: 'yes' }],
-    ['meta', { name: 'theme-color', content: '#2563eb' }],
+    // 状态栏颜色：浅色白、深色黑。
+    //
+    // 不能写两条带 media 的 theme-color —— VuePress 的 head 去重按
+    // `<meta name>` 判重，第二条会被直接丢掉（实测只剩 light 那条）。
+    // 所以：保留一条静态 meta 作为无 JS 的兜底，下面这段首屏脚本按
+    // 系统偏好先改一次，client.ts 再按站点实际主题（含手动切换）持续同步。
+    ['meta', { name: 'theme-color', content: '#ffffff' }],
+    [
+      'script',
+      {},
+      `try{var m=document.querySelector('meta[name="theme-color"]');if(m&&window.matchMedia('(prefers-color-scheme: dark)').matches)m.setAttribute('content','#1b1b1f')}catch(e){}`,
+    ],
   ],
 
   bundler: viteBundler({

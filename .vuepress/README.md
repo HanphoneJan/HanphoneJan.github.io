@@ -76,6 +76,10 @@ problems/nowcoder/华为机试/HJ48.从…节点.md (id: HJ48)  -> /code-trainin
   正文行高 1.75。
 - **导航栏阴影**：hope 默认 `0 2px 8px`，这里压成 `0 1px 2px rgb(0 0 0/4%)`
   加一条 `--vp-c-divider` 分隔线。
+- **状态栏颜色**（移动端浏览器 / PWA）：浅色 `#ffffff`、深色 `#1b1b1f`。
+  VuePress 的 head 去重按 `<meta name>` 判重，**写两条带 media 的
+  theme-color 会丢掉第二条**；所以是「一条静态白 + 首屏脚本按系统偏好改黑
+  + `client.ts` 的 MutationObserver 跟随站点里手动切换」三层。
 - **沉浸阅读**：`.vuepress/components/LayoutToggle.vue`（JavaGuide 的
   `LayoutToggle` 同款）—— 右下角悬浮按钮切换 `html.layout-hidden`，
   隐藏导航/侧栏/目录并把正文放宽到 1000px 居中；状态存 localStorage，

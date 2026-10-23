@@ -78,7 +78,7 @@ export default hopeTheme({
     // 读者离线时能打开首页与已访问过的页面，其余请求走网络。
     pwa: {
       showInstall: false,
-      themeColor: '#2563eb',
+      themeColor: '#ffffff',
       update: 'available',
       maxSize: 2048,
       cacheHTML: false,
@@ -144,14 +144,13 @@ export default hopeTheme({
       },
       apple: {
         icon: '/img/pwa/apple-touch-icon.png',
-        statusBarColor: 'black-translucent',
       },
       manifest: {
         name: '寒枫的开荒地',
         short_name: '寒枫',
         description: '技术文档与算法训练场：前端、后端、嵌入式、机器学习、AI Agent。',
         lang: 'zh-CN',
-        theme_color: '#2563eb',
+        theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'any',
