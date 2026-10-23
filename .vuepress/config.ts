@@ -53,6 +53,11 @@ export default defineUserConfig({
     ],
     ['meta', { name: 'robots', content: 'all' }],
     ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
+    // iOS 添加到主屏幕时用的名字（插件不会生成这条）
+    [
+      'meta',
+      { name: 'apple-mobile-web-app-title', content: '寒枫的开荒地' },
+    ],
     ['meta', { name: 'mobile-web-app-capable', content: 'yes' }],
     // 状态栏颜色：浅色白、深色黑。
     //
