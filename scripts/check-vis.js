@@ -31,13 +31,15 @@
  * node scripts/check-vis.js --all 200   # 同上，但最多查 200 个
  * ```
  *
- * 全站模式从 `build/code-training/problems/` 下面递归找出**含
- * `id="visualizer"` 的页面**（构建产物自带这个事实，不需要另外维护清单）。
+ * 全站模式从 `.vuepress/dist/code-training/problems/` 下面递归找出**含
+ * `data-vis="recorded"` 的页面**（播放器是 React 孤岛，静态产物里只有挂载点
+ * 的这个标记；`id="visualizer"` 要等客户端挂载后才有）。
  * 需要先 `pnpm build` 且有一个静态服务器（脚本自己起一个 python http.server）。
  */
 
 const PORT = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : '3100';
 const BASE = `http://localhost:${PORT}`;
+const BUILD_DIR = '.vuepress/dist';
 const ALL = process.argv.includes('--all');
 /** `--tracers`：只查内嵌手写 tracer 的文档（算法模式页） */
 const TRACERS_ONLY = process.argv.includes('--tracers');
@@ -194,7 +196,7 @@ const path = require('path');
  * 不维护第二份清单，也就不会出现清单与产物不一致的情况。
  */
 function discoverPages() {
-  const root = path.join(process.cwd(), 'build', 'code-training', 'problems');
+  const root = path.join(process.cwd(), BUILD_DIR, 'code-training', 'problems');
   const out = [];
   const walk = (dir) => {
     for (const e of fs.readdirSync(dir, {withFileTypes: true})) {
@@ -207,12 +209,14 @@ function discoverPages() {
         continue;
       }
       const html = fs.readFileSync(full, 'utf8');
-      if (!html.includes('id="visualizer"')) {
+      // 录制式播放器是 React 孤岛，`id="visualizer"` 要等客户端挂载后才有，
+      // 静态产物里用挂载点的 data 标记来认。
+      if (!html.includes('data-vis="recorded"')) {
         continue;
       }
-      const rel = path.relative(path.join(process.cwd(), 'build'), full).split(path.sep).join('/');
+      const rel = path.relative(path.join(process.cwd(), BUILD_DIR), full).split(path.sep).join('/');
       out.push({
-        path: '/' + rel.replace(/\/index\.html$/, '').replace(/\.html$/, ''),
+        path: '/' + rel,
         name: e.name.replace(/\.html$/, ''),
         view: 'any',
         ptr: false,
@@ -282,7 +286,7 @@ const SEEK_MID = `
 })()`;
 
 async function main() {
-  if (ALL && !fs.existsSync(path.join(process.cwd(), 'build'))) {
+  if (ALL && !fs.existsSync(path.join(process.cwd(), BUILD_DIR))) {
     console.error('先跑 pnpm build（--all 模式从 build 产物里找页面）');
     process.exit(1);
   }
@@ -298,43 +302,30 @@ async function main() {
   );
 
   /**
-   * 用 `docusaurus serve` 而不是 `python3 -m http.server`。
-   *
-   * 差别是**URL 解析**：站点 `trailingSlash: false`，`/problems/leetcode/560`
-   * 对应磁盘上的 `560.html`。`http.server` 不做无扩展名解析，于是那个 URL
-   * 直接 404 —— 页面加载不出来，`#visualizer` 自然没有，
-   * 而 12 个页面**全都**报同一句「页面上没有 #visualizer」，
-   * 没有一个字指向「你用的是个不会解析无扩展名 URL 的服务器」。
-   *
-   * 线上（GitHub Pages）认无扩展名 URL，所以必须用同一种解析方式验。
+   * 启动一个静态服务器。VuePress 的 URL 一律以 `.html` 结尾（见
+   * `.vuepress/paths.ts` 的注释），所以 `python3 -m http.server` 就够用 ——
+   * 迁移前 Docusaurus 用无后缀 URL，才需要会做扩展名解析的服务器。
    */
-  // 注意要 spawn `node` + .mjs 入口，不能 spawn `node_modules/.bin/docusaurus`
-  // —— 那是个 **shell 脚本**（#!/usr/bin/env sh 的 shim），交给 node 会报
-  // `SyntaxError: Invalid or unexpected token`，报错指不到真正的原因。
+  // VuePress 2 没有 `serve` 子命令，而站点 URL 现在都以 `.html` 结尾，
+  // `python3 -m http.server` 的路径解析已经够用（不需要无扩展名解析）。
   const server = spawn(
-    'node',
-    [
-      'node_modules/@docusaurus/core/bin/docusaurus.mjs',
-      'serve',
-      '--port',
-      String(PORT),
-      '--no-open',
-    ],
+    'python3',
+    ['-m', 'http.server', String(PORT), '--directory', BUILD_DIR],
     {stdio: 'ignore'},
   );
-  // docusaurus serve 起得比 http.server 慢，等它真的能应答再开 Chrome，
-  // 否则第一批页面全 404 —— 而报出来的是「页面上没有 #visualizer」。
+  // 等服务器真的能应答再开 Chrome，否则第一批页面全 404 ——
+  // 而报出来的是「页面上没有 #visualizer」。
   let serverUp = false;
   for (let i = 0; i < 60; i++) {
     try {
-      await ping(`${BASE}/code-training/problems/leetcode/560`);
+      await ping(`${BASE}/code-training/problems/leetcode/560.html`);
       serverUp = true;
       break;
     } catch {
       await sleep(500);
     }
   }
-  if (!serverUp) throw new Error('docusaurus serve 没起来');
+  if (!serverUp) throw new Error('静态服务器没起来');
 
   /**
    * 调试端口与 profile 目录**每次都用自己的**。
@@ -454,7 +445,11 @@ async function main() {
         if (typeof ws.on === 'function') ws.on('message', h);
         else ws.addEventListener('message', h);
       });
-      await send('Page.navigate', {url: BASE + page.path}, sid);
+      await send('Page.navigate', {
+        url:
+          BASE +
+          (/\.html$/.test(page.path) ? page.path : page.path + '.html'),
+      }, sid);
       await loaded;
       await sleep(ALL ? 500 : 1200);
 
@@ -505,9 +500,16 @@ async function main() {
           );
           let mounted = false;
           for (let i = 0; i < 60; i++) {
+            // 必须查**这个播放器自己**的滑块：一页挂多个播放器时，
+            // 全局查会命中第一个已经挂好的，于是第二个还没挂上就开始判画面，
+            // 必然报「画面是空的」。
             mounted = await evalJs(
-              `!!Array.from(document.querySelectorAll('input[type="range"]'))
-                 .some(r => Number(r.max) > 1)`,
+              `(() => {
+                 const root = document.getElementById(${JSON.stringify(id)});
+                 return !!root && Array.from(
+                   root.querySelectorAll('input[type="range"]'),
+                 ).some(r => Number(r.max) > 1);
+               })()`,
             );
             if (mounted) break;
             await sleep(250);
@@ -538,7 +540,16 @@ async function main() {
                 tree: '[data-testid="tree-node"]',
                 table: '[data-testid="dp-table"] td',
                 grid: '[data-testid="grid"] > *',
-                any: '[data-testid="cell"], [data-testid="aux-array"] > *',
+                // any 只回答「画面上有没有东西」，所以把所有已知视图的
+                // 选择器并起来；用得太窄会把「换了渲染方式」误报成空画面。
+                any: [
+                  '[data-testid="cell"]',
+                  '[data-testid="main-array"] > *',
+                  '[data-testid="aux-array"] > *',
+                  '[data-testid="dp-table"] td',
+                  '[data-testid="tree-node"]',
+                  '[data-testid="grid"] > *',
+                ].join(', '),
               }[want];
               return root.querySelectorAll(sel).length;
             })()`,
@@ -601,7 +612,10 @@ async function main() {
         `(() => {
            const el = document.getElementById('visualizer');
            if (!el) return false;
-           const prev = el.previousElementSibling;
+           // 播放器现在跑在 React 孤岛里（外层是 .react-mount 挂载点），
+           // 「紧跟在标题下面」要按挂载点判，不能按 #visualizer 自己判。
+           const mount = el.closest('.react-mount') || el;
+           const prev = mount.previousElementSibling;
            // 按 id 判而不是 textContent：标题里还挂着一个 hash-link（锚点按钮），
            // textContent 会把它的「」也读进来
            return !!prev && prev.tagName === 'H2' &&

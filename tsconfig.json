@@ -1,8 +1,65 @@
 {
-  // This file is not used in compilation. It is here just for a nice editor experience.
-  "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
-    "baseUrl": "."
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@site/*": [
+        "./*"
+      ],
+      "@docusaurus/Link": [
+        "./src/vuepress/compat/Link.tsx"
+      ],
+      "@docusaurus/useBaseUrl": [
+        "./src/vuepress/compat/useBaseUrl.ts"
+      ],
+      "@docusaurus/useGlobalData": [
+        "./src/vuepress/compat/useGlobalData.ts"
+      ],
+      "@docusaurus/useDocusaurusContext": [
+        "./src/vuepress/compat/useDocusaurusContext.ts"
+      ],
+      "@docusaurus/plugin-content-docs/client": [
+        "./src/vuepress/compat/docsClient.ts"
+      ],
+      "@docusaurus/BrowserOnly": [
+        "./src/vuepress/compat/BrowserOnly.tsx"
+      ],
+      "@docusaurus/ExecutionEnvironment": [
+        "./src/vuepress/compat/ExecutionEnvironment.ts"
+      ],
+      "@docusaurus/theme-common/internal": [
+        "./src/vuepress/compat/themeCommonInternal.ts"
+      ],
+      "@docusaurus/theme-common": [
+        "./src/vuepress/compat/themeCommon.ts"
+      ],
+      "@theme/Heading": [
+        "./src/vuepress/compat/Heading.tsx"
+      ],
+      "@theme/Layout": [
+        "./src/vuepress/compat/Layout.tsx"
+      ]
+    }
   },
-  "exclude": [".docusaurus", "build"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.d.ts"
+  ]
 }
