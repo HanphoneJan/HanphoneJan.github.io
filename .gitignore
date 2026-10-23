@@ -1,8 +1,13 @@
 # Dependencies
 /node_modules
 
-# Production
+# Production（旧的 Docusaurus 产物，迁移期保留忽略）
 /build
+
+# VuePress 构建产物与缓存
+.vuepress/dist
+.vuepress/.temp
+.vuepress/.cache
 
 # Generated files
 .docusaurus

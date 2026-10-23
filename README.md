@@ -1,6 +1,8 @@
 # HanphoneJan.github.io
 
-Hanphone 的 Github 个人主页 - 基于 Docusaurus 构建的技术文档站。
+Hanphone 的 Github 个人主页 - 基于 **VuePress 2 + vuepress-theme-hope** 构建的技术文档站（主题参照 JavaGuide）。
+
+> 2026-10 从 Docusaurus 迁到 VuePress，迁移细节与已知缺失见 [`.vuepress/README.md`](.vuepress/README.md)。
 
 ## 📝 笔记管理系统 
 
@@ -49,7 +51,7 @@ pnpm install
 
 ```bash
 pnpm sync   # 先同步最新笔记
-pnpm start  # 启动 Docusaurus 预览
+pnpm start  # 启动 VuePress 开发服务器（端口 3001）
 ```
 
 ### 构建与部署
@@ -75,8 +77,9 @@ git push origin main
 ├── docs/                   # 同步生成的结构化文档
 ├── code-training/          # 算法训练子项目（独立维护）
 ├── scripts/                # 自动化脚本（包含同步逻辑）
-├── static/                 # 静态资源（图片等）
-├── src/                    # 源代码与自定义组件
-├── docusaurus.config.ts    # 主配置文件
+├── static/                 # 静态资源（图片、题库、轨迹、Pyodide）
+├── src/                    # React 交互件与孤岛挂载层
+├── .vuepress/              # VuePress 配置、主题、插件、组件注入
+├── index.md                # 首页
 └── package.json
 ```
