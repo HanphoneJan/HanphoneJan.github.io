@@ -203,10 +203,14 @@ React root 里：
   改这两页布局时不要把这些覆盖掉。
 - **导航栏站点名与搜索框单独统一了字体**：主题默认站点名是 `1.25rem` +
   40px 行高（中文落到 `--vp-font` 的衬线字体，比导航项大一圈），搜索框则
-  没有 `font-family`、用浏览器默认 Arial。`index.scss` 里把两者都改成
-  与导航项同一套无衬线栈；桌面导航高度压到 `3.5rem`，导航项 `0.9375rem`，
-  站点名反而更小（`0.8125rem`，靠 logo 和位置区分），搜索框与导航项同字号。
-  改导航栏样式时别把这几条覆盖掉。
+  没有 `font-family`、用浏览器默认 Arial。`index.scss` 里把字体统一设在
+  `.vp-navbar` 上（路由、站名、搜索框共用），搜索框再显式
+  `font-family: inherit`；桌面导航高度压到 `3.5rem`，导航项 `0.9375rem`，
+  站点名更小（`0.8125rem`）。改导航栏样式时别把这几条覆盖掉。
+- **Giscus 评论字体**：评论在 iframe 里，外站 CSS 进不去。`static/giscus/`
+  下的 `light.css` / `dark.css` 是 hope 模板主题 CSS + 末尾字体覆盖，
+  `theme.ts` 的 `lightTheme` / `darkTheme` 指向线上绝对地址；升级 hope 时
+  同步更新这两个文件。
 
 ### 已知的取舍
 

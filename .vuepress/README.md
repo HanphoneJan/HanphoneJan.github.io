@@ -82,9 +82,13 @@ problems/nowcoder/华为机试/HJ48.从…节点.md (id: HJ48)  -> /code-trainin
   加一条 `--vp-c-divider` 分隔线。
 - **导航栏字体**：站点名主题默认 `1.25rem` + 40px 行高（中文落到
   `--vp-font` 的衬线字体），搜索框没有 `font-family`、用浏览器默认 Arial。
-  `index.scss` 里统一成导航项的无衬线栈；桌面导航高度 `3.5rem`、导航项
-  `0.9375rem`，站点名更小（`0.8125rem`），搜索框与导航项同字号。
-  改导航栏时不要只改一边。
+  `index.scss` 里把字体统一设在 `.vp-navbar` 上，搜索框显式
+  `font-family: inherit`；桌面导航高度 `3.5rem`、导航项 `0.9375rem`，
+  站点名更小（`0.8125rem`）。
+- **Giscus 字体**：评论在 iframe 里，站点 CSS 改不到。`static/giscus/`
+  下的 `light.css` / `dark.css` 是 hope 模板主题 CSS + 末尾字体覆盖，
+  `theme.ts` 的 `lightTheme` / `darkTheme` 指向线上绝对 URL。升级 hope 时
+  要同步更新这两个文件。
 - **stars / projects 整宽布局**：两个 md 的 `containerClass` 分别挂
   `stars-page` / `projects-page`；`index.scss` 把 `[vp-content]` 的
   `--content-width` 限制放开并去掉主题页面标题（React 头部自带 h1）。
