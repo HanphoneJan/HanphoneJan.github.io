@@ -1,5 +1,6 @@
 ---
 _synced: true
+star: 2
 ---
 # Git
 
