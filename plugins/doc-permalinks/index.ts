@@ -1,5 +1,16 @@
+/**
+ * ⚠️ 迁移到 VuePress 后，本文件的**默认导出（Docusaurus 插件）已不再被调用**。
+ * 只有 `DocPermalinkData` 类型还在被引用；真实映射由 `.vuepress/paths.ts`
+ * 在构建期直接写入 `page.path`。
+ */
+
 import path from 'path';
-import type {LoadContext, Plugin} from '@docusaurus/types';
+// 迁移到 VuePress 后，这些文件只作为**纯数据 / 抽取函数**的宿主，
+// 默认导出的 Docusaurus 插件已经不再使用。这里用最小本地类型，
+// 避免为了几个类型继续依赖已删除的 @docusaurus/types。
+type LoadContext = { siteDir: string };
+// 默认导出的插件已不再被任何构建流程调用；这里只需要类型能编译通过。
+type Plugin<T> = any;
 
 /**
  * 全站 code-training 文档的 `md 相对路径 -> permalink` 映射。

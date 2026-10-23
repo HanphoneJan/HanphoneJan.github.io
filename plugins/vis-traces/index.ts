@@ -1,4 +1,10 @@
 /**
+ * ⚠️ 迁移到 VuePress 后，本文件的**默认导出（Docusaurus 插件）已不再被调用**。
+ * 只有 `VisTraceEntry` / `VisTracesData` 两个类型还在被组件引用；
+ * 实际的轨迹扫描与 adapter 选型搬到了 `.vuepress/data/training-data.ts`。
+ */
+
+/**
  * 把录制好的轨迹塞进 globalData，供题解页内嵌可视化。
  *
  * ## 只发清单，不发帧
@@ -18,7 +24,12 @@
 
 import fs from 'fs';
 import path from 'path';
-import type {LoadContext, Plugin} from '@docusaurus/types';
+// 迁移到 VuePress 后，这些文件只作为**纯数据 / 抽取函数**的宿主，
+// 默认导出的 Docusaurus 插件已经不再使用。这里用最小本地类型，
+// 避免为了几个类型继续依赖已删除的 @docusaurus/types。
+type LoadContext = { siteDir: string };
+// 默认导出的插件已不再被任何构建流程调用；这里只需要类型能编译通过。
+type Plugin<T> = any;
 // 相对路径而不是 @site/*：插件由 Docusaurus 在 Node 里 require，
 // 不走 webpack 的 alias 解析。py-samples 里那些 @site 引用全是
 // `import type`（编译后被擦除），所以没暴露这个问题 —— 这里有真实运行时 import。

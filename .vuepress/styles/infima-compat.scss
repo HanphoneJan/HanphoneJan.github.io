@@ -1,0 +1,35 @@
+/**
+ * Docusaurus/Infima 变量 -> Hope 主题变量的映射。
+ *
+ * `src/pages/stars` 与 `src/pages/projects`（以及运行条、播放器的样式）是按
+ * Infima 的 CSS 变量写的。它们现在以 React 孤岛的形式跑在 Hope 主题里，
+ * 直接引用 `--ifm-*` 会全部落空 —— 表现是「卡片没有背景、边框消失、
+ * 链接变成浏览器默认的蓝色」。这里把用到的二十来个变量接到 Hope 的
+ * `--vp-c-*` 上，两套主题（亮/暗）自动跟随，不需要给每个组件写两套色值。
+ */
+:root {
+  --ifm-color-primary: var(--vp-c-accent);
+  --ifm-color-primary-dark: var(--vp-c-accent-hover);
+  --ifm-color-primary-darker: var(--vp-c-accent-hover);
+  --ifm-color-primary-darkest: var(--vp-c-accent-hover);
+  --ifm-color-primary-light: var(--vp-c-accent);
+  --ifm-color-primary-lighter: var(--vp-c-accent);
+  --ifm-color-primary-lightest: var(--vp-c-accent-soft);
+  --ifm-color-primary-contrast-background: var(--vp-c-accent-soft);
+
+  --ifm-color-emphasis-100: var(--vp-c-bg-elv);
+  --ifm-color-emphasis-200: var(--vp-c-bg-soft);
+  --ifm-color-emphasis-300: var(--vp-c-border);
+  --ifm-color-emphasis-400: var(--vp-c-border-hard);
+  --ifm-color-emphasis-500: var(--vp-c-text-subtle);
+  --ifm-color-emphasis-600: var(--vp-c-text-mute);
+  --ifm-color-emphasis-700: var(--vp-c-text-mute);
+  --ifm-color-emphasis-800: var(--vp-c-text);
+
+  --ifm-background-color: var(--vp-c-bg);
+  --ifm-background-surface-color: var(--vp-c-bg-alt);
+  --ifm-font-color-base: var(--vp-c-text);
+  --ifm-heading-color: var(--vp-c-text);
+  --ifm-color-content-secondary: var(--vp-c-text-mute);
+  --ifm-link-color: var(--vp-c-accent);
+}

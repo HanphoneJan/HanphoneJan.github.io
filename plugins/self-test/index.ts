@@ -1,6 +1,17 @@
+/**
+ * ⚠️ 迁移到 VuePress 后，本文件的**默认导出（Docusaurus 插件）已不再被调用**。
+ * 只有 `SelfTestData` 类型还在用；题库清单在
+ * `.vuepress/data/training-data.ts` 里读取，注入位置见 `.vuepress/plugins/training.ts`。
+ */
+
 import fs from 'fs';
 import path from 'path';
-import type {LoadContext, Plugin} from '@docusaurus/types';
+// 迁移到 VuePress 后，这些文件只作为**纯数据 / 抽取函数**的宿主，
+// 默认导出的 Docusaurus 插件已经不再使用。这里用最小本地类型，
+// 避免为了几个类型继续依赖已删除的 @docusaurus/types。
+type LoadContext = { siteDir: string };
+// 默认导出的插件已不再被任何构建流程调用；这里只需要类型能编译通过。
+type Plugin<T> = any;
 import type {QuizBank} from '@site/src/components/training/selftest/types';
 
 /**

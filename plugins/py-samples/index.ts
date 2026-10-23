@@ -1,6 +1,20 @@
+/**
+ * ⚠️ 迁移到 VuePress 后，本文件的**默认导出（Docusaurus 插件）已不再被调用**。
+ * 现在被使用的是具名导出的纯函数：`pythonBlock` / `section` /
+ * `extractSignature` / `extractDocSamples` / `extractDocStdinSamples` /
+ * `crossCheckEntryName`，以及几个类型。
+ * 真正的构建期接线在 `.vuepress/data/training-data.ts`。
+ * 保留默认导出只是为了避免大改历史文件；将来可以整体搬进 `.vuepress/data/`。
+ */
+
 import fs from 'fs';
 import path from 'path';
-import type {LoadContext, Plugin} from '@docusaurus/types';
+// 迁移到 VuePress 后，这些文件只作为**纯数据 / 抽取函数**的宿主，
+// 默认导出的 Docusaurus 插件已经不再使用。这里用最小本地类型，
+// 避免为了几个类型继续依赖已删除的 @docusaurus/types。
+type LoadContext = { siteDir: string };
+// 默认导出的插件已不再被任何构建流程调用；这里只需要类型能编译通过。
+type Plugin<T> = any;
 
 /**
  * 抽取题解里的可运行代码与测试样例，供浏览器内的 Pyodide 使用。
@@ -97,7 +111,7 @@ export interface PySamplesData {
 }
 
 /** 取 `## <heading>` 小节的正文 */
-function section(md: string, heading: string): string | undefined {
+export function section(md: string, heading: string): string | undefined {
   const lines = md.split('\n');
   const startRe = new RegExp(`^##\\s+${escapeRe(heading)}\\s*$`);
   const start = lines.findIndex((l) => startRe.test(l.trim()));
@@ -119,7 +133,7 @@ function escapeRe(s: string): string {
 }
 
 /** 取小节里第一个 ```python 代码块 */
-function pythonBlock(sectionText: string | undefined): string {
+export function pythonBlock(sectionText: string | undefined): string {
   if (!sectionText) {
     return '';
   }
@@ -1155,7 +1169,13 @@ export default function pySamplesPlugin(
       return {entries};
     },
 
-    async contentLoaded({content, actions}): Promise<void> {
+    async contentLoaded({
+      content,
+      actions,
+    }: {
+      content: PySamplesData;
+      actions: {setGlobalData(data: PySamplesData): void};
+    }): Promise<void> {
       const all = Object.values(content.entries);
       const withSamples = all.filter((e) => e.samples.length > 0).length;
       const withStdin = all.filter((e) => e.stdinSamples.length > 0).length;

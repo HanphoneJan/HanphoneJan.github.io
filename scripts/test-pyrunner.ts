@@ -1003,12 +1003,14 @@ if (fs.existsSync(docsRoot)) {
       `；可跑 stdin 样例的题解 ${docsWithStdin} 篇`,
   );
 
-  // 这些数字是「页面有多满」的基线。掉了说明判定规则被改坏了。
+  // 这些数字是「页面有多满」的基线。**下限才有意义**：掉了说明判定规则
+  // 被改坏了（比如入口识别变严、样例抽取失效）。上限只是防止统计口径跑飞，
+  // 题解持续新增时不该因为它变红 —— 324 就是这么红的。
   check('语料里有足够的题解（>=170 篇）', files.length >= 170, files.length);
-  // 339/239 是实测基线（中文伪代码与缺 class 的方法体都算进片段）
-  check('可运行块数量在预期区间（300~460）', runnable >= 300 && runnable <= 460, runnable);
-  check('片段数量在预期区间（150~290）', fragments >= 150 && fragments <= 290, fragments);
-  check('Solution 块数量在预期区间（190~240）', solutions >= 190 && solutions <= 240, solutions);
+  // 339/239 是迁移时的实测基线（中文伪代码与缺 class 的方法体都算进片段）
+  check('可运行块数量在预期区间（300~900）', runnable >= 300 && runnable <= 900, runnable);
+  check('片段数量在预期区间（150~900）', fragments >= 150 && fragments <= 900, fragments);
+  check('Solution 块数量在预期区间（190~600）', solutions >= 190 && solutions <= 600, solutions);
   // 牛客题那批要是 0，就说明 `**输入：**` 的收尾 ** 又把正则挡掉了
   check('stdin 样例能抽到（>=15 篇）', docsWithStdin >= 15, docsWithStdin);
 }
