@@ -1,5 +1,11 @@
-// 正文宽度用 Hope 的默认值。
-// 试过 860px：在 1440 宽的屏幕上，侧栏 300 + 正文 860 + 右侧目录 236
-// 会超出视口 68px，页面出现横向滚动、目录被切掉半截。
+// 正文宽度与 JavaGuide 一致（780px）。
+// 试过 860px：在 1440 宽的屏幕上，侧栏 280 + 正文 860 + 右侧目录 236
+// 会超出视口，出现横向滚动、目录被切掉半截。
 $content-width: 780px;
 $sidebar-width: 280px;
+
+// 字体栈对齐 JavaGuide：西文优先 Georgia（衬线），中文走系统的
+// 苹方 / 冬青黑 / 思源宋体 / 雅黑。不加载任何 Web Font —— 国内访问
+// Google Fonts 会被墙，之前踩过 FOUT 的坑。
+$vp-font: 'Georgia, -apple-system, "Nimbus Roman No9 L", "PingFang SC", "Hiragino Sans GB", "Noto Serif SC", "Microsoft Yahei", "WenQuanYi Micro Hei", sans-serif';
+$vp-font-heading: $vp-font;

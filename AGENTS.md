@@ -51,7 +51,7 @@ code-training/docs/         # 算法训练：/code-training/**
   plugins/                  # 构建期插件：permalink / 组件注入 / 分类页
   data/training-data.ts     # 构建期汇总题库、轨迹、样例、知识图谱
   markdown/                 # markdown-it 规则（转义散落尖括号）
-  components/*.vue          # 挂在页面里的 React 孤岛壳子
+  components/*.vue          # React 孤岛壳子 + 首页 HomeSections + 沉浸阅读 LayoutToggle
   styles/                   # config.scss / palette.scss / index.scss
 src/components/             # 交互件（React：Pyodide 运行条、算法播放器、自测）
 src/pages/stars|projects/   # 两个整页的 React 组件（通过孤岛挂载）
@@ -109,6 +109,17 @@ React root 里：
 与 `/code-training/tags`、`/code-training/tags/<tag>` 由
 `.vuepress/plugins/catalogs.ts` 在 `onInitialized` 里 `createPage` 出来。
 它们出现在板块落地页的正文链接里，不生成就是 404。
+
+### 外观（首页 / 字体 / 沉浸阅读）
+
+- 首页 = hope 的 hero（`index.md` 的 frontmatter）+ `HomeSections.vue`
+  （统计 / 入口卡片 / 差异化能力）。统计数来自 `__SITE_STATS__`，
+  由 `plugins/training.ts` 在构建期算好注入。
+- 字体与 JavaGuide 同一套栈（`palette.scss` 的 `$vp-font`），
+  >=960px 根字号 17px；导航栏阴影压到几乎不可见。
+- 沉浸阅读是 `LayoutToggle.vue` 的显式开关（`html.layout-hidden`），
+  不用 hope 的 `focus`（那是滚动自动隐藏，不能手动进出）。
+  移动端无按钮、窄屏强制退出。
 
 ### 已知的取舍
 

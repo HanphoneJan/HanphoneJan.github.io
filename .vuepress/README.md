@@ -63,6 +63,25 @@ problems/nowcoder/华为机试/HJ48.从…节点.md (id: HJ48)  -> /code-trainin
 文件名里的 `+` 是个例外：VuePress 会把 `HTML+CSS+JS` 消毒成 `HTML_CSS_JS`，
 旧 URL `/docs/前端/HTML+CSS+JS` 由 `theme.ts` 的 `redirect` 配置补一条。
 
+## 外观与阅读体验
+
+- **首页**：`index.md` 只保留 hope 的 hero（`home: true`），下面的统计、入口卡片、
+  差异化能力由 `.vuepress/components/HomeSections.vue` 渲染。数字来自
+  `.vuepress/plugins/training.ts` 注入的 `__SITE_STATS__`（构建期真算，
+  题解数 / 有轨迹的篇数 / 有自测题的篇数），内容增删会自动跟着变。
+- **字体**：`.vuepress/styles/palette.scss` 的 `$vp-font` / `$vp-font-heading`
+  与 JavaGuide 用同一套栈（Georgia + 苹方/思源宋体/雅黑，不加载 Web Font）；
+  `index.scss` 里把 >=960px 的根字号提到 17px（JavaGuide 是 16px），
+  正文行高 1.75。
+- **导航栏阴影**：hope 默认 `0 2px 8px`，这里压成 `0 1px 2px rgb(0 0 0/4%)`
+  加一条 `--vp-c-divider` 分隔线。
+- **沉浸阅读**：`.vuepress/components/LayoutToggle.vue`（JavaGuide 的
+  `LayoutToggle` 同款）—— 右下角悬浮按钮切换 `html.layout-hidden`，
+  隐藏导航/侧栏/目录并把正文放宽到 1000px 居中；状态存 localStorage，
+  `config.ts` 的 head 里有一段首屏前脚本提前加 class，避免刷新闪一下。
+  移动端不显示按钮，窄屏会自动退出（否则导航被藏掉又没有入口）。
+  对应样式在 `index.scss` 的 `html.layout-hidden` 段。
+
 ## 三个接缝
 
 ### 1. 前端交互件：React 孤岛
