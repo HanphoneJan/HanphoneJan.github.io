@@ -51,10 +51,9 @@ const IconGitHub = () => (
   </svg>
 );
 
-const IconCode = () => (
+const IconBook = () => (
   <svg className={styles.iconSmall} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="16 18 22 12 16 6"/>
-    <polyline points="8 6 2 12 8 18"/>
+    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
   </svg>
 );
 
@@ -175,13 +174,14 @@ interface ProjectListItemProps {
 
 function ProjectListItem({ project, index }: ProjectListItemProps) {
   const githubUrl = `https://github.com/hanphonejan/${project.name}`;
+  const readmeUrl = `${githubUrl}/blob/${project.source || 'main'}/README.md`;
 
   return (
     <article className={styles.listItem} style={{ animationDelay: `${index * 0.03}s` }}>
       <div className={styles.listItemContent}>
         <div className={styles.listItemHeader}>
           <a
-            href={project.url}
+            href={githubUrl}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.listItemName}
@@ -204,14 +204,14 @@ function ProjectListItem({ project, index }: ProjectListItemProps) {
       </div>
 
       <a
-        href={githubUrl}
+        href={readmeUrl}
         target="_blank"
         rel="noopener noreferrer"
         className={styles.listItemLink}
-        title="查看源码"
+        title="查看文档"
       >
-        <IconCode />
-        <span>源码</span>
+        <IconBook />
+        <span>文档</span>
       </a>
     </article>
   );
@@ -239,6 +239,7 @@ interface ProjectCardProps {
 
 function ProjectCard({ project, index }: ProjectCardProps) {
   const githubUrl = `https://github.com/hanphonejan/${project.name}`;
+  const readmeUrl = `${githubUrl}/blob/${project.source || 'main'}/README.md`;
   const accentColor = getProjectColor(project.name);
   const initial = project.name.charAt(0).toUpperCase();
 
@@ -257,7 +258,7 @@ function ProjectCard({ project, index }: ProjectCardProps) {
           {initial}
         </div>
         <div className={styles.cardTitle}>
-          <a href={project.url} target="_blank" rel="noopener noreferrer" className={styles.cardName}>
+          <a href={githubUrl} target="_blank" rel="noopener noreferrer" className={styles.cardName}>
             {project.name}
             <IconExternal />
           </a>
@@ -279,17 +280,17 @@ function ProjectCard({ project, index }: ProjectCardProps) {
             {formatNumber(project.stars)}
           </span>
         )}
+        <a
+          href={readmeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.cardDocLink}
+          title="查看文档"
+          aria-label="查看文档"
+        >
+          <IconBook />
+        </a>
       </div>
-
-      <a
-        href={githubUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={styles.cardSource}
-      >
-        <IconCode />
-        <span>查看源码</span>
-      </a>
     </article>
   );
 }
