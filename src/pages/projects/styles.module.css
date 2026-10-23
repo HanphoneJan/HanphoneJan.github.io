@@ -549,20 +549,20 @@
 }
 
 .cardSource {
-  display: flex;
+  display: inline-flex;
+  align-self: flex-start;
   align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.4rem;
+  gap: 0.3rem;
+  padding: 0.25rem 0.55rem;
   border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 7px;
+  border-radius: 6px;
   color: var(--ifm-font-color-base);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.2;
   text-decoration: none;
   transition: all 0.15s ease;
-  min-height: 32px;
+  min-height: 26px;
 }
 
 .cardSource:hover {
