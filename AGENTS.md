@@ -4,22 +4,133 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Project Overview
 
-Personal tech documentation site built with Docusaurus 3.9, deployed via GitHub Pages to `docs.hanphone.cn`. The site includes docs, a code-training sub-site (algorithm problem solutions), GitHub Stars showcase, and projects display. **There is no blog here — the real blog is the separate site `hanphone.cn`.** Don't reintroduce `blog/` or the blog preset options; see "博客已迁走" below.
+Personal tech documentation site, **built with VuePress 2 + vuepress-theme-hope**
+(theme modeled on JavaGuide), deployed via GitHub Pages to `docs.hanphone.cn`.
+The site includes docs, a code-training sub-site (algorithm solutions), a GitHub
+Stars showcase, and a projects page. **There is no blog here — the real blog is
+the separate site `hanphone.cn`.**
+
+> 2026-10 从 Docusaurus 3.9 迁移到 VuePress。迁移的**完整说明、易错点、以及
+> 「为什么这么做」**都在 `.vuepress/README.md`。本文件的下半部分（
+> `### Content sources and data flow` 之后）是迁移前写的，凡是提到
+> swizzle / globalData / MDX / `build/` / `trailingSlash` 的地方都属于
+> **Docusaurus 时代的历史记录**；内容管线、算法可视化、题库、Pyodide
+> 那些章节描述的是数据与算法本身，现在仍然有效。
 
 ## Commands
 
 ```bash
-pnpm install          # Install dependencies (Node 24 + pnpm 11)
-pnpm start            # Start dev server on port 3001
-pnpm build            # Production build
-pnpm typecheck        # TypeScript type checking
+pnpm install          # Install dependencies (Node 24 + pnpm 11/12)
+pnpm start            # Dev server on port 3001（vuepress dev .）
+pnpm build            # Production build -> .vuepress/dist
+pnpm serve            # Preview the build on port 3000
+pnpm typecheck        # tsc --noEmit（只检查 src/，strict 关，与迁移前一致）
 pnpm sync             # Sync notes from private repo (E:/hanphonejan/hanphone-note)
 pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
+pnpm sync:pyodide     # Download the 12.9MB Pyodide runtime into static/pyodide/
 ```
 
-> **环境版本必须对齐**：本地与 CI 均使用 **Node 24 + pnpm 11**（见 `.github/workflows/`）。改动 CI 或依赖时，确保两者一致，否则 `pnpm install --frozen-lockfile` 在 CI 上会失败。
+> **环境版本必须对齐**：本地与 CI 均使用 **Node 24 + pnpm 11**（见 `.github/workflows/`）。
+> 改动 CI 或依赖时确保两者一致，否则 `pnpm install --frozen-lockfile` 在 CI 上会失败。
 
-## Architecture
+## Architecture (VuePress)
+
+### 目录
+
+```
+index.md                    # 首页（hope 的 project home 布局）
+stars.md / projects.md      # 两个 React 孤岛页面
+docs/                       # 主文档：/docs/**
+code-training/docs/         # 算法训练：/code-training/**
+.vuepress/
+  config.ts                 # 站点配置（head / bundler / pagePatterns / plugins）
+  theme.ts                  # hopeTheme 配置（导航、侧边栏、markdown、插件）
+  navbar.ts / sidebar.ts    # 导航与侧边栏（侧边栏由文件系统现场生成）
+  paths.ts                  # md 文件 -> 线上 URL（核心：保留旧地址）
+  client.ts                 # 全局注册 React 孤岛组件 + 加载自定义样式
+  plugins/                  # 构建期插件：permalink / 组件注入 / 分类页
+  data/training-data.ts     # 构建期汇总题库、轨迹、样例、知识图谱
+  markdown/                 # markdown-it 规则（转义散落尖括号）
+  components/*.vue          # 挂在页面里的 React 孤岛壳子
+  styles/                   # config.scss / palette.scss / index.scss
+src/components/             # 交互件（React：Pyodide 运行条、算法播放器、自测）
+src/pages/stars|projects/   # 两个整页的 React 组件（通过孤岛挂载）
+src/vuepress/               # React 孤岛的挂载器 + Docusaurus API 替身
+```
+
+### URL 规则（不要随手改）
+
+`.vuepress/paths.ts` 把每个 md 映射到**旧 Docusaurus 站点一模一样的 URL**：
+
+```
+docs/前端/Vue基础.md                                  -> /docs/前端/Vue基础.html
+docs/intro.md                     (slug: /)           -> /docs.html
+code-training/docs/intro.md       (slug: /)           -> /code-training.html
+problems/leetcode/0001_two_sum.md (id: 1)             -> /code-training/problems/leetcode/1.html
+```
+
+最后一段取 `frontmatter.slug` > `frontmatter.id` > 文件名。**必须带 `.html`**：
+VuePress 的 `inferRoutePath` 会把不以 `.html` 结尾的路由补成 `.html`，否则
+每条路由都落到 404（迁移时踩过，整站 452 页全是 404）。旧的无后缀 URL
+（`/docs`、`/code-training/problems/leetcode/1`）由 GitHub Pages 的
+`X -> X.html` 解析兜住，书签和外链不受影响。
+
+### React 孤岛（为什么页面里还有 React）
+
+交互件（Pyodide 运行条、录制式/手写算法播放器、自测题、Stars/Projects）
+是 React 写的，核心逻辑（执行协议、trace adapter、题库校验）与框架无关，
+只有渲染层是 React。迁移没有把它们重写成 Vue，而是让它们跑在自己的
+React root 里：
+
+- `src/vuepress/compat/*` 是 `@docusaurus/*`、`@theme/*` 的最小替身，
+  在 `.vuepress/config.ts` 的 Vite alias 里接上，**组件源码一行没改**
+- `.vuepress/components/*.vue` 是薄壳：`onMounted` 后懒加载对应 React 组件
+  并 `createRoot()`，卸载时 unmount
+- 这些区块**不在 SSR 产物里**（React 只在浏览器挂载），对 SEO 不可见；
+  它们本来也都是「点开才算」的交互件
+
+### 组件注入（md 一行都不用改）
+
+旧站点靠 swizzle 接缝；VuePress 下改成在 **markdown-it token 流**里插组件
+标签（VuePress 会把渲染结果当 Vue 模板编译）：
+
+| 位置 | 组件 |
+|---|---|
+| 每个可运行的 python 代码块之后 | `SnippetBarMount` |
+| `## 完整代码实现` 标题之后 | `RecordedVisualizerMount` / `NoVisStepsMount` |
+| 正文末尾 | `TracerVisualizerMount`、`PatternGraphMount`、`SelfTestMount` |
+
+数据在构建期算好（`.vuepress/data/training-data.ts`），只有「模式 -> 相关题目」
+这一张表通过 Vite `define` 进客户端；题库和轨迹帧仍然按需 `fetch`。
+
+### 构建期生成的页面
+
+`/code-training/category/*`（题库、机器学习、数据结构、算法模式、复习系统）
+与 `/code-training/tags`、`/code-training/tags/<tag>` 由
+`.vuepress/plugins/catalogs.ts` 在 `onInitialized` 里 `createPage` 出来。
+它们出现在板块落地页的正文链接里，不生成就是 404。
+
+### 已知的取舍
+
+- **PWA**：用 `@vuepress/plugin-pwa`，只 precache 外壳（2.5MB），页面/图片/
+  轨迹走运行时缓存。`register-service-worker` 必须静态 import 一次（见
+  `.vuepress/README.md` 的 PWA 一节），否则动态 import 落在 load 之后会
+  静默不注册。
+- **`check:vis --all` 的页面发现标记改成 `data-vis="recorded"`**：播放器是
+  React 孤岛，`id="visualizer"` 要等客户端挂载才有。
+- **`.vuepress/styles/index.scss` 不会自动加载**（hope rc.110 的 `userStyle`
+  没接上），必须在 `.vuepress/client.ts` 里显式 `import`。
+- **本地搜索用 `@vuepress/plugin-search`**，不是 slimsearch：slimsearch
+  rc.128 产出的 worker 是 ESM 却按经典 worker 加载，线上直接报
+  `Cannot use import statement outside a module`。
+
+---
+
+## 历史记录（Docusaurus 时代）
+
+以下内容写于 2026-10 迁移之前。**提到 Docusaurus 专有机制的地方已经不适用**，
+但其中关于内容管线、算法可视化、题库出题、Pyodide 执行协议的记录仍然有效，
+是迁移时逐条对照过的依据。
 
 ### Content sources and data flow
 

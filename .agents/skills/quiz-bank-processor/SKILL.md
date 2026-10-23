@@ -159,8 +159,9 @@ pnpm quiz:validate --strict    # 有 error 就退出非 0，CI 用
 
 ### docId 为什么用路径而不是 docId
 
-不是 docId，是**文件相对路径**。Docusaurus 的 numberPrefixParser 会改写 id：
-`0001_two_sum.md` → `1`，`HJ48_从单向链表….md` → `HJ48`，规则不统一。
+不是 docId，是**文件相对路径**。站点的 URL 会按 frontmatter 改写末段
+（`0001_two_sum.md` + `id: 1` → `/1`，`HJ48.从单向链表….md` + `id: HJ48`
+→ `/HJ48`，见 `.vuepress/paths.ts`），规则跟着 frontmatter 走，不适合当键。
 路径是唯一稳定的标识。
 
 ### `source` 必须能对上小节名

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Layout from '@theme/Layout';
 import styles from './styles.module.css';
+import projectsJson from '@site/data/projects.json';
 
 // 类型定义
 interface Project {
@@ -295,13 +296,7 @@ function ProjectCard({ project, index }: ProjectCardProps) {
 
 export default function ProjectsPage(): React.ReactElement {
   // 加载数据
-  const projectsData: ProjectsData = useMemo(() => {
-    try {
-      return require('@site/data/projects.json');
-    } catch {
-      return { lastUpdated: '', count: 0, projects: [] };
-    }
-  }, []);
+  const projectsData: ProjectsData = projectsJson as unknown as ProjectsData;
 
   // 视图模式（从 localStorage 读取）
   const [viewMode, setViewMode] = useState<ViewMode>('card');
