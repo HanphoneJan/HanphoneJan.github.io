@@ -44,7 +44,6 @@ const TRAINING_TOP_ORDER = [
   'data-structures',
   'patterns',
   'review',
-  'resources',
 ]
 
 /** 顶层目录的中文名（其余目录用 `_category_.json` 的 label，再退回目录名） */

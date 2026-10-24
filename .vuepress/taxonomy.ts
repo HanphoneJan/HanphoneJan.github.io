@@ -32,7 +32,6 @@ const TRAINING_DIR_LABELS: Record<string, string> = {
   'data-structures': '数据结构',
   patterns: '算法模式',
   review: '复习系统',
-  resources: '资源',
 }
 
 /** 题库下的平台目录（platform 缺失或为占位值时的回退） */
