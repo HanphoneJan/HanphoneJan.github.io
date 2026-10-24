@@ -220,6 +220,13 @@ React root 里：
   静默不注册。**HTML 的 `NetworkFirst` 不能设 `networkTimeoutSeconds`**：
   超时回退的旧 HTML 指向已删除的哈希 chunk，会卡在
   `Failed to fetch dynamically imported module`。
+  **预缓存也不能应答 `/`**（`generateSWConfig.directoryIndex: null`）：
+  Workbox 默认的 `directoryIndex: 'index.html'` 会把 `start_url`（`/`）
+  在预缓存里命中成首次安装时那份 `index.html`，安装版 PWA 于是永远跑旧外壳
+  —— 新部署删掉旧 chunk 后，站内跳转静默失败（浏览器网页从深路径进来，
+  HTML 走 NetworkFirst，所以不容易撞上）。`client.ts` 的 `router.onError`
+  兜住这类 chunk 错误，改为整页打开目标地址；`visibilitychange` 里顺带
+  每 30 分钟查一次 SW 更新。首页手写的链接必须带 `.html`，否则也不走路由。
 - **`check:vis --all` 的页面发现标记改成 `data-vis="recorded"`**：播放器是
   React 孤岛，`id="visualizer"` 要等客户端挂载才有。
 - **`.vuepress/styles/index.scss` 不会自动加载**（hope rc.110 的 `userStyle`
