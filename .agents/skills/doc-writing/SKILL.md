@@ -60,7 +60,7 @@ description: 为一个代码库写或重写项目文档时使用：先由一个 
 
 ### 3. 写
 
-- 先按文体读范文：写架构说明、设计文档、运维/踩坑记录，读 `exemplars/reference/` 与 `exemplars/reasoning/`；只有写教程/面试向内容才读 `exemplars/tutorial/`。再读 `prompts/new-section.md` 或 `prompts/rewrite-section.md`。
+- 先按文体读范文：写架构说明、设计文档、运维/踩坑记录，读 `exemplars/reference/` 与 `exemplars/reasoning/`；只有写教程/面试向内容才读 `exemplars/tutorial/`。`reference/` 不够时，读本仓库 `docs/项目/数据分析平台/` 的文档看完整形态（只学行文，不搬事实）。再读 `prompts/new-section.md` 或 `prompts/rewrite-section.md`。
 - **整篇重写，不在旧句子上打补丁。** 保留事实、数字、代码路径，**章节顺序和标题层级可以完全重来**。先按自己的提纲写，初稿完成后再拿旧文档查漏。
 - 一次一篇，写到临时 staging 目录（默认 `/tmp/doc-writer/<project>/stage/`），**不要直接改 `docs/`**。
 - 每篇写完，在文末留一段注释：关键数字与它们的出处（`file:line`），自查用；交付前删掉。
