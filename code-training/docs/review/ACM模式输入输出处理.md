@@ -252,3 +252,99 @@ queue = []
 for _ in range(count[0]):
     queue.append(list(map(int, input().split())))
 ```
+
+---
+
+## 7. JSON 形式的输入
+
+题面里一旦出现「输入一个 JSON」「每行一个 JSON 对象」，就**不要再用 `split()` 去拆**。
+JSON 里的逗号、引号、花括号都是语法的一部分，按空白一切，结构就碎了。
+正确做法是把整段（或整行）读成字符串，交给 `json.loads()` 解析。
+
+### 7.1 整段输入就是一个 JSON
+
+```python
+import json
+import sys
+
+data = json.loads(sys.stdin.read())
+print(type(data).__name__)      # dict / list / int / str
+```
+
+`json.loads()` 的参数是**字符串**；如果想直接把标准输入当文件对象交给它，用 `json.load(sys.stdin)`。
+
+### 7.2 第一行是组数 n，后面 n 行每行一个 JSON
+
+```python
+import json
+import sys
+
+input = sys.stdin.readline
+n = int(input())
+rows = [json.loads(input()) for _ in range(n)]
+```
+
+### 7.3 一行一个 JSON，直到文件尾
+
+```python
+import json
+import sys
+
+for line in sys.stdin:
+    line = line.strip()
+    if not line:                # 空行跳过，别让 json.loads 报 Expecting value
+        continue
+    obj = json.loads(line)
+    print(obj)
+```
+
+### 7.4 本地调试时从文件读
+
+```python
+import json
+
+with open('case.json', encoding='utf-8') as f:
+    data = json.load(f)         # 文件 -> 对象，等价于 json.loads(f.read())
+```
+
+文件带 BOM（Windows 记事本存的）时报 `JSONDecodeError: Expecting value: line 1 column 1`，
+把编码换成 `utf-8-sig` 即可读。
+
+### 7.5 单引号、`True`、`None` 不是 JSON
+
+`{'a': 1}`、`True`、`None`、`(1, 2)` 都是 **Python 字面量**，`json.loads` 会直接抛
+`JSONDecodeError` —— JSON 只认双引号、`true` / `false` / `null`。这类输入用 `ast.literal_eval`：
+
+```python
+import ast
+
+data = ast.literal_eval("{'a': 1, 'b': [1, 2]}")   # {'a': 1, 'b': [1, 2]}
+```
+
+判断标准很简单：题面写的是 JSON（双引号 + `true` / `false` / `null`）就用 `json`；
+写的是 Python 字面量（单引号 + `True` / `None`）就用 `ast.literal_eval`。
+
+### 7.6 输出 JSON
+
+```python
+import json
+
+ans = {'name': '小欧', 'score': [90, 85]}
+print(json.dumps(ans, ensure_ascii=False, separators=(',', ':')))
+# {"name":"小欧","score":[90,85]}
+```
+
+- `ensure_ascii=False`：中文按原字符输出，不会变成 `\u5c0f\u6b27`
+- `separators=(',', ':')`：去掉逗号与冒号后面的空格。不少 OJ 是逐字符比对，
+  默认参数输出的 `{"a": 1, "b": 2}` 会因此判错
+- 需要按字典序输出键时加 `sort_keys=True`
+
+### 7.7 常见报错对照
+
+| 报错 | 原因 | 处理 |
+|------|------|------|
+| `JSONDecodeError: Expecting value: line 1 column 1` | 输入是空串、纯空白，或带 BOM | 先 `strip()` 判空；文件用 `utf-8-sig` |
+| `JSONDecodeError: Expecting property name enclosed in double quotes` | 用了单引号 | 换成 `ast.literal_eval` |
+| `JSONDecodeError: Extra data` | 一段字符串里塞了多个 JSON | 按行拆开逐个 `loads` |
+| `TypeError: the JSON object must be str, bytes or bytearray` | 把文件对象直接给了 `loads` | 用 `json.load(f)` |
+| 读出来是字符串而不是对象 | 少解析了一层（`json.dumps` 过又读回） | 确认拿到的是 `dict` / `list` 再用 |
