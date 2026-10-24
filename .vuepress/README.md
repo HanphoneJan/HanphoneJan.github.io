@@ -262,13 +262,24 @@ oxc: { jsx: { runtime: 'automatic' } }
 `plugins.pwa` 已启用，构建产物里有 `manifest.webmanifest` 与 `service-worker.js`，
 首屏加载后自动注册并接管页面。
 
-两个刻意的取舍：
+几条刻意的取舍（每条都对应一个线上症状，改之前先看注释里的因果）：
 
 - **只 precache 应用外壳**（`index.html` / `404.html` / `app-*.js` / `style-*.css`，
   约 2.5MB）。默认行为会把 622 个页面 chunk（39MB）全部塞进 precache，
   首次安装要下 42MB —— 文档站不需要「一次装完所有页面」。其余资源走
   Workbox 运行时缓存：页面 `NetworkFirst`、JS/CSS `StaleWhileRevalidate`、
   图片 `CacheFirst`、轨迹 JSON 与题库单独分桶。
+- **`generateSWConfig.directoryIndex: null` —— 预缓存不许应答 `/`。**
+  Workbox 默认 `directoryIndex: 'index.html'`：预缓存路由会把「以 `/` 结尾」
+  的请求补成 `index.html` 去查预缓存，而预缓存是 **cache-first**。manifest 的
+  `start_url` 恰好就是 `/`，于是安装版 PWA 每次启动都拿到**首次安装时那份
+  `index.html`**，里面的 `app-<hash>.js` 也是旧的；新部署删掉旧 chunk 之后，
+  站内跳转（`beforeResolve` 里 `await import(页面 chunk)`）拿不到文件，
+  这次导航直接中止 —— 页面上就是「点了没反应」。
+  浏览器网页里大多从搜索结果 / 书签落到深路径，那些 HTML 走 `NetworkFirst`，
+  所以不会出现；这就是「PWA 里切路由会卡、网页里不会」的由来。
+  置空后 `/` 也走 `NetworkFirst`：在线永远是新 HTML，离线回退到 `html-v2`
+  里缓存的那份（首次被 SW 接管后的那次重载就会写进去，实测离线启动正常）。
 - **HTML 的 `NetworkFirst` 不能设 `networkTimeoutSeconds`。** 设了之后
   Workbox 在超时（原来的 3 秒）就回退到缓存 HTML，而 HTML 引用的
   `assets/app-<hash>.js` 每次部署都会换名 —— 旧 HTML 指向的 chunk 已不存在，
@@ -276,12 +287,24 @@ oxc: { jsx: { runtime: 'automatic' } }
   「首次进入只有导航栏」：React 首页本来就靠 JS 挂载，chunk 拉不到就是空白。
   现在网络慢也等真实 HTML，只有真正离线才用缓存；缓存名改成 `html-v2`，
   让旧缓存失效一次。
+- **chunk 加载失败要自愈**：`.vuepress/client.ts` 在 `router.onError` 里拦
+  `Failed to fetch dynamically imported module` 这一类错误，**整页打开目标地址**
+  （HTML 是服务端渲染的，内容一定在），而不是留一个点不动的页面。同一目标
+  60 秒内只救一次，防止「跳转 → 新文档又失败」的刷新循环。
+- **回到前台时查一次 SW 更新**（`visibilitychange`，30 分钟节流）。安装版 PWA
+  很少整页导航，浏览器就不会去检查 `service-worker.js`；主动查一次，
+  新版本才会通过插件自带的「新内容已就绪」按钮生效。
 - **`register-service-worker` 必须在 `load` 之前求值**。这个包的模块顶层就
   挂了 `addEventListener('load')`，而插件是在 `onMounted` 里**动态 import**
   它的；动态 import 落到 load 之后，那个 Promise 永远不会 resolve，
   Service Worker 静默不注册（本机 headless 稳定复现）。所以
   `.vuepress/client.ts` 里静态 `import 'register-service-worker'` 了一次，
   并在 `package.json` 里把它提成直接依赖。
+- **站内链接必须带 `.html`**：`/docs`、`/stars` 这类无后缀地址不会命中
+  VuePress 的路由（路由是 `/docs.html`，见 `paths.ts`），点击会退化成
+  **整页导航**。首页的按钮与卡片曾经就是这种写法（`HomePage.vue`），
+  在 PWA 里表现为「点了没反应 / 白等」—— 现在全部带 `.html`。
+
 
 ## 依赖版本与升级
 

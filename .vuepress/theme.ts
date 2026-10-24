@@ -144,6 +144,25 @@ export default hopeTheme({
       // 这里只预缓存应用外壳（约 2.5MB），其余按需缓存：
       // 访问过的页面离线可看，没访问过的走网络。
       generateSWConfig: {
+        // **别让预缓存里的 index.html 应答 `/`。**
+        //
+        // `directoryIndex` 默认是 `'index.html'`：Workbox 的预缓存路由会把
+        // 「以 `/` 结尾」的请求补成 `index.html` 去预缓存里查，而预缓存是
+        // **cache-first** —— 命中之后既不回网络、也不会自己更新。
+        // 而 manifest 的 `start_url` 正是 `/`，安装版 PWA 每次都从这里启动，
+        // 于是它会一直跑**首次安装时那份应用外壳**（旧的 `app-<hash>.js`），
+        // 直到新 SW 被 skipWaiting 激活为止。
+        //
+        // 外壳里的页面 chunk 名字带构建哈希，部署一次就换名、旧文件被删；
+        // 点站内链接时 `import()` 拿不到那些旧 chunk → vue-router 的这次导航
+        // 直接中止，页面上「点了没反应」（见 client.ts 的 `router.onError`）。
+        // 浏览器网页里大多是从搜索结果/书签直接落到某个深路径上，
+        // 那个 HTML 走 NetworkFirst，所以拿得到新外壳 —— 这就是
+        // 「PWA 里切换路由会卡、网页里不会」的由来。
+        //
+        // 置空之后导航一律落到下面的 NetworkFirst：在线时永远是新 HTML，
+        // 离线才回退到 html-v2 里缓存的那份（首次接管后的那次重载就会写进去）。
+        directoryIndex: null,
         globPatterns: [
           'index.html',
           '404.html',

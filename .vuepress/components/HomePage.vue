@@ -10,9 +10,9 @@
             可回放的算法动画，以及看完就忘不了的自测题。
           </p>
           <div :class="$style.buttons">
-            <a href="/docs" :class="$style.heroButton">开始阅读</a>
+            <a href="/docs.html" :class="$style.heroButton">开始阅读</a>
             <a
-              href="/code-training/category/题库"
+              href="/code-training/category/题库.html"
               :class="$style.heroButtonSecondary"
             >
               刷算法题
@@ -119,30 +119,36 @@ const site = useSiteData()
 const title = computed(() => site.value.title)
 const tagline = '技术文档与算法训练场'
 
+/**
+ * 入口链接**一律带 `.html`**：VuePress 的路由就是 `/docs.html` 这种带后缀的
+ * 路径（见 `paths.ts`），写 `/docs` 不会命中路由，点击会退化成整页导航 ——
+ * 在安装版 PWA 里等于「点了没反应，等一整次文档加载」。
+ * 导航栏由 hope 自己解析成 permalink，这里手写的 href 没有那层转换。
+ */
 const ENTRIES: Entry[] = [
   {
-    to: '/docs',
+    to: '/docs.html',
     icon: '📘',
     title: '技术文档',
     desc: '前端、后端、嵌入式、机器学习、AI Agent，以及 Python / Java 计算机基础系列。',
     cta: '进入文档',
   },
   {
-    to: '/code-training/category/题库',
+    to: '/code-training/category/题库.html',
     icon: '🧮',
     title: '代码训练',
     desc: '力扣 / 牛客题解，每道题都能在浏览器里直接跑样例、看逐行动画。',
     cta: '开始刷题',
   },
   {
-    to: '/stars',
+    to: '/stars.html',
     icon: '⭐',
     title: 'Stars',
     desc: '收藏并打标签的优质开源仓库，支持搜索、标签筛选与排序。',
     cta: '浏览收藏',
   },
   {
-    to: '/projects',
+    to: '/projects.html',
     icon: '🚀',
     title: '项目',
     desc: '自己做过与正在做的开源项目与作品。',
@@ -152,19 +158,19 @@ const ENTRIES: Entry[] = [
 
 const FEATURES: Feature[] = [
   {
-    to: '/code-training/category/题库',
+    to: '/code-training/category/题库.html',
     icon: '▶',
     title: '浏览器里跑样例',
     desc: '题解里点一下就能运行代码、比对样例输出，不用装 Python 环境，也不用复制粘贴。',
   },
   {
-    to: '/code-training/category/算法模式',
+    to: '/code-training/category/算法模式.html',
     icon: '🎬',
     title: '逐行算法动画',
     desc: '录制真实执行过程并回放每一步：数组怎么收缩、指针怎么走、DP 表怎么填。',
   },
   {
-    to: '/code-training/category/题库',
+    to: '/code-training/category/题库.html',
     icon: '🧠',
     title: '主动回忆自测',
     desc: '每道题解末尾都有一组自测题，看完解析当场检验自己是不是真的记住了。',
