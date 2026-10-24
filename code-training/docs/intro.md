@@ -38,10 +38,40 @@ slug: /
 - **代码复制**：代码块右上角有复制按钮
 - **评论**：每道题解底部都有 Giscus 评论，可留言讨论
 
+## 学习资源
+
+### 刷题路线
+
+- [如何科学刷题？- 力扣讨论区](https://leetcode.cn/discuss/post/3141566/ru-he-ke-xue-shua-ti-by-endlesscheng-q3yd/) —— 灵神（endlesscheng）的刷题方法论
+- [LeetCode 热题 100](https://leetcode.cn/studyplan/top-100-liked/) —— 经典高频题目合集
+- [灵神刷题路线图](https://hanphone.top/gh/HanphoneJan/public_pictures/learn/%E7%81%B5%E7%A5%9E%E5%88%B7%E9%A2%98%E8%B7%AF%E7%BA%BF%E5%9B%BE.webp) —— 算法学习路径可视化
+
+### 综合资料
+
+- [数据结构与算法入门宝典：超全知识汇总 - 知乎](https://zhuanlan.zhihu.com/p/1903577161132115759) —— 包含深度学习手撕代码
+- [OI Wiki](https://oi-wiki.org/) —— 竞赛编程知识库，算法与数据结构讲得很细
+- [VisuAlgo - 算法可视化](https://visualgo.net/zh) —— 用动画看数据结构和算法的执行过程
+- [Python Tutor](https://pythontutor.com/python-compiler.html#mode=edit) —— Python 代码逐行执行可视化，适合理解代码到底怎么跑的
+
+### 推荐题单
+
+| 阶段 | 题单 |
+|------|------|
+| 基础入门 | LeetCode 热题 100 —— 建立算法思维的基础题单 |
+| 进阶提升 | LeetCode 精选 TOP 面试题、剑指 Offer 系列 |
+| 专项训练 | 数组与字符串 · 链表 · 树与图 · 动态规划 · 回溯算法 |
+
+### 学习建议
+
+1. **循序渐进**：按灵神路线图，从基础数据结构开始，逐步过渡到复杂算法。
+2. **五遍刷题法**：第一遍能写出解法就行 → 第二遍优化到最优 → 一天后复习 → 一周后复习 → 面试前再复习。
+3. **可视化学习**：用 VisuAlgo 和 Python Tutor 理解算法的执行过程，比盯着代码硬想快得多。
+4. **归纳总结**：每类题型整理出通用模板，写进「算法模式」那一栏，下次直接套。
+
 ## 统计
 
 - 题解数量：持续增长中
-- 覆盖平台：LeetCode 为主
+- 覆盖平台：LeetCode、牛客、CodeFun2000 等
 - 难度分布：简单、中等、困难全覆盖
 
 ---

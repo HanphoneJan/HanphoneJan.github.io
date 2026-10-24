@@ -253,6 +253,8 @@ export default hopeTheme({
       config: {
         '/docs/intro': '/docs',
         '/code-training/intro': '/code-training',
+        // 学习资源已并入板块首页，旧地址继续可用
+        '/code-training/resources': '/code-training',
         '/markdown-page': '/',
         // VuePress 会把文件名里的 `+` 消毒成 `_`（HTML+CSS+JS -> HTML_CSS_JS），
         // 这条旧 URL 已经在线上存在，补一个重定向。
