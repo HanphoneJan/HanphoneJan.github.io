@@ -75,6 +75,24 @@ VuePress 的 `inferRoutePath` 会把不以 `.html` 结尾的路由补成 `.html`
 （`/docs`、`/code-training/problems/leetcode/1`）由 GitHub Pages 的
 `X -> X.html` 解析兜住，书签和外链不受影响。
 
+### 侧边栏：每个分组必须带自己的 `prefix`
+
+`.vuepress/sidebar.ts` 现场扫描目录生成侧边栏，每个目录是一个可折叠分组。
+**分组必须写 `prefix`（它自己目录的 URL 前缀，`legacyDirPrefix()` 算出来）。**
+不写的时候 hope 让分组继承侧边栏的 base，而它判定「这个分组是不是当前」
+有一条 `isActiveLink(route, prefix)`，两边的归一化都会去掉 `.html`：
+
+- 板块首页在 `paths.ts` 里是 `/docs.html` / `/code-training.html`，而
+  `theme.ts` 为了给首页配侧边栏也注册了这两个 key —— 于是 base 正好是首页
+  URL 本身，**首页上所有分组都被判成当前**；
+- `SidebarLinks` 用 `findIndex` 打开第一个当前项，每一层都如此 ——
+  在首页点开任一目录，它的第一个子目录（再套第一个子目录…）会整支自动展开，
+  分组标题也全部亮成激活态，而页面本身没有任何报错。
+
+`pnpm test:sidebar`（8 项）把口径钉住：每个分组都有唯一前缀、板块首页上
+没有任何分组是当前、每篇文档只展开它的祖先链。改 `sidebar.ts` 或换主题版本
+后跑一遍。
+
 ### React 孤岛（为什么页面里还有 React）
 
 交互件（Pyodide 运行条、录制式/手写算法播放器、自测题、Stars/Projects）
