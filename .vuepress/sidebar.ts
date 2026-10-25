@@ -1,6 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { legacyPathFor, readFrontMatter, type PageMeta } from './paths'
+import {
+  legacyDirPrefix,
+  legacyPathFor,
+  readFrontMatter,
+  type PageMeta,
+} from './paths'
 
 /**
  * 侧边栏：从内容目录现场生成，不手写。
@@ -14,6 +19,16 @@ import { legacyPathFor, readFrontMatter, type PageMeta } from './paths'
 export interface SidebarItem {
   text: string
   link?: string
+  /**
+   * 这一组子项所在目录的 URL 前缀（`/docs/前端/`）。
+   *
+   * **必须写**：不写的时候 hope 会让分组继承侧边栏的 base，而分组的
+   * 「是否当前」判据里有 `isActiveLink(route, prefix)`，两边归一化都会去掉
+   * `.html` —— 板块首页的 base 是 `/docs.html`，等于首页 URL 本身，于是首页上
+   * 所有分组都被判成「当前」，`findIndex` 永远取到第 0 项：
+   * 点开任一目录，第一个子目录会连带整支自动展开。
+   */
+  prefix?: string
   collapsible?: boolean
   expanded?: boolean
   children?: SidebarItem[]
@@ -162,6 +177,7 @@ function walkDir(
     const guide = path.join(sub.path, '导读.md')
     const meta = readFrontMatter(guide) as PageMeta
     const byName = topOrder?.indexOf(sub.name) ?? -1
+    const prefix = legacyDirPrefix(sourceDir, sub.path)
     entries.push({
       order:
         byName !== -1
@@ -171,6 +187,7 @@ function walkDir(
         text: dirLabel(sub.path, sub.name),
         collapsible: true,
         expanded: false,
+        ...(prefix ? { prefix } : {}),
         ...(fs.existsSync(guide)
           ? { link: legacyPathFor(sourceDir, guide, meta) ?? undefined }
           : {}),

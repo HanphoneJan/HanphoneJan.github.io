@@ -46,6 +46,31 @@ export function relativeSource(sourceDir: string, filePath: string): string {
   return path.relative(sourceDir, filePath).split(path.sep).join('/')
 }
 
+/**
+ * 内容目录 -> 它在站点上的 URL 前缀（带结尾斜杠）。
+ *
+ * 侧边栏每个分组必须显式带上它自己目录的前缀，否则 hope 会让分组**继承
+ * 侧边栏的 base 路径**，而分组的「是否当前」「要不要展开这支」判据里有一条
+ * `isActiveLink(route, prefix)`，两边的归一化都会去掉 `.html`：
+ * 板块首页 `/docs.html` 的 base 正好也是 `/docs.html`，于是首页上**每一个**
+ * 分组都被判成「当前」，`SidebarLinks` 的 `findIndex` 永远返回 0 ——
+ * 点开任一目录，它的第一个子目录（以及子目录的第一个子目录…）会一路自动展开。
+ * 详见 `.vuepress/sidebar.ts` 里 `walkDir` 的注释。
+ */
+export function legacyDirPrefix(sourceDir: string, dirPath: string): string | null {
+  const rel = relativeSource(sourceDir, dirPath)
+
+  if (rel === 'docs') return '/docs/'
+  if (rel.startsWith('docs/')) return `/docs/${rel.slice('docs/'.length)}/`
+
+  if (rel === 'code-training/docs') return '/code-training/'
+  if (rel.startsWith('code-training/docs/')) {
+    return `/code-training/${rel.slice('code-training/docs/'.length)}/`
+  }
+
+  return null
+}
+
 export function legacyPathFor(
   sourceDir: string,
   filePath: string,
