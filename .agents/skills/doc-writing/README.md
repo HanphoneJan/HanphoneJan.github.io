@@ -61,7 +61,7 @@ doc-writing/
 
 | 分组 | 来源 | 什么时候读 |
 |---|---|---|
-| `reference/` | 本仓库 `docs/项目/数据分析平台/`：日志系统架构、权限设计与权限矩阵（AI 生成，作者认可其文体） | 架构说明、设计文档、运维记录 |
+| `reference/` | 本仓库 `docs/项目/数据分析平台/`：日志系统架构、权限设计与权限矩阵；`docs/项目/图像检索系统/`：核心系统设计（均经作者认可其文体，范文节选见 `exemplars/reference/`） | 架构说明、设计文档、运维记录 |
 | `reasoning/` | [Vonng/ddia](https://github.com/Vonng/ddia) 「人为错误」（23.9k star，CC BY 4.0）；[ruanyf/es6tutorial](https://github.com/ruanyf/es6tutorial) 「let」（21.4k star，CC BY-NC 4.0） | 需要讲机制、取舍、事实密度 |
 | `tutorial/` | [JavaGuide](https://github.com/Snailclimb/JavaGuide) 五篇节选（Apache-2.0） | 教程、面试向内容 |
 
