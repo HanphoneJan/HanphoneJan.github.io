@@ -60,7 +60,7 @@ description: 为一个代码库写或重写项目文档时使用：先由一个 
 
 ### 3. 写
 
-- 先按文体读范文：写架构说明、设计文档、运维/踩坑记录，读 `exemplars/reference/` 与 `exemplars/reasoning/`；只有写教程/面试向内容才读 `exemplars/tutorial/`。`reference/` 不够时，读本仓库 `docs/项目/数据分析平台/` 的文档看完整形态（只学行文，不搬事实）。再读 `prompts/new-section.md` 或 `prompts/rewrite-section.md`。
+- 先按文体读范文：写架构说明、设计文档、运维/踩坑记录，读 `exemplars/reference/` 与 `exemplars/reasoning/`；只有写教程/面试向内容才读 `exemplars/tutorial/`。`reference/` 不够时，读本仓库 `docs/项目/数据分析平台/` 与 `docs/项目/图像检索系统/` 的文档看完整形态（只学行文，不搬事实）。再读 `prompts/new-section.md` 或 `prompts/rewrite-section.md`。
 - **整篇重写，不在旧句子上打补丁。** 保留事实、数字、代码路径，**章节顺序和标题层级可以完全重来**。先按自己的提纲写，初稿完成后再拿旧文档查漏。
 - 一次一篇，写到临时 staging 目录（默认 `/tmp/doc-writer/<project>/stage/`），**不要直接改 `docs/`**。
 - 每篇写完，在文末留一段注释：关键数字与它们的出处（`file:line`），自查用；交付前删掉。
@@ -167,7 +167,7 @@ python3 .agents/skills/doc-writing/scripts/check_rewrite.py --dir <原文目录>
 | `prompts/plan.md` | 写作方案：写几篇、写哪几篇、框架、图、顺序 |
 | `prompts/review.md` | 评审 + 事实核对 |
 | `prompts/de-ai-pass.md` | 去 AI 味：删判决句、还原换算、补事实（独立一遍） |
-| `exemplars/reference/` | 参考手册体：日志系统架构、权限设计与权限矩阵（本仓库，AI 生成、作者认可） |
+| `exemplars/reference/` | 参考手册体：日志系统架构、权限设计与权限矩阵（数据分析平台）、增量索引设计（图像检索系统），均经作者认可其文体 |
 | `exemplars/reasoning/` | 机制与取舍：DDIA 中文版「人为错误」、阮一峰《ES6 入门》（均 >20k star，CC BY / CC BY-NC） |
 | `exemplars/tutorial/` | 教程体：JavaGuide 五篇（内存、哈希、MySQL 索引、索引失效、消息队列，Apache-2.0） |
 | `scripts/check_rewrite.py` | 机械核对脚本 |

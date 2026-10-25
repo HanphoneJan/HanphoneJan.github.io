@@ -5,7 +5,7 @@
 - `.agents/skills/doc-writing/exemplars/reference/`（参考手册体：名词标题、表格承载信息、因果只给一条并带编号）
 - `.agents/skills/doc-writing/exemplars/reasoning/`（事实密度与平实语气）
 
-`reference/` 只有两段节选。需要看完整形态时，读本仓库 `docs/项目/数据分析平台/` 下的文档——学它怎么摆标题、表格和因果，不搬它的事实。
+`reference/` 只有三段节选。需要看完整形态时，读本仓库 `docs/项目/数据分析平台/` 与 `docs/项目/图像检索系统/` 下的文档——学它怎么摆标题、表格和因果，不搬它的事实。
 
 再读待改的稿子：{draft.md}
 以及它依据的事实：{事实}（带 `file:line`）
