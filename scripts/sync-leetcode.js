@@ -6,10 +6,26 @@
  * - 拉取提交列表 → 获取每题代码 + 题目详情
  * - 与 code-training/leetcode/ 现有文件 diff,只生成新题
  * - 每次请求会从 Set-Cookie 捕获续期后的 LEETCODE_SESSION,
- *   若发生变化会写入 cookie 输出文件,供 workflow 更新 secret
+ *   写进 cookie 输出文件(.lc-cookie.tmp),由调用方决定是否保存
  *
- * 用法:
+ * **没有定时 workflow。** 2026-10-25 起 sync-leetcode.yml 已删除:
+ * cookie 过期后每次运行都死在同一处 `HTTP 401: {"detail":"身份认证信息未提供。"}`,
+ * 而仓库里没有 SYNC_PAT,`GITHUB_TOKEN` 又改不了 secret,所以脚本
+ * 自动续期的 cookie 从来没被写回过,断一次就再也起不来。
+ * 脚本保留下来只作**同步逻辑的参考实现**,需要时由 AI/agent 显式调用。
+ *
+ * 用法(需要一个**当次登录**拿到的新 cookie,过期值会直接 401):
  *   LEETCODE_SESSION="..." node scripts/sync-leetcode.js
+ *   LEETCODE_SESSION="..." LC_COOKIE_OUTPUT=/tmp/cookie.txt node scripts/sync-leetcode.js
+ *
+ * 认证相关的口径(改脚本时别踩):
+ * - 只带 LEETCODE_SESSION 一个 cookie 就够,不读 csrftoken
+ * - 提交列表走 /api/submissions/?(limit|offset),不是 GraphQL
+ * - 详情/题面走 /graphql/(POST JSON),需要 Referer + Origin 是 leetcode.cn
+ * - 续期是"滚动"的:响应 Set-Cookie 里每次都带新的 LEETCODE_SESSION,
+ *   只保留最后一个,漫游在 fetchJson 的 setCookieFromHeaders 里
+ * - 401 的报文是固定的"身份认证信息未提供。",不带 cookie 与带过期 cookie
+ *   返回完全一样 —— 看到它不要怀疑接口改版,先换 cookie
  */
 
 const fs = require('fs');
@@ -478,6 +494,9 @@ async function main() {
     await writeCookieOutput();
   } catch (error) {
     console.error('❌ Error:', error.message);
+    if (/HTTP 401/.test(error.message)) {
+      console.error('   LEETCODE_SESSION 已过期或无效:请重新登录 leetcode.cn 取一份新的 cookie。');
+    }
     process.exit(1);
   }
 }
