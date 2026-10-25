@@ -133,6 +133,7 @@ python3 .agents/skills/doc-writing/scripts/check_rewrite.py --dir <原文目录>
 - 拆段、并段、改句式、用「你/我」、关键结论和数字加粗。
 - 删「本文」「本节」「这里不重复」「详见」。
 - **删判决句**：替读者下的结论（「这条约束比……重要」「这不是 bug」「这是明说的取舍」）。删完读者仍能得出同样的结论，就说明它本来就多余。
+- **删历史沿革**：早期的实现、后来的迁移、改完的表现（「早期只存 12 个 hex……改成 64 位之后旧 Key 全部失效」）。只留「现在必须怎么做 + 为什么不能那样做」。三种例外：当前数据的形状、可复现的报错原文与实测数字、待办欠账。判据见 `prompts/de-ai-pass.md` 的「删时间线」。
 - **把评价改成决定**：「我们没把过滤下推到 8020」是决定，「这条约束比省一次往返重要」是评价。决定要留，评价不要。
 
 **不可以**
@@ -152,6 +153,7 @@ python3 .agents/skills/doc-writing/scripts/check_rewrite.py --dir <原文目录>
 - 不要用检查器分数当验收标准。它量的是机械丢失，不是声音。
 - 不要把去 AI 味做成风格规则清单。规则清单会让模型逐条应试，写出第二种僵硬；减法 pass 只做删、换、缩。
 - 不要拿教程体范文写设计文档。`tutorial/` 学来的是判断句和短句断言，正好是演讲腔的来源。
+- 不要把 git 历史当素材。`git log` 只能用来确认「这条约束是怎么来的」，不能把「怎么从 A 改成 B」写进正文；读者要的是当前约束。
 - 不要把项目模型提交进仓库；它是工作底稿。
 
 ## 文件
@@ -171,5 +173,5 @@ python3 .agents/skills/doc-writing/scripts/check_rewrite.py --dir <原文目录>
 | `exemplars/reasoning/` | 机制与取舍：DDIA 中文版「人为错误」、阮一峰《ES6 入门》（均 >20k star，CC BY / CC BY-NC） |
 | `exemplars/tutorial/` | 教程体：JavaGuide 五篇（内存、哈希、MySQL 索引、索引失效、消息队列，Apache-2.0） |
 | `scripts/check_rewrite.py` | 机械核对脚本 |
-| `scripts/check_voice.py` | 行文指标对照（只报告，不判定） |
+| `scripts/check_voice.py` | 行文指标对照 + 判决句 / 历史沿革候选（只报告，不判定） |
 | `scripts/export_drawio.sh` | 批量导出 `.drawio` → `.svg` |
