@@ -48,6 +48,23 @@ JUDGEMENT_PATTERNS = [
 ]
 JUDGEMENT_RE = re.compile("|".join(JUDGEMENT_PATTERNS))
 
+# 历史沿革候选。命中不等于要删：只有三种情况该留（当前数据的形状、可复现的
+# 报错原文/实测数字、待办欠账），其余是「早期实现是 A，后来改成 B」的迁移记录。
+TIMELINE_PATTERNS = [
+    r"早期(实现|版本|设计)?",
+    r"第一版",
+    r"最初的?(实现|版本|设计)",
+    r"曾经",
+    r"旧版(?!本)",
+    r"之前(是|用|写)",
+    r"原来是",
+    r"后来(改|换|发现|才)",
+    r"已经改成",
+    r"历史(上|脏数据|遗留)",
+    r"全部失效",
+]
+TIMELINE_RE = re.compile("|".join(TIMELINE_PATTERNS))
+
 CODE_FENCE = re.compile(r"```[\s\S]*?```")
 FRONTMATTER = re.compile(r"\A---\n[\s\S]*?\n---\n")
 IMAGE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
@@ -114,6 +131,21 @@ def judgement_hits(text: str):
     return hits
 
 
+def timeline_hits(text: str):
+    hits = []
+    in_code = False
+    for no, line in enumerate(text.splitlines(), 1):
+        if line.lstrip().startswith("```"):
+            in_code = not in_code
+            continue
+        if in_code or not line.strip():
+            continue
+        for m in TIMELINE_RE.finditer(line):
+            hits.append((no, m.group(0), line.strip()))
+            break
+    return hits
+
+
 def load_samples(group: str):
     files = sorted((EXEMPLARS / group).glob("*.md"))
     texts = []
@@ -159,12 +191,14 @@ def main():
     files = collect(Path(args.target))
     rows = []
     all_hits = []
+    all_timeline = []
     for f in files:
         text = f.read_text(encoding="utf-8")
         m = metrics(text)
         rows.append((f, m))
         if not args.quiet:
             all_hits.extend((f, no, word, line) for no, word, line in judgement_hits(text))
+            all_timeline.extend((f, no, word, line) for no, word, line in timeline_hits(text))
 
     if not rows:
         raise SystemExit(f"没有找到 .md：{args.target}")
@@ -191,10 +225,17 @@ def main():
             snippet = line if len(line) <= 90 else line[:90] + "…"
             print(f"  {f}:{no}  [{word}]  {snippet}")
 
+    if all_timeline:
+        print(f"\n历史沿革候选 {len(all_timeline)} 处（只留三种：当前数据的形状、可复现的报错原文、待办欠账）：")
+        for f, no, word, line in all_timeline:
+            snippet = line if len(line) <= 90 else line[:90] + "…"
+            print(f"  {f}:{no}  [{word}]  {snippet}")
+
     print(
         "\n这些数字只做对照。分号密度最可信：一个分号串两个论点、第二个论点是升华，"
         "是演讲腔最稳的指纹。引号口语会误伤（引用术语、讨论一个说法都会推高），"
-        "命中要回原文看，不要按分数验收。"
+        "命中要回原文看，不要按分数验收。历史沿革候选同理："
+        "「旧文档要 reparse」这种欠账要留，「早期实现是 A、后来改成 B」要删。"
     )
 
 
