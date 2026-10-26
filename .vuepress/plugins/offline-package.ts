@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { App, Page } from 'vuepress/core'
+import { PYODIDE_RUNTIME_FILES } from '../../src/components/training/pyrunner/runtime-files'
 import { BUILD_ID } from '../build-id'
 import {
   chunkStem,
@@ -115,6 +116,13 @@ export function buildManifest(app: App): OfflineManifest {
 
   let pageCount = 0
   let chunkless = 0
+  /**
+   * 已经作为「页面 chunk」下发过的文件，别在共享脚本里再来一份。
+   *
+   * 路由表里的全部 chunk 先记一遍（含别名路由指向的同一份），页面解析出来的
+   * 再补一遍 —— 后者覆盖「路由表没写、靠文件名兜底匹配到」的情况。
+   */
+  const pageChunks = new Set<string>(routeChunks.values())
 
   for (const page of app.pages) {
     // 404 已经进了预缓存，不必再下一份
@@ -126,6 +134,8 @@ export function buildManifest(app: App): OfflineManifest {
     const htmlBytes = sizeOf(file)
     const chunkBytes = chunk ? sizeOf(path.join(dest, chunk)) : 0
     if (!chunk) chunkless++
+
+    if (chunk) pageChunks.add(chunk.replace(/^assets\//, ''))
 
     const section = bucket(sectionOf(page.path))
     const entry: OfflineEntry = [page.path, chunk, htmlBytes, chunkBytes]
@@ -154,8 +164,61 @@ export function buildManifest(app: App): OfflineManifest {
     section.bytes += bytes
   }
 
+  // 4) 页面之外被懒加载的脚本（约 3MB）。
+  //
+  // 只下 HTML + 页面 chunk 的话，题解页离线打开是「能读，但运行条/播放器/
+  // mermaid/公式全都不出现」—— 那些是**页面 chunk 之外**的懒加载 chunk
+  // （`SnippetBar-*.js`、`runner-*.js`、`CodeEditor-*.js`、mermaid 的几十个小
+  // chunk…）。它们不属于任何一条路由，路由表里找不到，只能按「不是页面
+  // chunk、也不是已进预缓存的外壳」筛出来。
+  const sharedFiles = assets.filter(
+    (file) =>
+      file.endsWith('.js') && !file.startsWith('app-') && !pageChunks.has(file),
+  )
+  if (sharedFiles.length > 0) {
+    const section = bucket('shared')
+    for (const file of sharedFiles.sort()) {
+      const bytes = sizeOf(path.join(assetsDir, file))
+      section.entries.push([`/assets/${file}`, null, bytes, 0])
+      section.bytes += bytes
+    }
+  }
+
+  // 5) Python 运行时（12.9MB）。文件清单与缓存名来自
+  //    `src/components/training/pyrunner/runtime-files.ts` —— 那是客户端
+  //    fetch 拦截、构建期清单、设置页三方共用的唯一口径。
+  //    `static/pyodide/` 是 gitignore 的（CI 在 build 前 `node
+  //    scripts/fetch-pyodide.js` 现下），本地没同步时这块就不出现。
+  const pyodideDir = path.join(publicDir, 'pyodide')
+  const pyodideFiles = PYODIDE_RUNTIME_FILES.filter((name) =>
+    fs.existsSync(path.join(pyodideDir, name)),
+  )
+  if (pyodideFiles.length > 0) {
+    const section = bucket('pyodide')
+    for (const name of pyodideFiles) {
+      const bytes = sizeOf(path.join(pyodideDir, name))
+      section.entries.push([`/pyodide/${name}`, null, bytes, 0])
+      section.bytes += bytes
+    }
+    if (pyodideFiles.length < PYODIDE_RUNTIME_FILES.length) {
+      console.warn(
+        `[offline-package] static/pyodide 里只有 ${pyodideFiles.length}/${PYODIDE_RUNTIME_FILES.length} 个运行时文件，` +
+          '设置页的「Python 运行时」会少几项（先 pnpm sync:pyodide）',
+      )
+    }
+  }
+
   // 页面少的板块排在前面，读者一眼能看到「首页那点东西就几十 KB」
-  const order: SectionId[] = ['start', 'quiz', 'traces', 'docs', 'training', 'archive']
+  const order: SectionId[] = [
+    'start',
+    'shared',
+    'pyodide',
+    'quiz',
+    'traces',
+    'docs',
+    'training',
+    'archive',
+  ]
   const sorted: Record<string, OfflineSection> = {}
   for (const id of order) if (sections[id]) sorted[id] = sections[id]
 

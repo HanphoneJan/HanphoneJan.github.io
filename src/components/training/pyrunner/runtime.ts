@@ -38,6 +38,8 @@
  * 见 `scripts/fetch-pyodide.js`。
  */
 
+import { PYODIDE_CACHE_NAME, PYODIDE_RUNTIME_FILES } from './runtime-files'
+
 /** PyProxy 只需要这两个能力 */
 interface PyProxy {
   destroy?: () => void;
@@ -97,22 +99,8 @@ export interface LoadOptions {
  * 好处：1) 不与 plugin-pwa 冲突 2) Cache API 同源，跨页面持久
  * 3) 首次运行之后就是秒开。
  */
-const CACHE_NAME = 'pyodide-runtime-v1';
-
-/**
- * 必须缓存的运行时文件。
- *
- * 两个 .mjs 也要显式预取：它们是被 `import()` 加载的，走的是 ESM 模块加载器
- * 而**不是** `window.fetch`，所以光靠 fetch 拦截是碰不到它们的
- * （漏掉的话 asm.mjs 的 1.2MB 每次都要重下）。
- */
-const RUNTIME_FILES = [
-  'pyodide.mjs',
-  'pyodide.asm.mjs',
-  'pyodide.asm.wasm',
-  'python_stdlib.zip',
-  'pyodide-lock.json',
-];
+const CACHE_NAME = PYODIDE_CACHE_NAME;
+const RUNTIME_FILES = PYODIDE_RUNTIME_FILES;
 
 let fetchShimInstalled = false;
 
