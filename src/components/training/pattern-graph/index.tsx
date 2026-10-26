@@ -6,6 +6,11 @@ import type {
   PatternGraphData,
   PatternProblem,
 } from '@site/plugins/pattern-graph';
+import {
+  DIFFICULTY_LABELS,
+  UNKNOWN_DIFFICULTY_LABEL,
+  difficultyLabel,
+} from '../difficulty';
 import styles from './styles.module.css';
 
 /**
@@ -28,19 +33,16 @@ export const RELATED_ANCHOR = 'related-problems';
 
 export const RELATED_TITLE = '相关题目';
 
-const DIFF_GROUPS: Array<{label: string; test: RegExp}> = [
-  {label: '简单', test: /简单|Easy/i},
-  {label: '中等', test: /中等|Medium/i},
-  {label: '困难', test: /困难|Hard/i},
-];
+/**
+ * 难度分组口径与题解页的难度徽标同源（`../difficulty`）。
+ *
+ * 早先这里也自带一套正则，判据只有 简单/中等/困难 —— 牛客的 入门 / 较难
+ * 全部落到「其它」。现在五档都认，「其它」只剩真正没标注的（当前 0 篇）。
+ */
+const DIFF_GROUP_ORDER = [...DIFFICULTY_LABELS, UNKNOWN_DIFFICULTY_LABEL];
 
 function groupOf(p: PatternProblem): string {
-  for (const g of DIFF_GROUPS) {
-    if (g.test.test(p.difficulty)) {
-      return g.label;
-    }
-  }
-  return '其它';
+  return difficultyLabel(p.difficulty);
 }
 
 export default function RelatedProblems({
@@ -66,7 +68,7 @@ export default function RelatedProblems({
     }
   }
 
-  const order = ['简单', '中等', '困难', '其它'];
+  const order = DIFF_GROUP_ORDER;
 
   return (
     <section className={styles.section}>
