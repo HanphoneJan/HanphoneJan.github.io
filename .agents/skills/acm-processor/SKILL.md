@@ -257,17 +257,11 @@ date_reviewed: []
 
 ## 解题思路
 
-### 第一步：理解问题本质
+### [小节标题按内容起，如：这道题真正要判定的是什么]
+
 [Core concept explanation]
-
-### 第二步：暴力解法
-[Naive approach with code]
-
-### 第三步：优化解法
-[Improved approach]
-
-### 第四步：最优解法
-[Optimal solution explanation]
+[关键观察与「为什么是这个算法」也写在这里：数据范围反推 + 问题结构，
+各算法的阶梯只在真实存在时出现]
 
 ---
 
@@ -297,13 +291,13 @@ date_reviewed: []
 
 ## 易错点总结
 
-### 1. [Common mistake 1]
+### [Common mistake 1]
 
-[Explanation and fix]
-
-### 2. [Common mistake 2]
-
-[Explanation and fix]
+[写出两件事：错的代码位置（哪一行/哪个常数/哪个方向）与错误发生时的现象。
+**每条都必须可指认**：举不出「怎么验证它会错」的条目不要写。
+**题面设定不是易错点**：像「初始选址是输入顺序的前 q 座城市」这种定义属于
+解题思路里交代问题设定的地方（必须讲清楚，因为一错全错），但它是阅读理解，
+不进易错点清单。数量 1~3 条，写最致命的；「多而无重点」比没有更糟。]
 
 ---
 
@@ -335,10 +329,18 @@ date_reviewed: []
 - 保留所有原有注释，即使表达不够完美
 
 ### Progressive Teaching
-Always present solutions in order:
-1. **Naive/Brute force** - establishes baseline understanding
-2. **Optimized approach** - shows how to improve using problem constraints
-3. **Optimal solution** - achieves best complexity with detailed explanation
+**「Naive → Optimal」是内容清单，不是标题清单。** 只有解法阶梯真实存在的题才写
+暴力/优化/最优三级；纯模拟、一次贪心的题直写分析与实现，**不要硬造暴力解再否定它**
+——那读起来是框子不是思路。无论走不走阶梯，以下内容必须落在纸面上：
+
+1. 输出到底是什么、判定标准是什么（输出里的「小机关」——次级最优化、
+   字典序、输出成本——决定 DP 状态要长什么样，必须先讲）；
+2. 关键观察：由数据范围反推算法（「n≤100 意味着 O(n²) 稳过」是真实线索），
+   或由问题结构推出（每步决策叠在更小的问题上 → 背包/DP）；
+   「为什么是这个算法」必须写明；
+3. 算法到实现的映射：讲到的关键决策要能指出代码里的位置。
+
+小节标题按内容起（如「输出里藏着什么」），不固定使用「第一步/第二步」。
 
 ### No Thinking Traces
 - Never include phrases like "让我重新推演", "等等", "实际上这个判断有误"
@@ -561,7 +563,8 @@ if __name__ == "__main__":
 - [ ] **Comments explain WHY, not just WHAT**
 - [ ] **Test cases include edge cases** (original tests preserved + new ones added)
 - [ ] **Markdown follows exact template structure**
-- [ ] **Complexity analysis uses table format**
+- [ ] **Complexity analysis uses table format** (best solution's row is named with 「（最优）」 and no other row/space/time cell contains「最优」— the quiz generator parses this mechanically)
+- [ ] **Common mistakes are 1~3 verifiable items**, each naming the exact code location and the failure symptom; no problem-statement definition is mislabeled as a "mistake"
 - [ ] **No "thinking traces" in final content**
 - [ ] **Code is runnable with `python filename.py`** and `python filename.py --test`
 - [ ] **Progressive approach (naive → optimal) is shown**
