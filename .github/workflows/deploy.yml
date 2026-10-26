@@ -103,6 +103,19 @@ jobs:
             exit 1
           fi
 
+      - name: Verify offline package manifest
+        # 清单在 `onGenerated` 里生成，**它坏了不会让 build 失败**：页面 chunk
+        # 名解析不出来时，清单里的 chunk 全是 null，读者点「缓存全部」下的是
+        # 一份离线点不动的包（能读正文、站内跳转一律退化成整页重载）。
+        # `pnpm test:offline` 在真实产物上验「路由表解析出的 chunk 都存在、
+        # 页面覆盖率 >= 90%」，所以放在构建之后当护栏。
+        run: |
+          if [ ! -f .vuepress/dist/offline-manifest.json ]; then
+            echo "::error::.vuepress/dist/offline-manifest.json 不存在 —— /settings.html 的离线包没有清单"
+            exit 1
+          fi
+          pnpm test:offline
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
