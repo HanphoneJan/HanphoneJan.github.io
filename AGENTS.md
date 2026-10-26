@@ -28,6 +28,7 @@ pnpm typecheck        # tsc --noEmit（只检查 src/，strict 关，与迁移�
 pnpm sync             # Sync notes from private repo (E:/hanphonejan/hanphone-note)
 pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 pnpm sync:pyodide     # Download the 12.9MB Pyodide runtime into static/pyodide/
+pnpm test:offline     # 离线包口径（板块归类 + 路由表解析 + dist 覆盖率）
 ```
 
 > **环境版本必须对齐**：本地与 CI 均使用 **Node 24 + pnpm 11**（见 `.github/workflows/`）。
@@ -40,6 +41,7 @@ pnpm sync:pyodide     # Download the 12.9MB Pyodide runtime into static/pyodide/
 ```
 index.md                    # 首页（home: true；内容由 HomePage.vue 服务端渲染）
 stars.md / projects.md      # 两个 React 孤岛页面
+settings.md                 # 缓存与离线（/settings.html，CacheSettings.vue）
 docs/                       # 主文档：/docs/**
 code-training/docs/         # 算法训练：/code-training/**
 .vuepress/
@@ -48,7 +50,7 @@ code-training/docs/         # 算法训练：/code-training/**
   navbar.ts / sidebar.ts    # 导航与侧边栏（侧边栏由文件系统现场生成）
   paths.ts                  # md 文件 -> 线上 URL（核心：保留旧地址）
   client.ts                 # 全局注册 React 孤岛组件 + 加载自定义样式
-  plugins/                  # 构建期插件：permalink / 组件注入 / 分类页
+  plugins/                  # 构建期插件：permalink / 组件注入 / 分类页 / 离线包清单
   data/training-data.ts     # 构建期汇总题库、轨迹、样例、知识图谱
   markdown/                 # markdown-it 规则（转义散落尖括号）
   components/*.vue          # 首页 HomePage + React 孤岛壳子 + 沉浸阅读 LayoutToggle + 导航图标
@@ -232,8 +234,11 @@ React root 里：
 
 ### 已知的取舍
 
-- **PWA**：用 `@vuepress/plugin-pwa`，只 precache 外壳（2.5MB），页面/图片/
-  轨迹走运行时缓存。`register-service-worker` 必须静态 import 一次（见
+- **PWA**：用 `@vuepress/plugin-pwa`，只 precache 外壳（3.7MB），页面/图片/
+  轨迹走运行时缓存。**`maxSize` 必须是 4096**：它是 Workbox 的
+  `maximumFileSizeToCacheInBytes`，而应用外壳 `app-*.js` 已经 2.04MB，改回
+  2048 之后它会被**静默剔除**（日志照常、构建不报错），全新安装后第一次断网
+  就是浏览器离线错误页。`register-service-worker` 必须静态 import 一次（见
   `.vuepress/README.md` 的 PWA 一节），否则动态 import 落在 load 之后会
   静默不注册。**HTML 的 `NetworkFirst` 不能设 `networkTimeoutSeconds`**：
   超时回退的旧 HTML 指向已删除的哈希 chunk，会卡在
@@ -245,6 +250,13 @@ React root 里：
   HTML 走 NetworkFirst，所以不容易撞上）。`client.ts` 的 `router.onError`
   兜住这类 chunk 错误，改为整页打开目标地址；`visibilitychange` 里顺带
   每 30 分钟查一次 SW 更新。首页手写的链接必须带 `.html`，否则也不走路由。
+- **离线包在 `/settings.html`**：`offline-manifest.json` 由
+  `plugins/offline-package.ts` 在构建期生成（889 页 + 206 份轨迹 ≈ 110MB），
+  下载时按目标桶写进**已有的** `html-v2` / `assets` / `traces` / `quiz`，
+  所以不需要新增 SW 路由。清单带构建版本，部署后旧包会被标成「需要更新」并
+  删掉上一版遗留的页面 chunk。只下 HTML 也能读（SSR 产物在 HTML 里），但站内
+  跳转会退化成整页重载 —— 勾「同时缓存页面脚本」才是完整体验。细节见
+  `.vuepress/README.md` 的「离线包与缓存管理」。
 - **`check:vis --all` 的页面发现标记改成 `data-vis="recorded"`**：播放器是
   React 孤岛，`id="visualizer"` 要等客户端挂载才有。
 - **`.vuepress/styles/index.scss` 不会自动加载**（hope rc.110 的 `userStyle`

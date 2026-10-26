@@ -11,6 +11,7 @@ import 'register-service-worker'
 import { defineClientConfig } from 'vuepress/client'
 
 import HomePage from './components/HomePage.vue'
+import CacheSettings from './components/CacheSettings.vue'
 import LayoutToggle from './components/LayoutToggle.vue'
 import NavbarHomeLink from './components/NavbarHomeLink.vue'
 import NoVisStepsMount from './components/NoVisStepsMount.vue'
@@ -50,6 +51,7 @@ export default defineClientConfig({
     app.component('StarsMount', StarsMount)
     app.component('ProjectsMount', ProjectsMount)
     app.component('HomePage', HomePage)
+    app.component('CacheSettings', CacheSettings)
 
     /**
      * 页面 chunk 加载失败时，别把读者晾在一个「点了没反应」的页面上。

@@ -8,6 +8,7 @@ import { markdownEnhancePlugin } from './plugins/markdown-enhance.js'
 import { trainingPlugin } from './plugins/training.js'
 import { catalogsPlugin } from './plugins/catalogs.js'
 import { taxonomyPlugin } from './plugins/taxonomy.js'
+import { offlinePackagePlugin } from './plugins/offline-package.js'
 
 const __dirname = getDirname(import.meta.url)
 
@@ -144,6 +145,7 @@ export default defineUserConfig({
     'index.md',
     'stars.md',
     'projects.md',
+    'settings.md',
     'docs/**/*.md',
     'code-training/docs/**/*.md',
     '!**/node_modules/**',
@@ -155,6 +157,7 @@ export default defineUserConfig({
     trainingPlugin,
     catalogsPlugin,
     taxonomyPlugin,
+    offlinePackagePlugin,
   ],
 
   shouldPrefetch: false,

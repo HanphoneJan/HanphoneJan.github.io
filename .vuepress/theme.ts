@@ -129,18 +129,33 @@ export default hopeTheme({
     },
     // PWA：可安装 + Service Worker 预缓存静态资源。
     // 12.9MB 的 Pyodide 运行时会被 maxSize 自动排除（它本来就靠运行时的
-    // fetch + Cache API 缓存，见 pyrunner/runtime.ts）；622 个 HTML 页面
-    // 也不进预缓存（cacheHTML: false），否则首次安装要下几十 MB。
-    // 读者离线时能打开首页与已访问过的页面，其余请求走网络。
+    // fetch + Cache API 缓存，见 pyrunner/runtime.ts）；894 个 HTML 页面
+    // 也不进预缓存（cacheHTML: false），否则首次安装要下 69MB。
+    // 读者离线时能打开已缓存过的页面，其余请求走网络；
+    // 「把整个板块预先下下来」由 `/settings.html` 的离线包负责
+    // （清单见 `.vuepress/plugins/offline-package.ts`）。
     pwa: {
       showInstall: false,
       themeColor: '#ffffff',
       update: 'available',
-      maxSize: 2048,
+      // `maxSize` 就是 Workbox 的 `maximumFileSizeToCacheInBytes`（单位 KB），
+      // 它同时管预缓存与图片，**不是**「整个预缓存的大小上限」。
+      //
+      // **别改回 2048。** 应用外壳 `assets/app-<hash>.js` 现在是 2.1MB
+      // （2,115,209 B），刚好越过 2MB 线，会被 Workbox **静默跳过**：
+      // 构建日志一切正常，而 `service-worker.js` 的预缓存清单里只有
+      // index.html / 404.html / style / 两张 logo（约 1.6MB，因为它们自己的
+      // 体积都远小于 2MB）。
+      // 后果是全新安装、或者清过站点数据之后第一次就断网，`start_url`（`/`）
+      // 拿不到外壳 → 浏览器离线错误页；线上靠 `assets` 路由的
+      // StaleWhileRevalidate 在**第二次**访问时才把它补进缓存，所以平时
+      // 看不出来。4MB 之后预缓存 3.68MB = 外壳 2.04 + 两张 logo 1.38 +
+      // 样式 0.24，与设计预期一致。
+      maxSize: 4096,
       cacheHTML: false,
       cacheImage: false,
-      // 默认的 precache 会把 **622 个页面 chunk（39MB）** 全塞进来，
-      // 首次安装要下 42MB —— 文档站不需要「一次装完所有页面」。
+      // 默认的 precache 会把 **1047 个 js/css/svg（46MB）** 全塞进来，
+      // 首次安装先下 46MB —— 文档站不需要「一次装完所有页面」。
       // 这里只预缓存应用外壳（约 2.5MB），其余按需缓存：
       // 访问过的页面离线可看，没访问过的走网络。
       generateSWConfig: {
@@ -170,6 +185,16 @@ export default hopeTheme({
           'assets/style-*.css',
           'img/**/*.svg',
         ],
+        // 离线包（`/settings.html`）直接往下面这两条路由的缓存里写：
+        // HTML -> `html-v2`，页面 chunk -> `assets`。所以**不需要为它新增
+        // SW 路由**，而且语义正好：`html-v2` 是 NetworkFirst，在线永远拿新的、
+        // 离线才回退到包里那份；chunk 名带哈希，进了缓存就是不可变文件。
+        //
+        // 顺带一个容易踩的点：`ExpirationPlugin` 只按 IndexedDB 里记的
+        // 时间戳淘汰**它自己写进去的**条目（见 workbox-expiration 的
+        // `CacheExpiration.expireEntries`），页面用 `cache.put()` 直接塞的
+        // 那 800 多条不在它的账上 —— 所以 `maxEntries: 200` 不会把离线包
+        // 挤掉，也不需要为了离线包把它调大。要清理请走设置页的「清除」。
         runtimeCaching: [
           {
             urlPattern: ({request}: {request: Request}) =>
@@ -212,7 +237,10 @@ export default hopeTheme({
             handler: 'CacheFirst' as const,
             options: {
               cacheName: 'traces',
-              expiration: {maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 180},
+              // 206 篇题解都有轨迹文件（`static/traces/`），上限低于这个数
+              // 时离线包会在下完之后**立刻少几条**（Workbox 按 LRU 淘汰它
+              // 自己写进去的条目），设置页上永远显示 200/206。
+              expiration: {maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 180},
             },
           },
           {

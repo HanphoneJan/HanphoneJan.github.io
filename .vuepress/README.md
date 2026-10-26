@@ -20,7 +20,7 @@
 | 数学 | `remark-math` + `rehype-katex` | `@vuepress/plugin-markdown-math`（KaTeX） |
 | 图片放大 | 无 | PhotoSwipe（`plugins.photoSwipe`） |
 | 沉浸模式 | 无 | hope `focus`（滚动进正文后自动隐藏导航/侧栏） |
-| PWA | `@docusaurus/plugin-pwa`（全量 precache） | `@vuepress/plugin-pwa`（只 precache 外壳 2.5MB + 运行时缓存） |
+| PWA | `@docusaurus/plugin-pwa`（全量 precache） | `@vuepress/plugin-pwa`（precache 外壳 3.7MB + 运行时缓存 + `/settings.html` 离线包） |
 | 归档 | 仅 code-training 的分类/标签页 | `/article/`、`/category/`、`/tag/`、`/timeline/`（hope blog 插件） |
 | 部署 | 上传 `build/` | 上传 `.vuepress/dist/` |
 
@@ -304,6 +304,57 @@ oxc: { jsx: { runtime: 'automatic' } }
   VuePress 的路由（路由是 `/docs.html`，见 `paths.ts`），点击会退化成
   **整页导航**。首页的按钮与卡片曾经就是这种写法（`HomePage.vue`），
   在 PWA 里表现为「点了没反应 / 白等」—— 现在全部带 `.html`。
+- **`maxSize` 是 `4096`，别改回 `2048`。** 它是 Workbox 的
+  `maximumFileSizeToCacheInBytes`（单位 KB），不是「整个预缓存的上限」。
+  应用外壳 `assets/app-*.js` 已经长到 **2.04MB**，越 2MB 线之后会被
+  **静默跳过**：构建日志一切正常，而 `service-worker.js` 的预缓存清单里
+  只剩 index / 404 / style / 两张 logo（约 1.6MB）。后果是全新安装（或清过
+  站点数据）之后第一次断网，`start_url` 拿不到外壳 → 浏览器离线错误页；
+  网页端靠 `assets` 路由的 StaleWhileRevalidate 在**第二次**访问时补上，
+  所以平时看不出来。改回 4MB 后预缓存是 3.68MB（外壳 2.04 + 两张 logo
+  1.38 + 样式 0.24）。
+
+### 离线包与缓存管理（`/settings.html`）
+
+`settings.md` + `.vuepress/components/CacheSettings.vue` 提供「像手机 App
+设置页」的三件事：把内容下到本地、手动检查/应用 Service Worker 更新、
+手动清除。**没有新增任何 SW 路由**，全部落在已有的缓存桶上：
+
+| 内容 | 缓存桶 | 策略 |
+|---|---|---|
+| 页面 HTML | `html-v2` | `NetworkFirst`（在线永远是新的，离线回退缓存） |
+| 页面 chunk | `assets` | `StaleWhileRevalidate`（文件名带内容哈希，不可变） |
+| 题解轨迹 JSON | `traces` | `CacheFirst` |
+| 自测题库 | `quiz` | `StaleWhileRevalidate` |
+
+- **清单是构建期生成的**：`.vuepress/plugins/offline-package.ts` 在
+  `onGenerated` 里写 `offline-manifest.json`（889 页 + 206 份轨迹 ≈ 110MB，
+  `docs` 121 / `training` 529 / `archive` 235 / `start` 4 / `traces` 206 /
+  `quiz` 1）。页面 chunk 名从产物路由表读（`assets/app-*.js` 里的
+  `` [`/路径`,{loader:()=>import(`./xxx.js`)``），**不能靠猜**：`/tag/*`
+  这类生成页没有 md 文件，不同目录还有同名 `intro.md`。`sitemap.xml` 少
+  240 条（标签页、分类页、归档页），也不能当清单来源。
+- **`ExpirationPlugin` 不会淘汰页面用 `cache.put()` 塞进去的条目。** 它只按
+  IndexedDB 里的时间戳结算**自己写进去的**那些（workbox-expiration 的
+  `CacheExpiration.expireEntries`），所以 1100 条离线包待在
+  `html-v2`（`maxEntries: 200`）里不会被挤掉，也不需要为它调大上限。
+- **离线包必须绑构建版本。** HTML 引用的 `assets/<页面>-<hash>.js` 部署一次
+  就换名。清单带 `build`（CI 用 `GITHUB_SHA`，本地用 git HEAD，脏工作区加
+  时间戳），下载成功记进 localStorage；两边不一致时页面标「需要更新」，
+  重新缓存成功后把上一版遗留的 chunk 从 `assets` 里删掉 —— 不删的话每部署
+  一次就多堆几十 MB，而 `ExpirationPlugin` 管不到它们。
+- **只下 HTML 也能读，但点不动。** SSR 产物在 HTML 里，缺 chunk 时 Vue 只是
+  不水合（导航会落到 `router.onError` 的整页重载）。「同时缓存页面脚本」
+  不勾就是这种半残状态，页面上会显示「N 项缺脚本」。
+- **删除是两步确认**：第一次点变「确认清除」，20 秒内再点才真删。**不要换成
+  `window.confirm()`** —— 原生对话框会阻塞整个页面，自动化里点一下就卡死。
+- **清掉预缓存桶之后要注销 SW 并重载**：预缓存只在 install 时填充，SW 脚本
+  没变就不会重装，清空后它不会自己回来。
+- **`traces` 的 `maxEntries` 是 300**（原来是 200）：`static/traces/` 有 206
+  份，上限低于这个数时离线包刚下完就少几条，页面永远显示 200/206。
+- 回归测试：`pnpm test:offline`（板块归类、路由表解析、真实产物的页面覆盖率
+  与 chunk 存在性）。没有 dist 时只跑纯函数部分；两个部署 workflow 在
+  build 之后都会跑它 —— 清单坏了**不会**让 build 失败。
 
 
 ## 依赖版本与升级
