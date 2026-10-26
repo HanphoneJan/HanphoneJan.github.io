@@ -67,6 +67,8 @@
                 <span v-if="row.cached && row.chunkMissing" class="muted">
                   · {{ row.chunkMissing }} 项缺脚本
                 </span>
+                <span v-if="row.stale" class="muted"> · {{ row.stale }} 项内容更新</span>
+                <span v-else-if="row.shell" class="muted"> · 外壳待刷新</span>
               </div>
               <div class="row-actions">
                 <button
@@ -75,7 +77,17 @@
                   :disabled="progress.running"
                   @click="download(row.id)"
                 >
-                  {{ row.cached === 0 ? '缓存' : row.cached === row.count ? '重新缓存' : '继续' }}
+                  {{
+                    row.cached === 0
+                      ? '缓存'
+                      : row.cached < row.count
+                        ? '继续'
+                        : row.stale
+                          ? '更新'
+                          : row.shell
+                            ? '刷新'
+                            : '检查'
+                  }}
                 </button>
                 <button
                   type="button"
@@ -97,7 +109,9 @@
               :disabled="progress.running"
               @click="downloadAll"
             >
-              缓存全部（{{ formatBytes(estimatedTotal) }}）
+              {{ meta ? '更新全部（只下变更）' : '缓存全部' }}（{{
+                formatBytes(estimatedTotal)
+              }}）
             </button>
             <button
               type="button"
@@ -133,6 +147,10 @@
             mermaid、公式），不下的话「预先下好的页面」离线点着没反应。
             <b>Python 运行时</b>（Pyodide，约 13MB）是题解里「▶ 运行」用的解释器：
             提前缓存之后，断网也能跑代码；不缓存的话要等第一次点运行才下载。
+            每项都带内容指纹：<b>重新部署后只下载真正变了的那些</b>。页面脚本
+            （38MB）、轨迹、题库、Python 运行时的文件名或指纹没变就一个字节都不重下；
+            唯一每次都要刷新的是页面 HTML 本身 —— 每页都引用了带构建哈希的
+            <code>app-*.js</code>，所以部署后所有页面外壳都要重下一次（压缩后约 20MB）。
           </p>
         </template>
       </section>
@@ -162,10 +180,18 @@
           </button>
         </div>
 
-        <p v-if="newerBuild" class="warn">
-          站点已经有新版本（<code>{{ manifest?.build }}</code>），离线包还是旧版本
-          （<code>{{ meta?.build }}</code>）。旧 HTML 引用的脚本名在新部署里已被删除，
-          离线打开会白屏 —— 请重新缓存。
+        <p v-if="staleTotal" class="warn">
+          有 {{ staleTotal }} 项需要更新。页面 HTML 与页面脚本都引用了
+          <code>app-&lt;hash&gt;.js</code>，而它在每次构建里都会改名，所以这两类会整体刷新
+          （约 28MB 传输）；<b>轨迹、题库、Python 运行时不受影响，一个字节都不重下</b>。
+        </p>
+        <p v-else-if="shellTotal" class="warn">
+          内容没变：这次构建换了应用外壳的哈希，{{ shellTotal }} 页 HTML 需要整体刷新
+          （约 20MB 传输），页面脚本与其它内容都不用重下。
+        </p>
+        <p v-else-if="newerBuild" class="warn">
+          站点部署了新版本（<code>{{ manifest?.build }}</code>），但离线内容一项都没变，
+          不需要重新下载。
         </p>
         <p class="hint">
           「检查新版本」就是手动触发一次 Service Worker 更新检查，等价于站点平时
@@ -269,6 +295,8 @@ interface OfflineEntry extends Array<string | number | null> {
   1: string | null
   2: number
   3: number
+  /** 内容指纹（sha1 前 10 位），见 plugins/offline-package.ts 的 hashOf */
+  4: string
 }
 
 interface OfflineSection {
@@ -290,6 +318,10 @@ interface PackageMeta {
   at: string
   sections: string[]
   withChunks: boolean
+  /** URL -> 上次确认过的**整份文件**指纹（决定要不要重下） */
+  hashes: Record<string, string>
+  /** URL -> 上次确认过的**内容**指纹（页面用 chunk 名；用来区分「内容变了」与「只是外壳变了」） */
+  content: Record<string, string>
 }
 
 interface CacheStat {
@@ -305,6 +337,10 @@ interface SectionRow {
   estimated: number
   cached: number
   chunkMissing: number
+  /** 内容真的变了的条目数（页面比 chunk 名、其它比文件指纹） */
+  stale: number
+  /** 只是页面外壳变了（app 的构建哈希换了，HTML 字节变了但内容没变） */
+  shell: number
 }
 
 const HTML_CACHE = 'html-v2'
@@ -341,6 +377,7 @@ const progress = reactive({
   bytes: 0,
   totalBytes: 0,
   failed: 0,
+  skipped: 0,
   message: '',
 })
 const rows = ref<SectionRow[]>([])
@@ -394,17 +431,21 @@ const newerBuild = computed(
   () => Boolean(manifest.value && meta.value && manifest.value.build !== meta.value.build),
 )
 
+const staleTotal = computed(() => rows.value.reduce((sum, row) => sum + row.stale, 0))
+const shellTotal = computed(() => rows.value.reduce((sum, row) => sum + row.shell, 0))
+
 const packageStateText = computed(() => {
   if (!manifest.value) return '清单不可用'
   if (!meta.value) return '未下载'
-  if (meta.value.build !== manifest.value.build) return '需要更新'
+  if (staleTotal.value > 0) return `需更新 ${staleTotal.value} 项`
+  if (shellTotal.value > 0) return '外壳需刷新'
   const covered = rows.value.filter((r) => r.count > 0 && r.cached === r.count).length
   return covered === rows.value.length ? '完整可用' : '部分已缓存'
 })
 
 const packageStateClass = computed(() => ({
   'is-ok': packageStateText.value === '完整可用',
-  'is-warn': packageStateText.value === '需要更新',
+  'is-warn': staleTotal.value > 0 || shellTotal.value > 0,
 }))
 
 const swText = computed(() => {
@@ -427,12 +468,33 @@ function absolute(url: string): string {
   return new URL(url, window.location.origin).href
 }
 
+/**
+ * 缓存里那份响应的内容指纹（与构建期 `hashOf` 同口径：sha1 前 10 位）。
+ *
+ * 只在**旧版离线包没有记指纹**时用：升级到这个格式的第一次「更新」靠它
+ * 把已缓存的内容就地校验一遍，一个网络请求都不发 —— 否则第一次升级就得把
+ * 100MB 重下一遍。浏览器存的响应体是解码后的字节（= 原文件），所以能对上。
+ */
+async function cachedHash(response: Response): Promise<string> {
+  try {
+    const buffer = await response.clone().arrayBuffer()
+    const digest = await crypto.subtle.digest('SHA-1', buffer)
+    return [...new Uint8Array(digest)]
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('')
+      .slice(0, 10)
+  } catch {
+    return ''
+  }
+}
+
 function readMeta(): PackageMeta | null {
   try {
     const raw = localStorage.getItem(META_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as PackageMeta
-    return parsed && typeof parsed.build === 'string' ? parsed : null
+    if (!parsed || typeof parsed.build !== 'string') return null
+    return {...parsed, hashes: parsed.hashes ?? {}, content: parsed.content ?? {}}
   } catch {
     return null
   }
@@ -465,12 +527,30 @@ function computeRows(): void {
     rows.value = []
     return
   }
+  // 没下过包时不谈「变了」：指纹一片空，全算变更会满屏噪音
+  const hashes = meta.value ? (meta.value.hashes ?? {}) : null
+  const contentOf = meta.value?.content ?? {}
+  // 旧格式的 meta 没有 content：不能断言「内容变了」，只能算外壳差异
+  const contentKnown = Object.keys(contentOf).length > 0
+
   rows.value = Object.entries(manifest.value.sections).map(([id, section]) => {
     let cached = 0
     let chunkMissing = 0
+    let stale = 0
+    let shell = 0
     let estimated = 0
     for (const entry of section.entries) {
       estimated += entry[2] + (withChunks.value ? entry[3] : 0)
+      if (hashes) {
+        const contentNow = entry[1] ?? entry[4]
+        const contentBefore = contentOf[entry[0]]
+        if (contentKnown && contentBefore !== contentNow) {
+          stale++
+        } else if (hashes[entry[0]] !== entry[4]) {
+          // 内容没变（或还不知道），但 HTML 字节变了 —— app 构建哈希换了
+          shell++
+        }
+      }
       if (keysOf(targetCache(entry[0])).has(absolute(entry[0]))) {
         cached++
         if (
@@ -489,6 +569,8 @@ function computeRows(): void {
       estimated,
       cached,
       chunkMissing,
+      stale,
+      shell,
     }
   })
 }
@@ -572,11 +654,26 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
   const failures: string[] = []
   let done = 0
   let bytes = 0
+  let skipped = 0
+  /** 这次「确认过」的 URL：下载成功，或指纹命中且缓存还在 */
+  const verified = new Set<string>()
+
+  // 缓存键的本地镜像：运行中会不断补写，省掉每条一次 `cache.match()`
+  const known = new Map<string, Set<string>>()
+  const knownOf = (name: string): Set<string> => {
+    let set = known.get(name)
+    if (!set) {
+      set = new Set(keysOf(name))
+      known.set(name, set)
+    }
+    return set
+  }
 
   const flush = (): void => {
     progress.done = done
     progress.bytes = bytes
     progress.failed = failures.length
+    progress.skipped = skipped
   }
 
   const worker = async (): Promise<void> => {
@@ -584,34 +681,78 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
       if (controller.signal.aborted) return
       const entry = queue.shift()
       if (!entry) return
-      const [url, chunk, htmlBytes, chunkBytes] = entry
-      try {
-        const body = await fetch(url, { cache: 'reload', signal: controller.signal })
-        if (!body.ok) throw new Error(`HTTP ${body.status}`)
-        const target = targetCache(url)
-        const cache = await cacheOf(target)
-        await cache.put(new Request(absolute(url)), body.clone())
-        bytes += htmlBytes
+      const [url, chunk, htmlBytes, chunkBytes, hash] = entry
+      const target = targetCache(url)
+      const targetKeys = knownOf(target)
+      const assetKeys = knownOf(ASSET_CACHE)
+      const chunkUrl = chunk ? `/${chunk}` : ''
 
-        // **两个 .mjs 要额外进 `assets`。** 它们是 `import()` 加载的，
-        // 模块加载器不走 `runtime.ts` 的 fetch 拦截，但会经过 SW 的
-        // script 路由（读 `assets`）。只放在 `pyodide-runtime-v1` 里的话，
-        // 离线跑代码会卡在
-        // `Failed to fetch dynamically imported module: /pyodide/pyodide.mjs`
-        // —— 实测过，wasm/zip 都命中了，就这一步过不去。
-        if (target === PYODIDE_CACHE && url.endsWith('.mjs')) {
-          const assetCache = await cacheOf(ASSET_CACHE)
-          await assetCache.put(new Request(absolute(url)), body.clone())
+      /**
+       * 增量判断：**内容指纹没变 + 缓存里还在** 就整条跳过。
+       *
+       * 之前每次「重新缓存」都把所有条目 `fetch(cache:'reload')` 一遍 ——
+       * 什么都没改也要重下 100MB。chunk 名自带内容哈希、并且不可变，所以
+       * chunk 只要在缓存里就不必再下；HTML 用清单里的 sha1 比对即可。
+       */
+      const cachedThere = targetKeys.has(absolute(url))
+      const storedHash = meta.value?.hashes?.[url]
+      let unchanged = false
+      if (hash && cachedThere) {
+        if (storedHash === hash) {
+          unchanged = true
+        } else if (!storedHash) {
+          // 升级到「带指纹」格式的第一次：就地校验缓存内容，不发请求
+          const cached = await (await cacheOf(target)).match(absolute(url))
+          unchanged = Boolean(cached) && (await cachedHash(cached!)) === hash
+        }
+      }
+      const needChunk = Boolean(
+        chunkUrl && withChunks.value && !assetKeys.has(absolute(chunkUrl)),
+      )
+
+      if (unchanged && !needChunk) {
+        skipped++
+        verified.add(url)
+        done++
+        if (done <= 20 || done % 5 === 0 || done === tasks.length) flush()
+        continue
+      }
+
+      try {
+        if (!unchanged) {
+          const body = await fetch(url, { cache: 'reload', signal: controller.signal })
+          if (!body.ok) throw new Error(`HTTP ${body.status}`)
+          const cache = await cacheOf(target)
+          await cache.put(new Request(absolute(url)), body.clone())
+          targetKeys.add(absolute(url))
+          bytes += htmlBytes
+
+          // **两个 .mjs 要额外进 `assets`。** 它们是 `import()` 加载的，
+          // 模块加载器不走 `runtime.ts` 的 fetch 拦截，但会经过 SW 的
+          // script 路由（读 `assets`）。只放在 `pyodide-runtime-v1` 里的话，
+          // 离线跑代码会卡在
+          // `Failed to fetch dynamically imported module: /pyodide/pyodide.mjs`
+          // —— 实测过，wasm/zip 都命中了，就这一步过不去。
+          if (target === PYODIDE_CACHE && url.endsWith('.mjs')) {
+            const assetCache = await cacheOf(ASSET_CACHE)
+            await assetCache.put(new Request(absolute(url)), body.clone())
+            assetKeys.add(absolute(url))
+          }
         }
 
-        if (withChunks.value && chunk) {
-          const chunkUrl = `/${chunk}`
-          const script = await fetch(chunkUrl, { cache: 'reload', signal: controller.signal })
+        if (needChunk) {
+          const script = await fetch(chunkUrl, {
+            cache: 'reload',
+            signal: controller.signal,
+          })
           if (!script.ok) throw new Error(`HTTP ${script.status}（${chunk}）`)
           const assetCache = await cacheOf(ASSET_CACHE)
           await assetCache.put(new Request(absolute(chunkUrl)), script.clone())
+          assetKeys.add(absolute(chunkUrl))
           bytes += chunkBytes
         }
+
+        verified.add(url)
       } catch (error) {
         if (controller.signal.aborted) return
         failures.push(`${url}：${error instanceof Error ? error.message : String(error)}`)
@@ -631,12 +772,21 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
     flush()
   }
 
+  const downloaded = done - failures.length - skipped
   if (controller.signal.aborted) {
-    progress.message = `已取消：已下载的 ${done - failures.length} 项保留在缓存里。`
+    progress.message = `已取消：本次更新 ${downloaded} 项，${skipped} 项原本就是最新。`
   } else if (failures.length > 0) {
-    progress.message = `${failures.length} 项失败（多为网络中断）。已成功的保留，可再点一次「继续」。第一条：${failures[0]}`
+    progress.message =
+      `${failures.length} 项失败（多为网络中断）。已成功 ${downloaded} 项、` +
+      `${skipped} 项无需更新，可再点一次「继续」。第一条：${failures[0]}`
+  } else if (skipped === done) {
+    progress.message = `${label}：${done} 项都已是最新，没有下载（省了 ${formatBytes(
+      progress.totalBytes,
+    )}）。`
   } else {
-    progress.message = `${label}：${done} 项已缓存，共 ${formatBytes(bytes)}。`
+    progress.message = `${label}：更新 ${downloaded} 项（${formatBytes(bytes)}），${
+      skipped
+    } 项已是最新。`
   }
 
   // 记录这一版包覆盖了哪些板块。清单里没拿到 build（离线）时就保留旧值，
@@ -646,11 +796,41 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
   if (manifest.value && succeeded) {
     const sections = new Set(previous?.build === manifest.value.build ? previous.sections : [])
     for (const id of ids) sections.add(id)
+    // 指纹只保留「当前清单里还在」的，并且只写这次确认过的：
+    // 下载失败的条目不能记 —— 否则下次会被误判成「没变」而永远不补。
+    const hashByUrl = new Map<string, string>()
+    const contentByUrl = new Map<string, string>()
+    for (const section of Object.values(manifest.value.sections)) {
+      for (const entry of section.entries) {
+        hashByUrl.set(entry[0], entry[4])
+        // 页面的「内容」指纹用 chunk 名（内容哈希）：HTML 本身每次构建都会
+        // 因为 app 哈希变化而变字节，拿它当内容指纹会把「只换了外壳」算成
+        // 「内容全变了」。
+        contentByUrl.set(entry[0], entry[1] ?? entry[4])
+      }
+    }
+    const hashes: Record<string, string> = {}
+    const content: Record<string, string> = {}
+    for (const [key, value] of Object.entries(previous?.hashes ?? {})) {
+      if (hashByUrl.has(key)) hashes[key] = value
+    }
+    for (const [key, value] of Object.entries(previous?.content ?? {})) {
+      if (contentByUrl.has(key)) content[key] = value
+    }
+    for (const url of verified) {
+      const fileHash = hashByUrl.get(url)
+      const contentHash = contentByUrl.get(url)
+      if (fileHash) hashes[url] = fileHash
+      if (contentHash) content[url] = contentHash
+    }
+
     writeMeta({
       build: manifest.value.build,
       at: new Date().toISOString(),
       sections: [...sections],
       withChunks: withChunks.value,
+      hashes,
+      content,
     })
 
     // 跨版本重下一次之后，上一版那 800 多个 `assets/<页面>-<旧哈希>.js`
