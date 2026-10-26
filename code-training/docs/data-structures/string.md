@@ -2,97 +2,86 @@
 title: 字符串
 category: 数据结构
 difficulty_range: [简单, 中等]
-last_updated: 2026-10-26
+last_updated: 2026-10-27
 ---
 
 # 字符串
 
-## 一句话理解
+## 定义与不可变性
 
-**字符串是「字符的序列」，但操作它的功夫全在「不可变」三个字上**：Python 的任何「修改」（拼接、替换、切片）都是造一个新字符串。整个字符串篇章的路数——用什么 API、代码为什么这么写——都从这条不变性开始。
+字符串（string）是有限字符组成的序列。Python 的 `str` 支持 O(1) 下标、切片、`in`、字典序比较，但有一个贯穿全部考点的性质：**不可变（immutable）**——任何「修改」（拼接、替换、切片重组）都产生新对象，原串不动。
 
-现实模型是刻好的石碑：想改一个字，只能重新刻一块碑。理解了「每改一次都付整块碑的成本」，`s += c` 循环拼接为什么是 O(n²)、`''.join` 为什么是 O(n)，就不再是要背的结论，而是必然。
-
-## 核心特性
-
-- **不可变**：无法原地修改，所有操作返回新字符串
-- **可索引 / 可切片**：`s[i]`、`s[a:b]`、`s[::-1]`；负下标从尾数
-- **支持 `in` 与比较**：`sub in s`、字典序比较直接对字符串用 `<` `==`
-- **字符本质是长度为 1 的字符串**：Python 没有单独的 char 类型，`ord` / `chr` 负责与码点互转
-
-### 时间复杂度
+由此而来的复杂度分工：
 
 | 操作 | 复杂度 | 说明 |
 |------|-------|------|
-| `s[i]` 索引 | O(1) | 按偏移取 |
-| `s[a:b]` 切片 | O(k)，k 为片段长度 | 产生新串 |
+| `s[i]` | O(1) | 按偏移取 |
+| `s[a:b]` 切片 | O(k)（k 为片段长） | 产生新串 |
 | `s1 + s2` | O(n + m) | 产生新串；**循环里连用是 O(n²)** |
-| `''.join(list)` | O(n) | 正确的成串姿势 |
-| `sub in s` / `find` | 期望 O(n) | CPython 用优化的 Boyer-Moore-Horspool 变体，最坏仍 O(n·m) |
+| `''.join(list)` | O(n) | 多段成串的正确姿势 |
+| `sub in s` / `find` | 期望 O(n) | CPython 用 Boyer-Moore-Horspool 变体，最坏 O(n·m) |
 | `split` / `replace` | O(n) | 全串线性扫描 |
 
-**循环拼接的正确姿势**（面试里拿出来讲是加分点）：
+**循环拼接的正确写法**：攒在一个列表里，最后一次 join（O(n)）。`s += c` 每次都产生长度递增的新串，叠加成 O(n²)。CPython 对引用计数为 1 的串做了原地扩容优化，实践中很多场景感觉不到开销——但这是实现细节不是语言承诺，不能写进依赖它的代码。
 
 ```python
 parts = []
 for piece in pieces:
     parts.append(piece)
-s = ''.join(parts)     # 一次成串，O(n)
+s = ''.join(parts)
 ```
 
-CPython 的 `+=` 在**引用计数恰为 1**时有原地扩容优化（很多场景跑起来像 O(n)），但这是实现细节不是语言承诺，别当依赖。
-
-## 常考点一：Python 字符串 API 速查（笔试现场最省时间的一张表）
+## 常用 API 速查（笔试现场省时）
 
 | 需求 | 写法 |
 |------|------|
 | 大小写 | `s.upper()` `s.lower()` `s.capitalize()` `s.title()` |
 | 判断组成 | `s.isdigit()` `s.isalpha()` `s.isalnum()` `s.isspace()` |
 | 去空白 | `s.strip()` `s.lstrip()` `s.rstrip()` |
-| 查找 | `s.find(sub)`（没找到返回 -1）、`s.count(sub)`、`sub in s` |
+| 查找 | `s.find(sub)`（缺席返回 -1）、`s.count(sub)`、`sub in s` |
 | 拆装 | `s.split(sep)`（默认按任意空白）、`s.splitlines()`、`sep.join(list)` |
 | 替换 | `s.replace(old, new, count=-1)` |
-| 对齐补位 | `s.zfill(n)`（前补 0）、`s.ljust(n)` `s.rjust(n)` |
-| 单字符转换 | `ord('A')=65`、`chr(97)='a'`；`ord(c) - ord('a')` 得字母 0~25 下标 |
-| 变映射表 | `str.maketrans` + `s.translate(table)`（一表批量换字符） |
+| 补位 | `s.zfill(n)`（前补 0）、`s.ljust(n)` `s.rjust(n)` |
+| 单字符 ↔ 码点 | `ord('A')==65`、`chr(97)=='a'`；`ord(c) - ord('a')` 得字母 0~25 |
+| 批量映射 | `str.maketrans` + `s.translate(table)` |
 
-「`ord(c) - ord('a')` 定位字母下标」与「`''.join` 成串」这两个动作，把后面一半字符串题串成一条线。
+`ord(c) - ord('a')` 定位26 个字母的下标一步算出——计数数组、差分、「下标对应字典序」的题全靠它。
 
-## 常考点二：双指针反转与回文
+## 题型一：反转与回文（双指针）
 
-**反转字符串（344）**是原地双指针的敲门砖：
+反向是原地双指针一类（344），注意 LeetCode Python 接口传入的一般是 `List[str]`（列表），**原地才可行**：真正的 `str` 无原地改法，面试口头说明这层差异即可。
 
 ```python
 def reverseString(s):
     left, right = 0, len(s) - 1
     while left < right:
-        s[left], s[right] = s[right], s[left]   # Python 的 str 不能这么干！
+        s[left], s[right] = s[right], s[left]
         left += 1
         right -= 1
 ```
 
-注意这题在 LeetCode 的 Python 接口里传进来的 `s` 是 `List[str]`（列表），**原地才可能**；真正的 `str` 做不到原地修改，面试问到要说得出这层区别。
+回文验证（125）：跳过非字母数字 + 统一小写之后同款双指针逐位比较。
 
-**验证回文（125）**：双指针 + 跳过非字母数字 + 统一小写。**回文子串计数（647）**用「中心扩展」：每个位置（含两字符间的缝隙）当中心、向两边扩到不同为止，2n-1 个中心各扩一次，O(n²) 拿到全部回文数——这是不学 KMP 时面试最稳的回文计数解法。
+回文子串计数（647）的稳解是**中心扩展**：以每个字符为候选中心「向两侧扩展到字符不再相等，途经的每个半径都是一个回文」，长度为奇/偶的中心分别取在字符处与两个字符之间，共 2n−1 个。扩展各遍历最多 O(n) 层，总 O(n²)——比 DP 少一维、比 Manacher 简单，不写 KMP 时就是这么答。
 
-## 常考点三：滑动窗口找子串
+## 题型二：滑动窗口找子串
 
-「找一个包含/不含某些字符的最短、最长子串」是字符串+滑动窗口的合体考点（[76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/)、438 异位词、3 无重复最长子串）：
+「找包含/不含某些字符的最短或最长连续子串」是一套模板换约束（[76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/)、[3 无重复最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)、438 异位词），见 [patterns/sliding_window.md](../patterns/sliding_window.md)。最小覆盖子串的完整实现即「右针扩张、欠账计数、左针收缩」三件事：
 
 ```python
 from collections import Counter
 
 def minWindow(s: str, t: str) -> str:
-    need = Counter(t)          # 需要的字母与个数
-    missing = len(t)           # 还缺多少个「必需」字母
+    need = Counter(t)          # 需要的字符与个数
+    missing = len(t)           # 还缺的必需字符总数
     left = 0
     best = (float('inf'), 0)   # (长度, 起点)
-    for right, ch in enumerate(s, 1):        # 右指针一枚枚放进窗口
+    for right, ch in enumerate(s, 1):
         if need[ch] > 0:
             missing -= 1
         need[ch] -= 1
-        if missing == 0:                      # 窗口已凑齐
-            while need[s[left]] < 0:          # 左边是盈余的（负数）就压掉
+        if missing == 0:                       # 窗口已凑齐
+            while need[s[left]] < 0:           # 左端是盈余（负数）就压掉
                 need[s[left]] += 1
                 left += 1
             if right - left < best[0]:
@@ -101,50 +90,49 @@ def minWindow(s: str, t: str) -> str:
     return '' if length == float('inf') else s[left:left + length]
 ```
 
-窗口算法的骨架永远是三件事：**右指针扩、欠账计数、左指针缩**；这题变量换成了「字母频次」而已。模板细节见 [patterns/sliding_window.md](../patterns/sliding_window.md)。
+这题的变量语义可以背下来：`need` 记缺口（负 = 盈余）、`missing` 记总缺口、回到 0 触发收缩。窗口不变量是「入右针、若已齐则能收多紧收多紧」，答案在每次「齐」的极小窗口处取。
 
-## 常考点四：KMP（讲思想，不现场手写）
+## 题型三：KMP（讲思想，不要求手写）
 
-子串查找的最优解 O(n + m)。KMP 的洞见一句话：**失配时已经匹配过的那一段里，藏着可复用的自信息（模式串自己就是自己的样本）**——模式串对每个位置 i 预先算好 `next[i]`（最长的「相等真前缀 = 真后缀」的长度），失配后模式串直接跳到 next 位置再比，**主串指针永不回头**。
+子串查找最优解 O(n + m)。KMP 洞见：**失配时，已匹配的那一段自己就包含可复用的自匹配信息**——模式串对每个位置 i 预先算出 `next[i]`，含义是「模式串前 i 个字符中，最长相等的真前缀与真后缀的长度」；失配后模式串依 `next` 跳转，**主串指针永不回退**。
 
-「next 数组怎么求」白板手写是困难档；面试最常见的考法是**说出两个复杂度与直觉即可**：
+- 匹配阶段 O(n)：主串指针只前进
+- 预处理 O(m)：用同样的跳转法对模式串自身算 `next`
 
-- 匹配阶段 O(n)（主串指针不回退）
-- 预处理 O(m)（模式串对自身用同样的跳转法算 next）
+日常规模的查找 `sub in s`（暴力 O(n·m) 期望 O(n)）就能吃下；「在一篇文章里同时找很多模式」的冷门场景是 Aho-Corasick / 后缀结构，答到名字与定位即可。
 
-不写 KMP 时，退一步的答案要能报出来：`sub in s` / 双指针暴力 O(n·m) 能吃下日常规模。更冷门场景（很多模式找出处）用 Aho-Corasick 或后缀自动机，知道名字和「多模式场景」这个定位即可。
+## 题型四：编码与字节
 
-## 常考点五：编码与字节
-
-- **str 与 bytes 分家**：`str` 是码点序列，`encode('utf-8')`/`decode` 负责与字节序列互转；处理网络与文件时「先开 bytes、再解码」是默认姿势
-- **CJK 宽度对齐**：`len('中') == 1` 但显示宽度占 2 格——终端对齐时用 `unicodedata.east_asian_width` 自己算显示宽
-- **大数与转换**：`int(s)`、`int(str_num, 16)`（指定进制）、`bin`/`oct`/`hex` 与 `int(x, 0)` 解析前缀
+- `str`（码点序列）与 `bytes`（字节序列）分家，`encode('utf-8')` / `decode` 互转；读文件与网络通信先交 bytes 再解码是默认姿势
+- CJK 显示问题：`len('中') == 1` 但终端占 2 格；对齐用 `unicodedata.east_asian_width` 自算显示宽
+- 进制：`int(s)`、`int(s, 16)`（指定进制）、`bin/oct/hex` 与 `int(s, 0)`（识别 `0x` 前缀）
 
 ## 易错点总结
 
-- 循环里 `s += c`（潜在 O(n²)），要用 `''.join`
-- 对 `str` 试图原地赋值 `s[i] = 'x'`——不可变对象，要么用 `list` 中转再 join，要么 `s = s[:i] + 'x' + s[i+1:]`（O(n)，一次性才划算）
-- 切片下标搞反「含头不含尾」：`s[a:b]` 包 a 不包 b，步长与负下标叠加时画一条数轴再动手
-- `find` 与 `index` 混用：没找到时前者返 -1，后者抛异常——判断场景挑对应的那种
-- `split()` 默认版连续空白会当一整个分隔符，`split(' ')` 则不会——两种行为完全不同
-- 回文判断忘归一化：大小写与标点要按题意先处理（125 题的输入是「带标点的句子」）
+- 循环里 `s += c`（潜在 O(n²)）：用列表攒 + 一次 join
+- 对 `str` 原地赋值 `s[i] = 'x'` 直接 TypeError；单向替换可以 `s[:i] + 'x' + s[i+1:]`（O(n)，只允许一次划算）
+- 切片下标口径是含头不含尾：`s[a:b]` 包 a 不包 b；步长与负下标叠加时建议画数轴
+- `find` 与 `index` 分工：前者缺席返回 -1，后者抛异常——按题意挑
+- `split()`（无参）把连续空白当一个分隔符，`split(' ')` 则逐个空格——两者不是同一种行为
+- 回文题先归一化：大小写、标点按题意先清理（125 的输入就是带标点的句子）
+- 344 的接口是 `List[str]`，不要对 Python `str` 想当然原地改
 
 ## 相关题目
 
-- [3. 无重复字符的最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)
-- [5. 最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/)（中心扩展 / DP）
+- [3](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)、[5. 最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/)（中心扩展 / DP）
 - [125. 验证回文串](https://leetcode.cn/problems/valid-palindrome/)
 - [242. 有效的字母异位词](https://leetcode.cn/problems/valid-anagram/)
 
 ## 相关知识点
 
-- [哈希表](hash_table.md)——字符频率统计的存放方式
-- [滑动窗口模式](../patterns/sliding_window.md)——子串匹配的通用模板
-- [双指针](../patterns/two_pointers.md)——反转与验证回文的用法
+- [哈希表](hash_table.md)——字符频率的存放方式
+- [滑动窗口模式](../patterns/sliding_window.md)——子串匹配的模板出处
+- [双指针](../patterns/two_pointers.md)——反转与回文的写法
 
 ---
 
 ## 算法可视化
 
-下面的播放器可以**改输入后重跑**：把两串换成你自己的，逐步看二维 DP
-表每个格子怎么填。「最长公共子序列」的表就是字符串对比过程的全记录。
+下面的播放器可以**改输入后重跑**：把两串换成你自己的，逐帧观察
+二维 DP 表的每个格子如何填写。「最长公共子序列」的表就是字符串
+对比过程本身。
