@@ -274,7 +274,11 @@ React root 里：
   兜住这类 chunk 错误，改为整页打开目标地址；`visibilitychange` 里顺带
   每 30 分钟查一次 SW 更新。首页手写的链接必须带 `.html`，否则也不走路由。
 - **离线包在 `/settings.html`**：`offline-manifest.json` 由
-  `plugins/offline-package.ts` 在构建期生成（889 页 + 206 份轨迹 ≈ 110MB），
+  `plugins/offline-package.ts` 在构建期生成（889 页 + 206 份轨迹 + 约 3MB
+  懒加载共享脚本 + 12.9MB 的 Python 运行时 ≈ 127MB；运行时的文件清单与缓存名在
+  `src/components/training/pyrunner/runtime-files.ts`，客户端 fetch 拦截与
+  设置页共用；两个 `.mjs` 要同时进 `pyodide-runtime-v1` 与 `assets`，
+  否则离线跑代码卡在 import 那一步），
   下载时按目标桶写进**已有的** `html-v2` / `assets` / `traces` / `quiz`，
   所以不需要新增 SW 路由。清单带构建版本，部署后旧包会被标成「需要更新」并
   删掉上一版遗留的页面 chunk。只下 HTML 也能读（SSR 产物在 HTML 里），但站内

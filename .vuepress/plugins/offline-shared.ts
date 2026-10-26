@@ -13,6 +13,8 @@ export type SectionId =
   | 'archive'
   | 'traces'
   | 'quiz'
+  | 'pyodide'
+  | 'shared'
 
 export const SECTION_LABELS: Record<SectionId, string> = {
   start: '首页与固定页',
@@ -21,6 +23,11 @@ export const SECTION_LABELS: Record<SectionId, string> = {
   archive: '归档页',
   traces: '题解可视化',
   quiz: '自测题库',
+  // 不是页面，是 12.9MB 的 Python 解释器（题解里「▶ 运行」用）
+  pyodide: 'Python 运行时',
+  // 页面之外被懒加载的脚本：跑代码的 SnippetBar/runner、改代码的
+  // CodeEditor、mermaid、katex……不缓存的话「预先下好的页面」离线点不动
+  shared: '共享脚本',
 }
 
 /** 一条待缓存资源：`[url, 页面 chunk | null, HTML 字节数, chunk 字节数]` */

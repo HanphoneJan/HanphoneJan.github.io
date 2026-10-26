@@ -127,9 +127,12 @@
           <p v-if="progress.message" class="state">{{ progress.message }}</p>
 
           <p class="hint">
-            离线包按「首页 / 文档 / 代码训练 / 归档 / 题解可视化 / 自测题库」分块，
-            可以只下自己常用的部分。12.9MB 的 Python 运行时（Pyodide）不在里面：
-            它要跑代码时才加载，用过一次会单独缓存。
+            离线包按「首页 / 共享脚本 / Python 运行时 / 文档 / 代码训练 / 归档 /
+            题解可视化 / 自测题库」分块，可以只下自己常用的部分。
+            <b>共享脚本</b>是页面之外懒加载的那些 chunk（运行条、代码编辑器、
+            mermaid、公式），不下的话「预先下好的页面」离线点着没反应。
+            <b>Python 运行时</b>（Pyodide，约 13MB）是题解里「▶ 运行」用的解释器：
+            提前缓存之后，断网也能跑代码；不缓存的话要等第一次点运行才下载。
           </p>
         </template>
       </section>
@@ -259,6 +262,7 @@
  * （旧 HTML 引用的是已被删除的 `assets/<页面>-<旧哈希>.js`）。
  */
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { PYODIDE_CACHE_NAME } from '../../src/components/training/pyrunner/runtime-files'
 
 interface OfflineEntry extends Array<string | number | null> {
   0: string
@@ -307,6 +311,8 @@ const HTML_CACHE = 'html-v2'
 const ASSET_CACHE = 'assets'
 const TRACE_CACHE = 'traces'
 const QUIZ_CACHE = 'quiz'
+// 缓存名与文件清单在 runtime-files.ts 里（客户端 fetch 拦截也用那一份）
+const PYODIDE_CACHE = PYODIDE_CACHE_NAME
 const META_KEY = 'hanphone:offline-package'
 /** 清空缓存后要重载页面，结果写成一句话留给重载后的自己 */
 const NOTICE_KEY = 'hanphone:offline-notice'
@@ -359,6 +365,11 @@ const keysOf = (name: string): Set<string> => cacheKeys.get(name) ?? new Set<str
 function targetCache(url: string): string {
   if (url.startsWith('/traces/')) return TRACE_CACHE
   if (url.startsWith('/quiz/')) return QUIZ_CACHE
+  // 12.9MB 的 Python 解释器有自己的桶，不归 SW 管（见 pyrunner/runtime.ts）
+  if (url.startsWith('/pyodide/')) return PYODIDE_CACHE
+  // 「共享脚本」也要进 `assets`：那是 SW 的 script 路由读的桶（SWR，
+  // 文件名带内容哈希所以不可变）。塞进 html-v2 的话永远不会被用到。
+  if (url.startsWith('/assets/')) return ASSET_CACHE
   return HTML_CACHE
 }
 
@@ -442,7 +453,7 @@ async function readCacheKeys(): Promise<void> {
   cacheKeys.clear()
   if (typeof caches === 'undefined') return
   await Promise.all(
-    [HTML_CACHE, ASSET_CACHE, TRACE_CACHE, QUIZ_CACHE].map(async (name) => {
+    [HTML_CACHE, ASSET_CACHE, TRACE_CACHE, QUIZ_CACHE, PYODIDE_CACHE].map(async (name) => {
       const keys = await caches.open(name).then((cache) => cache.keys())
       cacheKeys.set(name, new Set(keys.map((request) => request.url)))
     }),
@@ -577,9 +588,21 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
       try {
         const body = await fetch(url, { cache: 'reload', signal: controller.signal })
         if (!body.ok) throw new Error(`HTTP ${body.status}`)
-        const cache = await cacheOf(targetCache(url))
+        const target = targetCache(url)
+        const cache = await cacheOf(target)
         await cache.put(new Request(absolute(url)), body.clone())
         bytes += htmlBytes
+
+        // **两个 .mjs 要额外进 `assets`。** 它们是 `import()` 加载的，
+        // 模块加载器不走 `runtime.ts` 的 fetch 拦截，但会经过 SW 的
+        // script 路由（读 `assets`）。只放在 `pyodide-runtime-v1` 里的话，
+        // 离线跑代码会卡在
+        // `Failed to fetch dynamically imported module: /pyodide/pyodide.mjs`
+        // —— 实测过，wasm/zip 都命中了，就这一步过不去。
+        if (target === PYODIDE_CACHE && url.endsWith('.mjs')) {
+          const assetCache = await cacheOf(ASSET_CACHE)
+          await assetCache.put(new Request(absolute(url)), body.clone())
+        }
 
         if (withChunks.value && chunk) {
           const chunkUrl = `/${chunk}`
