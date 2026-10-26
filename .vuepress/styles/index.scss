@@ -235,7 +235,7 @@ html.layout-hidden {
 // 尺寸/颜色/内边距全部交给主题的 `.vp-action-link`（与 GitHub 仓库图标同一套），
 // 这里只补一件事：和下一个图标之间的水平间距。
 // `.vp-navbar .vp-action` 是 `margin: 0 !important`，需要更高一层的选择器。
-.vp-navbar .vp-navbar-end .navbar-home-item {
+.vp-navbar .vp-navbar-end .navbar-util-item {
   margin-inline-end: 0.25rem !important;
 }
 
