@@ -206,7 +206,11 @@ function main(): void {
       if (!section) {
         warn(where, `题解里找不到小节「## ${heading}」，无法交叉校验答案`);
       } else {
-        const norm = (s: string) => s.replace(/\s+/g, '').toLowerCase();
+        const norm = (s: string) =>
+          s
+            .replace(/\s+/g, '')
+            .replace(/\$/g, '')
+            .toLowerCase();
         const normSection = norm(section);
         for (const text of answerTexts(q)) {
           if (!text) {
