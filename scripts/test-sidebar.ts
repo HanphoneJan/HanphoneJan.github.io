@@ -148,4 +148,47 @@ for (const [landing, base, build] of SECTION_LANDING) {
   })
 }
 
+/**
+ * 题号顺序。
+ *
+ * 只有 15/16/28/95 这四篇题解写了 `sidebar_position`，其余都落到 9999、
+ * 再按标题排序 —— 两套尺子混用，15 会整体跳到 1 前面。现在缺 position
+ * 时用文件名里的题号兜底（`0015_3sum.md` -> 15），这里把结果钉住。
+ */
+check('LeetCode 题解按题号升序', () => {
+  const findGroup = (items: SidebarItem[], text: string): SidebarItem | undefined => {
+    for (const item of items) {
+      if (item.children) {
+        if (item.text === text) return item
+        const found = findGroup(item.children, text)
+        if (found) return found
+      }
+    }
+    return undefined
+  }
+
+  const leetcode = findGroup(trainingSidebar(process.cwd()), 'LeetCode')
+  assert.ok(leetcode?.children, '找不到 LeetCode 分组')
+
+  const items = leetcode.children.filter((item) => item.link)
+  const numbers = items.map((item) => {
+    const match = /^(\d+)\./.exec(item.text)
+    return match ? Number(match[1]) : undefined
+  })
+
+  for (let i = 1; i < numbers.length; i += 1) {
+    if (numbers[i - 1] !== undefined && numbers[i] !== undefined) {
+      assert.ok(
+        numbers[i - 1]! <= numbers[i]!,
+        `题号顺序错误：${items[i - 1].text} 排在了 ${items[i].text} 前面`,
+      )
+    }
+  }
+
+  const twoSum = items.findIndex((item) => item.text === '1. 两数之和')
+  const threeSum = items.findIndex((item) => item.text === '15. 三数之和')
+  assert.ok(twoSum >= 0 && threeSum >= 0, '找不到 1/15 两篇题解')
+  assert.ok(twoSum < threeSum, '「1. 两数之和」应排在「15. 三数之和」前面')
+})
+
 console.log(`✔ test:sidebar 通过（${passed} 项）`)
