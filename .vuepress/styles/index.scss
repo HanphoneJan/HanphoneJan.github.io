@@ -49,6 +49,60 @@
   max-width: 100%;
 }
 
+
+// ============================================
+// 题解页的难度徽标（页面信息行里的那一项）
+// ============================================
+
+// 它渲染在主题的 `.page-info`（日期 · 分类 · 难度 · 标签 · 字数 · 阅读时间）
+// 里，布局、字号、与相邻项的间距都由主题的 `.page-info > span` 给好，
+// 这里只补配色与那三根信号条。
+//
+// 档位由组件写在 `data-level` 上：easy 绿 / medium 黄 / hard 红
+// （入门与简单同绿、较难与困难同红，见 src/components/training/difficulty.ts）。
+.page-difficulty-info {
+  --diff-color: var(--vp-c-text-mute);
+
+  &[data-level='easy'] {
+    --diff-color: #2f9e44;
+  }
+
+  &[data-level='medium'] {
+    --diff-color: #d9480f;
+  }
+
+  &[data-level='hard'] {
+    --diff-color: #c92a2a;
+  }
+
+  // 点亮的条数表示档位：1 根 / 2 根 / 3 根。透明度要逐条写，
+  // 写在 svg 上的 opacity 会连点亮的条一起压暗。
+  .icon rect {
+    fill: currentcolor;
+    opacity: 0.28;
+
+    &.on {
+      fill: var(--diff-color);
+      opacity: 1;
+    }
+  }
+}
+
+// 深色主题下三色都提亮一档，否则红/绿在深底上发闷。
+html[data-theme='dark'] .page-difficulty-info {
+  &[data-level='easy'] {
+    --diff-color: #69db7c;
+  }
+
+  &[data-level='medium'] {
+    --diff-color: #ffa94d;
+  }
+
+  &[data-level='hard'] {
+    --diff-color: #ff8787;
+  }
+}
+
 // stars / projects 这两页是整宽布局的独立页面。
 // `.react-wide` 是挂载点本身，先让它撑满正文栏。
 .react-wide {

@@ -29,6 +29,7 @@ pnpm sync             # Sync notes from private repo (E:/hanphonejan/hanphone-no
 pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 pnpm sync:pyodide     # Download the 12.9MB Pyodide runtime into static/pyodide/
 pnpm test:offline     # 离线包口径（板块归类 + 路由表解析 + dist 覆盖率）
+pnpm test:difficulty  # 难度口径（8 种写法归一 + 全库覆盖率 + 徽标接线契约）
 ```
 
 > **环境版本必须对齐**：本地与 CI 均使用 **Node 24 + pnpm 11**（见 `.github/workflows/`）。
@@ -94,6 +95,28 @@ VuePress 的 `inferRoutePath` 会把不以 `.html` 结尾的路由补成 `.html`
 `pnpm test:sidebar`（8 项）把口径钉住：每个分组都有唯一前缀、板块首页上
 没有任何分组是当前、每篇文档只展开它的祖先链。改 `sidebar.ts` 或换主题版本
 后跑一遍。
+
+### 难度（题解页那一行 `.page-info` 里的一项）
+
+题解的 `frontmatter.difficulty` 有 8 种写法（`Easy` / `Medium` / `Hard` /
+`简单` / `中等` / `困难` / `入门` / `较难`），口径收在
+`src/components/training/difficulty.ts`：**标签保留五档**（牛客的五级比力扣细），
+**配色只三档**（入门+简单=绿、中等=黄、较难+困难=红）。算法模式 / 数据结构页
+写的是区间（`difficulty: 简单-中等` 或 `difficulty_range: [中等, 困难]`），
+都解析成 `简单–中等` 这种形式，配色取较难的那一端。
+
+页面上它显示在标题下方那一行（日期 · 分类 · **难度** · 标签 · 字数 · 阅读时间）：
+
+- 挂载点是 **hope 的 `PageInfo`**：它对每一项做 `resolveComponent(\`${item}Info\`)`，
+  所以 `.vuepress/components/DifficultyInfo.vue` 在 `client.ts` 里全局注册成
+  `DifficultyInfo`，`theme.ts` 的 `pageInfo` 里写一项 `'Difficulty'` 就进位了。
+  这样是 **SSR**（`react-mount` 那些孤岛不同），不闪、爬虫也看得到。
+- `pageInfo` 的类型是封闭 union，配置里只能 `as unknown as PageInfoType[]`；
+  **删掉全局注册这一项会静默消失**（开发时一行警告，构建照常成功），
+  所以 `pnpm test:difficulty` 把这条契约也钉住了。
+- `plugins/catalogs.ts`（题库 / 标签页）、`.vuepress/data/training-data.ts`
+  （相关题目排序）、`pattern-graph` 组件共用同一个口径 —— 这三处原先各写一份
+  正则且只有三档，牛客的 **入门 24 篇、较难 6 篇全被算进「其它」**。
 
 ### React 孤岛（为什么页面里还有 React）
 

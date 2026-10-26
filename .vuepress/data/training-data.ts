@@ -15,6 +15,7 @@ import {
   type PySample,
   type StdinSample,
 } from '../../plugins/py-samples'
+import { parseDifficulty } from '../../src/components/training/difficulty'
 
 /**
  * 构建期的训练数据。
@@ -61,11 +62,13 @@ export interface PatternProblem {
   platform: string
 }
 
+/**
+ * 相关题目的排序权重。口径在 `src/components/training/difficulty.ts` ——
+ * 早先这里是「简单/中等/困难，其余算最后一档」，于是牛客的 入门 / 较难
+ * 全被当成「其它」排到最后。
+ */
 function diffRank(d: string): number {
-  if (/简单|Easy/i.test(d)) return 0
-  if (/中等|Medium/i.test(d)) return 1
-  if (/困难|Hard/i.test(d)) return 2
-  return 3
+  return parseDifficulty(d).rank
 }
 
 function walk(dir: string): string[] {

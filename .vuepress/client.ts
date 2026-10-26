@@ -12,6 +12,7 @@ import { defineClientConfig } from 'vuepress/client'
 
 import HomePage from './components/HomePage.vue'
 import CacheSettings from './components/CacheSettings.vue'
+import DifficultyInfo from './components/DifficultyInfo.vue'
 import LayoutToggle from './components/LayoutToggle.vue'
 import NavbarHomeLink from './components/NavbarHomeLink.vue'
 import NoVisStepsMount from './components/NoVisStepsMount.vue'
@@ -52,6 +53,14 @@ export default defineClientConfig({
     app.component('ProjectsMount', ProjectsMount)
     app.component('HomePage', HomePage)
     app.component('CacheSettings', CacheSettings)
+    /**
+     * 题解页 `.page-info` 行里的难度徽标。
+     *
+     * `theme.ts` 的 `pageInfo` 里写的 `'Difficulty'` 会被 hope 的 `PageInfo`
+     * 用 `resolveComponent('DifficultyInfo')` 解析 —— 也就是说**注册即生效**，
+     * 不需要改主题、也不需要动 md。详见 `components/DifficultyInfo.vue` 文件头。
+     */
+    app.component('DifficultyInfo', DifficultyInfo)
 
     /**
      * 页面 chunk 加载失败时，别把读者晾在一个「点了没反应」的页面上。

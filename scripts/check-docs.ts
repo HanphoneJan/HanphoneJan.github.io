@@ -26,8 +26,9 @@
  * 3. **有无自测题** —— `bank.json` 里有没有这个 `docId`
  * 4. **frontmatter** —— `id/title/platform/difficulty/tags/patterns/date_added`
  *
- * 第 4 条里 `difficulty` 只影响难度归一化、`patterns` 只影响知识图谱，
- * 缺了不会让页面坏掉，但会让复习卡片少信息 —— 所以它们报成 **warn** 而不是 error。
+ * 第 4 条里 `difficulty` 影响题解页的难度徽标（认不出就不显示）、`patterns`
+ * 只影响知识图谱，缺了不会让页面坏掉，但会让复习卡片少信息 ——
+ * 所以它们报成 **warn** 而不是 error。
  *
  * ## 退出码
  *
@@ -60,6 +61,7 @@ import {
 } from '../plugins/py-samples';
 import {analyzeSnippet, nodeParams} from '../src/components/training/pyrunner/snippet';
 import {usableSamples} from '../src/components/training/pyrunner/runner';
+import {parseDifficulty} from '../src/components/training/difficulty';
 
 // ============================================================
 
@@ -309,6 +311,17 @@ function inspect(doc: {docId: string; abs: string}, bankDocIds: Set<string>): Ro
     if (!filled) {
       issues.push({level: 'error', text: `frontmatter 缺 ${key}`});
     }
+  }
+  /**
+   * 难度写了但认不出来 = 页面上那枚徽标不渲染（见
+   * `src/components/training/difficulty.ts`）。构建不会报错，所以在这里提示。
+   */
+  const difficulty = valueOf('difficulty').join(' ');
+  if (difficulty && parseDifficulty(difficulty).level === 'unknown') {
+    issues.push({
+      level: 'warn',
+      text: `difficulty「${difficulty}」认不出来，题解页不会显示难度徽标`,
+    });
   }
   // id 与 patterns 是可选的（id 可由文件名推出、patterns 可为空数组），
   // 但缺了会让复习卡片少信息，所以报 warn
