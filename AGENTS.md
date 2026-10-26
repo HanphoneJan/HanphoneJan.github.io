@@ -278,9 +278,11 @@ React root 里：
   懒加载共享脚本 + 12.9MB 的 Python 运行时 ≈ 127MB；运行时的文件清单与缓存名在
   `src/components/training/pyrunner/runtime-files.ts`，客户端 fetch 拦截与
   设置页共用；两个 `.mjs` 要同时进 `pyodide-runtime-v1` 与 `assets`，
-  否则离线跑代码卡在 import 那一步）。清单每条带 sha1 指纹，设置页按指纹
-  做增量：轨迹 / 题库 / Python 运行时重新部署后一个请求都不发；页面 HTML 与
-  页面 chunk 因为都引用会改名的 `app-<hash>.js`，每次部署都会整体刷新。
+  否则离线跑代码卡在 import 那一步）。清单每条带 sha1 指纹，设置页按指纹做增量；
+  页面的指纹是「抹掉 `src|href="/assets/..."` 之后」的 HTML，缓存 HTML 时连它
+  引用的那一版 `app-<hash>.js` 一起留住，所以重新部署后**一个请求都不发**
+  （实测 121 页文档「都已是最新」）。prune 要保留被缓存 HTML 引用的旧外壳/旧
+  chunk，别按「不在当前清单里就删」一刀切。
   下载时按目标桶写进**已有的** `html-v2` / `assets` / `traces` / `quiz`，
   所以不需要新增 SW 路由。清单带构建版本，部署后旧包会被标成「需要更新」并
   删掉上一版遗留的页面 chunk。只下 HTML 也能读（SSR 产物在 HTML 里），但站内
