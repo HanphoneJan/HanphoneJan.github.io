@@ -549,7 +549,7 @@ nums.sort(key=cmp_to_key(compare))
 - [贪心](greedy.md)：大量贪心题的第一步是排序。
 - [双指针](two_pointers.md)：有序数组上的两数之和、去重。
 - [哈希映射](hash_map.md)：计数排序之外的另一种「按值索引」。
-- [堆与优先队列](../data-structures/stack_queue_heap_unionfind.md)：Top K 的常用工具。
+- [堆与优先队列](../data-structures/heap.md)：Top K 的常用工具。
 
 ## 算法可视化
 

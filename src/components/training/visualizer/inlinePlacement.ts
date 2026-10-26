@@ -77,7 +77,7 @@ export const INLINE_TRACER_PLACEMENT: Record<string, readonly Placement[]> = {
   'data-structures/linked_list.md': [
     {tracerId: 'list-reverse', title: '链表反转：三个指针'},
   ],
-  'data-structures/stack_queue_heap_unionfind.md': [
+  'data-structures/unionfind.md': [
     {tracerId: 'union-find', title: '并查集：路径压缩 + 按大小合并'},
   ],
   'data-structures/binary_tree.md': [

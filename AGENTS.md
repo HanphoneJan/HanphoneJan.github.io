@@ -1137,7 +1137,7 @@ JS 里「字符串结尾」要写 `$(?![\s\S])`。凡是照着 Python 正则搬�
 | `patterns/hash_map.md` | 哈希表：就地统计出现次数 |
 | `data-structures/hash_table.md` | 哈希表：就地统计出现次数 |
 | `data-structures/linked_list.md` | 链表反转：三个指针 |
-| `data-structures/stack_queue_heap_unionfind.md` | 并查集：路径压缩 + 按大小合并 |
+| `data-structures/unionfind.md` | 并查集：路径压缩 + 按大小合并 |
 | `data-structures/binary_tree.md`、`tree.md` | 树的 DFS 遍历 |
 | `data-structures/string.md`、`array.md` | LCS（二维 DP 表） |
 | `data-structures/graph.md` | 网格 BFS |

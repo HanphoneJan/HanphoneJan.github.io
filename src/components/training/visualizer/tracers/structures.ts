@@ -2,7 +2,7 @@
  * 数据结构的 tracer。
  *
  * 覆盖 `patterns/hash_map.md`、`data-structures/hash_table.md`、
- * `data-structures/linked_list.md`、`data-structures/stack_queue_heap_unionfind.md`、
+ * `data-structures/linked_list.md`、`data-structures/unionfind.md`、
  * `data-structures/string.md`。
  *
  * 这些页面讲的是「这个结构自己怎么用」，不是某道题 —— 而结构的行为
@@ -274,7 +274,7 @@ export const unionFind: Tracer<UnionInput> = {
   defaultInput: {n: 6, pairs: [[0, 1], [1, 2], [3, 4], [0, 3], [2, 4]]},
   formatInput: formatUnion,
   parseInput: parseUnion,
-  relatedDocId: 'data-structures/stack_queue_heap_unionfind.md',
+  relatedDocId: 'data-structures/unionfind.md',
   run({n, pairs}): Frame[] {
     const b = new TraceBuilder();
     const parent = Array.from({length: n}, (_, i) => i);

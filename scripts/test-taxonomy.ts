@@ -94,11 +94,11 @@ check('模式页同时拿到规范标签与日期', () => {
 
 check('数据结构页按文件名拿标签', () => {
   const taxonomy = deriveTaxonomy(
-    'code-training/docs/data-structures/stack_queue_heap_unionfind.md',
-    { title: '栈、队列、堆与并查集' },
+    'code-training/docs/data-structures/unionfind.md',
+    { title: '并查集' },
   )
   assert.equal(taxonomy.category, '数据结构')
-  assert.deepEqual(taxonomy.tags, ['栈', '队列', '堆', '并查集'])
+  assert.deepEqual(taxonomy.tags, ['并查集'])
 })
 
 check('日期优先级 date > date_added > last_updated', () => {
