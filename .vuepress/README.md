@@ -361,6 +361,20 @@ oxc: { jsx: { runtime: 'automatic' } }
   IndexedDB 里的时间戳结算**自己写进去的**那些（workbox-expiration 的
   `CacheExpiration.expireEntries`），所以 1100 条离线包待在
   `html-v2`（`maxEntries: 200`）里不会被挤掉，也不需要为它调大上限。
+- **增量更新靠内容指纹，不是靠 build id。** 清单里每一条都带一个 sha1 前
+  10 位（第 5 个字段，见 `plugins/offline-package.ts` 的 `hashOf`），设置页把
+  「确认过的指纹」记在 localStorage：指纹一致且缓存里还在，就**一个请求都不发**
+  地跳过。实测：重新部署后点「更新」，Python 运行时 5 项 / 13MB 全部跳过
+  （`5 项都已是最新，没有下载（省了 12.9 MB）`，服务端零请求）。
+  旧版离线包没有指纹，第一次「更新」会读缓存响应体就地算 sha1 比对
+  （`cachedHash`），同样不发请求。
+- **但页面 HTML 与页面 chunk 每次部署都会重下。** 每个页面 chunk 都
+  `import "./app-<hash>.js"`，HTML 的 `<script src>` 也是它，而 app 的哈希
+  **每次构建都变**（`__vite__mapDeps` 里 mermaid 那几十个 chunk 名不稳定）。
+  所以一次部署会刷新 894 个 HTML + 894 个页面 chunk，约 28MB 传输；
+  轨迹（8MB）、题库、Python 运行时（13MB）不受影响。
+  要真正做到「只下变更」，得让 app 入口用稳定文件名（如 `assets/app.js`），
+  那是构建层改动，还没做 —— 顺带会牺牲 10 分钟的 CDN 缓存失效语义。
 - **离线包必须绑构建版本。** HTML 引用的 `assets/<页面>-<hash>.js` 部署一次
   就换名。清单带 `build`（CI 只用 `GITHUB_SHA`，本地用 git HEAD，本地脏工作区
   才加时间戳 —— CI 的检出在 build 前就被 `fetch-stars.js` 写脏了，拿「脏」

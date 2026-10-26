@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import type { App, Page } from 'vuepress/core'
@@ -65,6 +66,20 @@ function sizeOf(file: string): number {
     return fs.statSync(file).size
   } catch {
     return 0
+  }
+}
+
+/**
+ * 内容指纹（sha1 前 10 位）。
+ *
+ * 设置页拿它判断「这一项到底变没变」：只比哈希、不再发请求。用内容哈希而不是
+ * mtime —— 每次构建所有文件都会重写，mtime 必然全变。
+ */
+function hashOf(file: string): string {
+  try {
+    return createHash('sha1').update(fs.readFileSync(file)).digest('hex').slice(0, 10)
+  } catch {
+    return ''
   }
 }
 
@@ -138,7 +153,7 @@ export function buildManifest(app: App): OfflineManifest {
     if (chunk) pageChunks.add(chunk.replace(/^assets\//, ''))
 
     const section = bucket(sectionOf(page.path))
-    const entry: OfflineEntry = [page.path, chunk, htmlBytes, chunkBytes]
+    const entry: OfflineEntry = [page.path, chunk, htmlBytes, chunkBytes, hashOf(file)]
     section.entries.push(entry)
     section.bytes += htmlBytes + chunkBytes
     pageCount++
@@ -151,8 +166,9 @@ export function buildManifest(app: App): OfflineManifest {
     const section = bucket('traces')
     for (const file of fs.readdirSync(tracesDir).sort()) {
       if (!file.endsWith('.json')) continue
-      const bytes = sizeOf(path.join(tracesDir, file))
-      section.entries.push([`/traces/${file}`, null, bytes, 0])
+      const full = path.join(tracesDir, file)
+      const bytes = sizeOf(full)
+      section.entries.push([`/traces/${file}`, null, bytes, 0, hashOf(full)])
       section.bytes += bytes
     }
   }
@@ -160,7 +176,7 @@ export function buildManifest(app: App): OfflineManifest {
   if (fs.existsSync(bank)) {
     const section = bucket('quiz')
     const bytes = sizeOf(bank)
-    section.entries.push(['/quiz/bank.json', null, bytes, 0])
+    section.entries.push(['/quiz/bank.json', null, bytes, 0, hashOf(bank)])
     section.bytes += bytes
   }
 
@@ -179,7 +195,13 @@ export function buildManifest(app: App): OfflineManifest {
     const section = bucket('shared')
     for (const file of sharedFiles.sort()) {
       const bytes = sizeOf(path.join(assetsDir, file))
-      section.entries.push([`/assets/${file}`, null, bytes, 0])
+      section.entries.push([
+        `/assets/${file}`,
+        null,
+        bytes,
+        0,
+        hashOf(path.join(assetsDir, file)),
+      ])
       section.bytes += bytes
     }
   }
@@ -196,8 +218,9 @@ export function buildManifest(app: App): OfflineManifest {
   if (pyodideFiles.length > 0) {
     const section = bucket('pyodide')
     for (const name of pyodideFiles) {
-      const bytes = sizeOf(path.join(pyodideDir, name))
-      section.entries.push([`/pyodide/${name}`, null, bytes, 0])
+      const full = path.join(pyodideDir, name)
+      const bytes = sizeOf(full)
+      section.entries.push([`/pyodide/${name}`, null, bytes, 0, hashOf(full)])
       section.bytes += bytes
     }
     if (pyodideFiles.length < PYODIDE_RUNTIME_FILES.length) {
