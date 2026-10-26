@@ -1,20 +1,44 @@
 ---
 title: 二叉树
 category: 数据结构
-parent_topic: tree.md
 difficulty_range: [简单, 困难]
-last_updated: 2026-03-23
+last_updated: 2026-10-26
 ---
 
 # 二叉树
 
-## 知识点概述
+## 一句话理解
 
-二叉树是每个节点最多有两个子节点的树结构，是最常见的树形结构。
+**二叉树是「递归的教具」**：每个节点最多两个孩子，而**每棵子树本身还是一棵二叉树**——这个自相似性让几乎所有二叉树题都天然长成递归题。学二叉树学的一半是结构，另一半是「怎么把一个问题变成『处理左右子树 + 在根上合账』」。
 
-**二叉树**（Binary tree）是每个节点最多只有两个分支（即不存在分支度大于 2 的节点）的树结构。二叉树的分支具有左右次序，不能随意颠倒。
+树的一般概念（节点、深度、层数、森林）在[树](tree.md)一篇；本篇聚焦二叉树自己的东西。
 
-### 节点定义
+## 性质公式（口算题，笔试客观题常用）
+
+| 性质 | 公式 | 顺手记法 |
+|------|------|---------|
+| 第 i 层最多节点数 | 2^(i-1)（i 从 1 起） | 每层翻倍 |
+| 高度 h 的树最多节点数 | 2^h − 1 | 全层满：1+2+4+…+2^(h-1) |
+| 叶子数 vs 度 2 节点数 | n₀ = n₂ + 1 | 一叉补丁 |
+| n 个节点的完全二叉树高度 | ⌊log₂n⌋ + 1 | 层数就是 log 往下取整 |
+| 满二叉树用层数算节点 | 2^h − 1（h 层） | −1 是常识项 |
+
+## 类型谱系（面试答「都有哪些二叉树」的模板）
+
+```text
+普通二叉树
+├─ 满二叉树        每层都满（形状最饱满）
+├─ 完全二叉树      只许最后一层缺右侧 —— 数组存储的根基（[堆](heap.md) 就是它）
+├─ 二叉搜索树 BST  左 < 根 < 右 —— 查找O(log n)的排序结构
+├─ 平衡二叉树 AVL  任意节点左右子树高差 ≤ 1 —— 防退化
+└─ （工程延伸）红黑树：约平衡、增删改查综合更稳，C++ map / Java TreeMap 的底层
+```
+
+BST 与完全二叉树最容易混：完全二叉树说的是**形状**，BST 说的是**值的大小关系**，词根无关，两件事可以同时成立也可以都不成立。
+
+## 遍历：四种小动作，一套递归心智
+
+递归版是「一个递归三行」，先把三种顺序的唯一差别写清楚：
 
 ```python
 class TreeNode:
@@ -22,56 +46,51 @@ class TreeNode:
         self.val = val
         self.left = left
         self.right = right
+
+def preorder(root):          # 前：根 → 左 → 右
+    if not root:
+        return []
+    return [root.val] + preorder(root.left) + preorder(root.right)
+
+def inorder(root):           # 中：左 → 根 → 右（BST 里 = 升序序列！）
+    if not root:
+        return []
+    return inorder(root.left) + [root.val] + inorder(root.right)
+
+def postorder(root):         # 后：左 → 右 → 根
+    if not root:
+        return []
+    return postorder(root.left) + postorder(root.right) + [root.val]
 ```
 
-```cpp
-struct TreeNode {
-    int val;
-    TreeNode *left;
-    TreeNode *right;
-    TreeNode(int x) : val(x), left(NULL), right(NULL) {}
-};
+- 「前/中/后」说的是**根被访问的位置**——三个顺序只是这一行的摆放不同
+- **中序遍历 BST 得到升序序列**是 BST 一切考点的基石（验证 BST、找第 k 小、两个 BST 合并全部挂在它上面）
+- 遍历都 O(n)（每个节点摸一次），空间 O(h)（递归栈深 h，最坏 O(n) 链状树）
+
+### 迭代版（颜色标记法，忘可能性最小）
+
+```python
+def inorder_iter(root):
+    WHITE, GRAY = 0, 1
+    stack = [(root, WHITE)]
+    res = []
+    while stack:
+        node, color = stack.pop()
+        if not node:
+            continue
+        if color == WHITE:
+            # 中序：右、根、左 倒序入栈，出栈顺序即为 左、根、右
+            stack.append((node.right, WHITE))
+            stack.append((node, GRAY))
+            stack.append((node.left, WHITE))
+        else:
+            res.append(node.val)
+    return res
 ```
 
-## 二叉树类型
+「第一次见到 → 拆开子问题压栈；第二次见到（灰色）→ 收答案」——把「防重访问」变成颜色标记，三种遍历只改三行入栈顺序，白板上不会写乱。
 
-### 1. 满二叉树
-
-每层节点都达到最大值，深度为 k 的满二叉树有 2^k - 1 个节点。
-
-除最后一层节点外，其他所有节点都有两个子结点，必定是完全二叉树。
-
-### 2. 完全二叉树
-
-除最后一层外，若其余层都是满的，并且最后一层是满的或者是在右边缺少连续若干节点，则这个二叉树就是**完全二叉树**。
-
-简单来说：除最后一层外，其他层的节点数都达到最大，最后一层的节点都靠左排列（或满的）。
-
-**当根节点的值为 1 的情况下，若父结点的序号是 i，那么左子节点的序号就是 2i，右子节点的序号是 2i+1。这个性质使得完全二叉树利用数组存储时可以极大地节省空间，以及利用序号找到某个节点的父结点和子节点。**
-
-![完全二叉树示例图1.webp](https://hanphone.top/gh/HanphoneJan/public-pictures/datastructure/%E5%AE%8C%E5%85%A8%E4%BA%8C%E5%8F%89%E6%A0%91%E7%A4%BA%E4%BE%8B%E5%9B%BE1.webp)
-
-![完全二叉树的顺序存储示例图.webp](https://hanphone.top/gh/HanphoneJan/public-pictures/datastructure/%E5%AE%8C%E5%85%A8%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E9%A1%BA%E5%BA%8F%E5%AD%98%E5%82%A8%E7%A4%BA%E4%BE%8B%E5%9B%BE.webp)
-
-### 3. 二叉搜索树（BST）
-
-- 左子树所有节点值 < 根节点值
-- 右子树所有节点值 > 根节点值
-- 左右子树也都是 BST
-
-### 4. 平衡二叉树
-
-任意节点的左右子树高度差不超过 1。
-
-包括AVL树和红黑树。
-
-## 常见操作
-
-### 遍历模板
-
-参考 [树](tree.md) 的遍历方法。
-
-### 层序遍历（BFS）
+### 层序遍历（BFS，队列）
 
 ```python
 from collections import deque
@@ -79,257 +98,123 @@ from collections import deque
 def levelOrder(root):
     if not root:
         return []
-
-    result = []
-    queue = deque([root])
-
-    while queue:
-        level_size = len(queue)
-        current_level = []
-
-        for _ in range(level_size):
-            node = queue.popleft()
-            current_level.append(node.val)
-
-            if node.left:
-                queue.append(node.left)
-            if node.right:
-                queue.append(node.right)
-
-        result.append(current_level)
-
-    return result
+    q = deque([root])
+    res = []
+    while q:
+        level = []
+        for _ in range(len(q)):     # 关键一行：先固定本层的长度，再逐个弹
+            node = q.popleft()
+            level.append(node.val)
+            if node.left:  q.append(node.left)
+            if node.right: q.append(node.right)
+        res.append(level)
+    return res
 ```
 
-## 常见题型
+「for _ in range(len(q)) 先记下本层人数」这一行是**分层遍历**的锚点：刚进队列的正好是同一层的兄弟，这一行不写，层次信息就没了。Z 字形（103）只需在偶数层 `level.reverse()`；右视图（199）只收每层最后一个——都是同一个模板一步的变式（队列的重要性见[队列](queue.md)）。
 
-### 1. 递归遍历
-
-- 前序、中序、后序遍历
-- 树的深度和高度
-
-### 2. 层序遍历
-
-- BFS 遍历
-- 右视图
-- 之字形遍历
-
-**相关题目：**
-- 二叉树的层序遍历
-- 二叉树的右视图
-- 二叉树的锯齿形层序遍历
-
-### 3. 路径问题
-
-- 路径和
-- 最长路径
-- 路径是否存在
-
-### 4. 构造与修改
-
-- 翻转二叉树
-- 从遍历序列构造
-- 合并二叉树
-
-## 解题技巧
-
-### 技巧 1：递归模板
+## 递归的两条路（决定解题思路哪条对）
 
 ```python
-def traverse(root):
-    # 1. 终止条件
-    if not root:
-        return
-
-    # 2. 处理当前节点（前序位置）
-    process(root)
-
-    # 3. 递归左子树
-    traverse(root.left)
-
-    # 4. 处理当前节点（中序位置）
-    process(root)
-
-    # 5. 递归右子树
-    traverse(root.right)
-
-    # 6. 处理当前节点（后序位置）
-    process(root)
-```
-
-### 技巧 2：层序遍历模板
-
-使用队列，记录每层大小。
-
-### 技巧 3：路径问题
-
-使用回溯 + DFS。
-
-## DFS 的两种思路
-
-### 自顶向下 DFS（先序遍历）
-
-在「递」的过程中维护值，从根节点向下传递信息。
-
-```python
-# 判断是否存在根到叶的路径和为 targetSum（自顶向下：沿路径累减目标值）
-def hasPathSum(self, root: Optional[TreeNode], targetSum: int) -> bool:
+def hasPathSum(root, targetSum):       # 自顶向下（前序）：把「目标」传下去
     if not root:
         return False
-    # 叶子节点：判断当前累计值是否正好匹配
     if not root.left and not root.right:
-        return root.val == targetSum
-    # 向下传递 targetSum - root.val（自顶向下传递信息）
-    return (self.hasPathSum(root.left, targetSum - root.val) or
-            self.hasPathSum(root.right, targetSum - root.val))
-```
+        return targetSum == root.val   # 叶子处结算
+    remain = targetSum - root.val
+    return hasPathSum(root.left, remain) or hasPathSum(root.right, remain)
 
-### 自底向上 DFS（后序遍历）
-
-在「归」的过程中计算，先递归处理子节点，再处理当前节点。
-
-```python
-# 求二叉树最大深度（自底向上：先求左右子树深度，再合并 +1）
-# 注意用 max 而非 +：+ 会把左右子树深度相加，得到的是"路径节点总数"
-def maxDepth(self, root: Optional[TreeNode]) -> int:
+def maxDepth(root) -> int:             # 自底向上（后序）：把「结果」收上来
     if not root:
         return 0
-    return max(self.maxDepth(root.left), self.maxDepth(root.right)) + 1
-
-# 合并二叉树
-def mergeTrees(self, root1: Optional[TreeNode], root2: Optional[TreeNode]) -> Optional[TreeNode]:
-    if root1 is None:
-        return root2
-    if root2 is None:
-        return root1
-    return TreeNode(
-        root1.val + root2.val,
-        self.mergeTrees(root1.left, root2.left),
-        self.mergeTrees(root1.right, root2.right)
-    )
+    return 1 + max(maxDepth(root.left), maxDepth(root.right))
 ```
 
-## 二叉搜索树（BST）
+`maxDepth` 这里用 `max` 而不是 `+`——树的「深度」是**取左右两条里较长的那条**，两边相加是「节点总数」，这一处量错就是 104 题的经典报错。
 
-### 性质
+两条路怎么选：**答案在路径上或依赖传递的 → 自顶向下；答案需要「左右子树先各自结算、在节点处合账」的 → 自底向上（后序）**。「最大深度」「直径」[543] 「最大路径和」[124] 都是后序。「路径是否存在」「沿路径决定要不要继续」多是前序。
 
-- 节点的左子树仅包含键**小于**节点键的节点
-- 节点的右子树仅包含键**大于**节点键的节点
-- 左右子树也必须是二叉搜索树
-
-**平衡的二叉搜索树插入、查找的时间复杂度都是 O(logn)**
-
-### 常见考点
-
-- 中序遍历有序性
-- 插入与删除
-- 验证与构建
-
-### 验证 BST
+## 常考点一：验证 BST（98 题，一个陷阱考烂了）
 
 ```python
-def isValidBST(self, root: Optional[TreeNode], left=float('-inf'), right=float('inf')) -> bool:
-    if root is None:
-        return True
-    x = root.val
-    return left < x < right and \
-           self.isValidBST(root.left, left, x) and \
-           self.isValidBST(root.right, x, right)
+def isValidBST(root) -> bool:
+    def check(node, lo, hi):
+        if not node:
+            return True
+        if node.val <= lo or node.val >= hi:
+            return False
+        return check(node.left, lo, node.val) and check(node.right, node.val, hi)
+    return check(root, float('-inf'), float('inf'))
 ```
 
-### BST 转累加树
+**陷阱就是「只看孩子不看祖先」**：`[5, 4, 6, null, null, 3, 7]`——3 在右子树里，小 5 也是大 6，都是不合法的。判据必须沿祖先链传 `lo/hi` 上下界（或者中序遍历后检查严格递增）——树的问题十有八九是「你只看了相邻两层」。
 
-遍历顺序：**右 → 根 → 左**（降序遍历）
+## 常考点二：重建与 LCA
+
+**重建**：前序 + 中序（105）能唯一确定一棵树，依据是——前序首元素是根，在中序里一切左边的属于左子树，切分两边递归：
 
 ```python
-def convertBST(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
-    s = 0
-    def dfs(node: TreeNode) -> None:
-        if node is None:
-            return
-        dfs(node.right)  # 先遍历右子树
-        nonlocal s
-        s += node.val
-        node.val = s
-        dfs(node.left)
-    dfs(root)
+def buildTree(preorder, inorder):
+    if not preorder:
+        return None
+    root = TreeNode(preorder[0])
+    idx = inorder.index(preorder[0])     # O(n) 找根；量大可用哈希表加速
+    root.left = buildTree(preorder[1:idx+1], inorder[:idx])
+    root.right = buildTree(preorder[idx+1:], inorder[idx+1:])
     return root
 ```
 
-### 有序数组转平衡 BST
+切片版简洁但每层都在新建列表，总复杂度 O(n²)——面试被追问「能更快吗」时，答「用下标穿范围、哈希表定位根」就升级为 O(n)。
 
-**关键**：BST 中序遍历后变成升序数组！
+**最近公共祖先（236）**的后序合账，是「自底向上」的最佳示例：
 
 ```python
-def sortedArrayToBST(self, nums: List[int]) -> Optional[TreeNode]:
-    def dfs(left, right):
-        if left > right:
-            return None
-        mid = left + (right - left) // 2
-        root = TreeNode(nums[mid])
-        root.left = dfs(left, mid - 1)
-        root.right = dfs(mid + 1, right)
+def lowestCommonAncestor(root, p, q):
+    if not root or root is p or root is q:
         return root
-    return dfs(0, len(nums) - 1)
+    l, r = lowestCommonAncestor(root.left, p, q), lowestCommonAncestor(root.right, p, q)
+    if l and r:
+        return root          # p、q 分居两侧 → 当前节点就是 LCA
+    return l or r
 ```
 
-## 二叉树与链表
+## 常考点三：对称 / 翻转 / 相同
 
-### 二叉树展开为链表
+- **翻转二叉树（226）**：`root.left, root.right = invert(right), invert(left)` 一句经典的递归
+- **对称二叉树（101）**：判断两个树「左右互镜像」——递归调用的**参数不是同一颗树的两个节点**，而是「left.left vs right.right」「left.right vs right.left」
+- **相同的树（100）**：三个判空 + 值相等 + 左左/右右递归
 
-```python
-def flatten(self, root: TreeNode) -> None:
-    """将二叉树原地展开为链表（Morris 风格，O(1) 额外空间）
-    核心：每遇到有左子树的节点，把当前右子树接到左子树的最右节点下"""
-    curr = root
-    while curr:
-        if curr.left:
-            # 找到左子树的最右节点（左子树中最后一个被访问的节点）
-            predecessor = curr.left
-            while predecessor.right:
-                predecessor = predecessor.right
-            # 将右子树接到左子树最右节点的右侧
-            predecessor.right = curr.right
-            # 左子树整体移到右边，置空左指针
-            curr.right = curr.left
-            curr.left = None
-        curr = curr.right
-```
+## 与堆、BST 的位置关系
+
+- **完全二叉树 → 堆**：形状使得数组存得下（[堆](heap.md)），父不被要求与左右的大小关系必须只在父子之间（兄弟无序）
+- **BST → 有序集合**：增删查 O(log n)，平衡后（AVL/红黑）不用怕退化
+
+## 易错点总结
+
+- 「下一层节点最多几个」直接 2^i 粗算，忘了 i 从 1 起的口径
+- 判 BST 只跟直接孩子比，忘祖先的上下界（98 题必炸）
+- 层序遍历忘「先记 len(q) 再逐个弹」，层次信息全部丢失
+- maxDepth 用 `+` 把左右深度相加，得到的是节点总数
+- 递归终止只写 `if not node: return` 不写累积结算——每题必须明确「叶子处怎么结算 / 空节点返回什么」
+- 重建用 `list.index` 每层 O(n) 找根，铸成 O(n²)——大规模数据用哈希表存值到下标的映射
+- 递归深了 RecursionError：树高 1000 层话递归崩，用迭代遍历或 `sys.setrecursionlimit` 临时抬高
+
+## 相关题目
+
+- [104. 二叉树的最大深度](../problems/leetcode/0104_maximum_depth_of_binary_tree.md)
+- [101. 对称二叉树](../problems/leetcode/0101_symmetric_tree.md) / [226. 翻转二叉树](../problems/leetcode/0226_invert_binary_tree.md)
+- [105. 从前序与中序遍历序列构造二叉树](../problems/leetcode/0105_construct_binary_tree_from_preorder_and_inorder_traversal.md)
+- [236. 二叉树的最近公共祖先](../problems/leetcode/0236_lowest_common_ancestor_of_a_binary_tree.md)
 
 ## 相关知识点
 
-- [树](tree.md)
-- [BFS 模式](../patterns/bfs.md)
-- [DFS 模式](../patterns/dfs.md)
-- [BFS 模式](../patterns/bfs.md)
-- [DFS 模式](../patterns/dfs.md)
-
-## 题目列表
-
-**简单：**
-- 二叉树的前序遍历 / 中序遍历 / 后序遍历
-- 二叉树的最大深度
-- 翻转二叉树
-
-**中等：**
-- 验证二叉搜索树
-- 二叉树的最近公共祖先
-- 从前序与中序遍历序列构造二叉树
-
-**困难：**
-- 二叉树中的最大路径和
-- 二叉树的序列化与反序列化
-
-## 重点提示
-
-- 理解递归的本质：处理当前节点 + 递归子问题
-- 区分前中后序的处理时机
-- 层序遍历一定用 BFS（队列）
-- 深度优先用 DFS（递归或栈）
+- [树](tree.md)——一般树、N 叉树与遍历的迭代化
+- [堆](heap.md)——完全二叉树的一个最佳日常
+- [深度优先搜索](../patterns/dfs.md)、[广度优先搜索](../patterns/bfs.md)
 
 ---
 
 ## 算法可视化
 
-下面的播放器可以**改输入后重跑**：把数组换成你自己的，
-逐步看每一帧的状态怎么变。三种遍历只差「访问根」的位置。空槽位用虚线小点画出来 —— 它们是「这里没有孩子」，不是「这里看不见」。
+下面的播放器可以**改输入后重跑**：把树的层序数组换成你自己的，逐步看
+前 / 中 / 后序遍历每一步走到哪个节点。递归深度的变化也画在画面里。
