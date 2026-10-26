@@ -2,41 +2,38 @@
 title: 并查集
 category: 数据结构
 difficulty_range: [中等, 较难]
-last_updated: 2026-10-26
+last_updated: 2026-10-27
 ---
 
 # 并查集（Union-Find）
 
-## 一句话理解
+## 定义
 
-**并查集管理的是「谁跟谁是一伙的」**：它维护一族互不相交的集合，只支持两个动作——
+并查集维护一个**不相交集合的划分**：n 个元素初始各自成集，支持在集合之间合并，并回答「两个元素是否属于同一集合」。它还有一个别名：不相交集合数据结构（disjoint-set data structure）。
 
-- **find(x)**：x 这一伙的「代表元」是谁？（查同一个代表元 = 认识同伙）
-- **union(x, y)**：把 x 和 y 两伙合并成一伙
+实现用「森林」表示集合：每个元素持有一个父指针，每个集合内选一个元素作**代表元（representative）**——它自成一个环（父指针指向自己），其余元素沿父指针逐级向上可到达它。结构的不变量只有一条：
 
-它 **不支持**：删除一个元素、把一个集合拆开、查询某个集合的完整成员列表。这个「只会合、不会分」的偏科不是缺陷——所有「动态连通性」问题恰好只需要这两个动作，比如「加了这条边之后，甲乙两地通不通？」「现在图里还有几片互不连通的孤岛？」
+> 不相交的集合不共享代表元。判定「x、y 同集」的唯一依据是 `find(x) == find(y)`，即两者向上追溯到的自环节点相同。
 
-现实模型很直观：微信好友关系。成百上千万用户，你只关心「这个人跟我是不是间接认识」与「两个团队合并了」。并查集就是这件事的 O(α(n)) 实现。
+接口与复杂度：
 
-## 复杂度与直觉
+| 操作 | 语义 | 复杂度（两个优化齐开） |
+|------|------|----------------------|
+| `find(x)` | 返回 x 所在集合的代表元 | 均摊 O(α(n)) |
+| `union(x, y)`（即 merge） | 合并 x、y 所在的两个集合 | 均摊 O(α(n)) |
+| 初始化 | n 个元素各自成集 | O(n) |
 
-| 操作 | 复杂度 | 说明 |
-|------|-------|------|
-| find（带路径压缩） | 均摊 O(α(n)) | α 是阿克曼反函数，宇宙尺度下都 ≤ 4，**视作常数** |
-| union（按大小合并） | 均摊 O(α(n)) | 先 find 两次再挂接 |
-| 初始化 | O(n) | n 个节点各成独立集合 |
+α 是阿克曼反函数，其对任意现实可行规模都 ≤ 4，**工程上按常数处理**。不做任何优化时 find 最坏 O(n)（合并方式不当形成链）；两个优化（见下）正是针对这条退化链设计的。
 
-不做任何优化的话 find 最坏 O(n)（链退化）；两个优化齐上后 α(n) 这个数字看着神秘，工程感受就是**「每次操作几乎是 O(1)」**。反过来说，这题数据范围大到 10^7 仍能跑，靠的就是这俩。
+它不支持的操作也值得写清：删除、把一个集合拆开、列出集合成员。动态连通性问题的需求集合恰好只落在 find / union 两个动作上，超出范围的题目（比如「支持回滚的合并」）要用别的结构或离线重排。
 
-## 实现：一个数组走天下
-
-### 朴素版（理解用的起点）
+## 朴素版本
 
 ```python
-fa = list(range(n))    # fa[x] = x 的父节点；自己当父 = 自己是代表元
+fa = list(range(n))    # fa[x] = x 的父节点；fa[x] == x 即 x 是代表元
 
 def find(x):
-    while fa[x] != x:          # 顺着父指针一路往上爬
+    while fa[x] != x:          # 沿父指针向上，直到自环节点
         x = fa[x]
     return x
 
@@ -44,45 +41,45 @@ def union(x, y):
     fa[find(x)] = find(y)      # 把 x 的代表元挂到 y 的代表元下
 ```
 
-朴素版在「链状合并」下会退化成一条长链：`union(1,2), union(2,3), union(3,4)…` 之后 `find(1)` 要爬完全程。下面两个优化就是针对这条链的。
+朴素版在「链式合并」下退化：`union(1,2), union(2,3), union(3,4)…` 之后 `find(1)` 要爬完整条链。下面两个优化分别封掉这条链的两个来源。
 
-### 优化一：路径压缩（find 时砍平）
+## 优化一：路径压缩（find 时加速）
 
 ```python
 def find(x):
     if fa[x] != x:
-        fa[x] = find(fa[x])    # 祖父直接变成父；递归回程顺手拍扁
+        fa[x] = find(fa[x])    # 祖父直接升为父；递归回程顺手拍扁
     return fa[x]
 ```
 
-查找路上经过的每个节点，回程时**全部直接挂到代表元名下**。效果是这棵树越用越扁——查过的路，第二次走一步就到。递归写法深链时会爆栈，最坏 n 层；工程上更稳的写法是「写两步拍扁」的迭代版（父指针跳两次取值），效果略差但够用且不递归。
+find 经过路过的每个节点，回程时**全部直接挂在代表元下**——树越用越扁，一条路径第二次 find 一步就到。工程上更稳的是迭代版本（父指针每跳两步取值），不必递归；效果略逊，够用。
 
-### 优化二：按大小合并（union 时矮树挂高树）
+## 优化二：按大小合并（union 时防新链）
 
 ```python
 size = [1] * n
 
-def union(x, y):
+def union2(x, y):
     root_x, root_y = find(x), find(y)
     if root_x == root_y:
-        return False           # 已经是一伙，合并失败（环检测就靠这个 False！）
+        return False           # 本已同集（环检测的信号）
     if size[root_x] < size[root_y]:
         root_x, root_y = root_y, root_x
-    fa[root_y] = root_x        # 小的挂到大的
+    fa[root_y] = root_x        # 小树挂大树
     size[root_x] += size[root_y]
     return True
 ```
 
-不加它也能跑，但「把大树挂到小树下面」会主动制造长链。两个优化是搭档：一个在 find 时拍扁历史，一个在 union 时预防新链。**合并挂接方向的选择依据是 size（按大小）或 rank（按秩），两者效果等价，按大小额外送一份「集合多大」的信息**，常用的是 size 版。
+没有它，「大集挂到小集下」会重造深链。两个优化在岗位分工上互补：路径压缩**事后**（find 时），按大小合并**事前**（union 时）。挂接方向也可按秩（rank）记录树高，两者理论效果等价；按 size 版额外附送「集多大」，实践中更常用。
 
-### 完整模板（背这份就够）
+## 完整模板
 
 ```python
 class UnionFind:
     def __init__(self, n: int):
-        self.fa = list(range(n))    # fa[x]：x 的父节点，初始自成一派
-        self.size = [1] * n         # 每个集合的大小（挂接时用）
-        self.cc = n                 # connected components：连通块个数
+        self.fa = list(range(n))    # fa[x]：x 的父节点
+        self.size = [1] * n         # 各集合大小（挂接方向依据）
+        self.cc = n                 # 连通块（connected components）数
 
     def find(self, x: int) -> int:
         if self.fa[x] != x:
@@ -93,7 +90,7 @@ class UnionFind:
         return self.find(x) == self.find(y)
 
     def merge(self, x: int, y: int) -> bool:
-        """合并两集合；返回 False 表示本来就一组（调用方常用它当环信号）"""
+        """合并两个集合；返回 False 表示二者已在同一集合（调用方常用作环信号）"""
         rx, ry = self.find(x), self.find(y)
         if rx == ry:
             return False
@@ -105,35 +102,32 @@ class UnionFind:
         return True
 
     def get_size(self, x: int) -> int:
-        """x 所在集合有多大"""
+        """x 所在集合的成员数"""
         return self.size[self.find(x)]
 ```
 
-`cc` 这个计数器常被忽略，却是很多题的答案本体：合并成功一次，连通块就少一块。**「岛屿数量」「省份数量」系列的答案全部来自这个 `cc`**，不用每次重新扫描全图。
+`cc`（连通块计数）是最容易被遗忘、却经常是答案本体的量：每次 merge 成功恰减少一块。起始 n 块、终态多少块就是「省份数量」「岛屿数量」这类题的全部答案。
 
-## 常考点一：连通块计数（省份数量 / 岛屿数量）
+## 题型一：连通块计数（547 省份数量）
 
-[547. 省份数量](https://leetcode.cn/problems/number-of-provinces/)：`isConnected[i][j] = 1` 表示 i、j 直连，求有多少个「省」。
+[547. 省份数量](https://leetcode.cn/problems/number-of-provinces/)：`isConnected[i][j] == 1` 表示两城直连，问有多少个省。
 
 ```python
 def findCircleNum(isConnected: list[list[int]]) -> int:
     n = len(isConnected)
     uf = UnionFind(n)
-    # 只扫上三角：矩阵是对称的，i-j 和 j-i 是同一条边
     for i in range(n):
-        for j in range(i + 1, n):
+        for j in range(i + 1, n):   # 矩阵对称，只扫上三角
             if isConnected[i][j] == 1:
                 uf.merge(i, j)
     return uf.cc
 ```
 
-对比 DFS/BFS 解法（要维护 visited 数组、每发现一个没访问过的城市就得重新发起一次遍历），并查集版把「边」过一遍就完事，代码量也最少。**「初始 n 个连通块、每成功 merge 一次减一」这幅画面更容易一眼想清楚**。
+DFS/BFS 也能解：需要 `visited` 数组，且每发现一个未访问城市就发起一次遍历。并查集的写法沿边去 merge、直接读 `cc`，代码量最少，且天然不需要「重新找起点」的逻辑。
 
-## 常考点二：冗余连接（树上多了一根线）
+## 题型二：冗余连接（684，环检测）
 
-[684. 冗余连接](https://leetcode.cn/problems/redundant-connection/)：一棵树加了一条边变成 n 条边，找出那条多余的。
-
-**这里的钥匙：树里任意两点的路径只有一条，所以「一条边把两个已连通的点连起来」时这条边就是环的闭合处。**
+[684. 冗余连接](https://leetcode.cn/problems/redundant-connection/)：给一棵树加了一条边，找出那条多余的。依据：**树中任意两点路径唯一**，因此某条边连接的两个端点若已连通，则这条边必在环上。
 
 ```python
 def findRedundantConnection(edges: list[list[int]]) -> list[int]:
@@ -141,126 +135,119 @@ def findRedundantConnection(edges: list[list[int]]) -> list[int]:
     uf = UnionFind(max_node + 1)
     ans = []
     for u, v in edges:
-        if not uf.merge(u, v):      # 合并失败：u、v 早已连通 → 这条边多余
+        if not uf.merge(u, v):      # 合并失败 = 端点已连通 = 该边多余
             ans = [u, v]
     return ans
 ```
 
-按边序处理，merge 返回 False 的那条就是答案——并查集给了你「环检测」这个几乎白送的副产品。图论里「判环」在无向图上并查集是最省事的一条路（有向图判环得用 DFS 三色标记或拓扑排序，见 [patterns/bfs.md](../patterns/bfs.md) 的拓扑与 [patterns/dfs.md](../patterns/dfs.md)）。
+无向图判环的最省事的写法就是这一手：merge 的返回 False 直接当环信号。有向图判环走另一路（DFS 三色标记或拓扑排序），见 [patterns/dfs.md](../patterns/dfs.md)、[patterns/bfs.md](../patterns/bfs.md)。
 
-## 常考点三：Kruskal 最小生成树
+## 题型三：Kruskal 最小生成树
 
-并查集最经典的大应用：把边按权值从小到大扫一遍，**能 merge 的才要**——保证「每收一条边都连着两片原来不相干的森林」，收满 n-1 条就是最小生成树。
+按边权从小到大扫一遍，**能 merge 的才收**（收得下 = 两端恰好分属两个连通块）；收满 n−1 条即得 MST。贪心成立的依据：考虑「剩下可用边里最便宜的 `e`」，其两端要么已连通（再收只是添一圈），要么分属两块（不收也不亏，因为连通它们迟早要花更高代价）——单条边两种结局与最优解一致。
 
 ```python
 import math
 
 def min_spanning_tree(n: int, edges: list[tuple[int, int, int]]) -> float:
-    """edges: [(u, v, 边权), ...]，返回 MST 总权；不连通返回 inf"""
-    edges.sort(key=lambda e: e[2])       # 按边权排序，贪心的起点
+    """edges: [(u, v, 边权), ...]；返回 MST 总权；不连通返回 inf"""
+    edges.sort(key=lambda e: e[2])      # 排序 O(m log m)，瓶颈在它
     uf = UnionFind(n)
     total = 0.0
     for u, v, w in edges:
-        if uf.merge(u, v):               # 成功 = 两块不同连通块被接上
+        if uf.merge(u, v):              # 成功 = 恰接上两块不同连通块
             total += w
             if uf.cc == 1:
-                return total             # 提前退：连成一整块即完成
+                return total            # 连成一整块即止，剩余边不必再看
     return math.inf if uf.cc > 1 else total
 ```
 
-排序本身 O(m log m)（m 为边数），比并查集那边的 O(α(n)) 更贵，这才是 Kruskal 的复杂度瓶颈。
+复杂度瓶颈是排序本身的 O(m log m)——并查集那部分（O(m·α(n))）反而是次要的。
 
-贪心为什么对：当前考虑的是「剩下的最便宜的边」，它的两端要么已连通（收了也只是白添一条圈，丢弃）、要么分属两块（收它能以当前最低代价把两块拼起来，不收的话，稍后要连通它们只能用更贵的边）。**在单条边上决策的这两种结局都不亏，所以逐条贪心成立**。`cc == 1` 之后可以直接停——剩下的边无论多便宜都不该再收，MST 不会多要任何一条边。
+## 题型四：带权并查集(399)
 
-## 常考点四：带权并查集（升级版，399 题）
-
-普通版只知道「同伙与否」；**带权版把关系量化**：每条 fa 边上挂一个权重，`weight[x]` 记「x 相对它当前父节点的倍数」，查询时把沿途的倍数连乘折算到根。
-
-[399. 除法求值](https://leetcode.cn/problems/evaluate-division/)：给 `a/b = 2.0` 这类等式，要求均摊近似 O(1) 地回答任意 `x / y`。用的思想是**把每个变量的「相对值」直接挂在代表元的树形结构上**。
+普通版只知道「同不同集」；带权版在每个 `fa` 边上**附加一个数**：`weight[x]` 为「x 相对其当前父节点的倍数（比值）」，find 时路径上累乘折算到根。代表的是 [399. 除法求值](https://leetcode.cn/problems/evaluate-division/)：给 `a/b = 2.0` 一类等式，回答任意 `x/y`。
 
 ```python
 class WeightedUnionFind:
     def __init__(self):
-        self.fa = {}         # 节点可以按需加入（字符串/任意可哈希）
-        self.weight = {}     # weight[x]：x 相对它父节点的比值
+        self.fa = {}         # 任意可哈希键，可按需加入
+        self.weight = {}     # weight[x]：x 相对其父节点的比值
 
     def add(self, x):
         if x not in self.fa:
             self.fa[x] = x
-            self.weight[x] = 1.0   # 路径上没有边 → 倍数 1
+            self.weight[x] = 1.0
 
     def find(self, x) -> str:
         if self.fa[x] != x:
             root = self.find(self.fa[x])
-            self.weight[x] *= self.weight[self.fa[x]]   # 沿途倍数累乘到根
+            self.weight[x] *= self.weight[self.fa[x]]   # 沿途比值折算到根
             self.fa[x] = root                            # 顺手路径压缩
         return self.fa[x]
 
     def merge(self, x: str, y: str, ratio: float):
-        """x / y = ratio，合并两集合"""
+        """merge x / y = ratio"""
         self.add(x); self.add(y)
         root_x, root_y = self.find(x), self.find(y)
         if root_x == root_y:
-            return                       # 关系已隐含在树里，不用再挂
+            return                       # 关系已隐含在树里
         self.fa[root_x] = root_y
-        # 关键推导（三个已知量）：
-        #   x / y = ratio（题目给的），weight[x] = x/root_x，weight[y] = y/root_y
-        #   想要的是 weight[root_x] = root_x / root_y（root_x 新变成 root_y 的孩子）
-        #   root_x = x / weight[x] = (ratio * y) / weight[x] = ratio * weight[y] * root_y / weight[x]
+        # 目标：weight[root_x] = root_x / root_y（root_x 新成 root_y 的孩子）
+        # root_x = x / weight[x]，root_y = y / weight[y]
+        # 代入 x = ratio * y：
         self.weight[root_x] = ratio * self.weight[y] / self.weight[x]
 
-    def query(self, x: str, y: str) -> float:   # 求比值，失败（不在一伙）返回 -1.0
+    def query(self, x: str, y: str) -> float:   # 缺席 / 不在同集返回 -1.0
         if x not in self.fa or y not in self.fa or self.find(x) != self.find(y):
             return -1.0
         return self.weight[x] / self.weight[y]
 ```
 
-### 手推一遍（权重怎么被「攒」出来）
+两个必须落笔的推导点：**x / y 的值 = 沿路径各段比值相对代表元的累乘**；merge 时新增边 `root_x → root_y` 的比值按上面 3 行代数推出。每次 find 都要折算并压缩——不压缩的话每次 query 都逐层重算，压缩后比值存进 `weight`，query 只剩一次除法。
 
-等式组：`a/b = 2`、`b/c = 3`。一步一步看挂接与折算：
+`a/b=2, b/c=3` 的演化：
 
 ```text
-merge(a, b, 2)：fa[a] = b，weight[a] = 2    （a 挂在 b 下，a 相对 b 是 2）
-merge(b, c, 3)：fa[b] = c，weight[b] = 3    （b 挂在 c 下）
+merge(a, b, 2)：fa[a]=b, weight[a]=2    （a 挂在 b 下）
+merge(b, c, 3)：fa[b]=c, weight[b]=3
 
-现在树：c ← b ← a，weight: a→b=2, b→c=3（各自相对父节点）
+树：c ← b ← a，weight：a→b=2, b→c=3（各自相对父节点）
 
 query(a, c)：
-  find(a) 先递归 find(b)：
-    b 的父是 c 转 2 步拍扁成根，weight[b] = 3 * weight[c](=1) = 3
-  回来后 weight[a] = 2 * weight[b](=3) = 6，fa[a] 也压成 c
-  返回 weight[a] / weight[c] = 6 / 1 = 6
+  find(a) 递归 find(b)：b 的父是 c，weight[b]=3*weight[c](=1)=3
+  回程 weight[a]=2*weight[b](=3)=6，fa[a] 压成 c
+  返回 weight[a]/weight[c] = 6/1 = 6
 
-query(c, a)：c 本身就是根，weight[c]=1，weight[a]=6 → 1/6 = 0.1667
+query(c, a)：c 即根，weight[c]=1，weight[a]=6 → 1/6
 ```
-
-两个必须记住的点：**相对值 = 沿路径各段倍数的累乘**；**每次 find 顺手压缩**——不压缩的话每次查询都要一层层重算倍数，压缩成「一步到根」后倍数已经折算好存在 weight 里，剩下的就是一次除法，均摊复杂度这才回到 O(α(n))。
 
 ## 易错点总结
 
-- **union 前不先 find 就比较**：`union` 内部两次 find 是必须的，比较「同一集合」判断永远用 find 后的代表元，不能用原始下标
-- **扔掉 merge 的返回值**：这个 False 就是「无向图的环」信号，判环题（684）全靠它
-- 路径压缩的迭代写法（两步一拍扁）容易把父指针更新错序，先备份 `fa[x]` 再改 `fa[x]`，递归版没有这个问题
-- 带权并查集 merge 的比值推导方向写反：`weight[root_x] = ratio * weight[y] / weight[x]`，推一遍「root_x / root_y 到底等于多少」再落笔
-- 初始化范围少一：节点编号到 max 时数组要开 `max + 1`
-- 判断「不在一伙」时机比 find 早了：必须两个都 find 完（顺带各自压缩 + 折算权重）再比较，否则权重还没折算到根，除法结果就是错的
+- merge 里忘了先两次 find——判「同集」的依据是 `find` 后的代表元，不是原始下标
+- 扔掉了 merge 的返回值，等于丢了无向图的环信号（684）
+- 带权 merge 的比值方向写反：先把「目标 `weight[root_x] = ?`」用代数推一遍，再落到 `weight[root_x] = ratio * weight[y] / weight[x]`
+- 初始化范围少一：节点编号最大时数组开 `max + 1`
+- 带权 query 先比较、后读值：`query` 内的 find 顺序决定了路径上的比值是否已折算，比较之前必须两个 find 都跑过
+- 迭代路径压缩的父指针更新顺序：先备份 `fa[x]` 再改；递归版不存在这个问题
 
 ## 相关题目
 
 - [547. 省份数量](https://leetcode.cn/problems/number-of-provinces/)
 - [684. 冗余连接](https://leetcode.cn/problems/redundant-connection/)
-- [399. 除法求值](../problems/leetcode/0399_evaluate_division.md)（带权并查集）
-- [128. 最长连续序列](../problems/leetcode/0128_longest_consecutive_sequence.md)（并查集 / 哈希表殊途同归）
+- [399. 除法求值](../problems/leetcode/0399_evaluate_division.md)（带权）
+- [128. 最长连续序列](../problems/leetcode/0128_longest_consecutive_sequence.md)（并查集 / 哈希表两路可解）
 
 ## 相关知识点
 
-- [图](graph.md)——连通块、最小生成树的全图视角，可与 DFS 计数互相印证
-- [patterns/bfs.md](../patterns/bfs.md)、[patterns/dfs.md](../patterns/dfs.md)——无向图连通性、有向图判环
+- [图](graph.md)——连通块、最小生成树的全图视角
+- [树](tree.md)——父指针表示法的出处
+- [patterns/bfs.md](../patterns/bfs.md)、[patterns/dfs.md](../patterns/dfs.md)——无向连通、有向判环
 
 ---
 
 ## 算法可视化
 
-下面的播放器可以**改输入后重跑**：把操作序列换成你自己的，逐步看每一帧里
-父亲指针怎么变。路径压缩与按大小合并一起做，均摊复杂度才是 O(α(n))。
-画面上能看到查找时经过的每个节点都直接指向根，树越用越扁。
+下面的播放器可以**改输入后重跑**：把操作序列换成你自己的，逐帧观察
+每一步父指针的变动——路径压缩与按大小合并同时进行，
+所指向的每个节点都直接挂在代表元下。
