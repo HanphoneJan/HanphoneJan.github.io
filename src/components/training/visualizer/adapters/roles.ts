@@ -105,6 +105,28 @@ export const OVERRIDES: Record<
     arrayVar: 't',
     pointerVars: ['i'],
   },
+  /**
+   * P4801 两段脉冲信号的公共序列：源码里 pos 与 j 都落在 [0, len) 内、
+   * 也都有 +=1/-=1，被双指针判据误收。实际不是双指针（没有区间收缩），
+   * 只保留逐位推进的 j，免得 test:adapters 拿双指针不变式量它。
+   */
+  P4801: {
+    pointerVars: ['j'],
+  },
+  /**
+   * P5615 病菌蔓延：i/j/ni 是网格行列出边，画面上由 grid 的 cursor 表达，
+   * 不是一维数组上的双指针。
+   */
+  P5615: {
+    pointerVars: ['i'],
+  },
+  /**
+   * P5919 二叉排序树：node 是树节点下标、i 是输入序列下标，
+   * 两者都不是一维数组上的双指针。
+   */
+  P5919: {
+    pointerVars: ['i'],
+  },
 };
 
 /** Json 标量判定：数字或单字符字符串 */

@@ -60,6 +60,10 @@ import sys
 
 __TREE_MAX__ = 40
 __LIST_MAX__ = 40
+# 二进制大块（筛法里的 30KB bytearray 之类）不是画面要展示的内容；
+# 原样进轨迹会让 JSON 膨胀到几百 MB，Pyodide 回传时直接报
+# 「Cannot create a string longer than 0x1fffffe8 characters」。
+__BYTES_MAX__ = 80
 
 def _tjsonable(v, depth=0, nmap=None, nroot=None):
     if depth > 3:
@@ -72,9 +76,10 @@ def _tjsonable(v, depth=0, nmap=None, nroot=None):
     # 解不出 utf-8 就用 replace 兜住，绝不让采集器因为一个坏字节崩掉。
     if isinstance(v, (bytes, bytearray)):
         try:
-            return bytes(v).decode("utf-8")
+            s = bytes(v).decode("utf-8")
         except Exception:
-            return bytes(v).decode("utf-8", "replace")
+            s = bytes(v).decode("utf-8", "replace")
+        return s if len(s) <= __BYTES_MAX__ else s[:__BYTES_MAX__] + "…"
     if nmap is not None and nmap.get("id") == id(v):
         # 这个对象就是本帧的「根」，按整棵结构编码（层序 / 数组）。
         # 比较用 == 不是 is：id() 返回的是普通 int 对象，
