@@ -111,6 +111,21 @@ interface Entry {
   item: SidebarItem
 }
 
+/**
+ * 文件名开头的题号（`0001_two_sum.md` -> 1）。
+ *
+ * 题解目录里只有极少数几篇写了 `sidebar_position`，其余都落到 9999、
+ * 再按标题排序。两套尺子混用时，写了 15 的那篇会整体跳到最前面 ——
+ * 「15. 三数之和」排在「1. 两数之和」前面。题号本来就在文件名里，
+ * 没有显式 position 时用它兜底，所有题号才在同一把尺子上。
+ */
+function numberFromName(name: string): number | undefined {
+  const match = /^(\d+)(?:[._-]|$)/.exec(name.replace(/\.(md|mdx)$/, ''))
+  if (!match) return undefined
+  const value = Number(match[1])
+  return Number.isFinite(value) ? value : undefined
+}
+
 function fileItem(
   sourceDir: string,
   filePath: string,
@@ -132,7 +147,7 @@ function fileItem(
         ? meta.sidebar_position
         : typeof meta.order === 'number'
           ? meta.order
-          : 9999
+          : (numberFromName(name) ?? 9999)
   return { order, item: { text, link } }
 }
 
