@@ -617,7 +617,9 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
         failures.push(`${url}：${error instanceof Error ? error.message : String(error)}`)
       }
       done++
-      if (done % 5 === 0 || done === tasks.length) flush()
+      // 小分块（Python 运行时只有 5 个文件、单个 9.6MB）要一次一刷，
+      // 否则界面上会一直停在 0/5 —— 看起来像卡死，其实正在下。
+      if (done <= 20 || done % 5 === 0 || done === tasks.length) flush()
     }
   }
 
