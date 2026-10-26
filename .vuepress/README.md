@@ -324,11 +324,34 @@ oxc: { jsx: { runtime: 'automatic' } }
 |---|---|---|
 | 页面 HTML | `html-v2` | `NetworkFirst`（在线永远是新的，离线回退缓存） |
 | 页面 chunk | `assets` | `StaleWhileRevalidate`（文件名带内容哈希，不可变） |
+| 共享脚本（懒加载 chunk） | `assets` | 同上 |
 | 题解轨迹 JSON | `traces` | `CacheFirst` |
 | 自测题库 | `quiz` | `StaleWhileRevalidate` |
+| Python 运行时（Pyodide 12.9MB） | `pyodide-runtime-v1` | 页面内 fetch 拦截（见 `pyrunner/runtime.ts`） |
 
+- **「共享脚本」是必需的，别当成可有可无的 3MB。** 页面 chunk 之外还有一批
+  懒加载 chunk：跑代码的 `SnippetBar-*.js` / `runner-*.js`、改代码的
+  `CodeEditor-*.js`、mermaid 与 KaTeX 的几十个小 chunk。它们不属于任何一条
+  路由（路由表里没有），只下载页面 + 页面 chunk 的话，索引里「预先下好的
+  题解页」离线打开是**能读但运行条根本不出现** —— 这一条是实测出来的：
+  只缓存 Python 运行时后断网跑样例，卡在「运行中…」，控制台报
+  `Failed to fetch dynamically imported module: assets/runner-*.js`。
+  清单里用「`assets/*.js` 减去页面 chunk、减去已进预缓存的外壳」筛出来，
+  `scripts/test-offline.ts` 断言它不与页面 chunk 重复（重复会让页面多下一遍）。
+- **Python 运行时（Pyodide，12.9MB）也在离线包里**：文件清单与缓存名放在
+  `src/components/training/pyrunner/runtime-files.ts`，客户端 fetch 拦截、
+  构建期清单、设置页三方共用这一份 —— 只改一处就会出现「显示已缓存，点运行
+  还是要下 13MB」。wasm / stdlib / lock 进自己的 `pyodide-runtime-v1`
+  （fetch 拦截读它）；**两个 `.mjs` 还要额外在 `assets` 里放一份**：
+  `import()` 走模块加载器、**不经过**那个 fetch 拦截，但会经过 SW 的 script
+  路由（读 `assets`）。只放前一个桶时，离线跑代码卡在
+  `Failed to fetch dynamically imported module: /pyodide/pyodide.mjs` ——
+  wasm/zip 都命中了，就这一步过不去。`static/pyodide/` 是 gitignore 的，
+  本地没 `pnpm sync:pyodide` 时这块直接不出现。
+  实测（`localhost` 断网、题解页点「▶ 跑样例」）：三组样例全过。
 - **清单是构建期生成的**：`.vuepress/plugins/offline-package.ts` 在
-  `onGenerated` 里写 `offline-manifest.json`（889 页 + 206 份轨迹 ≈ 110MB，
+  `onGenerated` 里写 `offline-manifest.json`（889 页 + 206 份轨迹 + 13MB
+  运行时 ≈ 123MB，
   `docs` 121 / `training` 529 / `archive` 235 / `start` 4 / `traces` 206 /
   `quiz` 1）。页面 chunk 名从产物路由表读（`assets/app-*.js` 里的
   `` [`/路径`,{loader:()=>import(`./xxx.js`)``），**不能靠猜**：`/tag/*`

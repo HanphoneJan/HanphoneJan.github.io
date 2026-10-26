@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { extractRouteChunks, sectionOf } from '../.vuepress/plugins/offline-shared'
+import { PYODIDE_RUNTIME_FILES } from '../src/components/training/pyrunner/runtime-files'
 
 /**
  * 离线包清单的口径测试。
@@ -99,6 +100,66 @@ if (!fs.existsSync(assetsDir)) {
       (chunk) => !fs.existsSync(path.join(assetsDir, chunk)),
     )
     assert.deepEqual(missing.slice(0, 5), [], `${missing.length} 个 chunk 文件缺失`)
+  })
+
+  check('真实产物：清单里的 Python 运行时与磁盘一致', () => {
+    const manifestPath = path.join(dist, 'offline-manifest.json')
+    if (!fs.existsSync(manifestPath)) return
+
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
+      sections: Record<string, {entries: Array<[string, string | null, number, number]>}>
+    }
+    const section = manifest.sections.pyodide
+    // 本地没跑过 pnpm sync:pyodide 时清单里没有这一块
+    if (!section) return
+
+    const listed = section.entries.map(([url]) => url.replace('/pyodide/', '')).sort()
+    for (const name of listed) {
+      assert.ok(
+        PYODIDE_RUNTIME_FILES.includes(name),
+        `清单里出现了运行时清单之外的文件：${name}`,
+      )
+    }
+    // 与 dist/pyodide 里真实存在的文件一一对应：不少（设置页显示不全）
+    // 也不多（会去下根本用不到的文件）
+    const onDisk = PYODIDE_RUNTIME_FILES.filter((name) =>
+      fs.existsSync(path.join(dist, 'pyodide', name)),
+    ).sort()
+    assert.deepEqual(listed, onDisk)
+    // 体积求和要覆盖那 12.9MB，不能全是 0（`sizeOf` 失败时会静默变 0）
+    const bytes = section.entries.reduce((sum, [, , size]) => sum + size, 0)
+    assert.ok(bytes > 10 * 1024 * 1024, `Python 运行时体积只算出 ${bytes} 字节`)
+  })
+
+  check('真实产物：共享脚本不与页面 chunk 重复、文件都在', () => {
+    const manifestPath = path.join(dist, 'offline-manifest.json')
+    if (!fs.existsSync(manifestPath)) return
+
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
+      sections: Record<
+        string,
+        {entries: Array<[string, string | null, number, number]>}
+      >
+    }
+    const shared = manifest.sections.shared
+    if (!shared) return
+
+    const pageChunks = new Set(
+      Object.values(manifest.sections).flatMap((section) =>
+        section.entries.map(([, chunk]) => chunk).filter((chunk): chunk is string => Boolean(chunk)),
+      ),
+    )
+    assert.ok(shared.entries.length > 0, '共享脚本是空的')
+    for (const [url] of shared.entries) {
+      assert.ok(url.startsWith('/assets/') && url.endsWith('.js'), `不是脚本：${url}`)
+      // 同一份文件既当页面 chunk 又当共享脚本的话，说明 pageChunks 没记上，
+      // 页面下的那份会被这里重复下载一遍（白白多 40MB）
+      assert.ok(
+        !pageChunks.has(url.replace(/^\//, '')),
+        `${url} 同时被当成页面 chunk 和共享脚本`,
+      )
+      assert.ok(fs.existsSync(path.join(dist, url)), `${url} 不存在于 dist`)
+    }
   })
 
   check('真实产物：页面覆盖率 >= 90%', () => {
