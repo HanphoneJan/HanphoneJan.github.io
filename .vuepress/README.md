@@ -339,8 +339,10 @@ oxc: { jsx: { runtime: 'automatic' } }
   `CacheExpiration.expireEntries`），所以 1100 条离线包待在
   `html-v2`（`maxEntries: 200`）里不会被挤掉，也不需要为它调大上限。
 - **离线包必须绑构建版本。** HTML 引用的 `assets/<页面>-<hash>.js` 部署一次
-  就换名。清单带 `build`（CI 用 `GITHUB_SHA`，本地用 git HEAD，脏工作区加
-  时间戳），下载成功记进 localStorage；两边不一致时页面标「需要更新」，
+  就换名。清单带 `build`（CI 只用 `GITHUB_SHA`，本地用 git HEAD，本地脏工作区
+  才加时间戳 —— CI 的检出在 build 前就被 `fetch-stars.js` 写脏了，拿「脏」
+  判断版本会让每天的定时重建都提示一次更新），下载成功记进 localStorage；
+  两边不一致时页面标「需要更新」，
   重新缓存成功后把上一版遗留的 chunk 从 `assets` 里删掉 —— 不删的话每部署
   一次就多堆几十 MB，而 `ExpirationPlugin` 管不到它们。
 - **只下 HTML 也能读，但点不动。** SSR 产物在 HTML 里，缺 chunk 时 Vue 只是
