@@ -541,6 +541,14 @@ function computeRows(): void {
     let estimated = 0
     for (const entry of section.entries) {
       estimated += entry[2] + (withChunks.value ? entry[3] : 0)
+      if (!keysOf(targetCache(entry[0])).has(absolute(entry[0]))) continue
+
+      cached++
+      if (withChunks.value && entry[1] && !keysOf(ASSET_CACHE).has(absolute(`/${entry[1]}`))) {
+        chunkMissing++
+      }
+      // 「变了多少」只对**已经下过**的条目有意义：没下过就是没下过，
+      // 行上已经写着 0/N 了，再标一遍「内容更新」纯属噪音
       if (hashes) {
         const contentNow = entry[1] ?? entry[4]
         const contentBefore = contentOf[entry[0]]
@@ -549,16 +557,6 @@ function computeRows(): void {
         } else if (hashes[entry[0]] !== entry[4]) {
           // 内容没变（或还不知道），但 HTML 字节变了 —— app 构建哈希换了
           shell++
-        }
-      }
-      if (keysOf(targetCache(entry[0])).has(absolute(entry[0]))) {
-        cached++
-        if (
-          withChunks.value &&
-          entry[1] &&
-          !keysOf(ASSET_CACHE).has(absolute(`/${entry[1]}`))
-        ) {
-          chunkMissing++
         }
       }
     }
