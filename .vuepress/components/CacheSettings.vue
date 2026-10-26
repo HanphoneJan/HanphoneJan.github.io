@@ -45,10 +45,7 @@
             <input v-model="withChunks" type="checkbox">
             <span>
               同时缓存页面脚本
-              <span class="muted">
-                （离线时站内跳转才有交互；不要的话只存 HTML，体积少一半，
-                离线打开是「能读但点不动」）
-              </span>
+              <span class="muted">（离线时才可交互）</span>
             </span>
           </label>
 
@@ -106,9 +103,7 @@
               :disabled="progress.running"
               @click="downloadAll"
             >
-              {{ meta ? '更新全部（只下变更）' : '缓存全部' }}（{{
-                formatBytes(estimatedTotal)
-              }}）
+              {{ meta ? '全部更新' : `缓存全部（${formatBytes(estimatedTotal)}）` }}
             </button>
             <button
               type="button"
@@ -138,15 +133,8 @@
           <p v-if="progress.message" class="state">{{ progress.message }}</p>
 
           <p class="hint">
-            离线包按「首页 / 共享脚本 / Python 运行时 / 文档 / 代码训练 / 归档 /
-            题解可视化 / 自测题库」分块，可以只下自己常用的部分。
-            <b>共享脚本</b>是页面之外懒加载的那些 chunk（运行条、代码编辑器、
-            mermaid、公式），不下的话「预先下好的页面」离线点着没反应。
-            <b>Python 运行时</b>（Pyodide，约 13MB）是题解里「▶ 运行」用的解释器：
-            提前缓存之后，断网也能跑代码；不缓存的话要等第一次点运行才下载。
-            每项都带内容指纹：<b>重新部署后只下载真正变了的那些</b>，没变的一个字节
-            都不重下。页面 HTML 引用了带构建哈希的 <code>app-*.js</code>，缓存时会把它
-            一起留下，所以「外壳改名」不再等于「整站重下」；旧页面配旧外壳，离线照样能开。
+            按板块下载，只下没下过和内容变过的。<b>共享脚本</b>是运行条、编辑器、
+            图表等懒加载代码；<b>Python 运行时</b>是题解里「▶ 运行」的解释器。
           </p>
         </template>
       </section>
@@ -177,18 +165,10 @@
         </div>
 
         <p v-if="staleTotal" class="warn">
-          有 {{ staleTotal }} 项<b>内容</b>变了，点「更新」只下这些。没变的页面保留原样
-          —— 连同它们引用的那一版 <code>app-&lt;hash&gt;.js</code> 一起留在缓存里，
-          所以外壳改名不会再拖累整站重下。
+          有 {{ staleTotal }} 项内容变了，点「更新」只下这些。
         </p>
         <p v-else-if="newerBuild" class="warn">
-          站点部署了新版本（<code>{{ manifest?.build }}</code>），但离线内容一项都没变，
-          不需要重新下载。
-        </p>
-        <p class="hint">
-          「检查新版本」就是手动触发一次 Service Worker 更新检查，等价于站点平时
-          每 30 分钟自动做的那次。「立即更新」会把等待中的新版本切上来并重载页面，
-          与右下角「新内容已就绪」按钮是同一件事。
+          站点已更新（<code>{{ manifest?.build }}</code>），离线内容没变。
         </p>
       </section>
 
@@ -228,11 +208,7 @@
           </table>
         </div>
 
-        <p class="hint">
-          大小按响应头里的 <code>content-length</code> 累加，个别资源没带这个头会少算，
-          准确占用以上面的「浏览器占用」为准。清除「应用外壳」的预缓存后会注销并
-          重装 Service Worker（页面重载一次），否则那个桶不会自己填回来。
-        </p>
+        <p class="hint">大小为估算值（按响应头累加）。删掉应用外壳会重装 SW 并重载页面。</p>
 
         <div class="actions">
           <button type="button" class="btn" :disabled="persisting" @click="enablePersist">
@@ -241,8 +217,8 @@
         </div>
         <p class="hint">
           {{ persisted
-            ? '已获得持久化存储：浏览器空间紧张时不会优先清掉这些缓存。'
-            : '不申请持久化时，浏览器在磁盘紧张时可能整站清空（iOS Safari 还会在 7 天不访问后清理站点数据）。' }}
+            ? '已开启：空间紧张时不会被优先清掉。'
+            : '未开启：iOS 7 天不访问或磁盘紧张时可能被清掉。' }}
         </p>
       </section>
     </template>
@@ -1177,7 +1153,7 @@ onMounted(async () => {
   if (!updateMessage.value) {
     updateMessage.value = sw.waiting
       ? '浏览器已经下载好了新版本，只差切换。'
-      : '点「检查新版本」手动查一次；平时回到前台也会自动查（30 分钟一次）。'
+      : '手动查一次（回到前台时会自动检查）。'
   }
 })
 </script>
