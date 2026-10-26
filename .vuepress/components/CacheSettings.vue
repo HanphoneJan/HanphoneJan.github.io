@@ -68,7 +68,6 @@
                   · {{ row.chunkMissing }} 项缺脚本
                 </span>
                 <span v-if="row.stale" class="muted"> · {{ row.stale }} 项内容更新</span>
-                <span v-else-if="row.shell" class="muted"> · 外壳待刷新</span>
               </div>
               <div class="row-actions">
                 <button
@@ -84,9 +83,7 @@
                         ? '继续'
                         : row.stale
                           ? '更新'
-                          : row.shell
-                            ? '刷新'
-                            : '检查'
+                          : '检查'
                   }}
                 </button>
                 <button
@@ -147,10 +144,9 @@
             mermaid、公式），不下的话「预先下好的页面」离线点着没反应。
             <b>Python 运行时</b>（Pyodide，约 13MB）是题解里「▶ 运行」用的解释器：
             提前缓存之后，断网也能跑代码；不缓存的话要等第一次点运行才下载。
-            每项都带内容指纹：<b>重新部署后只下载真正变了的那些</b>。页面脚本
-            （38MB）、轨迹、题库、Python 运行时的文件名或指纹没变就一个字节都不重下；
-            唯一每次都要刷新的是页面 HTML 本身 —— 每页都引用了带构建哈希的
-            <code>app-*.js</code>，所以部署后所有页面外壳都要重下一次（压缩后约 20MB）。
+            每项都带内容指纹：<b>重新部署后只下载真正变了的那些</b>，没变的一个字节
+            都不重下。页面 HTML 引用了带构建哈希的 <code>app-*.js</code>，缓存时会把它
+            一起留下，所以「外壳改名」不再等于「整站重下」；旧页面配旧外壳，离线照样能开。
           </p>
         </template>
       </section>
@@ -181,13 +177,9 @@
         </div>
 
         <p v-if="staleTotal" class="warn">
-          有 {{ staleTotal }} 项需要更新。页面 HTML 与页面脚本都引用了
-          <code>app-&lt;hash&gt;.js</code>，而它在每次构建里都会改名，所以这两类会整体刷新
-          （约 28MB 传输）；<b>轨迹、题库、Python 运行时不受影响，一个字节都不重下</b>。
-        </p>
-        <p v-else-if="shellTotal" class="warn">
-          内容没变：这次构建换了应用外壳的哈希，{{ shellTotal }} 页 HTML 需要整体刷新
-          （约 20MB 传输），页面脚本与其它内容都不用重下。
+          有 {{ staleTotal }} 项<b>内容</b>变了，点「更新」只下这些。没变的页面保留原样
+          —— 连同它们引用的那一版 <code>app-&lt;hash&gt;.js</code> 一起留在缓存里，
+          所以外壳改名不会再拖累整站重下。
         </p>
         <p v-else-if="newerBuild" class="warn">
           站点部署了新版本（<code>{{ manifest?.build }}</code>），但离线内容一项都没变，
@@ -320,8 +312,18 @@ interface PackageMeta {
   withChunks: boolean
   /** URL -> 上次确认过的**整份文件**指纹（决定要不要重下） */
   hashes: Record<string, string>
-  /** URL -> 上次确认过的**内容**指纹（页面用 chunk 名；用来区分「内容变了」与「只是外壳变了」） */
+  /** URL -> 上次确认过的**内容**指纹（页面：抹平 app 哈希后的 HTML）；决定要不要重下 */
   content: Record<string, string>
+  /**
+   * 页面 URL -> 缓存这份 HTML 时它引用的那一版外壳。
+   *
+   * 页面 HTML 里写死了 `app-<hash>.js`，而它每次构建都会改名。**保留旧外壳**
+   * （而不是重下 HTML）才能做到「只改文档时只下改到的那几页」：
+   * 旧 HTML + 旧 app + 旧 chunk 三件套一起留在缓存里，离线照样能启动。
+   */
+  pages: Record<string, {app: string; chunk: string}>
+  /** 外壳文件 -> 它的静态依赖（目前只有 rolldown-runtime-*.js），prune 时一并保留 */
+  appDeps: Record<string, string[]>
 }
 
 interface CacheStat {
@@ -339,8 +341,6 @@ interface SectionRow {
   chunkMissing: number
   /** 内容真的变了的条目数（页面比 chunk 名、其它比文件指纹） */
   stale: number
-  /** 只是页面外壳变了（app 的构建哈希换了，HTML 字节变了但内容没变） */
-  shell: number
 }
 
 const HTML_CACHE = 'html-v2'
@@ -432,20 +432,18 @@ const newerBuild = computed(
 )
 
 const staleTotal = computed(() => rows.value.reduce((sum, row) => sum + row.stale, 0))
-const shellTotal = computed(() => rows.value.reduce((sum, row) => sum + row.shell, 0))
 
 const packageStateText = computed(() => {
   if (!manifest.value) return '清单不可用'
   if (!meta.value) return '未下载'
   if (staleTotal.value > 0) return `需更新 ${staleTotal.value} 项`
-  if (shellTotal.value > 0) return '外壳需刷新'
   const covered = rows.value.filter((r) => r.count > 0 && r.cached === r.count).length
   return covered === rows.value.length ? '完整可用' : '部分已缓存'
 })
 
 const packageStateClass = computed(() => ({
   'is-ok': packageStateText.value === '完整可用',
-  'is-warn': staleTotal.value > 0 || shellTotal.value > 0,
+  'is-warn': staleTotal.value > 0,
 }))
 
 const swText = computed(() => {
@@ -494,7 +492,13 @@ function readMeta(): PackageMeta | null {
     if (!raw) return null
     const parsed = JSON.parse(raw) as PackageMeta
     if (!parsed || typeof parsed.build !== 'string') return null
-    return {...parsed, hashes: parsed.hashes ?? {}, content: parsed.content ?? {}}
+    return {
+      ...parsed,
+      hashes: parsed.hashes ?? {},
+      content: parsed.content ?? {},
+      pages: parsed.pages ?? {},
+      appDeps: parsed.appDeps ?? {},
+    }
   } catch {
     return null
   }
@@ -530,35 +534,31 @@ function computeRows(): void {
   // 没下过包时不谈「变了」：指纹一片空，全算变更会满屏噪音
   const hashes = meta.value ? (meta.value.hashes ?? {}) : null
   const contentOf = meta.value?.content ?? {}
-  // 旧格式的 meta 没有 content：不能断言「内容变了」，只能算外壳差异
   const contentKnown = Object.keys(contentOf).length > 0
 
   rows.value = Object.entries(manifest.value.sections).map(([id, section]) => {
     let cached = 0
     let chunkMissing = 0
     let stale = 0
-    let shell = 0
     let estimated = 0
     for (const entry of section.entries) {
       estimated += entry[2] + (withChunks.value ? entry[3] : 0)
       if (!keysOf(targetCache(entry[0])).has(absolute(entry[0]))) continue
 
       cached++
-      if (withChunks.value && entry[1] && !keysOf(ASSET_CACHE).has(absolute(`/${entry[1]}`))) {
+      // 「缺脚本」要对着**缓存里那份 HTML 实际引用的 chunk** 判断：
+      // 保留旧页面时，清单里那个新 chunk 名本来就不该被下载。
+      const chunkToCheck = meta.value?.pages?.[entry[0]]?.chunk ?? entry[1]
+      if (
+        withChunks.value &&
+        chunkToCheck &&
+        !keysOf(ASSET_CACHE).has(absolute(`/${chunkToCheck}`))
+      ) {
         chunkMissing++
       }
       // 「变了多少」只对**已经下过**的条目有意义：没下过就是没下过，
       // 行上已经写着 0/N 了，再标一遍「内容更新」纯属噪音
-      if (hashes) {
-        const contentNow = entry[1] ?? entry[4]
-        const contentBefore = contentOf[entry[0]]
-        if (contentKnown && contentBefore !== contentNow) {
-          stale++
-        } else if (hashes[entry[0]] !== entry[4]) {
-          // 内容没变（或还不知道），但 HTML 字节变了 —— app 构建哈希换了
-          shell++
-        }
-      }
+      if (hashes && contentKnown && contentOf[entry[0]] !== entry[4]) stale++
     }
     return {
       id,
@@ -568,7 +568,6 @@ function computeRows(): void {
       cached,
       chunkMissing,
       stale,
-      shell,
     }
   })
 }
@@ -674,6 +673,46 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
     progress.skipped = skipped
   }
 
+  /** 页面 HTML 里写的 `<script src="/assets/app-xxx.js">` */
+  const appRefOf = (html: string): string => {
+    const match = /src="\/(assets\/app-[^"]+\.js)"/.exec(html)
+    return match ? match[1] : ''
+  }
+
+  // 记录每版外壳的静态依赖（目前只有 rolldown-runtime-*.js）
+  const appDeps: Record<string, string[]> = {...(meta.value?.appDeps ?? {})}
+  // 页面 URL -> 缓存这份 HTML 时用的外壳
+  const pages: Record<string, {app: string; chunk: string}> = {...(meta.value?.pages ?? {})}
+
+  /**
+   * 把外壳（以及它的静态依赖）留在 `assets` 里。
+   *
+   * 这是「保留旧版本」的关键：页面 HTML 里写死了 `app-<hash>.js`，只要把这份
+   * 外壳留下来，旧 HTML 离线仍然能启动 —— 不用为了一个新哈希把 894 页重下一遍。
+   * 优先从**任意缓存**（当前构建的外壳就在 SW 预缓存里）取，取不到才走网络。
+   */
+  const ensureAsset = async (rel: string): Promise<void> => {
+    const absUrl = absolute(rel)
+    if (knownOf(ASSET_CACHE).has(absUrl)) return
+    const assetCache = await cacheOf(ASSET_CACHE)
+    const cached = await caches.match(absUrl)
+    const response =
+      cached ?? (await fetch(rel, {cache: 'reload', signal: controller.signal}))
+    if (!response.ok) throw new Error(`HTTP ${response.status}（${rel}）`)
+    await assetCache.put(new Request(absUrl), response.clone())
+    knownOf(ASSET_CACHE).add(absUrl)
+
+    if (rel.endsWith('.js') && !appDeps[rel]) {
+      const text = await response.text()
+      appDeps[rel] = [
+        ...new Set(
+          [...text.matchAll(/from"\.\/([^"]+\.js)"/g)].map((m) => `assets/${m[1]}`),
+        ),
+      ]
+      for (const dep of appDeps[rel]) await ensureAsset(dep)
+    }
+  }
+
   const worker = async (): Promise<void> => {
     for (;;) {
       if (controller.signal.aborted) return
@@ -683,32 +722,31 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
       const target = targetCache(url)
       const targetKeys = knownOf(target)
       const assetKeys = knownOf(ASSET_CACHE)
-      const chunkUrl = chunk ? `/${chunk}` : ''
+      const chunkRel = chunk ?? ''
+      const chunkUrl = chunkRel ? `/${chunkRel}` : ''
 
       /**
-       * 增量判断：**内容指纹没变 + 缓存里还在** 就整条跳过。
+       * 增量判断：**内容没变 + HTML 还在 + 它引用的外壳还在** 就整条跳过。
        *
-       * 之前每次「重新缓存」都把所有条目 `fetch(cache:'reload')` 一遍 ——
-       * 什么都没改也要重下 100MB。chunk 名自带内容哈希、并且不可变，所以
-       * chunk 只要在缓存里就不必再下；HTML 用清单里的 sha1 比对即可。
+       * 页面的「内容」看 chunk 名（自己带内容哈希），不看 HTML 字节 ——
+       * HTML 每次构建都会因为 `app-<hash>.js` 改名而变化，拿它当内容指纹
+       * 就等于每次部署重下全站。旧 HTML 配旧外壳一起留着，离线照样能开。
        */
       const cachedThere = targetKeys.has(absolute(url))
-      const storedHash = meta.value?.hashes?.[url]
-      let unchanged = false
-      if (hash && cachedThere) {
-        if (storedHash === hash) {
-          unchanged = true
-        } else if (!storedHash) {
-          // 升级到「带指纹」格式的第一次：就地校验缓存内容，不发请求
-          const cached = await (await cacheOf(target)).match(absolute(url))
-          unchanged = Boolean(cached) && (await cachedHash(cached!)) === hash
-        }
-      }
+      const contentSame = Boolean(hash) && meta.value?.content?.[url] === hash
+      const record = pages[url]
+      // 旧 HTML 能不能继续用，取决于「它引用的那份外壳 + 那个页面 chunk」还在
+      const shellKept =
+        !chunkRel ||
+        (Boolean(record) &&
+          assetKeys.has(absolute(`/${record!.app}`)) &&
+          assetKeys.has(absolute(`/${record!.chunk}`)))
       const needChunk = Boolean(
         chunkUrl && withChunks.value && !assetKeys.has(absolute(chunkUrl)),
       )
+      const needHtml = !(contentSame && cachedThere && shellKept)
 
-      if (unchanged && !needChunk) {
+      if (!needHtml) {
         skipped++
         verified.add(url)
         done++
@@ -717,13 +755,15 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
       }
 
       try {
-        if (!unchanged) {
+        let htmlText = ''
+        if (needHtml) {
           const body = await fetch(url, { cache: 'reload', signal: controller.signal })
           if (!body.ok) throw new Error(`HTTP ${body.status}`)
           const cache = await cacheOf(target)
           await cache.put(new Request(absolute(url)), body.clone())
           targetKeys.add(absolute(url))
           bytes += htmlBytes
+          htmlText = chunkRel ? await body.text() : ''
 
           // **两个 .mjs 要额外进 `assets`。** 它们是 `import()` 加载的，
           // 模块加载器不走 `runtime.ts` 的 fetch 拦截，但会经过 SW 的
@@ -748,6 +788,19 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
           await assetCache.put(new Request(absolute(chunkUrl)), script.clone())
           assetKeys.add(absolute(chunkUrl))
           bytes += chunkBytes
+        }
+
+        // 页面：把这份 HTML 引用的外壳记下来（必要时下载并留下）
+        if (chunkRel) {
+          if (!htmlText) {
+            const cachedHtml = await (await cacheOf(target)).match(absolute(url))
+            htmlText = cachedHtml ? await cachedHtml.text() : ''
+          }
+          const app = appRefOf(htmlText)
+          if (app) {
+            await ensureAsset(app)
+            pages[url] = {app, chunk: chunkRel}
+          }
         }
 
         verified.add(url)
@@ -801,10 +854,9 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
     for (const section of Object.values(manifest.value.sections)) {
       for (const entry of section.entries) {
         hashByUrl.set(entry[0], entry[4])
-        // 页面的「内容」指纹用 chunk 名（内容哈希）：HTML 本身每次构建都会
-        // 因为 app 哈希变化而变字节，拿它当内容指纹会把「只换了外壳」算成
-        // 「内容全变了」。
-        contentByUrl.set(entry[0], entry[1] ?? entry[4])
+        // 内容指纹就是清单里的第 5 项，对页面是「抹平 app 哈希后的 HTML」的
+        // sha1（见 plugins/offline-package.ts 的 contentHashOfHtml）
+        contentByUrl.set(entry[0], entry[4])
       }
     }
     const hashes: Record<string, string> = {}
@@ -822,6 +874,20 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
       if (contentHash) content[url] = contentHash
     }
 
+    // 只留下仍然缓存着的页面的外壳记录：清掉的分区、被删掉的页面不该继续
+    // 拖着旧外壳不放（每份外壳 2MB）。
+    const pageRefs: Record<string, {app: string; chunk: string}> = {}
+    for (const [key, value] of Object.entries(pages)) {
+      if (!hashByUrl.has(key)) continue
+      if (!knownOf(targetCache(key)).has(absolute(key))) continue
+      pageRefs[key] = value
+    }
+    const keptApps = new Set(Object.values(pageRefs).map((item) => item.app))
+    const depsOut: Record<string, string[]> = {}
+    for (const [app, deps] of Object.entries(appDeps)) {
+      if (keptApps.has(app)) depsOut[app] = deps
+    }
+
     writeMeta({
       build: manifest.value.build,
       at: new Date().toISOString(),
@@ -829,6 +895,8 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
       withChunks: withChunks.value,
       hashes,
       content,
+      pages: pageRefs,
+      appDeps: depsOut,
     })
 
     // 跨版本重下一次之后，上一版那 800 多个 `assets/<页面>-<旧哈希>.js`
@@ -842,15 +910,38 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
   await refresh()
 }
 
-/** 只保留当前清单里的页面 chunk，删掉上一版遗留的 */
+/**
+ * 清理 `assets` 桶里再也不会被请求的旧资源。
+ *
+ * 保留三类：
+ * 1. 当前清单里的文件（页面 chunk、共享脚本、pyodide 的 `.mjs` 副本）；
+ * 2. **仍被缓存 HTML 引用的旧外壳**（`app-<hash>.js`）—— 保留旧版本的关键；
+ * 3. 这些外壳的静态依赖（`rolldown-runtime-*.js`）。
+ *
+ * 只有第 2、3 类之外、又不在当前清单里的才删（上一版改了内容的页面 chunk）。
+ */
 async function pruneStaleAssets(): Promise<void> {
   if (!manifest.value) return
   const keep = new Set<string>()
   for (const section of Object.values(manifest.value.sections)) {
     for (const entry of section.entries) {
+      if (entry[0].startsWith('/assets/')) keep.add(absolute(entry[0]))
+      if (entry[0].startsWith('/pyodide/') && entry[0].endsWith('.mjs')) {
+        keep.add(absolute(entry[0]))
+      }
       if (entry[1]) keep.add(absolute(`/${entry[1]}`))
     }
   }
+
+  const pageRefs = meta.value?.pages ?? {}
+  const deps = meta.value?.appDeps ?? {}
+  for (const item of Object.values(pageRefs)) {
+    keep.add(absolute(`/${item.app}`))
+    // 旧 app 的路由表指向**当时那个** chunk 名，它也得留着
+    keep.add(absolute(`/${item.chunk}`))
+    for (const dep of deps[item.app] ?? []) keep.add(absolute(`/${dep}`))
+  }
+
   const cache = await caches.open(ASSET_CACHE)
   for (const request of await cache.keys()) {
     if (!keep.has(request.url)) await cache.delete(request)

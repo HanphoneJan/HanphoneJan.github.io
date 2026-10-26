@@ -84,6 +84,28 @@ function hashOf(file: string): string {
 }
 
 /**
+ * 页面的「内容」指纹：**先把 app 的构建哈希抹平**再算 sha1。
+ *
+ * 每页 HTML 里都写着 `<script src="/assets/app-<hash>.js">`，而它每次构建都会
+ * 改名。直接哈希 HTML 的话，一次只改一篇文档的部署也会让 894 页全部「变了」。
+ * 抹平这一处之后，指纹只随页面自身内容变 —— 设置页据此保留旧 HTML（连同它
+ * 引用的那份 app），真正做到只下改到的页面。
+ */
+function contentHashOfHtml(file: string): string {
+  try {
+    // 把所有「构建产物引用」抹成常量：app-<hash>.js 之外还有 style-<hash>.css
+    // （它每次构建也会改名），以及以后可能加的其它 `src=/assets/...`。
+    // 只动 src/href 属性里的资源路径，正文里的代码示例不受影响。
+    const html = fs
+      .readFileSync(file, 'utf8')
+      .replace(/\b(src|href)="\/assets\/[^"]*"/g, '$1="/assets/BUILD"')
+    return createHash('sha1').update(html).digest('hex').slice(0, 10)
+  } catch {
+    return ''
+  }
+}
+
+/**
  * 构建期算清单。
  *
  * 暴露成函数，好让 `scripts/test-offline.ts` 在真实产物上验口径
@@ -153,7 +175,13 @@ export function buildManifest(app: App): OfflineManifest {
     if (chunk) pageChunks.add(chunk.replace(/^assets\//, ''))
 
     const section = bucket(sectionOf(page.path))
-    const entry: OfflineEntry = [page.path, chunk, htmlBytes, chunkBytes, hashOf(file)]
+    const entry: OfflineEntry = [
+      page.path,
+      chunk,
+      htmlBytes,
+      chunkBytes,
+      contentHashOfHtml(file),
+    ]
     section.entries.push(entry)
     section.bytes += htmlBytes + chunkBytes
     pageCount++
