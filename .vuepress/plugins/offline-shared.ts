@@ -30,8 +30,15 @@ export const SECTION_LABELS: Record<SectionId, string> = {
   shared: '共享脚本',
 }
 
-/** 一条待缓存资源：`[url, 页面 chunk | null, HTML 字节数, chunk 字节数]` */
-export type OfflineEntry = [string, string | null, number, number]
+/**
+ * 一条待缓存资源：
+ * `[url, 页面 chunk | null, HTML 字节数, chunk 字节数, 内容指纹]`
+ *
+ * 第 5 项是**文件内容的短哈希**（sha1 前 10 位）。设置页把它连同「已缓存」
+ * 一起记在 localStorage：重新部署后只要指纹没变、缓存里也还在，就**一个请求
+ * 都不发**地跳过这一项 —— 否则每次部署都要重下 100MB 才能「更新」。
+ */
+export type OfflineEntry = [string, string | null, number, number, string]
 
 export interface OfflineSection {
   label: string

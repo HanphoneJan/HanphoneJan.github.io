@@ -107,7 +107,7 @@ if (!fs.existsSync(assetsDir)) {
     if (!fs.existsSync(manifestPath)) return
 
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
-      sections: Record<string, {entries: Array<[string, string | null, number, number]>}>
+      sections: Record<string, {entries: Array<[string, string | null, number, number, string]>}>
     }
     const section = manifest.sections.pyodide
     // 本地没跑过 pnpm sync:pyodide 时清单里没有这一块
@@ -138,7 +138,7 @@ if (!fs.existsSync(assetsDir)) {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
       sections: Record<
         string,
-        {entries: Array<[string, string | null, number, number]>}
+        {entries: Array<[string, string | null, number, number, string]>}
       >
     }
     const shared = manifest.sections.shared
@@ -160,6 +160,26 @@ if (!fs.existsSync(assetsDir)) {
       )
       assert.ok(fs.existsSync(path.join(dist, url)), `${url} 不存在于 dist`)
     }
+  })
+
+  check('真实产物：每条都带内容指纹', () => {
+    const manifestPath = path.join(dist, 'offline-manifest.json')
+    if (!fs.existsSync(manifestPath)) return
+
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
+      sections: Record<string, {entries: Array<[string, string | null, number, number, string]>}>
+    }
+    const bad: string[] = []
+    let total = 0
+    for (const section of Object.values(manifest.sections)) {
+      for (const [url, , , , hash] of section.entries) {
+        total++
+        if (!/^[0-9a-f]{10}$/.test(hash ?? '')) bad.push(url)
+      }
+    }
+    // 指纹是设置页判断「这一项变没变」的唯一依据：缺一个，那一项每次部署
+    // 都会被当成新的重下一遍
+    assert.deepEqual(bad.slice(0, 5), [], `${bad.length}/${total} 条没有合法指纹`)
   })
 
   check('真实产物：页面覆盖率 >= 90%', () => {
