@@ -10,14 +10,19 @@ import { execFileSync } from 'node:child_process'
  *
  * 取值的三个层次：
  *
- * 1. CI 里用 `GITHUB_SHA`（精确到 7 位）。`refresh-data.yml` 每天都会重建
- *    并重新部署，但内容没变、SHA 也没变 —— 版本号保持稳定，
- *    读者不会每天被提示「离线包过期」。
- * 2. 本地构建用 `git rev-parse --short HEAD`，同一提交重复构建结果一致。
- * 3. 工作区有未提交改动时，同样的提交其实会产出不同的 chunk 哈希，
- *    所以追加 `-dirty.<时间戳>`，让本地验证「更新」这条路径时能看出区别。
+ * 1. **CI 里只用 `GITHUB_SHA`（7 位），不加任何后缀。** `refresh-data.yml`
+ *    每天都会重建并重新部署，但提交没变 —— 版本号必须保持稳定，否则读者
+ *    每天都会看到「离线包需要更新」。
  *
- * 拿不到 git（比如 CI 的浅克隆里没有 .git）时退化成 `local-<时间戳>`。
+ *    这里**不能**用「工作区脏不脏」来判断：两个部署 workflow 在 build 之前
+ *    都会 `node scripts/fetch-stars.js` / `fetch-projects.js` 重写
+ *    `data/*.json`，检出立即变脏，于是每个 CI 构建都会得到
+ *    `<sha>-dirty.<时间戳>` —— 每天变一次，正是要避免的那种噪音。
+ * 2. 本地构建用 `git rev-parse --short HEAD`，同一提交重复构建结果一致。
+ * 3. 本地工作区有未提交改动时，同样的提交确实会产出不同的 chunk 哈希，
+ *    追加 `-dirty.<时间戳>`，让本地验证「更新」这条路径时能看出区别。
+ *
+ * 拿不到 git（比如浅克隆里没有 .git）时退化成 `local-<时间戳>`。
  */
 function git(args: string[]): string | null {
   try {
@@ -28,9 +33,13 @@ function git(args: string[]): string | null {
 }
 
 function resolveBuildId(): string {
-  const sha = process.env.GITHUB_SHA?.trim().slice(0, 7) || git(['rev-parse', '--short=7', 'HEAD'])
+  const shaEnv = process.env.GITHUB_SHA?.trim().slice(0, 7)
+  if (shaEnv) return shaEnv
+
+  const sha = git(['rev-parse', '--short=7', 'HEAD'])
   if (!sha) return `local-${Date.now().toString(36)}`
-  const dirty = git(['status', '--porcelain']) !== null && Boolean(git(['status', '--porcelain']))
+
+  const dirty = Boolean(git(['status', '--porcelain']))
   return dirty ? `${sha}-dirty.${Date.now().toString(36)}` : sha
 }
 
