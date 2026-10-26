@@ -1,4 +1,5 @@
 import { hopeTheme } from 'vuepress-theme-hope'
+import type { PageInfoType } from 'vuepress-theme-hope'
 import { getDirname, path } from 'vuepress/utils'
 import navbar from './navbar.js'
 import { docsSidebar, trainingSidebar } from './sidebar.js'
@@ -63,9 +64,22 @@ export default hopeTheme({
     '/': false,
   },
 
-  // 每页正文信息：日期、分类、标签、字数、阅读时间。
+  // 每页正文信息：日期、分类、难度、标签、字数、阅读时间。
   // 分类与标签会链接到下面 blog 插件生成的 `/category/<名>/`、`/tag/<名>/`。
-  pageInfo: ['Date', 'Category', 'Tag', 'Word', 'ReadingTime'],
+  //
+  // **`'Difficulty'` 不是 hope 的内置项**：`PageInfo` 对每一项做
+  // `resolveComponent(`${item}Info`)`，所以 `client.ts` 里全局注册的
+  // `DifficultyInfo`（读 `frontmatter.difficulty`）就能顶上去。类型是封闭的
+  // union，只能断言；删掉那个注册的话这一项会**静默消失**（开发时一行
+  // 警告，构建照常成功），`pnpm test:difficulty` 会先把这条契约钉住。
+  pageInfo: [
+    'Date',
+    'Category',
+    'Difficulty',
+    'Tag',
+    'Word',
+    'ReadingTime',
+  ] as unknown as PageInfoType[],
 
   footer: '寒枫的开荒地 · 技术文档与算法训练场',
   displayFooter: true,

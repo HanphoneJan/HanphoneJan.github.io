@@ -3,6 +3,11 @@ import path from 'node:path'
 import { createPage } from '@vuepress/core'
 import type { App } from 'vuepress/core'
 import { legacyPathFor, readFrontMatter, relativeSource } from '../paths'
+import {
+  DIFFICULTY_LABELS,
+  UNKNOWN_DIFFICULTY_LABEL,
+  parseDifficulty,
+} from '../../src/components/training/difficulty'
 
 /**
  * Docusaurus 的「分类页」与「标签页」。
@@ -18,23 +23,21 @@ import { legacyPathFor, readFrontMatter, relativeSource } from '../paths'
 interface Problem {
   title: string
   link: string
-  difficulty: string
+  /** 归一化后的难度标签（入门/简单/中等/较难/困难/未标注） */
+  label: string
   platform: string
   tags: string[]
-  group: string
   dir: string
 }
 
-const DIFF_GROUPS: Array<{ label: string; test: RegExp }> = [
-  { label: '简单', test: /简单|Easy/i },
-  { label: '中等', test: /中等|Medium/i },
-  { label: '困难', test: /困难|Hard/i },
-]
-
-function groupOf(difficulty: string): string {
-  for (const g of DIFF_GROUPS) if (g.test.test(difficulty)) return g.label
-  return '其它'
-}
+/**
+ * 难度分组与展示口径统一走 `src/components/training/difficulty.ts`。
+ *
+ * 早先这里自带一套正则（只有 简单/中等/困难），于是牛客的 **入门 24 篇、
+ * 较难 6 篇全落进「其它」** —— 标签页上会看到一个 30 篇的「其它」小节，
+ * 而它们明明是有难度的。现在五档都认，`其它` 只剩真正没标注的（当前 0 篇）。
+ */
+const DIFF_GROUP_ORDER = [...DIFFICULTY_LABELS, UNKNOWN_DIFFICULTY_LABEL]
 
 const PLATFORM_LABELS: Record<string, string> = {
   leetcode: 'LeetCode',
@@ -66,13 +69,13 @@ function collectProblems(sourceDir: string): Problem[] {
     const link = legacyPathFor(sourceDir, full, fm)
     if (!link) continue
     const dir = rel.includes('/') ? rel.split('/')[0] : 'misc'
+    const difficulty = parseDifficulty(fm.difficulty)
     out.push({
       title: String(fm.title ?? rel),
       link,
-      difficulty: String(fm.difficulty ?? ''),
+      label: difficulty.label,
       platform: String(fm.platform ?? PLATFORM_LABELS[dir] ?? dir),
       tags: Array.isArray(fm.tags) ? (fm.tags as unknown[]).map(String) : [],
-      group: groupOf(String(fm.difficulty ?? '')),
       dir,
     })
   }
@@ -80,9 +83,19 @@ function collectProblems(sourceDir: string): Problem[] {
 }
 
 function linkLine(p: Problem): string {
-  return `- [${p.title}](${p.link}) · ${p.platform}${
-    p.difficulty ? ` · ${p.difficulty}` : ''
-  }`
+  const difficulty =
+    p.label && p.label !== UNKNOWN_DIFFICULTY_LABEL ? ` · ${p.label}` : ''
+  return `- [${p.title}](${p.link}) · ${p.platform}${difficulty}`
+}
+
+/** 一行难度分布，如「入门 24 · 简单 80 · 中等 165 · 较难 6 · 困难 40」。 */
+function difficultySummary(problems: Problem[]): string {
+  const parts: string[] = []
+  for (const label of DIFF_GROUP_ORDER) {
+    const count = problems.filter((p) => p.label === label).length
+    if (count > 0) parts.push(`${label} ${count}`)
+  }
+  return `难度分布：${parts.join(' · ')}`
 }
 
 function tagIndex(problems: Problem[]): string {
@@ -107,9 +120,9 @@ function tagIndex(problems: Problem[]): string {
 
 function tagPage(tag: string, problems: Problem[]): string {
   const lines = [`# 标签：${tag}`, '', `共 ${problems.length} 道题。`, '']
-  for (const g of [...DIFF_GROUPS.map((d) => d.label), '其它']) {
+  for (const g of DIFF_GROUP_ORDER) {
     const list = problems
-      .filter((p) => p.group === g)
+      .filter((p) => p.label === g)
       .sort((a, b) => a.title.localeCompare(b.title, 'zh', { numeric: true }))
     if (list.length === 0) continue
     lines.push(`## ${g}`, '')
@@ -184,6 +197,8 @@ export const catalogsPlugin = (app: App) => ({
       '',
       `共 ${problems.length} 道题。`,
       '',
+      difficultySummary(problems),
+      '',
     ]
     const dirs = [...new Set(problems.map((p) => p.dir))]
     const dirOrder = ['leetcode', 'nowcoder', 'codefun2000', 'shoppee', 'sf', 'misc']
@@ -197,6 +212,7 @@ export const catalogsPlugin = (app: App) => ({
         .filter((p) => p.dir === dir)
         .sort((a, b) => a.title.localeCompare(b.title, 'zh', { numeric: true }))
       lines.push(`## ${PLATFORM_LABELS[dir] ?? dir}（${list.length}）`, '')
+      lines.push(difficultySummary(list), '')
       for (const p of list) lines.push(linkLine(p))
       lines.push('')
     }
