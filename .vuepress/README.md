@@ -368,13 +368,19 @@ oxc: { jsx: { runtime: 'automatic' } }
   （`5 项都已是最新，没有下载（省了 12.9 MB）`，服务端零请求）。
   旧版离线包没有指纹，第一次「更新」会读缓存响应体就地算 sha1 比对
   （`cachedHash`），同样不发请求。
-- **但页面 HTML 与页面 chunk 每次部署都会重下。** 每个页面 chunk 都
-  `import "./app-<hash>.js"`，HTML 的 `<script src>` 也是它，而 app 的哈希
-  **每次构建都变**（`__vite__mapDeps` 里 mermaid 那几十个 chunk 名不稳定）。
-  所以一次部署会刷新 894 个 HTML + 894 个页面 chunk，约 28MB 传输；
-  轨迹（8MB）、题库、Python 运行时（13MB）不受影响。
-  要真正做到「只下变更」，得让 app 入口用稳定文件名（如 `assets/app.js`），
-  那是构建层改动，还没做 —— 顺带会牺牲 10 分钟的 CDN 缓存失效语义。
+- **页面按「内容」判断，外加保留旧外壳。** 每个页面 HTML 都写着
+  `<script src="/assets/app-<hash>.js">`，而 app 与 style 的哈希**每次构建
+  都会变**（`__vite__mapDeps` 里 mermaid 那些 chunk 名不稳定），所以不能拿
+  HTML 字节当内容指纹。`contentHashOfHtml()` 先把 `src|href="/assets/..."` 全部
+  抹成常量再算 sha1 —— 指纹只随页面内容变。
+  缓存一份 HTML 时，把它引用的 `app-<hash>.js`（以及它唯一的静态依赖
+  `rolldown-runtime-*.js`）一起写进 `assets`，并记下「这份 HTML 配哪版外壳、
+  哪个 chunk」。于是**旧 HTML + 旧 app + 旧 chunk** 三者一起留在缓存里，
+  离线照常启动，也就不用为了一个新哈希把 894 页重下一遍。
+  `pruneStaleAssets()` 相应改成保留「当前清单 ∪ 被缓存 HTML 引用的旧外壳与
+  旧 chunk ∪ 它们的依赖」。实测：重建后点「检查」→
+  `121 项都已是最新，没有下载（省了 26.3 MB）`；断网打开缓存页、站内跳转都正常。
+  代价是 `assets` 里会同时躺两三份 app（每份约 2MB），按引用回收。
 - **离线包必须绑构建版本。** HTML 引用的 `assets/<页面>-<hash>.js` 部署一次
   就换名。清单带 `build`（CI 只用 `GITHUB_SHA`，本地用 git HEAD，本地脏工作区
   才加时间戳 —— CI 的检出在 build 前就被 `fetch-stars.js` 写脏了，拿「脏」
