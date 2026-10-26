@@ -69,7 +69,10 @@ const DATA_STRUCTURE_TAGS: Record<string, string[]> = {
   binary_tree: ['二叉树'],
   graph: ['图'],
   hash_table: ['哈希表'],
-  stack_queue_heap_unionfind: ['栈', '队列', '堆', '并查集'],
+  stack: ['栈'],
+  queue: ['队列'],
+  heap: ['堆'],
+  unionfind: ['并查集'],
 }
 
 /**

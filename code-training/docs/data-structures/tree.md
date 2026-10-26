@@ -2,287 +2,177 @@
 title: 树
 category: 数据结构
 difficulty_range: [简单, 困难]
-last_updated: 2026-03-23
+last_updated: 2026-10-26
 ---
 
 # 树
 
-![树的示例图1.webp](https://hanphone.top/gh/HanphoneJan/public-pictures/datastructure/%E6%A0%91%E7%9A%84%E7%A4%BA%E4%BE%8B%E5%9B%BE1.webp)
+## 一句话理解
 
-## 知识点概述
+**树是「不回头的一对多」**：n 个节点、n−1 条边、从根出发任意一个节点恰好有一条到达路径（无环、连通、父子唯一）。现实模型是公司组织架构或文件夹结构：一个人有一个直属上级、可以有多个下属。
 
-树是一种非线性数据结构，由节点和边组成，具有层次关系。
+一句定位话：**树是图的一个特例（无环连通图），而二叉树是树的一个特例**（每个节点至多两个孩子）。面试里 90% 的「树」问的其实是[二叉树](binary_tree.md)——本篇处理一般树自己的部分：概念、N 叉树、前缀树，以及「怎样在并没有两个孩子时把遍历写对」。
 
-### 核心特性
+## 基本术语（一张表讲完，客观题按这张考）
 
-- **层次结构**：节点之间具有父子关系
-- **无环**：任意两个节点间只有一条路径
-- **根节点**：树的起始节点
-- **叶节点**：没有子节点的节点
+| 术语 | 含义 | 备注 |
+|------|------|------|
+| 根 / 叶 | 无父的节点 / 无子的节点 | 一棵树有且仅有一个根 |
+| 父 / 子 / 兄弟 | 直接上级 / 直接下级 / 同父的孩子 | 「兄弟」不看隔壁树 |
+| 深度 | 从**根**到该节点走的边数 | 根深度为 0（有书写 1，看口径） |
+| 高度 | 该节点到**最深叶子**的边数 | 整棵树的高度 = 根的高度 |
+| 层 | 深度相同的节点集合 | 第 1 层只有根（从此起算的口径是 1 系） |
+| 节点的度 | 孩子的个数 | 树的度 = 各节点度的最大值 |
+| 森林 | 互不相交的多棵树 | 删掉根就得到森林 |
 
-### 基本术语
+「深度」「高度」这两个词最容易混：**深度从根向下数，高度从该节点向上数的极限**——整棵树的高度 = 根的深度 + 1（口径不同时等价换算，写代码前先定口径）。
 
-- **节点**：树中的每个元素都可以统称为节点
-- **根节点**：顶层节点或者说没有父节点的节点
-- **父节点**：若一个节点含有子节点，则这个节点称为其子节点的父节点
-- **子节点**：一个节点含有的子树的根节点称为该节点的子节点
-- **兄弟节点**：具有相同父节点的节点互称为兄弟节点
-- **叶子节点**：没有子节点的节点
-- **节点的高度**：该节点到叶子节点的最长路径所包含的边数。叶子的高度为0
-- **节点的深度**：根节点到该节点的路径所包含的边数。根的深度为0
-- **节点的层数**：节点的深度+1
-- **树的高度**：根节点的高度
+## 树的存储（三种表示，各管谁）
 
-## 树的分类
+| 表示法 | 做法 | 用在哪 |
+|-------|------|--------|
+| 父指针法 | 每节点存 parent，根的 parent 为空 | **并查集**（[unionfind.md](unionfind.md) 的 `fa` 数组就是它），向上爬快 |
+| 孩子表示法 | 每节点存孩子的列表 | N 叉树、DFS/BFS 遍历（算法题默认形态） |
+| 左孩子右兄弟 | 用二叉链表把 N 叉树「拍」成二叉树 | 一般树 ↔ 二叉树的互转，理论统一 |
 
-### 1. 二叉树
+面试问「怎么存一棵 N 叉树」，按上面答三行即可；**做题时默认是邻接表形态的「孩子表示法」**。
 
-每个节点最多有两个子节点。
+## N 叉树：遍历怎么改
 
-**类型：**
-- 满二叉树
-- 完全二叉树
-- 二叉搜索树（BST）
-- 平衡二叉树（AVL）
-
-### 2. N 叉树
-
-每个节点可以有多个子节点。
-
-N叉树没有中序遍历的概念，只有前序、后序和层序遍历。
+N 叉树只剩**前序 / 后序**（没有「中」——没有唯一「中间」的孩子），层序照旧：
 
 ```python
-# N叉树节点定义
 class Node:
-    def __init__(self, val=0, children=None):
+    def __init__(self, val=None, children=None):
         self.val = val
-        self.children = children if children else []
+        self.children = children if children is not None else []
 
-# N叉树前序遍历（递归）
-def preorder_recursive(self, root: 'Node') -> List[int]:
-    res = []
-    if root is None:
-        return res
-    res.append(root.val)
+def preorder_n(root):                     # 递归：值，再孩子们
+    if not root:
+        return []
+    res = [root.val]
     for child in root.children:
-        res += self.preorder_recursive(child)
+        res += preorder_n(child)
     return res
 
-# N叉树前序遍历（迭代）
-def preorder_iterative(self, root: 'Node') -> List[int]:
-    if root is None:
+def preorder_n_iter(root):                # 迭代：栈，右→左压栈保证左先出
+    if not root:
         return []
-    res = []
-    stk = [root]
-    while stk:
-        node = stk.pop()
+    stack, res = [root], []
+    while stack:
+        node = stack.pop()
         res.append(node.val)
-        stk.extend(reversed(node.children))  # 反转保证顺序
+        stack.extend(reversed(node.children))
     return res
 ```
 
-### 3. 特殊树
+要点只有一处：**迭代版按「右到左」倒序压栈**——栈是后进先出，想让最左的孩子先被访问，就得让它最后进。
 
-- **Trie（前缀树）**
-- **线段树**
-- **树状数组**
-- **B树 / B+树**（数据库索引）
+## 前缀树 Trie（字典树）：N 叉树的杀手级应用
 
-**B树**：平衡多路搜索树，每个节点最多有m个子节点，适用于磁盘索引场景（减少I/O次数）。
-
-**B+树**：所有叶子节点包含全部关键字及指向数据的指针，且叶子节点按顺序链接（便于范围查询），数据库索引常用。
-
-### 4. 红黑树
-
-一种自平衡二叉查找树，确保最坏情况下的时间复杂度为 O(log n)。
-
-## 遍历方法
-
-### 递归遍历
+**Trie 是一棵「以字符为边」的树**：把一组词按「公共前缀共享路径」存起来，查「有没有以 xx 开头的词」不需要扫全部词，只按字符往下走。
 
 ```python
-# 前序遍历
-def preorder(root):
-    if not root:
-        return
-    visit(root)          # 访问根节点
-    preorder(root.left)  # 遍历左子树
-    preorder(root.right) # 遍历右子树
+class TrieNode:
+    def __init__(self):
+        self.children = {}     # 字符 -> 子节点
+        self.is_word = False   # 走到这里是否是一个完整词的终点
 
-# 中序遍历
-def inorder(root):
-    if not root:
-        return
-    inorder(root.left)   # 遍历左子树
-    visit(root)          # 访问根节点
-    inorder(root.right)  # 遍历右子树
+class Trie:
+    def __init__(self):
+        self.root = TrieNode()
 
-# 后序遍历
-def postorder(root):
-    if not root:
-        return
-    postorder(root.left)  # 遍历左子树
-    postorder(root.right) # 遍历右子树
-    visit(root)           # 访问根节点
+    def insert(self, word: str) -> None:
+        node = self.root
+        for ch in word:
+            if ch not in node.children:
+                node.children[ch] = TrieNode()
+            node = node.children[ch]
+        node.is_word = True
+
+    def search(self, word: str) -> bool:
+        node = self._walk(word)
+        return node is not None and node.is_word     # 前缀存在 ≠ 词存在！
+
+    def startsWith(self, prefix: str) -> bool:
+        return self._walk(prefix) is not None
+
+    def _walk(self, s: str):
+        node = self.root
+        for ch in s:
+            node = node.children.get(ch)
+            if node is None:
+                return None
+        return node
 ```
 
-### 迭代遍历
+复杂度：插入/查询 O(m)（m 为词长），**与词典里有多少词无关**——它比赛在「按前缀检索」场景里稳赢哈希表的地方就在这句话。
 
-使用栈实现非递归遍历。
+**手推一遍** 插入 `["apple"]`、再查 `["app", "apple", "appl"]`：
 
-**核心思想**：调用自己是"递"，return就是"归"。迭代解法本质是在模拟递归，使用Stack来模拟系统栈。
+```text
+root --a-- p --p-- l --e(is_word)
+               └─ p ─┘                  （共享 "app" 路径）
 
-| 遍历方式 | 顺序 | 根节点处理时机 | 能否 "边走边处理" |
-|---------|------|---------------|------------------|
-| 前序 | 根→左→右 | 第一次遇到根节点就处理 | ✅ 完全同步 |
-| 中序 | 左→根→右 | 左子树遍历完，第一次弹栈时处理 | ✅ 基本同步 |
-| 后序 | 左→右→根 | 左右子树都遍历完，第二次遇到根才处理 | ❌ 必须"回头处理" |
-
-```python
-# 前序遍历（迭代）
-def preorderTraversal(self, root: Optional[TreeNode]) -> List[int]:
-    res = []
-    stk = []
-    while root or stk:
-        while root:
-            res.append(root.val)  # 先处理根节点
-            stk.append(root)
-            root = root.left
-        root = stk.pop()
-        root = root.right
-    return res
-
-# 中序遍历（迭代）
-def inorderTraversal(self, root: Optional[TreeNode]) -> List[int]:
-    res = []
-    stk = []
-    while root or stk:
-        while root:
-            stk.append(root)
-            root = root.left
-        root = stk.pop()
-        res.append(root.val)  # 左子树处理完再处理根
-        root = root.right
-    return res
-
-# 后序遍历（迭代）- 使用逆前序的方法
-# 后序：左→右→根，可以看作：根→右→左 的逆序
-# 所以用类似前序的方法，但是先遍历右子树，最后反转结果
-def postorderTraversal(self, root: Optional[TreeNode]) -> List[int]:
-    if not root:
-        return []
-    res = []
-    stk = []
-    while root or stk:
-        while root:
-            res.append(root.val)
-            stk.append(root)
-            root = root.right  # 先遍历右子树
-        root = stk.pop()
-        root = root.left
-    return res[::-1]  # 反转得到结果
+search("app")    走得到 a-p-p，但 is_word=False → False（只是前缀）
+search("apple")  走到底且 is_word=True  → True
+startsWith("appl") 走得到 → True
 ```
 
-### 层序遍历
+适用场景（面试标准答案）：**单词接龙、自动补全、词频统计、拼写检查**；更进阶的「用 Trie 做异或问题」知道名字与定位即可。节点定义里 `children` 用 dict（任意字符）或 26 长度的数组（纯小写字母）是两种等价写法。
 
-使用队列实现 BFS。
+## 树上的通用打法（一般树与二叉树共用）
 
-```python
-from collections import deque
+### DFS vs BFS 怎么选
 
-def levelOrder(self, root: Optional[TreeNode]) -> List[List[int]]:
-    if not root:
-        return []
-    res = []
-    cur = deque([root])
-    while cur:
-        level = []
-        for _ in range(len(cur)):
-            node = cur.popleft()
-            level.append(node.val)
-            if node.left:
-                cur.append(node.left)
-            if node.right:
-                cur.append(node.right)
-        res.append(level)
-    return res
-```
+| 需求 | 用谁 |
+|------|------|
+| 看某一层、最短步数、右视图 | BFS（队列，[patterns/bfs.md](../patterns/bfs.md)） |
+| 到底了才算（路径和、深度、LCA） | DFS（递归/显式栈，[patterns/dfs.md](../patterns/dfs.md)） |
+| 全遍历 | 两者都行，BFS 空间在宽树上更吃亏，DFS 在深树上递归更深 |
 
-## 常见题型
+### 递归三要素（写任何树递归前先在草稿答出这三问）
 
-### 1. 遍历
+1. **终态**：`root is None` 返回什么？（`0`? `False`? `None`? —— 不同题不同，先写死）
+2. **本步做什么**：用「左右子树的返回值」这一件事描述清楚
+3. **返回什么**：上一层拿什么继续算
 
-- 前序遍历
-- 中序遍历
-- 后序遍历
-- 层序遍历
+树题 90% 的 bug 出在第 1 与第 3——「空节点该返 0 还是 -inf」没定、「该返节点还是返值」搞混。
 
-**相关题目：**
-- 二叉树的前序遍历 / 中序遍历 / 后序遍历
-- 二叉树的层序遍历
-- N 叉树的层序遍历
+### 迭代改写（递归深度不可控时）
 
-### 2. 递归
+树上 DFS 的迭代版通式：**显式栈 + 「白灰标记」**（见 [二叉树](binary_tree.md) 的颜色标记法），N 叉树同一套。避免 `RecursionError` 的工程兜底是 `sys.setrecursionlimit(10**5)`，但要明白治标——链状树本质就需要 O(n) 的栈深，迭代是真正的解。
 
-- 树的深度
-- 路径和
-- 翻转树
+## 与各专题的路网
 
-### 3. 构造
+- **[二叉树](binary_tree.md)**：遍历四序、BST、重建、LCA——树的大部分考题
+- **[堆](heap.md)**：完全二叉树 + 数组存储
+- **[并查集](unionfind.md)**：父指针法的极致
+- **[数组的前缀与差分](array.md)**——树状数组/线段树是它的树形升级：O(log n) 的区间和与区间加，知道名字与定位即可
 
-- 从遍历序列构造树
-- 最近公共祖先
+## 易错点总结
 
-## 解题技巧
+- 「深度」「高度」口径含糊：数字对不上多半是根深度算 0 还是 1 没统一
+- N 叉树迭代遍历忘了 `reversed(children)`，孩子顺序全部走反
+- Trie 的 `search` 与 `startsWith` 混写：前者要求走到**且** `is_word` 为真，后者只要走到
+- 边数永远是节点数 − 1，用这个约束可以当校验器快速排错
+- 考虑树的「层」「深度」时忘了空树特判（`if not root: return []`）
 
-### 技巧 1：递归三要素
+## 相关题目
 
-1. 确定递归函数的参数和返回值
-2. 确定终止条件
-3. 确定单层递归的逻辑
-
-### 技巧 2：DFS vs BFS
-
-- **DFS**：深度优先，使用递归或栈
-- **BFS**：广度优先，使用队列，适合层序遍历
-
-### 技巧 3：分治思想
-
-将树分为根节点、左子树、右子树三部分。
+- [589. N 叉树的前序遍历](https://leetcode.cn/problems/n-ary-tree-preorder-traversal/)
+- [208. 实现 Trie (前缀树)](https://leetcode.cn/problems/implement-trie-prefix-tree/)
+- [429. N 叉树的层序遍历](https://leetcode.cn/problems/n-ary-tree-level-order-traversal/)
 
 ## 相关知识点
 
-- [二叉树](binary_tree)
-- [DFS 模式](../patterns/dfs)
-- [BFS 模式](../patterns/bfs)
-- [递归模式](../patterns/recursion)
-
-## 题目列表
-
-**简单：**
-- 二叉树的前序遍历 / 中序遍历 / 后序遍历
-- 二叉树的最大深度
-- 翻转二叉树
-
-**中等：**
-- 验证二叉搜索树
-- 二叉树的最近公共祖先
-- 二叉树的层序遍历
-
-**困难：**
-- 二叉树中的最大路径和
-- 二叉树的序列化与反序列化
-
-## 学习路径
-
-1. 掌握基本遍历方法
-2. 理解递归本质
-3. 练习 DFS 和 BFS
-4. 学习特殊树结构
+- [二叉树](binary_tree.md)——树的大部分考题发生地
+- [并查集](unionfind.md)——父指针表示法的极端用法
+- [深度优先搜索](../patterns/dfs.md)、[广度优先搜索](../patterns/bfs.md)
 
 ---
 
 ## 算法可视化
 
-下面的播放器可以**改输入后重跑**：把数组换成你自己的，
-逐步看每一帧的状态怎么变。n 叉树与二叉树是同一套 DFS，差别只在「有几个孩子」这一项。
+下面的播放器可以**改输入后重跑**：把树的层序数组换成你自己的，逐步看
+前 / 中 / 后序遍历每一步走到哪个节点。递归深度的变化也画在画面里。

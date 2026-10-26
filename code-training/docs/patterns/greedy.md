@@ -458,4 +458,4 @@ def next_permutation(nums):
 - [动态规划](dynamic_programming.md)：贪心不成立时的保底方案。
 - [双指针](two_pointers.md)：分配类贪心的常用实现。
 - [查找算法](search.md)：答案二分常与贪心判定结合。
-- [堆与优先队列](../data-structures/stack_queue_heap_unionfind.md)：会议室、Top K 类贪心。
+- [堆与优先队列](../data-structures/heap.md)：会议室、Top K 类贪心。
