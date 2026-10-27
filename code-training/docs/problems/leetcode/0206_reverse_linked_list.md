@@ -44,68 +44,67 @@ date_reviewed: []
 
 ## 解题思路
 
-### 第一步：理解问题本质
+### 问题本质
 
-反转链表意味着：
-- 原来的头节点变成尾节点
-- 原来的尾节点变成头节点
-- 每个节点的 next 指针指向前一个节点而不是后一个
+反转单链表，即将每个节点的 `next` 指针从指向后一个节点改为指向前一个节点，最终返回反转后的头节点（原链表的尾节点）。
 
-### 第二步：暴力解法 - 使用栈
+### 方法一：栈（重建链表）
 
-遍历链表，将所有节点值存入栈，然后创建新链表。
+**思路**：遍历链表将所有节点值压入栈，再依次出栈新建节点构建反转后的链表。
 
 ```python
-# 先把所有值按顺序压栈，再逐个弹出重建，借栈实现「后进先出」的倒序
-def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
-    stack = []
-    cur = head
-    # 一路走到链表末尾，值依次入栈，最后一个值位于栈顶
-    while cur:
-        stack.append(cur.val)
-        cur = cur.next
-
-    # 哑节点统一「往尾部接新节点」的写法，省掉第一个节点的特判
-    dummy = ListNode(0)
-    cur = dummy
-    # 出栈顺序正好与原链表相反，接出来的新链表就是反转结果
-    while stack:
-        cur.next = ListNode(stack.pop())
-        cur = cur.next
-
-    # dummy 本身不是结果，真正的头是它的下一个节点
-    return dummy.next
+class Solution:
+    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        stack = []
+        cur = head
+        while cur:
+            stack.append(cur.val)
+            cur = cur.next
+        dummy = ListNode(0)
+        cur = dummy
+        while stack:
+            cur.next = ListNode(stack.pop())
+            cur = cur.next
+        return dummy.next
 ```
 
-**为什么不够好**：需要 O(n) 额外空间，且创建了新节点而非原地反转。
+**说明**：并非原地反转指针，而是新建节点，额外使用栈空间。
 
-### 第三步：优化解法 - 递归
+### 方法二：递归
 
-递归到链表末尾，返回时反转指针。
+**思路**：递归到链表尾部，以尾节点作为新头返回。回溯时将 `head.next.next` 指向 `head`，再将 `head.next` 置为 `None` 完成反转。
 
 ```python
-# 递归到链表末尾，再把指针一层层掉头
-def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
-    # 递归出口：空链表或只有一个节点，反转后还是它自己
-    if not head or not head.next:
-        return head
-
-    # 先让子链表彻底反转，拿回新的头节点（原链表的尾节点）
-    new_head = self.reverseList(head.next)
-    # 让原来的后一个节点指回当前节点，这一段的指针就掉头了
-    head.next.next = head
-    # head 现在是新链表的尾节点，必须断开原来的后继，否则首尾相连成环
-    head.next = None
-
-    # 整条链已经反转完，新头节点一直向上传递
-    return new_head
+class Solution:
+    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        if not head or not head.next:
+            return head
+        new_head = self.reverseList(head.next)
+        head.next.next = head
+        head.next = None
+        return new_head
 ```
 
-**分析**：时间 O(n)，空间 O(n)（递归栈）。
+**说明**：代码简洁，时间 O(n)，空间 O(n)。
 
-### 第四步：最优解法 - 迭代（三指针法）
+### 方法三：迭代（双指针，推荐）
 
-使用三个指针：pre、cur、nxt，遍历链表时逐个反转指针方向。
+**思路**：用 `pre` 记录已反转部分的头，`cur` 遍历当前节点。先用 `nxt` 保存 `cur.next`，再将 `cur.next` 指向 `pre`，最后更新 `pre` 和 `cur`。
+
+```python
+class Solution:
+    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        pre = None
+        cur = head
+        while cur:
+            nxt = cur.next
+            cur.next = pre
+            pre = cur
+            cur = nxt
+        return pre
+```
+
+**说明**：原地反转指针，不创建新节点，空间复杂度 O(1)。
 
 ---
 
@@ -206,45 +205,17 @@ cur = None
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 |------|-----------|-----------|------|
-| 栈 | O(n) | O(n) | 需要额外栈空间 |
+| 栈（重建链表） | O(n) | O(n) | 额外栈空间并新建节点 |
 | 递归 | O(n) | O(n) | 递归栈空间 |
-| 迭代（三指针） | O(n) | O(1) | 最优解法 |
+| 迭代（双指针） | O(n) | O(1) | 原地反转，推荐做法 |
 
 ---
 
 ## 易错点总结
 
-### 1. 忘记保存 next 指针
-
-**错误**：
-```python
-# 顺序反了：还没保存后继就改 next，后面整条链再也找不回来
-cur.next = pre   # 断链了！
-cur = cur.next   # 错误！cur.next 已经是 pre 了
-```
-
-**正确**：
-```python
-# 先存后退：nxt 必须在 cur.next 被改写之前拿到
-nxt = cur.next   # 先保存
-cur.next = pre   # 再反转
-cur = nxt        # 移动到保存的 next
-```
-
-### 2. 返回错误的节点
-
-**错误**：`return cur`（cur 最后是 None）
-
-**正确**：`return pre`（pre 指向新的头节点）
-
-### 3. 递归法忘记断开原指针
-
-```python
-# 让后一个节点指回当前节点，就完成了这一段的掉头
-head.next.next = head
-# 当前节点成为新的尾节点，next 必须置空，否则两端互指形成环
-head.next = None  # 必须断开，否则形成环
-```
+- **先保存 `next` 再反转**：迭代时必须先用 `nxt = cur.next` 保存后继，再将 `cur.next` 指向 `pre`，否则会断链。
+- **返回 `pre` 而不是 `cur`**：遍历结束时 `cur` 为 `None`，新的头节点是 `pre`。
+- **递归要断开原指针**：`head.next.next = head` 后必须将 `head.next = None`，否则反转后的链表会形成环。
 
 ---
 

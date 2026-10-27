@@ -43,7 +43,7 @@ date_reviewed: []
 
 ## 解题思路
 
-### 第一步：理解问题本质
+### 问题分析
 
 核心操作：**链表的局部翻转**
 
@@ -51,7 +51,7 @@ date_reviewed: []
 - 组与组之间需要正确连接
 - 最后一组不足 k 个时不翻转
 
-### 第二步：暴力解法思路
+### 方法一：分组反转（指针操作）思路
 
 递归思路：
 1. 先遍历 k 个节点，检查是否够 k 个
@@ -81,7 +81,7 @@ def reverseKGroup(head, k):
     return prev  # 返回新的头部
 ```
 
-### 第三步：迭代解法（更优）
+### 方法二：迭代解法（更优）
 
 递归解法虽然简洁，但对于很长的链表可能导致栈溢出。迭代解法更稳健：
 
@@ -189,43 +189,23 @@ class Solution:
 
 ## 易错点总结
 
-### 1. 虚拟头节点的使用
-
-```python
-dummy = ListNode(0)
-dummy.next = head
-```
-统一处理头节点翻转的情况，避免特殊判断。
-
-### 2. 翻转边界处理
-
-```python
-prev = ktail.next  # 翻转后的尾部要连接到下一组
-```
-注意翻转后当前组的尾部（原来的头）要连接到 `group_next`。
-
-### 3. 指针更新顺序
+### 1. 先保存原头再改指针
 
 ```python
 temp = group_prev.next    # 先保存原来的头
 group_prev.next = ktail   # 再更新连接
 group_prev = temp         # 最后移动 group_prev
 ```
-顺序很重要，先保存再更新。
 
-### 4. 循环终止条件
+顺序颠倒后 `group_prev.next` 已被覆盖，下一组的起点就找不到了。
 
-```python
-while True:
-    # 检查是否还有k个节点
-    for _ in range(k):
-        ktail = ktail.next
-        if not ktail:
-            return dummy.next
-```
-当不足 k 个节点时立即返回，这是终止条件。
+### 2. 不足 k 个要原样返回
 
----
+`for _ in range(k)` 里 `ktail` 变成 `None` 时立即 `return dummy.next`；继续翻转会把最后一组不足 k 个的节点也倒过来。
+
+### 3. 组尾要接 `group_next` 而不是 `None`
+
+翻转后当前组的尾部（原来的头）要连到 `group_next`，接 `None` 会把后面的链表整段丢掉。
 
 ## 扩展思考
 

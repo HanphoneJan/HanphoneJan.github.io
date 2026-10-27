@@ -63,7 +63,7 @@ date_reviewed: []
 
 最小值就是右半段的第一个元素，也就是两段的分界点。
 
-### 第二步：暴力解法
+### 方法一：二分查找（对比）
 
 线性扫描找最小值：
 
@@ -75,7 +75,7 @@ def findMin(nums):
 - 时间复杂度：`O(n)`
 - 空间复杂度：`O(1)`
 
-### 第三步：最优解法 - 二分查找
+### 方法二：二分查找
 
 因为数组部分有序，可以用二分查找定位最小值。
 
@@ -152,31 +152,16 @@ class Solution:
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 |------|-----------|-----------|------|
-| 暴力 | O(n) | O(1) | 线性扫描 |
+| 线性查找 | O(n) | O(1) | 扫描一遍取最小值 |
 | 二分 | O(log n) | O(1) | **最优解** |
 
 ---
 
 ## 易错点总结
 
-### 1. 和 right 比较 vs 和 left 比较
-
-推荐和 `right` 比较，这样右半段有序的特性更明确。如果和 `left` 比较，需要额外处理未旋转的情况。
-
-### 2. 循环条件
-
-使用 `left < right` 而不是 `left <= right`。当 `left == right` 时就是答案，不需要继续循环。
-
-### 3. 边界更新
-
-`nums[mid] > nums[right]` 时，`left = mid + 1`（最小值不可能在 mid）。
-`nums[mid] < nums[right]` 时，`right = mid`（最小值可能在 mid）。
-
-### 4. 元素可重复的情况
-
-这是 [154. 寻找旋转排序数组中的最小值 II](https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array-ii/)，当 `nums[mid] == nums[right]` 时，无法判断，只能 `right -= 1`。
-
----
+1. **`right = mid` 必须配 `while left < right`**：写成 `left <= right` 且 `right = mid`，`left == right` 时会原地死循环。
+2. **`left = mid + 1` 不能写成 `left = mid`**：`nums[mid] > nums[right]` 已排除 mid 是答案，少加 1 同样会死循环。
+3. **比较对象要统一成 `nums[right]`**：一半分支和 `right` 比、另一半和 `left` 比，未旋转的数组会被判成「在右半段」，返回最大值。
 
 ## 扩展思考
 

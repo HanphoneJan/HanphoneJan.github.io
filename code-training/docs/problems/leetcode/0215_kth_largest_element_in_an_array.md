@@ -45,47 +45,79 @@ date_reviewed: []
 
 ## 解题思路
 
-### 第一步：理解问题本质
+### 问题本质
 
-第 k 大元素 = 升序排序后下标为 `n-k` 的元素。
+返回数组中第 `k` 个最大的元素。注意：这里指的是排序后的第 `k` 个最大值（并非第 `k` 个不同的值）。
 
-例如：`[1,2,3,4,5]`，第 2 大 = 4，升序下标为 `5-2=3`。
+### 方法一：排序
 
-### 第二步：暴力解法 - 完全排序
-
-```python
-# 完全排序后按下标取：第 k 大就是升序里倒数第 k 个元素
-def findKthLargest(self, nums: List[int], k: int) -> int:
-    nums.sort()
-    # 用 n-k 而不是 k-1，因为「第 k 大」是从大往小数
-    return nums[len(nums) - k]
-```
-
-**为什么不够好**：时间复杂度 O(n log n)，没有利用"只需要第 k 大"这个信息。
-
-### 第三步：优化解法 - 最小堆
-
-维护一个大小为 k 的最小堆，堆顶就是第 k 大的元素。
+**思路**：对数组排序，取 `nums[n-k]`（升序数组中倒数第 `k` 个元素即第 `k` 大）。
 
 ```python
-# 只保留「目前最大的 k 个数」，堆顶就是这 k 个里最小的那个，即第 k 大
-def findKthLargest(self, nums: List[int], k: int) -> int:
-    min_heap = []
-    for num in nums:
-        # 先入堆，让每个数都有机会参与「前 k 大」的竞争
-        heapq.heappush(min_heap, num)
-        # 超过 k 个就把最小的挤出去，堆永远只有 k 个元素
-        if len(min_heap) > k:
-            heapq.heappop(min_heap)
-    # 剩下的这 k 个元素中，最小的那个正是第 k 大
-    return min_heap[0]
+class Solution:
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        nums.sort()
+        return nums[len(nums) - k]
 ```
 
-**分析**：时间 O(n log k)，空间 O(k)。
+**说明**：实现简单，时间复杂度 O(n log n)，空间复杂度取决于排序算法实现。
 
-### 第四步：最优解法 - 快速选择
+### 方法二：最小堆
 
-快速排序的变种，平均 O(n) 时间找到第 k 大元素。
+**思路**：维护一个大小为 `k` 的最小堆。遍历数组，将元素入堆，若堆大小超过 `k` 则弹出堆顶（当前最小的元素）。遍历结束后，堆顶就是第 `k` 大的元素。
+
+```python
+import heapq
+class Solution:
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        heap = []
+        for num in nums:
+            heapq.heappush(heap, num)
+            if len(heap) > k:
+                heapq.heappop(heap)
+        return heap[0]
+```
+
+**说明**：时间复杂度 O(n log k)，空间复杂度 O(k)，适合 `k` 较小的场景。
+
+### 方法三：快速选择（推荐）
+
+**思路**：基于快速排序的 `partition` 操作，每次划分后可确定某个元素的最终位置。若该位置正好是 `n-k`，则直接返回，否则缩小区间继续查找。平均时间复杂度 O(n)。
+
+```python
+from random import randint
+class Solution:
+    def partition(self, nums: List[int], left: int, right: int) -> int:
+        i = randint(left, right)
+        nums[i], nums[left] = nums[left], nums[i]
+        pivot = nums[left]
+        i, j = left + 1, right
+        while True:
+            while i <= j and nums[i] < pivot:
+                i += 1
+            while i <= j and nums[j] > pivot:
+                j -= 1
+            if i >= j:
+                break
+            nums[i], nums[j] = nums[j], nums[i]
+            i += 1
+            j -= 1
+        nums[left], nums[j] = nums[j], nums[left]
+        return j
+
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        n = len(nums)
+        target_index = n - k
+        left, right = 0, n - 1
+        while True:
+            p = self.partition(nums, left, right)
+            if p == target_index:
+                return nums[p]
+            elif p > target_index:
+                right = p - 1
+            else:
+                left = p + 1
+```
 
 ---
 
@@ -183,9 +215,9 @@ pivot = 5，位置: 4
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 |------|-----------|-----------|------|
-| 完全排序 | O(n log n) | O(1) 或 O(n) | 取决于排序算法 |
-| 最小堆 | O(n log k) | O(k) | 适合 k 较小的情况 |
-| 快速选择 | 平均 O(n)，最坏 O(n²) | O(1) | 最优解法 |
+| 排序 | O(n log n) | O(1) 或 O(n) | 简单直接 |
+| 最小堆 | O(n log k) | O(k) | 适合 k 较小的场景 |
+| 快速选择（推荐） | 平均 O(n)，最坏 O(n²) | O(1) | 平均时间最优 |
 
 **快速选择平均 O(n) 的证明**：
 
@@ -195,29 +227,9 @@ T(n) = n + n/2 + n/4 + ... = 2n = O(n)
 
 ## 易错点总结
 
-### 1. target_index 计算
-
-**错误**：`target_index = k - 1`
-
-**正确**：`target_index = n - k`（第 k 大 = 升序下标 n-k）
-
-### 2. partition 后的判断
-
-```python
-if i == target_index:
-    # pivot 已经落到最终位置，正好是目标下标，直接返回
-    return nums[i]
-if i > target_index:  # 注意是 > 不是 <
-    # pivot 在目标右侧，答案只可能在左半区间
-    right = i - 1
-else:
-    # 反之答案在右半区间，每轮丢掉一半，所以平均是 O(n)
-    left = i + 1
-```
-
-### 3. 随机 pivot 的重要性
-
-如果不随机选择 pivot，在已排序数组上会退化到 O(n²)。
+- **下标计算**：第 `k` 大对应升序数组的下标 `n - k`，而不是 `k - 1`。
+- **区间收缩**：如果 `p == target_index` 直接返回；若 `p > target_index` 则在左区间 `[left, p-1]` 查找；否则在右区间 `[p+1, right]` 查找。
+- **随机 pivot**：为避免在有序数组上退化到 O(n²)，建议随机选取 pivot。
 
 ---
 

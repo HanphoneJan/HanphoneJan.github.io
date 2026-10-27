@@ -71,7 +71,7 @@ date_reviewed: []
 - 用 `directions` 数组表示四个方向
 - 用 `direction_idx` 表示当前方向索引
 
-### 第三步：边界收缩法（优化）
+### 方法一：边界收缩法（优化）
 
 不需要 `visited` 数组，用四个变量记录边界：
 - `top, bottom`：上下边界
@@ -206,43 +206,9 @@ class Solution:
 
 ## 易错点总结
 
-### 1. 边界检查
-
-```python
-if top <= bottom:   # 遍历下边前要检查
-    # 遍历下边
-
-if left <= right:   # 遍历左边前要检查
-    # 遍历左边
-```
-
-对于奇数行/列的矩阵，最后可能只剩一行或一列，避免重复遍历。
-
-### 2. 边界更新顺序
-
-```python
-# 上边遍历后，top 加 1
-# 右边遍历后，right 减 1
-# 下边遍历后，bottom 减 1
-# 左边遍历后，left 加 1
-```
-
-顺序不能错，否则会导致遍历错误。
-
-### 3. 反向遍历的范围
-
-```python
-for col in range(right, left - 1, -1):  # 注意是 left-1，且步长为 -1
-```
-
-### 4. 空矩阵处理
-
-```python
-if not matrix or not matrix[0]:
-    return []
-```
-
----
+1. **下边和左边遍历前要再判一次边界**：`if top <= bottom` / `if left <= right`。奇数行或奇数列的矩阵最后只剩一行（或一列），不判会把它重复输出一遍。
+2. **反向遍历的范围是 `range(right, left - 1, -1)`**：上界少写 `-1` 会重扫 `right` 那一格，下界写成 `left` 则漏掉最左一格。
+3. **空矩阵必须先挡掉**：`if not matrix or not matrix[0]`。直接取 `len(matrix[0])` 在 `matrix = []` 时 `IndexError`，`[[]]` 时不会报错但会进入死循环。
 
 ## 扩展思考
 

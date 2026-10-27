@@ -63,89 +63,79 @@ date_added: 2026-04-09
 
 ## 解题思路
 
-### 第一步：理解问题本质
+### 问题本质
 
-关键约束：
-1. 不能修改数组（不能排序）
-2. 只能使用 O(1) 额外空间（不能用哈希表）
+数组中有 `n + 1` 个元素，值域为 `[1, n]`，且**至少存在一个重复数**，题目假设只有一个重复数。要求在**不修改数组**且**仅用 O(1) 额外空间**的前提下找出这个重复数。
 
-这些约束排除了很多常规解法，需要使用更巧妙的算法。
+### 方法一：暴力枚举（双重循环）
 
-### 第二步：暴力解法
-
-双重循环，逐个比较元素。
+**思路**：枚举所有 `(i,j)` 且 `i < j`，逐一比较 `nums[i] == nums[j]`，找到即返回。
 
 ```python
-def findDuplicate_brute(nums):
-    n = len(nums)
-    for i in range(n):
-        # 只和后面的元素比较，保证每一对只比一次
-        for j in range(i + 1, n):
-            if nums[i] == nums[j]:
-                return nums[i]
-    # 题目保证有重复，走到这里说明输入不合法
-    return -1
+class Solution:
+    def findDuplicate(self, nums: List[int]) -> int:
+        n = len(nums)
+        for i in range(n):
+            for j in range(i + 1, n):
+                if nums[i] == nums[j]:
+                    return nums[i]
+        return -1
 ```
 
-**为什么不够好？**
-- 时间复杂度 O(n^2)，会超时
-- 没有利用数组元素范围的特性
+**说明**：思路最直接，但时间复杂度 O(n²)，对于 `n` 较大时会超时。不满足题目对时间的进阶要求，但能理解问题。
 
-### 第三步：优化解法 - 二分查找
+### 方法二：二分查找（值域二分）
 
-利用抽屉原理：如果重复数是 `target`，那么小于等于 `target` 的数的个数一定大于 `target`。
+**思路**：利用抽屉原理。二分的不是下标，而是**值域 `[1, n]`**。对于每个中间值 `mid`，统计数组中 `<= mid` 的元素个数 `count`：
+- 如果 `count > mid`，说明 `[1, mid]` 区间内的数字个数大于该区间的范围，重复数一定在 `[left, mid]` 内
+- 如果 `count <= mid`，说明重复数在 `[mid+1, right]` 内
+
+不断缩小区间，最终 `left == right` 时即为重复数。
 
 ```python
-def findDuplicate_binary_search(nums):
-    # 二分的是「值」不是下标：n+1 个数、值域 [1, n]
-    left, right = 1, len(nums) - 1
-    
-    # 左闭右闭区间，left == right 时区间里只剩一个候选值
-    while left < right:
-        mid = (left + right) // 2
-        # 统计 <= mid 的个数：正常最多只有 mid 个
-        count = sum(1 for x in nums if x <= mid)
-        
-        if count > mid:
-            # 个数超标，说明重复数落在左半边
-            # 重复数在 [left, mid] 中
-            right = mid
-        else:
-            # 否则重复数在右半边，mid 可以排除
-            # 重复数在 [mid+1, right] 中
-            left = mid + 1
-    
-    # 区间收敛到一个值，它就是重复数
-    return left
+class Solution:
+    def findDuplicate(self, nums: List[int]) -> int:
+        left, right = 1, len(nums) - 1
+        while left < right:
+            mid = (left + right) // 2
+            count = 0
+            for num in nums:
+                if num <= mid:
+                    count += 1
+            if count > mid:
+                right = mid
+            else:
+                left = mid + 1
+        return left
 ```
 
-**复杂度分析：**
-- 时间复杂度 O(n log n) - 二分查找 O(log n)，每次统计 O(n)
-- 空间复杂度 O(1)
+**说明**：时间复杂度 O(n log n)，空间复杂度 O(1)，且**不修改数组**，满足题目约束。
 
-### 第四步：最优解法 - Floyd 判圈算法
+### 方法三：Floyd 判圈算法（龟兔赛跑，推荐）
 
-**核心洞察：**
-将数组看作一个链表：下标 `i` 指向 `nums[i]`。
-- 每个下标有一条出边指向 `nums[i]`
-- 由于存在重复数，有两个下标指向同一个值，形成环的入口
-- 重复数就是环的入口
+**核心洞察**：将数组视作一个隐式链表，令 `next[i] = nums[i]`。由于值域在 `[1, n]` 且有 `n+1` 个元素，必然存在环。数组中重复的数字就是环的入口。
 
-**Floyd 判圈算法（龟兔赛跑）：**
-1. **阶段一**：快慢指针找相遇点
-   - 慢指针每次走 1 步
-   - 快指针每次走 2 步
-   - 有环则必然相遇
+**思路**：
+1. **找相遇点**：用快慢指针，从 `slow = nums[0]`、`fast = nums[nums[0]]`（或都从 0 出发）开始，`slow` 每次走一步，`fast` 每次走两步，直至相遇。
+2. **找环入口**：将其中一个指针重置到起点（索引 0），两者每次各走一步，再次相遇即为环入口，也就是重复的数字。
 
-2. **阶段二**：找环的入口
-   - 一个指针从起点出发，另一个从相遇点出发
-   - 两者每次各走 1 步，再次相遇点即为环入口
+```python
+class Solution:
+    def findDuplicate(self, nums: List[int]) -> int:
+        slow = fast = 0
+        while True:
+            slow = nums[slow]
+            fast = nums[nums[fast]]
+            if slow == fast:
+                break
+        slow = 0
+        while slow != fast:
+            slow = nums[slow]
+            fast = nums[fast]
+        return slow
+```
 
-**数学证明：**
-设环前长度为 `a`，环长度为 `b`。
-- 快慢指针相遇时，快指针比慢指针多走了 `n` 圈：`2d = d + nb`
-- 因此 `d = nb`，即慢指针走了 `nb` 步
-- 从起点再走 `a` 步到环入口，从相遇点再走 `a` 步也到环入口
+**说明**：时间复杂度 O(n)，空间复杂度 O(1)，是本题最优解法。思路与 [142. 环形链表 II](https://leetcode.cn/problems/linked-list-cycle-ii/) 完全一致。
 
 ---
 
@@ -274,54 +264,17 @@ head = 0, slow = 4
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 |------|-----------|-----------|------|
-| 暴力 | O(n^2) | O(1) | 双重循环，超时 |
-| 排序 | O(n log n) | O(1) 或 O(n) | 修改数组，不符合要求 |
-| 哈希表 | O(n) | O(n) | 空间复杂度不符合要求 |
-| 二分查找 | O(n log n) | O(1) | 满足约束，但不是最优 |
-| Floyd 判圈 | O(n) | O(1) | 最优解法 |
+| 暴力枚举（双重循环） | O(n²) | O(1) | 思路简单，但会超时 |
+| 二分查找（值域） | O(n log n) | O(1) | 不修改数组，满足题目约束 |
+| Floyd 判圈算法（推荐） | O(n) | O(1) | 时间最优，且符合所有约束 |
 
 ---
 
 ## 易错点总结
 
-### 1. 起点选择
-
-**正确做法：** 选择 0 作为起点。
-```python
-# 0 只是链表的入口，元素值域从 1 开始，所以 0 不会在环上
-slow = fast = 0
-```
-
-**原因：** 数组元素范围是 `[1, n]`，0 一定不在环上，适合作为起点。
-
-### 2. 快指针的移动
-
-**正确做法：**
-```python
-# 连取两次值：先得到下一个节点，再得到再下一个，才是走两步
-fast = nums[nums[fast]]  # 走 2 步
-```
-
-**错误做法：**
-```python
-# 错在把「下标加 1」当成了「沿链表走一步」
-fast = nums[fast + 1]    # 错误！不是简单的加 1
-```
-
-### 3. 阶段二的指针设置
-
-**正确做法：**
-```python
-# 一个指针回到起点，另一个留在相遇点，两者速度相同
-head = 0  # 从起点出发
-while slow != head:  # slow 从相遇点出发
-    slow = nums[slow]
-    head = nums[head]
-```
-
-### 4. 为什么一定能找到重复数？
-
-根据抽屉原理：n+1 个物品放入 n 个抽屉，至少有一个抽屉有 2 个物品。
+- **起点选择**：用 0 作为起点是合适的。因为数组值域是 `[1, n]`，`nums[0]` 也可能是环的一部分，但用 Floyd 算法时从 `0` 出发仍能正确找到环入口。
+- **快指针走两步**：`fast = nums[nums[fast]]` 才是沿着「下标 -> 值」这条隐式链表走两步，不能写成 `nums[fast + 1]`。
+- **阶段二要重置**：相遇后将 `slow` 重置为 0，再让两者每次各走一步，直到再次相遇即为环入口（重复数）。
 
 ---
 
