@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 ### 大模型云端部署
 ```dockerfile

@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 # Win11笔记本安装Debian13
 

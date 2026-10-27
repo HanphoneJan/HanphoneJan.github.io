@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 非常好的入门教程：[datawhalechina/happy-llm： 📚 从零开始的大语言模型原理与实践教程](https://github.com/datawhalechina/happy-llm)
 ## 前言

@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 [SQL语法基础知识总结 | JavaGuide](https://javaguide.cn/database/sql/sql-syntax-summary.html)
 ## SQL语法

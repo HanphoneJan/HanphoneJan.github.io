@@ -1,5 +1,4 @@
 ---
-_synced: true
 star: 1
 ---
 LLM大模型，最重要的就是了解Transformer！！！论文：[Attention Is All You Need](https://arxiv.org/pdf/1706.03762)
@@ -175,5 +174,218 @@ Add操作，将某一层的输入与该层经过处理后的输出进行逐元�
 ## 层归一化 (Norm)
 
 该操作对单个样本的所有特征进行归一化，使其均值为0，方差为1。这解决了模型训练过程中的**内部协变量偏移 (Internal Covariate Shift)** 问题，使每一层的输入分布保持稳定，从而加速模型收敛并提高训练的稳定性。
+
+## 面试补充：一个大模型完成一次训练的大概过程
+
+一句话版本：**把海量文本切成 token，让模型反复做“根据前文预测下一个 token”，用交叉熵算误差，反向传播求梯度，优化器更新参数；预训练之后再用指令数据和偏好数据做 SFT 与对齐。**
+
+面试里如果只答“前向、反向、更新”会被认为太薄。完整的回答要覆盖**数据、目标函数、单步训练、分布式、后训练、评测**六件事。
+
+### 1. 定目标与准备数据（决定模型上限）
+
+主流大模型是 decoder-only 的自回归语言模型，训练目标只有一个：
+
+$$
+\mathcal{L} = -\sum_{t=1}^{T} \log p_\theta(x_t \mid x_1, \dots, x_{t-1})
+$$
+
+也就是把同一段文本错开一位，前 $t-1$ 个 token 作为输入，第 $t$ 个 token 作为标签，所有位置同时算交叉熵。
+
+数据侧通常要做：
+
+- **采集与抽取**：网页、书籍、代码、论文、数学题、多语种语料，从 HTML/PDF 里抽正文。
+- **质量过滤**：语言识别、困惑度/分类器打分、规则过滤（广告、乱码、重复模板）、PII 与毒性处理。
+- **去重**：文档级 MinHash/SimHash，段落级精确去重。重复数据会让模型死记硬背，也会放大评测集泄漏。
+- **配比**：代码、数学、中文、英文按比例混合，小模型阶段还会做课程学习（先短后长、先易后难）。
+- **训练分词器**：在语料上跑 BPE，得到词表和 merge 规则；词表常见 3 万～15 万。
+- **Packing**：把多篇文档拼成固定长度（如 4K/8K/32K）的序列，减少 padding；文档边界要放 EOS，必要时重置 attention 或 position id。
+- **去污染**：从训练集里剔除与评测集重叠的题目，否则 benchmark 数字没有意义。
+
+### 2. 模型与训练配置
+
+- **结构**：$L$ 层 decoder block，每层是 RMSNorm → 多头自注意力（现在常见 GQA）→ 残差 → RMSNorm → SwiGLU FFN → 残差。位置信息用 RoPE，输出层与 embedding 可共享权重。
+- **规模**：层数、隐藏维度、头数、FFN 中间维度、词表大小共同决定参数量。7B 模型大约 32 层、hidden 4096。
+- **算力估算**：参数量 $N$、训练 token 数 $D$，一次训练的总计算量约为 $6ND$（前向 $2ND$，反向 $4ND$）。这是估算 GPU 时长和并行方案的第一步。
+- **显存估算**：混合精度 + Adam 下，每个参数大约要占 16 字节（bf16 权重 2 + bf16 梯度 2 + fp32 主权重 4 + 一阶动量 4 + 二阶动量 4），7B 模型光参数、梯度和优化器状态就约 112GB，还没算激活值。所以必须上 ZeRO/FSDP、张量并行或流水并行。
+- **初始化**：小方差正态初始化（如 0.02），残差分支做缩放，避免深层网络一开始就爆炸或消失。
+
+### 3. 预训练：一个 step 的微观流程
+
+1. **取 batch**：从数据管线取一个 batch 的 token（例如一次 4M token），按序列长度 pack 好，构造 `input_ids`、`labels`、`attention_mask`；padding 位置 label 设为 `-100`，不参与 loss。
+2. **前向**：embedding → $L$ 层 Transformer → final norm → lm_head，得到每个位置在词表上的 logits。
+3. **算 loss**：logits 与右移一位的 labels 做交叉熵，对非 padding token 求平均；有的模型再加一个 z-loss 约束 logits 的数值范围。
+4. **反向**：从 loss 开始反向传播，得到每个参数的梯度。中间激活值在前向时已经存下，所以显存占用远大于推理。
+5. **梯度同步**：数据并行下对所有 GPU 的梯度做 all-reduce（或 reduce-scatter）；张量并行、流水并行还会在不同维度通信。
+6. **梯度裁剪**：按全局范数裁剪（常见阈值 1.0），防止个别 batch 把参数带飞。
+7. **优化器更新**：AdamW，$\beta_1=0.9$、$\beta_2=0.95$、weight decay 约 0.1；学习率先 warmup（几千步）再 cosine 衰减到峰值的 10% 左右。
+8. **清零梯度，记录日志**：loss、grad norm、学习率、吞吐（tokens/s）、GPU 利用率；定期跑验证集 loss 和下游评测。
+9. **保存 checkpoint**：按固定步数保存分片权重和优化器状态，训练中断时能从最近一次恢复。
+
+工程上还会用 bf16/fp8 混合精度、梯度累积（小显存模拟大 batch）、激活重计算（用计算换显存）、FlashAttention（减少 attention 的显存读写）、通信与计算重叠。
+
+**并行策略**通常是组合使用：
+
+| 策略 | 切分对象 | 解决什么问题 |
+|---|---|---|
+| 数据并行 DP / ZeRO | batch 与优化器状态 | 吞吐不够、单卡放不下状态 |
+| 张量并行 TP | 单层内的矩阵 | 单层参数太大 |
+| 流水并行 PP | 按层切分 | 模型太深，单卡放不下整模型 |
+| 序列并行 SP | 序列维度 | 长序列激活值太大 |
+
+### 4. 监督微调（SFT）
+
+预训练完的模型只会“续写”，不会“听指令”。SFT 用人工/合成的高质量指令-回答对继续训练：
+
+- 按 chat template 拼成 `system + user + assistant`，**只对 assistant 部分算 loss**，prompt 部分 label 置 `-100`。
+- 学习率比预训练低 1～2 个数量级，通常只训 1～3 个 epoch，防止过拟合和灾难性遗忘。
+- 数据质量比数量重要；多轮对话要把历史轮次一起拼进去，并正确设置 mask。
+- 资源不够时用 LoRA/QLoRA：冻结原权重，只训练低秩旁路矩阵。
+
+### 5. 对齐（RLHF / DPO）
+
+SFT 让模型“会答”，对齐让模型“答得更符合人类偏好、更安全”：
+
+- **RLHF**：先用偏好对比数据训练奖励模型（Reward Model），再用 PPO 优化策略模型；同时用 KL 惩罚约束新模型不要偏离 SFT 模型太远，防止 reward hacking。
+- **DPO**：跳过奖励模型，直接用偏好对构造损失，让模型提高 chosen、降低 rejected 的概率，工程上更简单，是目前常见的替代方案。
+- 推理模型还会用可验证奖励（答案对错、单元测试通过）做 RL，例如 GRPO 一类方法。
+
+### 6. 评测、压缩与上线
+
+- 评测：困惑度、MMLU/GSM8K/HumanEval 等 benchmark、人工盲评、安全红队；注意去污染和评测集饱和。
+- 压缩：量化（INT8/FP8/INT4）、蒸馏、剪枝，把模型塞进目标显存并降低延迟。
+- 上线：转成推理引擎（vLLM、TensorRT-LLM、SGLang 等），配置并发、批处理、KV cache 和限流。
+
+### 7. 训练常见故障（面试加分）
+
+- **loss spike / NaN**：先回滚到上一个 checkpoint，降低学习率或提高 warmup，检查脏数据、梯度裁剪、attention logits 溢出；可加 z-loss、QK norm。
+- **loss 不降**：学习率太大、数据管线 label 错位、mask 写反、初始化有问题。
+- **过拟合**：验证 loss 回升，减少 epoch、加 dropout（大模型预训练通常不用）、扩充数据。
+- **灾难性遗忘**：SFT 学习率过高或数据分布太窄，混入一部分预训练数据、降低学习率。
+
+## 面试补充：从用户输入到完成一次推理输出
+
+先区分两个“一次”：
+
+- **一次前向**：prompt 进模型，输出下一个 token 的概率分布；
+- **一次完整推理**：从用户输入到生成完整回答，是 **1 次 prefill + N 次 decode**。
+
+面试一般问后者。下面按请求的生命周期拆开。
+
+### 1. 请求进入：模板、分词、截断
+
+1. 服务端收到请求，做鉴权、限流、排队。
+2. 把 `system`、历史对话、当前 `user` 输入按模型的 **chat template** 拼成一个字符串，插入 `<|im_start|>`、`<|im_end|>` 等特殊 token。
+3. 用与训练时完全一致的分词器做 BPE 编码，得到 `input_ids`（形状 `[B, L]`）和 `attention_mask`。
+4. 检查上下文长度：超过窗口就截断历史、摘要或拒绝请求；同时预留 `max_new_tokens` 的空间。
+5. 多模态模型还会把图片/音频编码成 token 或特征，拼进序列。
+
+> 分词器、chat template、特殊 token 任何一处和训练不一致，模型表现都会明显变差，这是线上问题的高发区。
+
+### 2. Prefill：把整段 prompt 一次算完
+
+prefill 阶段所有 prompt token **并行**进入网络：
+
+1. **Embedding**：`input_ids` 查表得到 `[B, L, d]` 的向量；经典 Transformer 在这里加正弦位置编码，现代模型（Llama 系）改在 attention 里对 Q/K 施加 RoPE。
+2. **逐层计算**（共 $L_{\text{layer}}$ 层）：
+   - RMSNorm → 线性层得到 Q、K、V；
+   - Q、K 做 RoPE，按头拆开；
+   - 计算 $QK^\top / \sqrt{d_k}$，加上**因果 mask**（位置 $t$ 只能看 $\le t$），softmax 后对 V 加权求和；
+   - 输出投影 + 残差；
+   - RMSNorm → SwiGLU FFN（gate/up/down 三个矩阵）→ 残差。
+   - 每一层的 K、V 写入 **KV cache**，后面 decode 直接复用。
+3. **输出头**：最后一层过 final norm，再乘 lm_head 得到 `[B, L, V]` 的 logits。生成只需要最后一个位置的 logits，取 `logits[:, -1, :]`。
+4. **采样第一个 token**：见下一节。
+
+Prefill 的计算量约 $O(L^2 d + L d^2)$，矩阵乘可以吃满 GPU，通常是 **compute-bound**；它决定了首 token 延迟（TTFT）。
+
+### 3. 从 logits 到 token：解码策略
+
+拿到 logits 后并不是直接取 argmax，而是一套采样流程：
+
+1. 除以温度 $T$：$T<1$ 分布更尖锐、更确定；$T>1$ 更随机；$T \to 0$ 等价于贪心。
+2. 可选的 top-k：只保留概率最高的 k 个 token。
+3. 可选的 top-p（nucleus）：按概率从高到低累加，保留累计概率达到 p 的最小集合。
+4. 重复惩罚 / 频率惩罚：降低已经出现过的 token 的分数，缓解复读。
+5. 对剩余 logits 做 softmax，按概率多项式采样；贪心解码则直接取最大。
+
+温度、top-k、top-p 是**推理参数**，不改变模型权重，但会明显影响输出的多样性和稳定性。
+
+### 4. Decode：自回归地一个 token 一个 token 生成
+
+生成第一个 token 后，把它追加到序列末尾，进入循环：
+
+```text
+while 未遇到停止条件:
+    取最后一个 token 的 id
+    embedding -> 只算这一个位置的 Q、K、V
+    新 K、V 追加到对应层的 KV cache
+    用当前 Q 和 cache 里所有历史 K、V 做 attention
+    -> FFN -> lm_head -> 最后一个位置的 logits
+    采样得到 next_token
+    追加到输出序列
+```
+
+关键点：
+
+- **每轮只前向一个新 token**，历史 token 的 K、V 不再重算，这就是 KV cache 的价值；否则每生成一个 token 都要把整段历史重新跑一遍，复杂度会高一个数量级。
+- 训练时用因果 mask 保证并行算所有位置时不泄漏未来；推理时每轮只有一个 query，它天然只能看到历史，所以不再需要完整的下三角 mask。
+- 单 token 的 decode 计算量约 $O(L d + d^2)$，但要把全部权重和 KV cache 从显存读一遍，通常是 **memory-bandwidth bound**，GPU 算力用不满。它决定每个输出 token 的间隔（TPOT/ITL）。
+
+**KV cache 占多少显存**：
+
+$$
+\text{bytes} = 2 \times n_{\text{layer}} \times n_{\text{kv\_head}} \times d_{\text{head}} \times L \times B \times \text{dtype\_bytes}
+$$
+
+以 Llama-3-8B 为例：32 层、8 个 KV 头（GQA）、每头 128 维、8K 上下文、fp16，单条序列约
+
+$$
+2 \times 32 \times 8 \times 128 \times 8192 \times 2 \approx 1.07\text{GB}
+$$
+
+batch 一大、上下文一长，KV cache 就会超过模型权重本身。GQA/MQA、PagedAttention、前缀缓存、KV 量化都是为了压这块。
+
+### 5. 停止与输出
+
+满足以下任一条件就停止：
+
+- 采样到 EOS / `<|im_end|>`；
+- 达到 `max_new_tokens`；
+- 命中用户指定的 stop 字符串；
+- 请求超时或被取消。
+
+然后把 token 序列 detokenize 回文本。字节级 BPE 可能把一个汉字拆在多个 token 里，流式输出时要缓存不完整的 UTF-8 字节，否则会出现乱码。最后通过 SSE/WebSocket 把增量结果推给前端。
+
+### 6. 推理引擎做了哪些优化
+
+- **Continuous batching**：不同请求的动态拼接，一个请求结束后立刻补新请求，而不是等整个 batch 跑完。
+- **PagedAttention**：把 KV cache 切成固定大小的 block，按需分配，减少显存碎片。
+- **Prefix caching**：相同 system prompt 或长文档前缀的 KV 直接复用。
+- **投机解码（Speculative Decoding）**：小模型先草拟多个 token，大模型一次并行验证，在不改变分布的前提下降低 decode 延迟。
+- **量化**：权重/激活用 FP8、INT8、INT4，减少显存带宽压力；KV cache 也可以量化。
+- **张量并行**：大模型单卡放不下时，把 attention/FFN 的矩阵切到多卡。
+
+### 7. 训练与推理的对比（高频追问）
+
+| 维度 | 训练 | 推理 |
+|---|---|---|
+| 目标 | 最小化下一个 token 的交叉熵 | 按概率分布生成 token |
+| 并行方式 | 整条序列所有位置并行 | prefill 并行，decode 自回归串行 |
+| 是否存 KV | 不存，一次前向算完 | 必须存，避免重复计算历史 |
+| 显存大头 | 参数、梯度、优化器状态、激活值 | 参数、KV cache |
+| 计算特征 | compute-bound，还要做梯度通信 | prefill 偏 compute，decode 偏 memory-bandwidth |
+| 精度 | bf16/fp8 + fp32 主权重 | fp16/bf16/int8/int4 |
+| batch | 大而固定 | continuous batching，动态变化 |
+| 关键指标 | loss、吞吐、MFU | TTFT、TPOT、吞吐、显存占用 |
+
+### 8. 这一题常见的追问
+
+- **为什么训练能并行、推理却要一个一个生成？** 训练时标签已知，因果 mask 保证每个位置只看左边，所以整条序列可以一次算完；推理时第 $t$ 个 token 依赖第 $t-1$ 个 token 的采样结果，天然串行。KV cache 让串行的每一步只算新 token，而不是重算全部历史。
+- **为什么 decode 阶段 GPU 利用率低？** 每生成一个 token 只做一次很“瘦”的矩阵向量乘，计算量小但要读全部权重和 KV，瓶颈在显存带宽而不是算力；batch 增大可以摊薄权重读取。
+- **为什么长上下文又贵又慢？** prefill 的 attention 是 $O(L^2)$，KV cache 随 $L$ 线性增长；训练长文本还受数据和显存限制。长度翻倍，attention 计算约翻四倍。
+- **SFT 为什么只对 answer 算 loss？** 让模型学习“给定指令如何回答”，而不是学习复述用户的问题；prompt 部分置 `-100` 即可。
+- **RLHF 为什么要加 KL 惩罚？** 防止策略模型为了刷奖励模型的分数而输出退化、重复或投机的文本（reward hacking），同时避免偏离 SFT 模型太远导致能力遗忘。
+- **温度设为 0 就完全确定吗？** 贪心解码在单机上确定，但浮点非确定性、batch 组合、并行归约顺序仍可能让结果有细微差异；工程上通常不承诺严格可复现。
+- **模型“幻觉”是训练还是推理的问题？** 两者都有：预训练数据有噪声、目标函数鼓励流畅而非真实；SFT/RLHF 可能奖励“自信的回答”；解码时高温采样也会放大编造。常见缓解是 RAG、工具调用、约束解码和更好的偏好数据。
 
 

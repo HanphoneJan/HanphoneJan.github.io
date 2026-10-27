@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 Hanphone 2024.9
 

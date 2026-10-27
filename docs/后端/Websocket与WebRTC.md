@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 # WebSocket
 

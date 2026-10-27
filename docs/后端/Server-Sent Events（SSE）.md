@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 内容主要参考自：[SSE协议深度解析：被低估的HTTP服务器推送标准 - 若-飞 - 博客园](https://www.cnblogs.com/zhanchenjin/p/19449682)
 

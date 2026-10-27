@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 
 ## 一、为什么需要 ClickHouse？

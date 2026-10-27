@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 [官方教程](https://python.langchain.com/docs/tutorials/)
 [LangChain home | LangChain Reference](https://reference.langchain.com/python/langchain/langchain/)
