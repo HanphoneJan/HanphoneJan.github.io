@@ -184,23 +184,9 @@ class LRUCache:
 
 ## 易错点总结
 
-### 1. 节点移动顺序
-
-`get` 命中后一定要把节点移到头部，表示最近使用。
-
-### 2. 淘汰时的删除
-
-淘汰尾部节点时，既要删除链表节点，也要从哈希表中删除对应的 key。
-
-### 3. __slots__ 的作用
-
-`__slots__` 可以限制实例属性，提高访问速度并减少内存占用。在 LRU Cache 这种高频操作中非常有用。
-
-### 4. 哨兵节点的初始化
-
-`dummy.prev = dummy; dummy.next = dummy` 构成自循环，这样 remove 和 push_front 操作时不需要判断 null。
-
----
+1. **`get` 命中后必须把节点移到头部**：只在 `put` 时更新顺序，读过的 key 会被当成最久未用，下一次淘汰就把它删掉。
+2. **淘汰尾节点时链表和哈希表都要删**：只从链表摘掉节点，`key_to_node` 里还留着这个 key，之后 `get` 会拿到一个已不在链表里的节点。
+3. **哨兵要自循环成环**：`dummy.prev = dummy; dummy.next = dummy`。缺这一步，空缓存时 `remove(dummy.prev)` 直接 `AttributeError`。
 
 ## 扩展思考
 

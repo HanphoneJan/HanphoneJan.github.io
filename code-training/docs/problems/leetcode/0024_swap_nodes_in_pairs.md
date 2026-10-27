@@ -48,55 +48,70 @@ date_reviewed: []
 
 观察规律：节点 1 和 2 互换，节点 3 和 4 互换，每对之间的关系相同。因此，关键在于**如何正确地交换一对节点，同时维护好前后连接**。
 
-### 第二步：暴力解法（修改值）
+### 方法一：交换节点值（不符合题意，仅作对比）
 
-如果允许修改节点值（本题不允许），可以直接遍历，每次交换相邻两个节点的 val：
+题目要求**不能修改节点值，只能交换节点本身**。如果允许修改值，可以直接交换相邻节点的 `val`：
 
 ```python
-# 注意：本题不允许此做法，仅作对比说明
 class Solution:
     def swapPairs(self, head):
         cur = head
         while cur and cur.next:
-            cur.val, cur.next.val = cur.next.val, cur.val  # 禁止！
+            cur.val, cur.next.val = cur.next.val, cur.val
             cur = cur.next.next
+        return head
 ```
 
-**为什么不符合题意：** 题目明确要求只能交换节点本身（修改指针），不能修改节点的值。这是因为在实际场景中，节点可能存储的是复杂对象的引用，值交换会带来语义问题。
+该方法虽然简短，但违反题意，不能作为本题解法。
 
-### 第三步：优化解法（递归）
+### 方法二：递归（交换节点指针）
 
-**递归的直觉：** `swapPairs(head)` 的结果，是将 `head` 和 `head.next` 交换，然后 `head.next` 接上 `swapPairs(head.next.next)` 的结果。
+**思路**：对于当前头节点 `head` 和 `head.next`，先将 `head.next` 设为 `swapPairs(head.next.next)` 的返回值，再将 `head` 接到 `head.next` 后面，最后返回原来的 `head.next`（新的头节点）。
 
 ```python
 class Solution:
     def swapPairs(self, head):
-        # 递归终止：不足两个节点，无法交换
         if not head or not head.next:
             return head
-        new_head = head.next          # 新的头是第二个节点
-        head.next = self.swapPairs(new_head.next)  # 第一个节点接上后续交换结果
-        new_head.next = head          # 第二个节点指向第一个节点
-        return new_head               # 返回新头
+        new_head = head.next
+        head.next = self.swapPairs(new_head.next)
+        new_head.next = head
+        return new_head
 ```
 
-**特点：**
-- 时间复杂度 O(n)，空间复杂度 O(n)（递归栈深度 n/2）
-- 代码简洁优雅，但有栈开销
+**说明**：递归能清晰地表达「每两两一组」的分治思路，代码简洁。
 
-### 第四步：最优解法（迭代）
+### 方法三：迭代（交换节点指针，推荐）
 
-**思路：** 用哑节点作为虚拟头，`cur` 指针指向每对节点的"前一个节点"。每次循环处理 `cur` 后面的一对节点（`first` 和 `second`），完成交换后让 `cur` 跳过这一对，指向下一对的前驱。
+**思路**：用哑节点 `dummy`，用指针 `cur` 指向每对节点的前驱。对于每一对 `(first, second)`，通过调整 `cur.next`、`first.next`、`second.next` 三个指针完成交换，再将 `cur` 移到交换后的这对末尾 `first`。
 
-**交换一对节点的三步操作（以 `cur -> first -> second -> 后续` 为例）：**
+**交换一对的三步操作（`cur -> first -> second -> next`）：**
+1. `cur.next = second`：让前驱指向第二个节点
+2. `first.next = second.next`：让第一个节点指向原先第二个节点之后的链表
+3. `second.next = first`：让第二个节点指向第一个节点
 
-1. `cur.next = second`：让 `cur` 直接指向 `second`（second 成为这对的新头）
-2. `first.next = second.next`：让 `first` 指向 `second` 原来的下一个节点
-3. `second.next = first`：让 `second` 指向 `first`（完成交换）
+操作后结构变为 `cur -> second -> first -> next`，`cur` 移动到 `first`，继续处理下一对。
 
-操作完成后，结构变为：`cur -> second -> first -> 后续`，然后 `cur = first`（first 是这对的末尾，也是下一对的前驱）。
+```python
+class Solution:
+    def swapPairs(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        dummy = ListNode(0, head)
+        cur = dummy
 
-**为什么用哑节点：** 链表头节点也需要参与交换，如果没有哑节点，处理头节点时需要特殊逻辑。哑节点让所有对的处理逻辑统一。
+        while cur.next and cur.next.next:
+            first = cur.next
+            second = cur.next.next
+
+            cur.next = second
+            first.next = second.next
+            second.next = first
+
+            cur = first
+
+        return dummy.next
+```
+
+**说明**：迭代版不依赖递归栈，且能直接复用节点，符合题目「只能交换节点本身」的要求。
 
 ---
 
@@ -187,20 +202,17 @@ cur = first = 节点3
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 |------|-----------|-----------|------|
-| 修改值（不符合题意） | O(n) | O(1) | 违反题目约束，不可用 |
-| 递归 | O(n) | O(n) | 递归栈深度为 n/2，每次递归处理一对节点 |
-| 迭代（最优） | O(n) | O(1) | 原地修改指针，无额外空间开销 |
+| 交换节点值（不符合题意） | O(n) | O(1) | 仅作对比，题目不允许 |
+| 递归（交换指针） | O(n) | O(n) | 递归栈深度为 n/2 |
+| 迭代（交换指针，推荐） | O(n) | O(1) | 原地修改指针，无额外空间开销 |
 
 ---
 
 ## 易错点总结
 
-- **三步指针操作的顺序不能颠倒：** 必须先 `cur.next = second`，再 `first.next = second.next`，最后 `second.next = first`。如果先执行 `second.next = first`，则 `second.next` 已经变成 `first`，`second.next`（即原来 `second` 后面的节点）就丢失了。正确做法是先保存好 `second.next`，或按上述顺序操作。
-- **cur 移动到 `first` 而非 `second`：** 交换后 `second -> first -> 下一对`，`first` 是这对的末尾，也是下一对两个节点的前驱，所以 `cur = first`，而不是 `cur = second`。
-- **哑节点忘记传入 head：** `ListNode(0, head)` 让哑节点的 `next` 直接指向 `head`，省去了 `dummy.next = head` 这一步，不要漏掉初始连接。
-- **链表节点数为奇数时：** 最后一个节点无法配对，循环条件 `cur.next and cur.next.next` 会在 `cur.next.next` 为 `None` 时退出，最后那个节点保持原位，不需要额外处理。
-
----
+- **三步顺序不能颠倒**：先执行 `second.next = first` 会覆盖 `second.next`，后半截链表直接丢失。
+- **`cur` 要移到 `first`**：交换后这对是 `second -> first`，`first` 才是下一对的前驱；移到 `second` 会让第二组开始就接错。
+- **循环条件 `cur.next and cur.next.next`**：只判 `cur.next` 时，奇数长度会在最后一对越界。
 
 ## 扩展思考
 

@@ -46,39 +46,32 @@ date_added: 2026-03-25
 
 ## 解题思路
 
-### 第一步：理解问题本质
+### 问题本质
 
-这是一个**二分查找的变体**问题。普通的二分查找找到一个目标值就返回，但这里需要找到目标值的范围（第一个和最后一个位置）。
+这是二分查找的变体。普通二分找到一个目标值即可返回，这道题要求找到**目标值在数组中的起始位置和结束位置**。且必须实现时间复杂度 O(log n) 的解法。
 
-### 第二步：暴力解法
+### 方法一：线性查找（不满足题目要求）
 
-**思路**：先找到任意一个 target 的位置，然后向两边扩展。
+**思路**：先用 `index()` 找到任意一个 `target` 的位置，再向左右两边扩展，直到遇到不同值。
 
 ```python
 class Solution:
     def searchRange(self, nums: List[int], target: int) -> List[int]:
-        # 找到任意一个 target
         try:
             idx = nums.index(target)
         except ValueError:
             return [-1, -1]
-
-        # 向两边扩展
         left = right = idx
         while left > 0 and nums[left - 1] == target:
             left -= 1
         while right < len(nums) - 1 and nums[right + 1] == target:
             right += 1
-
         return [left, right]
 ```
 
-**缺点**：
-- `index()` 方法是 O(n)
-- 向两边扩展最坏也是 O(n)
-- 整体时间复杂度不满足 O(log n) 的要求
+**说明**：思路简单，但 `index()` 和扩展都是 O(n)，不满足题目对 O(log n) 的要求。
 
-### 第三步：最优解法 —— 两次二分查找
+### 方法二：两次二分查找（推荐）
 
 **核心洞察**：
 - 找左边界：当 `nums[mid] == target` 时，不立即返回，而是收缩右边界，继续向左查找
@@ -193,7 +186,7 @@ class Solution:
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 |------|-----------|-----------|------|
-| 暴力 | O(n) | O(1) | 线性查找 |
+| 线性查找 | O(n) | O(1) | 找到任意一个目标值后向两边扩展 |
 | **两次二分（最优）** | **O(log n)** | **O(1)** | 满足题目要求 |
 
 ---

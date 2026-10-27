@@ -46,56 +46,41 @@ date_reviewed: []
 
 ## 解题思路
 
-### 第一步：理解问题本质
+### 问题本质
 
-这道题要找所有满足条件的**组合**（不考虑顺序，`[2,3]` 和 `[3,2]` 视为同一组合），且每个数字可以重复使用。
+这道题要求找出所有和为 `target` 的**组合**，且组合中元素顺序不影响结果。同一个元素可以无限次使用。搜索「所有合法组合」这类问题常用回溯（DFS）求解。
 
-搜索"所有满足条件的组合"这类问题，经典解法是**回溯（Backtracking）**：逐步构建候选组合，如果当前路径不可能达到目标就提前放弃（剪枝），如果达到目标就记录。
+### 方法一：回溯 + 起始下标 + 剪枝（推荐）
 
-形象地说，回溯就是在一棵"选择树"上做深度优先搜索（DFS）：每个节点代表一次选择，走到叶子节点时判断是否满足条件，不满足就原路返回（回溯）尝试其他分支。
-
-### 第二步：暴力解法
-
-递归枚举所有可能的组合（不带剪枝，且不去重）。
+**思路**：
+1. 将 `candidates` 排序，便于后续剪枝
+2. 用 DFS 构建路径 `path`，传入 `start` 控制搜索范围：每次从 `start` 开始选，且允许选当前元素本身（即传 `i` 而不是 `i+1`）以支持重复使用
+3. 当 `remain == 0` 时，将 `path` 的副本加入结果
+4. 若 `candidates[i] > remain`，由于数组已排序，后续元素更大，直接 `break` 剪枝
 
 ```python
 class Solution:
     def combinationSum(self, candidates: List[int], target: int) -> List[List[int]]:
+        candidates.sort()
         ans = []
-        def dfs(path, remain):
+        path = []
+
+        def dfs(start: int, remain: int):
             if remain == 0:
-                ans.append(sorted(path[:]))  # 排序后去重
+                ans.append(path[:])
                 return
-            if remain < 0:
-                return
-            for c in candidates:
-                path.append(c)
-                dfs(path, remain - c)
+            for i in range(start, len(candidates)):
+                if candidates[i] > remain:
+                    break
+                path.append(candidates[i])
+                dfs(i, remain - candidates[i])
                 path.pop()
-        dfs([], target)
-        # 去除重复组合
-        return [list(x) for x in set(tuple(p) for p in ans)]
+
+        dfs(0, target)
+        return ans
 ```
 
-**为什么不够好**：
-- 每个位置都从所有候选数重新选择，会产生大量重复状态（如 `[2,3]` 和 `[3,2]` 会都被生成）。
-- 去重操作本身耗时，且递归树分支爆炸，时间复杂度极高。
-
-### 第三步：优化——通过起始下标避免重复
-
-**为什么会产生重复？** 如果每次选择都从头开始扫描 candidates，`[2,3]` 和 `[3,2]` 都会被生成。
-
-**解决方法**：给 DFS 传入一个 `start` 参数，每次只从 `start` 位置开始选，不往前回头。这样保证组合中的数字是非递减的，自然消除了重复。
-
-比如，选了 `3` 之后，下次只能继续选 `3` 或更大的数，不会再选 `2`，从而避免 `[3,2]` 的出现。
-
-### 第四步：加入剪枝——提前终止无效分支
-
-在加入 `start` 参数之后，还可以进一步优化：如果当前候选数已经大于剩余目标，那更大的候选数也一定大于剩余目标，直接 `break` 跳出循环。
-
-**前提**：candidates 需要先排序，才能保证从 `start` 往后的数字是递增的，`break` 才合理。
-
-排序后，当 `candidates[i] > remain` 时，`i` 之后的所有数都大于 `remain`，无需继续枚举，直接剪枝。
+**说明**：用 `start` 限制搜索起点，既能允许重复使用，又能避免生成顺序不同的同一组合。配合排序剪枝能显著减少无效分支。
 
 ---
 
@@ -184,15 +169,9 @@ dfs(start=0, remain=7), path=[]
 
 ## 易错点总结
 
-- **`path[:]` 而非 `path`**：`ans.append(path)` 存入的是引用，后续 `path.pop()` 会修改已存入的内容。必须用 `path[:]` 存一个当前状态的副本。
-
-- **重复使用用 `i` 而非 `i+1`**：`dfs(i, ...)` 表示下一层仍可选当前数字（允许重复）。若改为 `dfs(i+1, ...)`，则每个数字最多选一次，变成了另一道题（LeetCode 40. 组合总和 II）。
-
-- **剪枝依赖排序**：`break` 的前提是 candidates 已排序，否则后面可能有更小的数，不能直接跳出。
-
-- **回溯要配对**：`path.append(...)` 和 `path.pop()` 必须成对出现，否则 path 状态会在不同递归分支间相互污染。
-
----
+- **`ans.append(path[:])` 而不是 `path`**：存引用时后续 `path.pop()` 会把已存入的组合清空。
+- **重复使用要写 `dfs(i, ...)`**：写成 `dfs(i + 1, ...)` 每个数只能用一次，变成另一道题（组合总和 II）。
+- **剪枝 `break` 依赖排序**：不排序就 `break`，后面可能还有更小的数被一起跳过。
 
 ## 扩展思考
 

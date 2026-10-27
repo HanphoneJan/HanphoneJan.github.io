@@ -49,7 +49,7 @@ date_reviewed: []
 
 ## 解题思路
 
-### 第一步：理解问题本质
+### 问题分析
 
 关键信息：
 1. 可以跳 1 到 `nums[i]` 的任意长度
@@ -58,7 +58,7 @@ date_reviewed: []
 
 这不是简单的"能不能到达"，而是"怎样跳次数最少"。
 
-### 第二步：暴力解法——DFS/BFS
+### 方法一：贪心（正向）
 
 **BFS思路**：
 - 把每个位置看作一个节点
@@ -91,7 +91,7 @@ def jump(nums):
 
 时间复杂度：O(n²) - 每个位置可能扩展 O(n) 个位置
 
-### 第三步：贪心解法
+### 方法二：贪心解法
 
 **核心思想**：
 每一步都选择"能跳最远"的那个位置作为下一跳的起点。
@@ -175,37 +175,28 @@ class Solution:
 
 ## 易错点总结
 
-### 1. 遍历范围
+### 1. 先扩展 `farthest`，再判断 `current_end`
 
 ```python
-for i in range(n - 1):  # 不是 range(n)
-```
-当到达最后一个位置时已经完成任务，不需要再处理。
-
-### 2. 更新顺序
-
-```python
-farthest = max(farthest, i + nums[i])  # 先更新 farthest
-if i == current_end:                    # 再判断是否到达边界
+farthest = max(farthest, i + nums[i])   # 先更新
+if i == current_end:                     # 再判断
     ans += 1
     current_end = farthest
 ```
-顺序不能错，先更新下一步能到达的最远位置，再判断是否需要跳跃。
 
-### 3. 初始条件
+顺序反过来时 `current_end` 拿到的是**上一轮**的 `farthest`，跳跃次数会多算一次。
+
+### 2. 循环只到 `n - 2`
 
 ```python
-if n <= 1:
-    return 0
+for i in range(n - 1):   # 不是 range(n)
 ```
-只有一个位置时，不需要跳跃。
 
-### 4. 理解 current_end 和 farthest
+到达最后一格时任务已经完成。多跑一轮会让 `i == current_end` 再触发一次 `ans += 1`，答案偏大 1。
 
-- `current_end`：当前这一步"预算"能到达的最远位置
-- `farthest`：从起点到当前位置的所有选择中，下一步能到达的最远位置
+### 3. `n <= 1` 要单独返回 0
 
----
+`current_end` 的初值是 0，长度为 1 时循环体不执行，若不提前返回，`ans` 会停在 0 但语义上「已经到达终点」，后续逻辑容易写错。
 
 ## 扩展思考
 

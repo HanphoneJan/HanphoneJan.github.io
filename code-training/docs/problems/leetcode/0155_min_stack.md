@@ -53,30 +53,60 @@ minStack.getMin();   --> 返回 -2.
 
 ## 解题思路
 
-### 第一步：分析需求
+### 问题本质
 
-普通栈的操作（push、pop、top）本来就是 `O(1)`。难点在于 `getMin()` 也要求 `O(1)`。
+在栈的基础上，额外要求 `getMin()` 能在 O(1) 时间返回当前栈中的最小元素。
 
-如果每次 `getMin()` 时遍历整个栈，时间复杂度是 `O(n)`，不满足要求。
+### 方法一：双栈（推荐）
 
-### 第二步：暴力解法
+**思路**：
+- `stack`：正常存储所有压入的元素
+- `min_stack`：存储每个状态下的最小值。每次 `push` 时将 `min(x, min_stack[-1])` 压入，`pop` 时两栈同时弹出。
 
-维护一个变量记录当前最小值。但 `pop` 时如果弹出的正好是最小值，就需要重新遍历找新的最小值，最坏 `O(n)`。
+```python
+class MinStack:
+    def __init__(self):
+        self.stack = []
+        self.min_stack = [10**18]
 
-### 第三步：最优解法 - 双栈 / 单栈元组
+    def push(self, val: int) -> None:
+        self.stack.append(val)
+        self.min_stack.append(min(val, self.min_stack[-1]))
 
-#### 方法一：双栈实现
-- 主栈 `stack`：正常存储所有元素
-- 辅助栈 `min_stack`：存储每个状态下的最小值
+    def pop(self) -> None:
+        self.stack.pop()
+        self.min_stack.pop()
 
-每次 `push` 时，`min_stack` 同步 push 当前最小值。
-每次 `pop` 时，两个栈同时 pop。
-`getMin()` 直接返回 `min_stack` 栈顶。
+    def top(self) -> int:
+        return self.stack[-1]
 
-#### 方法二：单栈元组
-每个栈元素存一个元组 `(val, 当前最小值)`，栈底放一个哨兵。
+    def getMin(self) -> int:
+        return self.min_stack[-1]
+```
 
-两种方法的时间和空间复杂度相同。
+### 方法二：单栈存元组
+
+**思路**：每个元素保存 `(val, current_min)`，用哨兵简化初始化。
+
+```python
+class MinStack:
+    def __init__(self):
+        self.st = [(0, 10**18)]
+
+    def push(self, val: int) -> None:
+        self.st.append((val, min(self.st[-1][1], val)))
+
+    def pop(self) -> None:
+        self.st.pop()
+
+    def top(self) -> int:
+        return self.st[-1][0]
+
+    def getMin(self) -> int:
+        return self.st[-1][1]
+```
+
+**说明**：两种方法时间复杂度均为 O(1)，空间复杂度均为 O(n)。
 
 ---
 
@@ -183,17 +213,9 @@ class MinStack2:
 
 ## 易错点总结
 
-### 1. 辅助栈的长度
-
-辅助栈应该和主栈等长（或比主栈多一个哨兵），这样 `pop` 时才能同步。
-
-### 2. getMin 时栈不能为空
-
-题目保证 `getMin()` 调用时栈非空。
-
-### 3. 哨兵值的选择
-
-哨兵值要选得足够大（大于所有可能的输入），这样第一个元素 push 时不会影响最小值计算。
+- **辅助栈要同步**：双栈法中，`push` 和 `pop` 必须同时操作主栈和最小栈，长度始终保持一致。
+- **用哨兵简化**：在辅助栈底部放一个足够大的初始值，避免 `push` 第一个元素时需要额外判断。
+- **只存最小值**：辅助栈每次只需存储「当前栈中的最小值」，不需要存储全部历史细节。
 
 ---
 

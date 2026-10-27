@@ -177,36 +177,9 @@ class Solution:
 
 ## 易错点总结
 
-### 1. 路径必须复制
-
-```python
-ans.append(path[:])  # 必须是 path[:]，不能是 path
-```
-`path` 是引用，后续修改会影响已保存的结果。
-
-### 2. 恢复现场的顺序
-
-```python
-path.pop()           # 先弹出路径
-visited[i] = False   # 再标记为未使用
-```
-顺序不能颠倒。
-
-### 3. visited 数组的索引
-
-```python
-visited[i] = True   # i 是 nums 的索引
-```
-不是值，是索引！
-
-### 4. 结束条件
-
-```python
-if len(path) == n:  # 不是 n-1
-```
-路径长度等于元素个数时才是一个完整排列。
-
----
+1. **`ans.append(path[:])` 而不是 `ans.append(path)`**：存引用时后续 `path.pop()` 会把已保存的排列一起清空，最终全是空列表。
+2. **`visited[i]` 的 `i` 是下标不是值**：写成 `visited[num]` 时，值超过 `n-1` 立刻 `IndexError`，值重复时又会漏掉合法排列。
+3. **结束条件写 `len(path) == n`**：写成 `n - 1` 会提前收集，每个排列都少最后一个元素。
 
 ## 扩展思考
 
