@@ -34,6 +34,13 @@ sudo reboot
 
 ### 系统配置
 
+#### 声卡
+有时启动时电脑麦克风初始化顺序有误，可以重新加载声卡
+
+```bash
+systemctl --user restart pipewire pipewire-pulse wireplumber  # 若使用PipeWire
+```
+
 #### 分辨率调整
 1. **打开设置**： 点击屏幕左上角的 Ubuntu 图标，选择"设置"。 或者，点击屏幕右上角的系统菜单图标，选择"Settings"。
 
@@ -288,6 +295,19 @@ sudo apt update && sudo apt upgrade
 | `mv`    | 移动或重命名文件    | `mv old.txt new.txt`                 |
 | `touch` | 创建空文件或修改时间戳 | `touch file.txt`                     |
 
+#### 压缩和解压
+`-xzvf` 是 `tar` 命令的**选项组合**，每个字母都代表一个具体操作。
+
+- **`-x`**：**eXtract**（提取/解压）。告诉 `tar` 我要解包，而不是打包（打包用 `-c`）。
+- **`-z`**：**Zip**（通过 gzip 解压）。告诉 `tar` 这个文件是 `.gz` 格式的（即 `gzip` 压缩），需要先解压缩再解包。如果是 `.bz2` 格式，这里要换成 `-j`。
+- **`-v`**：**Verbose**（详细输出）。
+- **`-f`**：**File**（指定文件）。
+
+```bash
+tar -xvf test.rar
+tar -xzvf test.rar
+```
+
 ### 文件内容查看
 
 | 命令              | 用途           | 示例                                       |
@@ -509,6 +529,139 @@ sudo apt update
 sudo apt install openssh-server
 ```
 
+### OpenSSH
+
+一般 linux 发行版中已经预装。
+
+#### 远程登录 (`ssh`)
+
+这是最常用的命令，基本格式为：`ssh [选项] [用户名@]服务器地址`。
+
+*   **密码登录**：
+```bash
+ssh root@192.168.1.100
+```
+（`root` 为用户名，`192.168.1.100` 为服务器 IP）。首次连接会提示验证主机指纹，输入 `yes` 确认即可。
+
+*   **指定端口**：若服务器 SSH 端口非默认的 22，使用 `-p` 参数。
+```bash
+ssh -p 2222 user@example.com
+```
+
+*   **执行远程命令**：在 `ssh` 命令后直接附加命令，执行后即退出。
+```bash
+ssh user@example.com ls -la /home/user
+```
+
+#### 文件传输
+
+*   **`scp`（复制文件）**：用法类似 `cp` 命令。
+```bash
+# 将本地文件复制到远程服务器
+scp /path/to/local/file user@example.com:/path/to/remote/
+
+# 从远程服务器复制文件到本地
+scp user@example.com:/path/to/remote/file /path/to/local/
+```
+
+*   **`sftp`（交互式文件传输）**：建立类似 FTP 的会话，进行文件管理。
+```bash
+sftp user@example.com
+```
+
+#### 配置密钥认证
+
+相比密码，密钥认证更安全、更方便。
+
+1.  **生成密钥对**：在**本地**终端执行。
+```bash
+ssh-keygen -t ed25519
+```
+*   `-t ed25519` 指定密钥类型，是目前推荐的安全算法。如设备不支持，可用 `ssh-keygen -t rsa -b 4096`。
+*   按提示选择保存路径（默认 `~/.ssh/id_ed25519`）和设置**密码短语**（可选但建议设置，增加私钥安全性）。
+
+2.  **将公钥添加到远程服务器**：执行以下命令，将公钥（`.pub` 文件）内容复制到远程服务器的 `~/.ssh/authorized_keys` 文件中。
+```bash
+ssh-copy-id user@example.com
+```
+*   如果服务器端口非 22，需指定端口：`ssh-copy-id -p 2222 user@example.com`。
+
+#### 预设配置
+
+创建或编辑本地 `~/.ssh/config` 文件，可为不同服务器预设连接参数，简化命令。
+```
+Host myserver
+    HostName 192.168.1.100  # 服务器IP或域名
+    User myusername         # 登录用户名
+    Port 2222               # SSH端口
+    IdentityFile ~/.ssh/id_ed25519 # 指定私钥文件
+```
+配置后，只需执行 `ssh myserver` 即可。
+
+### telnet
+
+`telnet` 是一个历史悠久的命令行工具，主要用于远程登录或测试网络服务的端口连通性。
+
+不过需要特别留意：**`telnet` 在传输数据（包括密码）时是明文，没有任何加密，非常不安全**。因此，**绝对不要在生产环境或涉及敏感信息的场景中使用**。它的价值更多在于网络排障，并且正被更安全的 `ssh` 所取代。
+
+下面是它的基本使用方法。
+
+#### 安装 Telnet 客户端
+
+大多数系统不会默认安装它，需要手动启用。
+
+| 操作系统                  | 安装方法                                                                 |
+| :------------------------ | :----------------------------------------------------------------------- |
+| **Windows**               | 打开“控制面板” -> “程序” -> “启用或关闭 Windows 功能” -> 勾选 **“Telnet 客户端”** -> 确定。 |
+| **Linux (Debian/Ubuntu)** | 执行命令：`sudo apt-get install telnet`                                   |
+| **Linux (CentOS/RHEL)**   | 执行命令：`sudo yum install telnet`                                       |
+| **macOS**                 | 执行命令（需先安装 Homebrew）：`brew install telnet`                      |
+
+#### 连接到服务器
+
+在终端或命令提示符中，使用以下格式：
+```bash
+telnet [主机名或IP地址] [端口号]
+```
+*   例如，测试 `192.168.1.100` 的 `80` 端口是否开放：
+```bash
+telnet 192.168.1.100 80
+```
+*   如果目标是默认的 Telnet 端口 `23`，可以省略端口号。
+```bash
+telnet example.com
+```
+连接成功后，你会进入远程系统的命令行界面。在这里，你可以像在本地一样输入并执行命令。例如，连接到一个 HTTP 服务后，可以手动发送一个简单的请求来测试：
+```http
+GET / HTTP/1.1
+Host: example.com
+```
+（输入完 `Host` 行后，需要**按两次回车**来发送请求。）
+
+可以在连接时使用一些选项：
+
+*   **`-l <用户名>`**：指定登录用户名。
+```bash
+telnet -l myusername example.com
+```
+*   **`-d`**：开启调试模式，显示详细的连接过程，用于排障。
+```bash
+telnet -d example.com 80
+```
+
+#### 退出 Telnet 会话
+
+退出 `telnet` 需要两步：
+
+1.  按下 **`Ctrl + ]`** 组合键。这会立刻脱离当前的远程会话，回到 `telnet` 自己的命令提示符下（显示为 `telnet>`）。
+> **注意**：这个操作不会关闭连接，只是让你进入 `telnet` 的命令模式。
+
+2.  在 `telnet>` 提示符后，输入 **`quit`** 或 **`close`** 并按回车，即可完全退出。
+```text
+telnet> quit
+```
+在 `telnet` 命令模式下，还可以使用 `open`（连接新主机）和 `status`（查看会话状态）等命令。
+
 ## 其他配置
 
 ### 换源
@@ -540,6 +693,8 @@ ln -s /home/hanphone/ros2_ws /home/hanphone/桌面/ros2_ws
 ```
 
 注意权限
+
+字体安装
 
 ### PostgreSQL
 #### 卸载 PostgreSQL 的步骤

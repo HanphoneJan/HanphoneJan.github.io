@@ -150,6 +150,11 @@ git config --global credential.helper 'cache --timeout=0'  # 设置凭据缓存�
 # 目前 GitHub、GitLab 等平台已禁用密码直接登录，需要使用 个人访问令牌（Personal Access Token，PAT）
 ```
 
+#### 忽略文件
+```bash
+git ls-files .claude/ | ForEach-Object { git update-index --skip-worktree $_ }
+```
+
 #### 清除已经提交中的敏感文件
 
 **核心原理就是删除相关文件的历史，然后强制推送。如果需要删除的过多，可以重新初始化然后强制推送。**
@@ -187,6 +192,12 @@ git push origin --force --all
 git checkout --orphan temp_branch && git add -A && git commit -m "Initial commit" && git branch -D main && git branch -m main && git push -f origin main
 ```
 
+其他人同步
+
+```bash
+git reset --hard origin/main
+```
+
 ### 添加远程仓库
 
 要将本地代码库连接到远程仓库，可以使用以下 git 命令：
@@ -205,6 +216,15 @@ git remote -v
 
 此后，就可以使用 git push 命令将代码推送到远程仓库，或使用 git pull 命令从远程仓库拉取代码。
 
+### Git缓存凭证
+```shell
+git config --global credential.helper store
+```
+输入以上命令后，就会保存输入的凭证。可以在以下位置验证：
+```shell
+cat ~/.git-credentials
+```
+
 ### Git 配置 SSH 秘钥
 
 1. 在 Git Bash 窗口中输入以下命令进行全局配置
@@ -218,6 +238,30 @@ ssh-keygen -t rsa -C "你的Git邮箱"
 输入以下指令测试
 
 ```bash
+ssh -T git@github.com
+```
+
+如果默认的 22 端口不可用，可以改用 ED25519 密钥并让 SSH 走 443 端口：
+
+```bash
+# 1. 生成 ED25519 密钥（回车使用默认路径）
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+# 2. 查看公钥并复制到 GitHub
+cat ~/.ssh/id_ed25519.pub
+
+# 3. 配置 SSH 使用 443 端口（绕过防火墙）
+mkdir -p ~/.ssh
+cat >> ~/.ssh/config << 'EOF'
+Host github.com
+    Hostname ssh.github.com
+    User git
+    Port 443
+    IdentityFile ~/.ssh/id_ed25519
+EOF
+chmod 600 ~/.ssh/config
+
+# 4. 测试连接
 ssh -T git@github.com
 ```
 
