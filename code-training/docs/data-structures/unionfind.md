@@ -233,9 +233,14 @@ query(c, a)：c 即根，weight[c]=1，weight[a]=6 → 1/6
 
 ## 相关题目
 
-- [547. 省份数量](https://leetcode.cn/problems/number-of-provinces/)
-- [684. 冗余连接](https://leetcode.cn/problems/redundant-connection/)
-- [399. 除法求值](../problems/leetcode/0399_evaluate_division.md)（带权）
+- [547. 省份数量](https://leetcode.cn/problems/number-of-provinces/)（连通块计数）
+- [684. 冗余连接](../problems/leetcode/0684_redundant_connection.md)（无向图环检测）
+- [721. 账户合并](../problems/leetcode/0721_accounts_merge.md)（邮箱实体合并）
+- [947. 移除最多的同行或同列石头](../problems/leetcode/0947_most_stones_removed_with_same_row_or_column.md)（行列连通分量）
+- [990. 等式方程的可满足性](../problems/leetcode/0990_satisfiability_of_equality_equations.md)（等价类）
+- [3493. 属性图](../problems/leetcode/3493_properties_graph.md)（属性交集连通）
+- [3532. 针对图的路径存在性查询 I](../problems/leetcode/3532_path_existence_queries_in_a_graph_i.md)（连通性查询预处理）
+- [399. 除法求值](../problems/leetcode/0399_evaluate_division.md)（带权并查集）
 - [128. 最长连续序列](../problems/leetcode/0128_longest_consecutive_sequence.md)（并查集 / 哈希表两路可解）
 
 ## 相关知识点
