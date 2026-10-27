@@ -4,27 +4,9 @@ Hanphone 的 Github 个人主页 - 基于 **VuePress 2 + vuepress-theme-hope** �
 
 > 2026-10 从 Docusaurus 迁到 VuePress，迁移细节与已知缺失见 [`.vuepress/README.md`](.vuepress/README.md)。
 
-## 📝 笔记管理系统 
+## 📝 文档维护
 
-项目现在支持从私人笔记库 `hanphone-note` 自动同步内容。可以完全在私人笔记中写作，通过标记控制发布。
-
-### 核心同步指令
-
-```bash
-pnpm sync     # 同步通用笔记
-pnpm sync:ml  # 同步机器学习笔记 (ipynb -> md)
-```
-
-### 如何发布笔记？
-
-1. **在私人笔记中标记**：在你的 `.md` 文件 Front Matter 中添加 `publish: true`，同步到 `docs/`。
-   - 标记 `type: blog` 的笔记会被**跳过**：博客已经搬到独立站点 [hanphone.cn](https://hanphone.cn)，本仓库不再有 `blog/`。
-2. **运行同步**：在本项目根目录执行 `pnpm sync`。
-3. **自动处理**：
-   - **一致性维护**：脚本会保持两端内容一致，私人笔记是唯一事实来源。
-   - **自动撤回**：若删除 `publish: true` 标记并再次运行同步，项目中的对应文件会被自动删除。
-   - **图片样式清理**：同步时会自动移除 HTML `<img>` 标签中的 `style` 属性，确保响应式兼容性。
-   - **隐私保护**：同步后，项目中的文件会自动移除 `publish` 等内部标记字段。
+`docs/` 直接在本仓库维护，不再从私人笔记库同步。
 
 ---
 
@@ -50,7 +32,6 @@ pnpm install
 ### 本地开发
 
 ```bash
-pnpm sync   # 先同步最新笔记
 pnpm start  # 启动 VuePress 开发服务器（端口 3001）
 ```
 
@@ -59,9 +40,9 @@ pnpm start  # 启动 VuePress 开发服务器（端口 3001）
 项目配置了 GitHub Actions。推送到 `main` 分支后会自动构建并部署到 GitHub Pages。
 
 ```bash
-pnpm sync
+pnpm build
 git add .
-git commit -m "feat: sync notes and update"
+git commit -m "docs: update"
 git push origin main
 ```
 
@@ -74,9 +55,9 @@ git push origin main
 ## 📁 项目结构
 
 ```
-├── docs/                   # 同步生成的结构化文档
+├── docs/                   # 主文档
 ├── code-training/          # 算法训练子项目（独立维护）
-├── scripts/                # 自动化脚本（包含同步逻辑）
+├── scripts/                # 构建与辅助脚本
 ├── static/                 # 静态资源（图片、题库、轨迹、Pyodide）
 ├── src/                    # React 交互件与孤岛挂载层
 ├── .vuepress/              # VuePress 配置、主题、插件、组件注入

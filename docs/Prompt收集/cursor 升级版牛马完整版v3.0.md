@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 # Cursor终极AI编程牛马助手完整版提示词 V3.0
 

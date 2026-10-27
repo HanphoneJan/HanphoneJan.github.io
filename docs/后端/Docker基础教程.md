@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 非常好的入门教学视频！！[Bilibili：40分钟的Docker实战攻略，一期视频精通Docker](https://www.bilibili.com/video/BV1THKyzBER6/?share_source=copy_web&vd_source=186f482d5782bc8b1831fb6379b26ea2)
 以下笔记中大部分也是转载了该视频评论区的一条热评。

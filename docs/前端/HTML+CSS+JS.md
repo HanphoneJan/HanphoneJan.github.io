@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 内容主要参考自：[html css js（这一篇就够了） - 小liii - 博客园](https://www.cnblogs.com/xxctx/p/18426729)
 

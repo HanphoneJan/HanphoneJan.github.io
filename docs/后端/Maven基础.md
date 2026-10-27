@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 Maven 是一个 项目管理与构建自动化工具，主要用于 Java 项目，但也可用于其他语言（如 Kotlin、Scala）。
 Maven 的核心功能包括：

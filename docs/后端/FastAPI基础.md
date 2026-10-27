@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 FastAPI 是基于 Python 3.8+ 的异步 Web 框架，主打**快速开发**+**自动生成接口文档**，底层基于 Starlette（异步Web框架）和 Pydantic（数据校验），适合做 **后端API、实时通信、微服务**，适合处理IO密集型任务，性能接近 Node.js、Go 级别。FastAPI 使用 Uvicorn 作为其默认的 Web 服务器。
 ## 核心架构

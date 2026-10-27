@@ -4,7 +4,7 @@ import { readFrontMatter, relativeSource } from '../paths'
 import { deriveTaxonomy } from '../taxonomy'
 
 /**
- * 没有 `frontmatter.title` 的页面，标题会取正文的 H1；而这些从笔记同步来的
+ * 没有 `frontmatter.title` 的页面，标题会取正文的 H1；而这些从私人笔记迁移来的
  * 文件里**大量没有 H1**（开头直接是正文或代码块），标题就是空字符串 ——
  * 浏览器标签页只剩站名，时间轴/文章列表上就是一条空白。
  *

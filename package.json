@@ -7,7 +7,6 @@
     "build": "vuepress build .",
     "serve": "python3 -m http.server 3000 --directory .vuepress/dist",
     "typecheck": "tsc -p tsconfig.json",
-    "sync": "ts-node scripts/sync-notes.ts",
     "sync:ml": "ts-node scripts/sync-machine-learning.ts",
     "sync:pyodide": "node scripts/fetch-pyodide.js",
     "quiz:gen": "ts-node scripts/gen-quiz.ts",

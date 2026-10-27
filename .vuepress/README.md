@@ -192,7 +192,7 @@ frontmatter。**必须在这个钩子做**：blog 插件的 `extendsPage` 读
 
 - 归档页是**目录形式**（`/timeline/` → `timeline/index.html`），不经过
   `paths.ts`，也别给它补 `.html`。GitHub Pages 会自动找 `index.html`。
-- 从笔记同步来的 `docs/**` 里有不少文件**既没有 `title` 也没有 H1**，
+- 从私人笔记迁移来的 `docs/**` 里有不少文件**既没有 `title` 也没有 H1**，
   页面标题原本是空字符串，时间轴上就是一条空白。`taxonomy.ts` 统一用
   文件名兜底（`intro` / `index` 例外，它们靠正文 H1）。
 

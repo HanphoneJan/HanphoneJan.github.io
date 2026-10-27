@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 资料参考：[前端面试 Vue篇_w3cschool](https://www.w3cschool.cn/web_interview/web_interview-ncsq3pv3.html)
 ## Vue3简介

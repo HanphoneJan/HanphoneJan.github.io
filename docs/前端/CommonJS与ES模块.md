@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 转载自： [CommonJS与ES模块：新手完全指南 | 吉森的技术小站](http://www.gsein.cn/pages/commonjs-vs-es/#%E9%80%89%E6%8B%A9%E6%8C%87%E5%8D%97)
 
