@@ -2,7 +2,6 @@
 title: 95. 不同的二叉搜索树 II
 platform: LeetCode
 difficulty: Medium
-sidebar_position: 95
 id: 95
 url: https://leetcode.cn/problems/unique-binary-search-trees-ii/
 tags:
