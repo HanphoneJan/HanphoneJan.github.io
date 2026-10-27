@@ -2,7 +2,6 @@
 title: 16. 最接近的三数之和
 platform: LeetCode
 difficulty: Medium
-sidebar_position: 16
 id: 16
 url: https://leetcode.cn/problems/3sum-closest/
 tags:

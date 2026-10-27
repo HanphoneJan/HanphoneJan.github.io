@@ -2,7 +2,6 @@
 title: 28. 找出字符串中第一个匹配项的下标
 platform: LeetCode
 difficulty: Easy
-sidebar_position: 28
 id: 28
 url: https://leetcode.cn/problems/find-the-index-of-the-first-occurrence-in-a-string/
 tags:
