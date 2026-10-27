@@ -55,7 +55,7 @@ date_reviewed: []
 
 这是一个**递归结构**的问题：整棵树的翻转 = 左子树翻转 + 右子树翻转 + 交换左右子树。
 
-### 第二步：暴力解法 - 复制新树
+### 方法一：递归（原地交换）
 
 遍历原树，创建新树，左右子树交换位置。
 
@@ -74,7 +74,7 @@ def invertTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
 
 **为什么不够好**：需要创建新节点，空间复杂度 O(n)。
 
-### 第三步：优化解法 - 原地递归
+### 方法二：原地递归
 
 直接修改原树的指针，无需创建新节点。
 
@@ -94,7 +94,7 @@ def invertTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
     return root
 ```
 
-### 第四步：最优解法 - 递归或迭代
+### 方法三：递归或迭代
 
 递归最简洁，迭代（BFS）可以避免栈溢出。
 

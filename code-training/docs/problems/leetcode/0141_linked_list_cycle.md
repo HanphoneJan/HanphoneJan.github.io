@@ -54,42 +54,47 @@ date_reviewed: []
 
 ## 解题思路
 
-### 第一步：理解问题
+### 问题本质
 
-判断一个链表是否有环，最直接的思路是记录访问过的节点，如果再次访问到就说明有环。
+判断链表中是否存在环：若链表尾节点的 `next` 指向链表中的某个节点（包括自己），则存在环。
 
-### 第二步：暴力解法 - 哈希表
+### 方法一：哈希表
 
-遍历链表，把每个节点存入集合，如果发现节点已经在集合中，说明有环。
+**思路**：遍历链表，将节点对象的引用存入集合。每次访问新节点时先检查是否已在集合中，若是则说明曾经访问过，存在环；否则加入集合并继续遍历。
 
 ```python
-def hasCycle(head):
-    # 存已经走过的节点引用，用集合保证查找是 O(1)
-    visited = set()
-    while head:
-        # 又走到走过的节点，说明指针绕回来了，存在环
-        if head in visited:
-            return True
-        visited.add(head)
-        # 不断后移，没有环时最终会走到 None 退出循环
-        head = head.next
-    return False
+class Solution:
+    def hasCycle(self, head: Optional[ListNode]) -> bool:
+        visited = set()
+        while head:
+            if head in visited:
+                return True
+            visited.add(head)
+            head = head.next
+        return False
 ```
 
-- 时间复杂度：`O(n)`
-- 空间复杂度：`O(n)`
+**说明**：思路直观，时间 O(n)，空间 O(n)。
 
-### 第三步：最优解法 - 快慢指针
+### 方法二：快慢指针（Floyd 判圈算法，推荐）
 
-Floyd 判圈算法的核心思想：
-- 慢指针 `slow` 每次走 1 步
-- 快指针 `fast` 每次走 2 步
+**思路**：用慢指针 `slow` 每次走 1 步，快指针 `fast` 每次走 2 步。
+- 若链表无环，`fast` 会先到达 `None`，返回 `False`
+- 若链表有环，`fast` 会在环内追上 `slow`，两者相遇时返回 `True`
 
-如果链表有环，快指针最终会追上慢指针（在环内相遇）。如果没有环，快指针会先到达末尾。
+```python
+class Solution:
+    def hasCycle(self, head: Optional[ListNode]) -> bool:
+        slow, fast = head, head
+        while fast and fast.next:
+            slow = slow.next
+            fast = fast.next.next
+            if slow == fast:
+                return True
+        return False
+```
 
-为什么一定能追上？
-- 假设环的长度为 `L`，当慢指针进入环时，快指针已经在环内某处。
-- 快指针相对于慢指针的速度是 1 步/轮，两者距离最多 `L-1`，所以最多 `L-1` 轮后一定会相遇。
+**说明**：不需要额外存储所有节点，空间 O(1)，是最常用的做法。
 
 - 时间复杂度：`O(n)`
 - 空间复杂度：`O(1)`
@@ -153,23 +158,15 @@ class Solution:
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 |------|-----------|-----------|------|
 | 哈希表 | O(n) | O(n) | 直观易懂 |
-| 快慢指针 | O(n) | O(1) | **最优解** |
+| 快慢指针（Floyd 判圈） | O(n) | O(1) | 推荐做法 |
 
 ---
 
 ## 易错点总结
 
-### 1. 循环条件
-
-必须是 `while fast and fast.next`，如果写 `while fast.next` 会在空链表时报错。
-
-### 2. 比较对象
-
-比较的是节点对象引用（地址），不是节点的值。因为值可能重复，但引用唯一。
-
-### 3. 为什么 fast 走 2 步？
-
-如果 fast 只走 1 步，那快慢指针永远保持初始距离（除非 head 就是环入口），无法判断。走 2 步才能保证在有环情况下追上。
+- **循环条件**：要用 `while fast and fast.next`，而不是 `while fast.next`，否则链表为空或只有一个节点时可能出错。
+- **比较的是引用**：要比较节点对象本身（`slow == fast`），而不是 `slow.val == fast.val`。
+- **快指针必须走两步**：只有速度差才能让快指针在环内追上慢指针。
 
 ---
 

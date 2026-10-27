@@ -42,50 +42,54 @@ date_added: 2026-03-25
 
 ## 解题思路
 
-### 第一步：理解问题本质
+### 问题本质
 
-问题的核心是：**如何快速找到倒数第 n 个节点？**
+要删除链表的倒数第 `n` 个节点，本质是找到它的前驱节点 `prev`，然后执行 `prev.next = prev.next.next`。难点在于：单链表没有从后往前的索引，只能从头遍历。
 
-如果知道链表长度 L，那么倒数第 n 个节点就是正数第 (L - n + 1) 个节点。但这需要遍历两次链表。
+### 方法一：两次遍历（先求长度）
 
-### 第二步：暴力解法
-
-**思路**：先遍历一遍计算链表长度，再遍历到目标位置删除。
+**思路**：先遍历一遍统计链表长度 `L`，倒数第 `n` 个节点对应正数第 `L - n` 个节点（0-based），其前一个节点就是要操作的前驱。再用哑节点 `dummy` 遍历到前驱位置，直接跳过目标节点。
 
 ```python
 class Solution:
     def removeNthFromEnd(self, head: Optional[ListNode], n: int) -> Optional[ListNode]:
-        # 计算链表长度
         length = 0
         cur = head
         while cur:
             length += 1
             cur = cur.next
 
-        # 找到要删除节点的前一个位置
         dummy = ListNode(0, head)
         cur = dummy
         for i in range(length - n):
             cur = cur.next
 
-        # 删除节点
         cur.next = cur.next.next
         return dummy.next
 ```
 
-**缺点**：需要遍历两次链表。
+**说明**：思路简单直观，需要两次遍历。
 
-### 第三步：最优解法 —— 双指针（快慢指针）
+### 方法二：双指针（快慢指针，一次遍历，推荐）
 
-**核心洞察**：
-- 让快指针先走 n 步，此时快指针和慢指针之间相隔 n 个节点
-- 然后快慢指针同时走，当快指针到达链表末尾时，慢指针正好在倒数第 n+1 个位置
-- 使用 dummy 节点统一处理删除头节点的情况
+**思路**：让快指针 `first` 先走 `n` 步，然后 `first` 和慢指针 `second` 同时向后走。当 `first` 到达链表末尾时，`second` 正好位于要删除节点的前一个节点。用哑节点统一处理删除头节点的情况。
 
-**为什么正确**：
-- 假设链表长度为 L，快指针先走 n 步后，还剩 L-n 步到末尾
-- 快慢指针一起走 L-n 步后，快指针到达末尾（走了 n + L-n = L 步）
-- 慢指针从 dummy 开始走了 L-n 步，到达第 L-n 个节点，即倒数第 n+1 个节点
+```python
+class Solution:
+    def removeNthFromEnd(self, head: Optional[ListNode], n: int) -> Optional[ListNode]:
+        dummy = ListNode(0, head)
+        first = head
+        for i in range(n):
+            first = first.next
+
+        second = dummy
+        while first:
+            first = first.next
+            second = second.next
+
+        second.next = second.next.next
+        return dummy.next
+```
 
 ---
 
@@ -179,32 +183,16 @@ dummy -> 1 -> 2 -> 3 -> 5
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 |------|-----------|-----------|------|
-| 暴力 | O(L) | O(1) | 需要遍历两次链表 |
-| **双指针（最优）** | **O(L)** | **O(1)** | 只需遍历一次链表 |
+| 两次遍历（先求长度） | O(L) | O(1) | 遍历两次链表 |
+| 双指针（快慢指针） | O(L) | O(1) | 只需遍历一次链表，最常用 |
 
 ---
 
 ## 易错点总结
 
-### 1. 必须使用 dummy 节点
-
-如果不使用 dummy 节点，当需要删除头节点时（如 `head = [1], n = 1`），需要特殊处理。
-
-```python
-# 不使用 dummy 的错误处理
-def removeNthFromEnd(self, head, n):
-    # ... 双指针逻辑 ...
-    # 当 n = 链表长度时，second 会停在 head 前面
-    # 但 head 前面没有节点，无法删除！
-```
-
-### 2. 快指针先走 n 步，不是 n+1 步
-
-快指针先走 n 步，这样当 fast 到达末尾时，slow 正好在倒数第 n+1 个位置（要删除节点的前一个）。
-
-### 3. 删除操作是 `second.next = second.next.next`
-
-不是 `second = second.next`，那样只是移动了指针，没有真正删除节点。
+- **必须使用哑节点**：如果要删除的是头节点（倒数第 `n` 恰好是头节点），用 `dummy` 能统一处理，避免单独判断。
+- **快指针先走 `n` 步**：让快慢指针之间保持 `n` 个节点的间隔。快指针到达末尾时，慢指针正好指向待删除节点的前驱。
+- **真正删除节点**：要用 `second.next = second.next.next` 跳过目标节点，不能用 `second = second.next`（那只是移动指针）。
 
 ---
 
