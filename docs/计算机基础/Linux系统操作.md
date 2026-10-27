@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 # Linux 系统操作 - 寒枫
 

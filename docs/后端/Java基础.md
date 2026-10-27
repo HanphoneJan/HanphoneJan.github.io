@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 教程：[简介 - Java 教程 - 廖雪峰的官方网站 (liaoxuefeng.com)](https://liaoxuefeng.com/books/java/introduction/index.html)
 

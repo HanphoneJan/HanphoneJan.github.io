@@ -25,7 +25,6 @@ pnpm start            # Dev server on port 3001（vuepress dev .）
 pnpm build            # Production build -> .vuepress/dist
 pnpm serve            # Preview the build on port 3000
 pnpm typecheck        # tsc --noEmit（只检查 src/，strict 关，与迁移前一致）
-pnpm sync             # Sync notes from private repo (E:/hanphonejan/hanphone-note)
 pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 pnpm sync:pyodide     # Download the 12.9MB Pyodide runtime into static/pyodide/
 pnpm test:offline     # 离线包口径（板块归类 + 路由表解析 + dist 覆盖率）
@@ -202,7 +201,7 @@ React root 里：
   是两套入口，不要为了「统一」删掉。
 - **时间轴依赖 git 历史**：CI 的 `actions/checkout` 必须 `fetch-depth: 0`
   （两个部署 workflow 都是），浅克隆会让所有页面挤在同一天。
-- **没有 H1 的同步笔记用文件名兜底标题**：`docs/` 里不少文件从笔记同步来，
+- **没有 H1 的历史笔记用文件名兜底标题**：`docs/` 里不少文件从私人笔记迁移来，
   既没有 `frontmatter.title` 也没有 `# 标题`，页面上原本标题为空、
   时间轴上就是一条空白。`plugins/taxonomy.ts` 统一用文件名兜底
   （`intro` / `index` 例外，它们靠正文 H1）。
@@ -306,7 +305,6 @@ React root 里：
 
 ### Content sources and data flow
 
-- **Private notes sync** (`scripts/sync-notes.ts`): Reads markdown files from `E:/hanphonejan/hanphone-note`, publishes those with `publish: true` frontmatter to `docs/`. Files with `type: blog` are **skipped** — the blog lives on hanphone.cn. Auto-cleans files when `publish` is removed.
 - **ML notebook sync** (`scripts/sync-machine-learning.ts`): Converts `.ipynb` files in `code-training/machine-learning/` to markdown via Quarto, outputs to `code-training/docs/machine-learning/`. 页面标题优先取源 notebook 的 `metadata.title`（可读中文标题），否则回退到文件名。
 - **GitHub data** (`data/`): `github-stars.json`, `projects.json`, `star-tags.json` are auto-fetched/updated by GitHub Actions workflows and consumed at build time by the Stars and Projects pages via `@site/data/`.
 - **LeetCode progress sync** (`scripts/sync-leetcode.js`): Pulls accepted LeetCode (leetcode.cn) submissions using the `LEETCODE_SESSION` cookie, diffs against local `code-training/leetcode/`, and generates new `*.py` + `docs/problems/leetcode/*.md` files. The scheduled `sync-leetcode.yml` workflow **has been removed** (2026-10-25); the script is kept **only as the reference implementation of the sync logic**, to be run by an AI/agent when explicitly requested. It also **records the rolling cookie renewal** (LeetCode returns a renewed `LEETCODE_SESSION` in `Set-Cookie` on every call) into `.lc-cookie.tmp`, but nothing persists it any more — the caller has to save it by hand. See 「LeetCode 同步」.
@@ -375,7 +373,7 @@ classic preset 里的 `blog` 选项、导航栏「博客」项、`src/theme/Blog
 `src/theme/BlogPostPage/`、giscus 的 `blogCategory`/`blogCategoryId`。
 
 旧 URL（`/blog/welcome` 等）**故意让它 404**，没加重定向 —— 用户明确选的。
-`sync-notes.ts` 现在跳过 `type: blog` 的笔记，所以那些文章以后也不会被同步回来。
+本仓库也没有从私人笔记库同步内容的通道，博客文章只存在于 hanphone.cn。
 
 `@docusaurus/plugin-content-blog` 还留在 `dependencies` 里：preset-classic 依赖它，
 即使不配 blog 选项也会被装上，删掉只会让 lockfile 动。

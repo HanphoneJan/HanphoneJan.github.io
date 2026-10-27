@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 参考教程：[Flask 基本概念 | 菜鸟教程](https://www.runoob.com/flask/flask-basic-concept.html)
 ## Flask核心基础

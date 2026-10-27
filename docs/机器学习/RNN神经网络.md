@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 ## RNN循环神经网络
 

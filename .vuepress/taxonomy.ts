@@ -7,7 +7,7 @@ import type { PageMeta } from './paths'
  *
  *   - `code-training/docs/problems/**` 有 `tags` / `date_added` / `platform`
  *     （由同步脚本写入，是人工校过的）
- *   - `docs/**` 只有 `_synced: true`，既没有分类也没有标签
+ *   - `docs/**` 大多没有分类也没有标签（早期同步进来的文件带 `_synced` 标记）
  *
  * 所以这里采取「**位置决定分类（题解优先用 platform），关键词决定标签，
  * frontmatter 优先**」：

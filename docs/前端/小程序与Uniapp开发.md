@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 # Uniapp
 [uni-app 快速入门_w3cschool](https://www.w3cschool.cn/uni_app/uni_app-k8zg370b.html)

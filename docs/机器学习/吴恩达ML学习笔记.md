@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 本博客是以下视频课程的学习笔记
 [耗费巨量时间翻译！全网最佳学习体验的吴恩达2025机器学习深度学习课程中英双语字幕版本，酣畅淋漓的学习体验！-神经网络/Pytorch/卷积神经网络](https://www.bilibili.com/video/BV1DzANeaEDW/?share_source=copy_web&vd_source=186f482d5782bc8b1831fb6379b26ea2)

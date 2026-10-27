@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 ## Keli 与 μVision 的基础知识
 

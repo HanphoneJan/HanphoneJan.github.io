@@ -1,5 +1,4 @@
 ---
-_synced: true
 ---
 ## 一、Shell 概述
 
