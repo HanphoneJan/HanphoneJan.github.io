@@ -259,16 +259,19 @@ date_reviewed: []
 
 ### [小节标题按内容起，如：这道题真正要判定的是什么]
 
-[Core concept explanation]
-[关键观察与「为什么是这个算法」也写在这里：数据范围反推 + 问题结构，
-各算法的阶梯只在真实存在时出现]
+[判定标准 + 关键观察 + 为什么是这个算法 + 数据范围给出的线索。
+每讲完一个关键步骤，紧接着贴对应的代码片段；完整 `solve()` 留在下一章。]
+
+### [步骤/方法二，真实存在才写]
+
+[推导 + 该方法代码；与上一种写清优劣，不要用「同理」带过。]
 
 ---
 
 ## 完整代码实现
 
 ```python
-[Complete code with comments, including embedded test cases]
+[可直接提交的完整程序，包含输入输出；第一个 python 块是页面运行入口]
 ```
 
 ---
@@ -283,21 +286,20 @@ date_reviewed: []
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 | ---- | ---------- | ---------- | ---- |
-| 暴力 | O(...)     | O(...)     | ...  |
-| 优化 | O(...)     | O(...)     | ...  |
-| 最优 | O(...)     | O(...)     | ...  |
+| [真实存在的方案] | O(...) | O(...) | ... |
+| [更优方案]（最优） | O(...) | O(...) | ... |
+
+> 只有真实存在的不同方案才列多行；没有替代方案时一行即可。
+> 最优行用「（最优）」标一次，其余行不要出现「最优」。
 
 ---
 
 ## 易错点总结
 
-### [Common mistake 1]
-
-[写出两件事：错的代码位置（哪一行/哪个常数/哪个方向）与错误发生时的现象。
-**每条都必须可指认**：举不出「怎么验证它会错」的条目不要写。
-**题面设定不是易错点**：像「初始选址是输入顺序的前 q 座城市」这种定义属于
-解题思路里交代问题设定的地方（必须讲清楚，因为一错全错），但它是阅读理解，
-不进易错点清单。数量 1~3 条，写最致命的；「多而无重点」比没有更糟。]
+1. **[错误写法]**：指出具体代码位置（哪一行/哪个下标/哪个方向）以及
+   错了之后的现象（答案偏大/偏小、越界、死循环、样例过不了）。
+2. 1~3 条即可；算法原理、复杂度说明、「不需要特判/天然满足」都不算易错点。
+   写不出可指认的条目就省略本节。
 
 ---
 
@@ -312,6 +314,9 @@ date_reviewed: []
 - [Problem Name](URL)
 
 ```
+
+> 写之前先读 `code-training/AGENTS.md` 的原则 5、6；那是题解写作的
+> 事实来源，本技能只负责流程与模板。
 
 ## Key Principles
 
@@ -562,10 +567,8 @@ if __name__ == "__main__":
 - [ ] **Multiple test cases handled correctly** - 处理 EOF 或 T 个测试用例
 - [ ] **Comments explain WHY, not just WHAT**
 - [ ] **Test cases include edge cases** (original tests preserved + new ones added)
-- [ ] **Markdown follows exact template structure**
-- [ ] **Complexity analysis uses table format** (best solution's row is named with 「（最优）」 and no other row/space/time cell contains「最优」— the quiz generator parses this mechanically)
-- [ ] **Common mistakes are 1~3 verifiable items**, each naming the exact code location and the failure symptom; no problem-statement definition is mislabeled as a "mistake"
-- [ ] **No "thinking traces" in final content**
-- [ ] **Code is runnable with `python filename.py`** and `python filename.py --test`
-- [ ] **Progressive approach (naive → optimal) is shown**
-- [ ] **Sample input/output are embedded in comments** using `# @sample-start` / `# @sample-end`
+- [ ] **Every real method's code follows its explanation** — no "all prose, code at the end" layout
+- [ ] **Only real ladders** — a "暴力→优化→最优" ladder appears only when those methods genuinely exist
+- [ ] **If editing an existing doc, the first python block under `## 完整代码实现` is unchanged**; if it changed, `pnpm trace:record <id>` has been rerun
+- [ ] **`node scripts/check-docs.ts` reports no error for this doc**, and `pnpm check:runbar <id>` passes when samples are usable
+- [ ] **Complexity table** — only real alternatives; the best row is marked with 「（最优）」 and no other row contains it
