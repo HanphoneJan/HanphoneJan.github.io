@@ -1,7 +1,7 @@
 ---
 title: Python速查
 category: 参考手册
-last_updated: 2026-03-23
+last_updated: 2026-10-31
 ---
 # Python速查
 
@@ -1562,16 +1562,46 @@ print(all(x > 0 for x in nums))  # True
 
 > 收录"看似简单常见、实则藏着细节"的内建知识——正是写题时最容易踩坑的地方。
 
-### `is` vs `==`
+### 值比较：`==`、`is` 与 `__eq__`
 
-- `==` 比较**值**（内容），`is` 比较**身份**（是不是同一个对象）。
-- 判断 `None` 必须用 `is`：`x is None`（`None` 是单例，`==` 也能过但风格不对，且自定义对象可能重载 `==`）。
-- 小整数（-5~256）和短字符串会被**驻留**（同一对象），所以 `a = 100; b = 100; a is b` 为 `True`——**不要依赖这一点**，大整数或新创建的字符串 `is` 可能为 `False`。
+| 写法 | 问的问题 | 底层 |
+|---|---|---|
+| `a == b` | 值是否相等 | `a.__eq__(b)` |
+| `a is b` | 是不是同一个对象 | `id(a) == id(b)` |
+| `hash(a) == hash(b)` | 哈希是否相同（不保证相等） | `a.__hash__()` |
+
+- `==` 比较**值**（内容），`is` 比较**身份**（是不是同一个对象）。判断 `None` 一律写 `x is None`：`None` 是单例，而 `==` 可能被自定义类重载。
+- 小整数（-5~256）和短字符串会被**缓存/驻留**，所以 `a = 100; b = 100; a is b` 可能为 `True`——这是 CPython 的实现细节，**不要依赖**。3.8+ 对 `x is 1` 这类字面量比较会给出 `SyntaxWarning`（提示 `Did you mean "=="?`）。
+- `id()` 只在对象存活期间唯一：对象回收后，新对象可能拿到同一个 `id`，不要把 `id` 当长期标识存起来。
 
 ```python
 [1, 2] == [1, 2]      # True（内容相同）
 [1, 2] is [1, 2]      # False（两个不同对象）
 ```
+
+**自定义类默认按身份比。** `object.__eq__` 就是身份比较；重写 `__eq__` 后 Python 会把 `__hash__` 置为 `None`，对象立刻不可哈希，要进 `set`/`dict` 必须一起实现 `__hash__`。`@dataclass` 默认 `eq=True`、`frozen=False`，同样不可哈希；用 `@dataclass(frozen=True)` 或自己补 `__hash__`。
+
+```python
+class User:
+    def __init__(self, name):
+        self.name = name
+
+    def __eq__(self, other):
+        return isinstance(other, User) and self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
+```
+
+**数值相等比想象中宽。** `1 == 1.0 == True` 为 `True`，三者的 `hash` 也相同，所以 `{1, True, 1.0}` 只剩一个元素。`Decimal("1.0") == Decimal("1.00")` 也为 `True`（按数值比，和 Java 的 `BigDecimal.equals` 相反）。
+
+**浮点不能直接 `==`。** `0.1 + 0.2 == 0.3` 为 `False`，用 `math.isclose(a, b)`。`NaN != NaN`，但 `nan is nan` 为 `True`；`nan in [nan]` 能命中是因为 `in` 先做身份判断，换一个 `NaN` 对象就找不到了。
+
+**容器比较是逐元素的。** `[1, 2] == [1, 2.0]` 为 `True`，`[1, 2] == (1, 2)` 为 `False`（类型不同）。`in`、`list.index`、`list.remove` 用 `==`；`set`/`dict` 先用 `hash` 定位再用 `==` 确认。NumPy 数组例外：`==` 返回布尔数组，`if arr == 0:` 会抛 `ValueError`，用 `np.array_equal` 或 `(arr == 0).all()`。
+
+**排序用的是 `<` 不是 `==`。** `sorted`、`min`、`max` 都靠 `__lt__`，只实现 `__eq__` 的类直接排序会抛 `TypeError`；补齐比较运算可以用 `functools.total_ordering`。
+
+和 Java 的逐项对照见 [Python 与 Java 的值比较](/docs/后端/Python与Java值比较.html)。
 
 ### 真值判断与短路
 

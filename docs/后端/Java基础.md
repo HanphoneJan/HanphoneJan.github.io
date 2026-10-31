@@ -137,6 +137,136 @@ public class Person {
 }
 ```
 
+## 值与相等性：`==`、`equals` 与 `hashCode`
+
+`==` 和 `equals` 是两套语义，混用是业务代码里最常见的 bug 之一。
+
+### `==` 比较什么
+
+| 操作数类型 | `==` 的含义 |
+|---|---|
+| 两个基本类型 | 数值相等，会做二元数值提升（`1 == 1.0` 为 `true`） |
+| 两个引用 | 是否指向同一个对象 |
+| 基本类型与包装类 | 包装类自动拆箱后按数值比较；包装类为 `null` 时抛 NPE |
+
+```java
+int a = 1;
+Integer b = 1;
+System.out.println(a == b);       // true：b 拆箱
+
+Integer c = null;
+// System.out.println(a == c);    // NullPointerException
+```
+
+### `equals` 比较什么
+
+`Object.equals` 的默认实现就是 `==`：
+
+```java
+public boolean equals(Object obj) {
+    return this == obj;
+}
+```
+
+`String`、包装类、`List`/`Set`/`Map` 等重写了它，改成比较内容。自己的类不重写，就仍然是身份比较：
+
+```java
+class User {
+    String name;
+    User(String name) { this.name = name; }
+}
+
+System.out.println(new User("a").equals(new User("a")));  // false
+```
+
+重写时注意三点：
+
+- 参数类型必须是 `Object`。写成 `equals(User other)` 是**重载**不是重写，集合里永远不会调用它；加 `@Override` 能让编译器当场报错。
+- 用 `getClass()` 还是 `instanceof` 要选一个：`instanceof` 允许子类与父类相等，可能破坏对称性；`getClass()` 更严格。
+- 先判 `this == o`，再判 `null` 和类型，`null` 一律返回 `false`。
+
+```java
+@Override
+public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    User user = (User) o;
+    return Objects.equals(name, user.name);
+}
+```
+
+`Objects.equals(a, b)` 是空安全写法：两边都是 `null` 返回 `true`，只有一边是 `null` 返回 `false`。
+
+### 重写 `equals` 必须同时重写 `hashCode`
+
+契约只有两条：
+
+- `a.equals(b)` 为 `true`，则 `a.hashCode() == b.hashCode()` 必须成立；
+- 两个对象不相等时，`hashCode` 可以相同（哈希冲突），也可以不同。
+
+`HashMap`/`HashSet` 先用 `hashCode` 找桶，再用 `equals` 在桶里确认。只重写 `equals` 不重写 `hashCode`，两个「相等」的对象会落到不同的桶，`map.get(new User("a"))` 取不到已经放进去的值。
+
+- 参与 `equals` 的字段，必须参与 `hashCode`；
+- 对象放进 `HashMap`/`HashSet` 之后，不要修改参与哈希的字段；
+- `record` 会自动生成 `equals`/`hashCode`/`toString`，但**组件是数组时仍按引用比较**，需要自己重写；
+- `TreeMap`/`TreeSet` 用的是 `compareTo`，它和 `equals` 不一致时会出现「明明不相等却被当成同一个 key」。
+
+```java
+record User(String id) {}
+
+Map<User, String> map = new HashMap<>();
+map.put(new User("1"), "alice");
+System.out.println(map.get(new User("1")));   // alice
+```
+
+### 两种「看起来对」的假象
+
+**字符串常量池。** 字面量在编译期进入常量池，同一个字面量复用同一个对象，所以 `==` 偶然为 `true`；一旦经过 `new` 或运行期拼接，就变成新对象：
+
+```java
+String a = "abc";
+String b = "abc";
+String c = new String("abc");
+String d = a + "";
+System.out.println(a == b);        // true：同一个常量
+System.out.println(a == c);        // false：new 出来的新对象
+System.out.println(a == d);        // false：运行期拼接
+System.out.println(a.equals(c));   // true：比内容
+```
+
+**包装类缓存。** `Integer.valueOf` 缓存 `-128..127`（JLS 保证这个范围，上限可用 `-XX:AutoBoxCacheMax` 调大），`Long`、`Short`、`Byte`、`Character` 也有类似缓存：
+
+```java
+Integer a = 127, b = 127;
+Integer c = 128, d = 128;
+System.out.println(a == b);        // true：命中缓存
+System.out.println(c == d);        // false：超出缓存，两个对象
+System.out.println(c.equals(d));   // true
+```
+
+结论：**包装类一律用 `equals` 或 `Objects.equals`；要按数值比，先拆箱成基本类型。** 同理，`Objects.equals(1, 1L)` 为 `false`：`Integer.equals` 只认 `Integer`，类型不同直接返回 `false`。
+
+### 其它容易忽略的类型
+
+| 类型 | `equals` 行为 |
+|---|---|
+| 数组 | 不重写，仍是身份比较；内容比较用 `Arrays.equals` / `Arrays.deepEquals` |
+| `StringBuilder` / `StringBuffer` | 不重写，仍是身份比较；要比较先 `toString()` |
+| `BigDecimal` | 数值和 `scale` 一起比，`2.0` 与 `2.00` 不相等；比值用 `compareTo(...) == 0` |
+| 枚举 | 天然单例，`==` 就是最合适的比较方式 |
+| 浮点数 | `Double.NaN != Double.NaN`；`0.0 == -0.0` 为 `true`，但 `Double.equals` 为 `false` |
+
+浮点比较用容差，不要直接 `==`：
+
+```java
+double a = 0.1 + 0.2;
+double b = 0.3;
+System.out.println(a == b);                    // false
+System.out.println(Math.abs(a - b) < 1e-9);    // true
+```
+
+和 Python 的逐项对照（`is`、`__eq__`、`__hash__`、`Decimal`、`NaN`）见 [Python 与 Java 的值比较](./Python与Java值比较.md)。
+
 ## 继承
 
 #### 继承关键字
