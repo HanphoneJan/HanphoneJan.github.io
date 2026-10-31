@@ -22,7 +22,7 @@ the separate site `hanphone.cn`.**
 ```bash
 pnpm install          # Install dependencies (Node 24 + pnpm 11/12)
 pnpm start            # Dev server on port 3001（vuepress dev .）
-pnpm build            # Production build -> .vuepress/dist
+pnpm build            # Production build -> .vuepress/dist（带 flock，单实例串行）
 pnpm serve            # Preview the build on port 3000
 pnpm typecheck        # tsc --noEmit（只检查 src/，strict 关，与迁移前一致）
 pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
@@ -33,6 +33,11 @@ pnpm test:difficulty  # 难度口径（8 种写法归一 + 全库覆盖率 + 徽
 
 > **环境版本必须对齐**：本地与 CI 均使用 **Node 24 + pnpm 11**（见 `.github/workflows/`）。
 > 改动 CI 或依赖时确保两者一致，否则 `pnpm install --frozen-lockfile` 在 CI 上会失败。
+>
+> **不要并行跑多个 `pnpm build`**：构建峰值 4–6GB，两三个并发会压满 15GB 内存，
+> 内核可能先杀 `gnome-shell`。`pnpm build` 已用 `scripts/build.sh` + `flock` 串行，
+> 但后台 agent 仍应只跑 `check:docs` / `check:runbar` / `test:adapters`；
+> 完整构建由主会话在最后跑一次。
 
 ## Architecture (VuePress)
 
