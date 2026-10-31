@@ -126,8 +126,11 @@ pnpm check:docs
 pnpm check:runbar P####       # 有可判定样例时
 pnpm test:adapters            # 有轨迹的题，改过首块必须重录
 pnpm quiz:gen && pnpm quiz:merge && pnpm quiz:validate
-pnpm build
 ```
+
+**不要由每个子代理各跑一次 `pnpm build`。** 构建峰值 4–6GB，多个并行会把
+内存压满；子代理只跑上面的轻量检查，完整 `pnpm build` 由主会话最后跑一次。
+`pnpm build` 本身已用 `scripts/build.sh` 的 `flock` 串行，后到的会排队。
 
 注意：`check:docs` 的「样例数」对 stdin/类接口题常显示 0，这是抽取器口径，
 不等于样例不存在；以官方样例手工/脚本对拍为准。
