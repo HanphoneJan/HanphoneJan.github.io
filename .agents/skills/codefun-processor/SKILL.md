@@ -23,6 +23,20 @@ description: Use when pulling CodeFun2000 (codefun2000.com) Huawei exam problems
 `/new-p/` 的 `window.UiContextNew` 里也有 `pdoc.content` / `ZhContentHTML`，但直接解析
 `div#content-ZhContent` 更简单。
 
+## Bundled scripts
+
+本 skill 自带两个脚本，**优先用它们**，不要每次手写解析：
+
+| 脚本 | 用途 |
+|---|---|
+| `scripts/list-recent.js` | 按 `groups` 日期索引列出最近 N 天场次，自动跳过模拟赛/选择题；`pnpm codefun:recent` 是它的别名 |
+| `scripts/extract-statement.py` | 拉 `/new-p/P####`，把 `div#content-ZhContent` 转成 Markdown（处理 KaTeX、表格、样例围栏） |
+
+```bash
+node .agents/skills/codefun-processor/scripts/list-recent.js --days 15
+python3 .agents/skills/codefun-processor/scripts/extract-statement.py P5948 --out /tmp/P5948.md
+```
+
 ## Step 1: Find recent sessions and PIDs
 
 先跑仓库里的脚本，**不要凭记忆看比赛页**：
@@ -53,6 +67,15 @@ pnpm codefun:recent --mock           # 连模拟赛一起列
    要「最近半个月真题」时优先用题库分组的日期。
 
 ## Step 2: Extract the official statement
+
+先用自带脚本：
+
+```bash
+python3 .agents/skills/codefun-processor/scripts/extract-statement.py P5948 --out /tmp/P5948.md
+```
+
+它处理了 KaTeX 重复、`span.tail`、表格和样例围栏。只有脚本缺失或需要改输出格式时，
+才手写解析 `/new-p/P####` 的 `div#content-ZhContent`。
 
 `/new-p/P####` 的 `div#content-ZhContent` 是渲染后的 HTML，包含
 题目内容 / 输入描述 / 输出描述 / 约束 / 样例。转换时注意：
