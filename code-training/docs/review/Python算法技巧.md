@@ -1,7 +1,7 @@
 ---
 title: Python算法技巧
 category: 参考手册
-last_updated: 2026-03-05
+last_updated: 2026-10-31
 ---
 # Python算法技巧
 
@@ -300,6 +300,98 @@ list(accumulate([1, 2, 3, 4]))     # [1, 3, 6, 10]
 
 ## 输入输出模板
 
+### 输入：定行、不定行与 EOF
+
+在线判题的多行输入只有两类：**行数已知**和**行数未知**。行数未知又分「有结束标志」和「读到文件尾」，写法不同：
+
+| 场景 | 写法 |
+|---|---|
+| 行数已知 | `for _ in range(n): ...` + `input()` |
+| 读到文件尾 | `for line in sys.stdin:`（推荐） |
+| 有结束标志 | `while True:` + `if ...: break` |
+| 一次性读完 | `sys.stdin.read().split()` |
+
+```python
+import sys
+
+# 定行：第一行 n，后面 n 行
+n = int(input())
+rows = [input().split() for _ in range(n)]
+
+# 不定行、无结束标志：读到文件尾自动结束
+for line in sys.stdin:
+    if not line.strip():        # 跳过空行，别让 split 解包报错
+        continue
+    a, b = map(int, line.split())
+    print(a + b)
+
+# 有结束标志：读到 0 0 为止
+while True:
+    a, b = map(int, input().split())
+    if a == 0 and b == 0:
+        break
+    print(a + b)
+```
+
+> **不要在 OJ 里用 `if line == '': break` 判断输入结束。** 输入耗尽时 `input()` 抛的是 `EOFError`，不会返回空串，这个判断在 OJ 上永远不成立；要兜底就捕获 `EOFError`，不要用裸 `except` 把其它异常一起吞掉。
+
+### 常见输入形态
+
+| 输入形态 | 读法 |
+|---|---|
+| 第一行 `t`，随后 `t` 组 | `t = int(input()); for _ in range(t): ...` |
+| 每组第一个数 `n`，后面 `n` 个数 | `n, *arr = map(int, input().split())` |
+| 每行不定个整数，读到 EOF | `for line in sys.stdin: nums = list(map(int, line.split()))` |
+| 一行逗号分隔的字符串 | `input().split(',')` |
+| 把一行拆成字符列表 | `list(input().strip())` |
+| 读一个 `n × m` 的网格 | `grid = [list(map(int, input().split())) for _ in range(n)]` |
+
+```python
+import sys
+
+# 先把所有 token 读进来，适合「数量太多、不想逐行解析」的题
+data = sys.stdin.read().split()
+it = iter(data)
+t = int(next(it))
+for _ in range(t):
+    n = int(next(it))
+    arr = [int(next(it)) for _ in range(n)]
+```
+
+### JSON 与 Python 字面量
+
+题面写「输入一个 JSON」时，**不要用 `split()` 拆**：JSON 里的逗号、引号、花括号都是语法的一部分，按空白切开结构就碎了。整段读成字符串交给 `json.loads`：
+
+```python
+import json
+import sys
+
+data = json.loads(sys.stdin.read())          # 整段是一个 JSON
+
+# 或者：第一行组数，后面每行一个 JSON
+input = sys.stdin.readline
+rows = [json.loads(input()) for _ in range(int(input()))]
+
+# 或者：一行一个 JSON，读到 EOF（空行要跳过）
+for line in sys.stdin:
+    line = line.strip()
+    if line:
+        obj = json.loads(line)
+```
+
+- `json.loads` 收字符串，`json.load` 收文件对象；读文件直接用 `json.load(f)`。
+- 单引号、`True`、`None`、元组是 **Python 字面量**，不是 JSON：用 `ast.literal_eval`。
+- 文件带 BOM（Windows 记事本存的）时用 `encoding='utf-8-sig'`。
+- 输出 JSON 用 `json.dumps(obj, ensure_ascii=False, separators=(',', ':'))`：中文不转义，且去掉 `,`/`:` 后的空格（有些 OJ 逐字符比对）。
+
+| 报错 | 原因 |
+|---|---|
+| `Expecting value: line 1 column 1` | 空串、纯空白或 BOM |
+| `Expecting property name enclosed in double quotes` | 用了单引号，应改用 `ast.literal_eval` |
+| `Extra data` | 一段字符串里塞了多个 JSON，按行拆开分别 `loads` |
+
+> 输入模式的整理参考 [sitJac 的 ACM 输入总结](https://sitjac.github.io/blog/acm-codeing-tips/)。
+
 ### 快速读入（大量数据时）
 
 **为什么用 `sys.stdin.readline`？** 内置 `input()` 每行都做一次缓冲处理，数据量大时慢；`readline` 直接读行，速度快数倍。**ACM/笔试必用。**
@@ -318,7 +410,7 @@ for _ in range(n):
     a, b = map(int, input().split())
 ```
 
-> 变体：不确定行数读到文件尾，用 `for line in sys.stdin:`；需要一次性读完用 `sys.stdin.read().split()`。详见 [ACM模式输入输出处理](ACM模式输入输出处理.md)。
+> 变体：不确定行数读到文件尾，用 `for line in sys.stdin:`；需要一次性读完用 `sys.stdin.read().split()`。
 
 ### print 的参数（sep / end / file / flush）
 
