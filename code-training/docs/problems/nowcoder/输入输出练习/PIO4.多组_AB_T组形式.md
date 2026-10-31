@@ -153,15 +153,9 @@ if __name__ == "__main__":
 有的人直接把所有 token 两两读成 `a b`，结果第一组的「a」其实是 T。
 务必把第一行的 T 单独读出来。
 
-### 2. 输出末尾多一个空行
+### 2. 用 `sys.stdin.read()` 却忘了 `import sys`
 
-如果先 `print()` 多次，每行末尾自带换行，没有问题；
-若拼成一个字符串再用 `sys.stdout.write` 输出，记得补末尾 `\n`，
-且不要在最后再空一行。
-
-### 3. 没有 `import sys`
-
-`input()` 是内置函数无需导入，但用 `sys.stdin.read()` 时必须 `import sys`。
+`input()` 是内置函数无需导入，但 `sys.stdin.read()` 必须先 `import sys`，否则运行时报 `NameError: name 'sys' is not defined`。
 
 ---
 

@@ -200,25 +200,7 @@ self.invertTree(root.right)
 return root  # 必须返回根节点
 ```
 
-### 2. 交换顺序错误
-
-先交换再递归也可以，但要保持一致：
-
-```python
-# 方案一：先递归，后交换
-# 拿到的是两棵已经翻转好的子树，最后对调它们的位置
-left = self.invertTree(root.left)
-right = self.invertTree(root.right)
-root.left, root.right = right, left
-
-# 方案二：先交换，后递归
-# 交换后 root.left 已经是原右子树，对它递归同样能翻转
-root.left, root.right = root.right, root.left
-self.invertTree(root.left)
-self.invertTree(root.right)
-```
-
-### 3. 空节点处理
+### 2. 空节点处理
 
 ```python
 # 空节点上取 .left / .right 会报错，先挡住；返回 None 而不是 root

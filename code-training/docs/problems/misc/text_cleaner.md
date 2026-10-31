@@ -82,24 +82,76 @@ a b c a b c
 
 ## 解题思路
 
-### 第一步：理解问题本质
+### 这是一条流水线，顺序本身就是规则的一部分
 
-本题是一个多阶段流水线处理的问题。每个文档依次经过 6 个过滤阶段，任一阶段不通过即被丢弃。需要严格按照顺序执行，且每个阶段的判断逻辑不同。
+每篇文档依次经过 6 道关卡，任何一关不通过就整篇丢弃，且后面的关卡不再执行。顺序不能随意调换：
 
-### 第二步：暴力解法
+- **长度过滤必须在空格规范化之后**，因为规范化会改变长度；
+- **黑名单和 3-gram 都基于「语义单词」**，所以要先提取单词；
+- **去重必须放在最后**，否则会把「本来会被黑名单拦掉」的文档提前记进已见集合，影响后续判断。
 
-直接按题意逐阶段实现即可。本题没有算法复杂度上的挑战，主要是正确实现每个规则。
+下面按顺序拆开。
 
-### 第三步：最优解法
+### 1. 空格规范化
 
-按顺序实现 6 个过滤阶段：
+```python
+normalized = re.sub(r'\s+', ' ', raw).strip()
+```
 
-1. **空格规范化：** `re.sub(r'\s+', ' ', text).strip()`
-2. **长度过滤：** `L <= len(text) <= R`
-3. **语义提取：** `re.findall(r'[A-Za-z0-9]+', text)`
-4. **黑名单检查：** `any(word.lower() in blacklist for word in words)`
-5. **3-gram 复读：** 用字典计数，任一元组出现次数 > M 即丢弃
-6. **去重：** 用小写单词元组作为 key，已出现过则丢弃
+`\s+` 把连续的空格、制表符、换行都压成一个空格，`strip()` 去掉首尾空格。注意这里用的是**原始行**，不是 `split()` 后的 token；一篇文档里的空格是内容的一部分。
+
+### 2. 长度过滤
+
+```python
+if not (L <= len(normalized) <= R):
+    continue
+```
+
+长度按**规范化后**的字符串算，包含端点。先算长度再提取单词，可以尽早丢掉明显不合规的文档。
+
+### 3. 语义单词提取
+
+```python
+words = re.findall(r'[A-Za-z0-9]+', normalized)
+words_lower = [w.lower() for w in words]
+```
+
+只保留连续字母/数字，标点自然成为分隔符：`"He is, A! Spammer."` 提取出 `["He", "is", "A", "Spammer"]`。显示时保留原大小写，判断时统一转小写。
+
+### 4. 黑名单拦截
+
+```python
+if any(w in blacklist for w in words_lower):
+    continue
+```
+
+黑名单里的词也要按小写比较，否则 `SPAM` 会漏过。注意是「任一单词命中就丢弃整篇」，不是只删掉那个词。
+
+### 5. 3-gram 复读惩罚
+
+3-gram 是**连续**三个单词组成的元组，滑动窗口每次右移一位：
+
+```python
+counter = defaultdict(int)
+for i in range(len(words_lower) - 2):
+    gram = tuple(words_lower[i:i + 3])
+    counter[gram] += 1
+    if counter[gram] > M:      # 超过阈值立即丢弃
+        break
+```
+
+`"a b c a b c a b c"` 的 3-gram 只有 `(a,b,c)` 反复出现，计到第 3 次就超过阈值 2；而 `"a b c a b c"` 只出现 2 次，保留。单词数不足 3 时没有 3-gram，直接跳过这一段。
+
+### 6. 规范化语义去重
+
+```python
+seq_tuple = tuple(words_lower)
+if seq_tuple in seen_sequences:
+    continue
+seen_sequences.add(seq_tuple)
+```
+
+去重比较的是**整个小写单词序列**，不是原始字符串：`"He is a spammer"` 和 `"He is, A! Spammer."` 标点、大小写不同，但单词序列都是 `(he, is, a, spammer)`，所以第二篇会被判重。
 
 ---
 

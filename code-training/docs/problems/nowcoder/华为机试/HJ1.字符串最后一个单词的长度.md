@@ -199,13 +199,6 @@ return len(words[-1]) if words else 0
 # words 为空时 words[-1] 会抛 IndexError，所以必须先判空
 ```
 
-### 3. 混淆 `strip()` 和 `rstrip()`
-
-- `strip()`：去除首尾空格
-- `rstrip()`：仅去除尾部空格
-
-本题两种情况都可以，因为开头的空格不影响从末尾遍历的结果。
-
 ---
 
 ## 扩展思考

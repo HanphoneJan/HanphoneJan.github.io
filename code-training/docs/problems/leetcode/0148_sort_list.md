@@ -224,10 +224,6 @@ class Solution:
 
 `mergeTwoLists` 不仅要返回新头节点，还要返回尾节点，以便下一轮快速拼接。
 
-### 3. 空链表和单节点
-
-`getListLength` 返回 0 时，`step = 1 < 0` 不成立，直接返回 `dummy.next`（即 `None`）。单节点时同理，无需排序。
-
 ---
 
 ## 扩展思考
