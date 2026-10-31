@@ -161,24 +161,24 @@ date_reviewed: []
 
 ## 解题思路
 
-### 第一步：理解问题本质
-[Core concept explanation]
+### [小节标题按内容起，不要固定「第一步/第二步」]
 
-### 第二步：暴力解法
-[Naive approach with code]
+[判定标准 + 关键观察 + 为什么是这个算法 + 算法到实现的映射。
+每讲完一种方法，紧接着贴该方法自己的代码；不要让「思路」全是文字、
+代码全堆到下一章。]
 
-### 第三步：优化解法
-[Improved approach]
+### 方法一：[名字]
+[推导 + 该方法代码]
 
-### 第四步：最优解法
-[Optimal solution explanation]
+### 方法二：[名字，真实存在才写]
+[推导 + 该方法代码；与上一种写清优劣，不要用「同理」带过]
 
 ---
 
 ## 完整代码实现
 
 ```python
-[Complete code with comments]
+[可直接提交的版本，允许多个方法/版本；第一个 python 块是页面运行入口]
 ```
 
 ---
@@ -193,21 +193,21 @@ date_reviewed: []
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 | ---- | ---------- | ---------- | ---- |
-| 暴力 | O(...)     | O(...)     | ...  |
-| 优化 | O(...)     | O(...)     | ...  |
-| 最优 | O(...)     | O(...)     | ...  |
+| [方法一] | O(...) | O(...) | ... |
+| [方法二] | O(...) | O(...) | ... |
+| [最优方法]（最优） | O(...) | O(...) | ... |
+
+> 只有真实存在的不同解法才列多行；最优行用「（最优）」标一次，
+> 其余行不要出现「最优」。
 
 ---
 
 ## 易错点总结
 
-### 1. [Common mistake 1]
-
-[Explanation and fix]
-
-### 2. [Common mistake 2]
-
-[Explanation and fix]
+- 1~3 条，每条必须能指出**具体代码位置**（哪一行/哪个下标/哪个方向）
+  和**可观察的失败现象**（答案偏大/偏小、越界、死循环、样例过不了）。
+- 算法原理、复杂度说明、「这样写也可以」「不需要特判」都不算易错点。
+- 写不出可指认的条目就省略本节，不要凑数。
 
 ---
 
@@ -222,6 +222,9 @@ date_reviewed: []
 - [Problem Name](URL)
 
 ```
+
+> 写之前先读 `code-training/AGENTS.md` 的原则 5、6；那是题解写作的
+> 事实来源，本技能只负责流程与模板。
 
 ## Frontmatter 规范
 
@@ -454,11 +457,14 @@ if __name__ == "__main__":
 - [ ] **main 测试代码在文件最后** - `if __name__ == "__main__":` 位于文件末尾，在所有 LeetCode 注释之后
 - [ ] Comments explain WHY, not just WHAT
 - [ ] Test cases include edge cases (original tests preserved + new ones added)
-- [ ] Markdown follows exact template structure
-- [ ] Complexity analysis uses table format
+- [ ] Every real method's code follows its explanation — no "all prose, code at the end" layout
+- [ ] Only real ladders — a 暴力→优化→最优 ladder appears only when those methods genuinely exist
+- [ ] If editing an existing doc, the first python block under `## 完整代码实现` is unchanged; if it changed, `pnpm trace:record <题号>` has been rerun
+- [ ] `pnpm check:runbar <题号>` passes when the samples are usable
+- [ ] Markdown follows the current template (methods interleaved with code, not the old 第一步/第二步/最优 structure)
+- [ ] Complexity analysis uses a real comparison table; the best row is marked 「（最优）」 exactly once
 - [ ] No "thinking traces" in final content
 - [ ] Code is runnable with `python filename.py`
-- [ ] Progressive approach (naive → optimal) is shown
 
 ### Frontmatter 完整性
 

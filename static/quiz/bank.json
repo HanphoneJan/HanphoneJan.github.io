@@ -5559,6 +5559,206 @@
       "source": "复杂度分析"
     },
     {
+      "docId": "problems/codefun2000/huawei-non-ai/P5491.md",
+      "source": "复杂度分析",
+      "id": "other-P5491-complexity",
+      "type": "blank",
+      "stem": "本题最优解「逐切点现转两段再比较」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n^2)",
+      "explain": "逐切点现转两段再比较的时间复杂度是 O(n^2)。同一张表里其他解法也是 O(n^2)，这题的区分点不在时间。"
+    },
+    {
+      "id": "other-P5491-space",
+      "docId": "problems/codefun2000/huawei-non-ai/P5491.md",
+      "type": "single",
+      "stem": "本题最优解「逐切点现转两段再比较」的空间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(n^2)"
+      ],
+      "answer": 0,
+      "explain": "逐切点现转两段再比较的空间复杂度是 O(n)。预先把每个切点的左右两段值都存成数组 O(n^2) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P5492.md",
+      "source": "复杂度分析",
+      "id": "other-P5492-complexity",
+      "type": "single",
+      "stem": "本题最优解「前缀最大值一次扫描」的时间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(n^2)"
+      ],
+      "answer": 0,
+      "explain": "前缀最大值一次扫描的时间复杂度是 O(n)。表里的其他解法分别是枚举所有 p<q 的数对 O(n^2) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P5493.md",
+      "source": "复杂度分析",
+      "id": "other-P5493-complexity",
+      "type": "single",
+      "stem": "本题最优解「deque + 两张哈希表」的时间复杂度是？",
+      "options": [
+        "总量 O(m)，单次均摊 O(1)",
+        "总量 O(m\\cdot F)"
+      ],
+      "answer": 0,
+      "explain": "deque + 两张哈希表的时间复杂度是 总量 O(m)，单次均摊 O(1)。表里的其他解法分别是用 list 当队列（pop(0) 删队首） 总量 O(m\\cdot F) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5499.md",
+      "source": "复杂度分析",
+      "id": "other-P5499-complexity",
+      "type": "single",
+      "stem": "本题最优解「归一后按位数 + 字典序逐段比较」的时间复杂度是？",
+      "options": [
+        "O(L)",
+        "O(L^2)"
+      ],
+      "answer": 0,
+      "explain": "归一后按位数 + 字典序逐段比较的时间复杂度是 O(L)。表里的其他解法分别是每段转成 int 再比 O(L^2) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5500.md",
+      "source": "复杂度分析",
+      "id": "other-P5500-complexity",
+      "type": "blank",
+      "stem": "本题最优解「从后向前双指针原地归并」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(m+n)",
+      "explain": "从后向前双指针原地归并的时间复杂度是 O(m+n)。同一张表里其他解法也是 O(m+n)，这题的区分点不在时间。"
+    },
+    {
+      "id": "other-P5500-space",
+      "docId": "problems/codefun2000/huawei-ai/P5500.md",
+      "type": "single",
+      "stem": "本题最优解「从后向前双指针原地归并」的空间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(m)"
+      ],
+      "answer": 0,
+      "explain": "从后向前双指针原地归并的空间复杂度是 O(1)。复制 nums1 有效部分后从前向后归并 O(m) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P5518.md",
+      "source": "复杂度分析",
+      "id": "other-P5518-complexity",
+      "type": "single",
+      "stem": "本题最优解「按人 DFS，最后一层直接收尾」的时间复杂度是？",
+      "options": [
+        "O(n\\cdot\\binom{m+n-1}{n-1})",
+        "O(m^n)"
+      ],
+      "answer": 0,
+      "explain": "按人 DFS，最后一层直接收尾的时间复杂度是 O(n\\cdot\\binom{m+n-1}{n-1})。表里的其他解法分别是枚举 n 元组再筛掉和不等于 m 的 O(m^n) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P5519.md",
+      "source": "复杂度分析",
+      "id": "other-P5519-complexity",
+      "type": "single",
+      "stem": "本题最优解「前缀和 + 候选段和 + 下标二分」的时间复杂度是？",
+      "options": [
+        "O(n + \\sum k\\log n)",
+        "O(n^2)"
+      ],
+      "answer": 0,
+      "explain": "前缀和 + 候选段和 + 下标二分的时间复杂度是 O(n + \\sum k\\log n)。表里的其他解法分别是每个候选终点都把数组重扫一遍来试切分 O(n^2) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5519-space",
+      "docId": "problems/codefun2000/huawei-non-ai/P5519.md",
+      "type": "single",
+      "stem": "本题最优解「前缀和 + 候选段和 + 下标二分」的空间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(1)"
+      ],
+      "answer": 0,
+      "explain": "前缀和 + 候选段和 + 下标二分的空间复杂度是 O(n)。每个候选终点都把数组重扫一遍来试切分 O(1) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P5520.md",
+      "source": "复杂度分析",
+      "id": "other-P5520-complexity",
+      "type": "single",
+      "stem": "本题最优解「前缀和 + 前缀平方和」的时间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(n^2)"
+      ],
+      "answer": 0,
+      "explain": "前缀和 + 前缀平方和的时间复杂度是 O(n)。表里的其他解法分别是每个切割点重扫两段求和与平方和 O(n^2) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5520-space",
+      "docId": "problems/codefun2000/huawei-non-ai/P5520.md",
+      "type": "single",
+      "stem": "本题最优解「前缀和 + 前缀平方和」的空间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(1)"
+      ],
+      "answer": 0,
+      "explain": "前缀和 + 前缀平方和的空间复杂度是 O(n)。每个切割点重扫两段求和与平方和 O(1) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5522.md",
+      "source": "复杂度分析",
+      "id": "other-P5522-complexity",
+      "type": "single",
+      "stem": "本题最优解「前缀异或 + 哈希计数」的时间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(n^2)"
+      ],
+      "answer": 0,
+      "explain": "前缀异或 + 哈希计数的时间复杂度是 O(n)。表里的其他解法分别是枚举左右端点、边扫边异或 O(n^2) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5522-space",
+      "docId": "problems/codefun2000/huawei-ai/P5522.md",
+      "type": "single",
+      "stem": "本题最优解「前缀异或 + 哈希计数」的空间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(1)"
+      ],
+      "answer": 0,
+      "explain": "前缀异或 + 哈希计数的空间复杂度是 O(n)。枚举左右端点、边扫边异或 O(1) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5523.md",
+      "source": "复杂度分析",
+      "id": "other-P5523-complexity",
+      "type": "single",
+      "stem": "本题最优解「等长 + 短一位两类候选」的时间复杂度是？",
+      "options": [
+        "$O(10\\cdot",
+        "s"
+      ],
+      "answer": 0,
+      "explain": "等长 + 短一位两类候选的时间复杂度是 $O(10\\cdot。表里的其他解法分别是枚举所有由 nums 拼成、长度不超过 $ s —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5523-space",
+      "docId": "problems/codefun2000/huawei-ai/P5523.md",
+      "type": "single",
+      "stem": "本题最优解「等长 + 短一位两类候选」的空间复杂度是？",
+      "options": [
+        "s",
+        "$ 的数"
+      ],
+      "answer": 0,
+      "explain": "等长 + 短一位两类候选的空间复杂度是 s。枚举所有由 nums 拼成、长度不超过 $ $ 的数 —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
       "docId": "problems/codefun2000/meituan/P5562.md",
       "source": "复杂度分析",
       "id": "other-P5562-complexity",
