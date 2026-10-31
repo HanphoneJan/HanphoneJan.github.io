@@ -6068,6 +6068,132 @@
       "explain": "位掩码 + MRV 回溯的时间复杂度是 指数级（本题规模下毫秒级）。表里的其他解法分别是固定顺序的朴素回溯 指数级 —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
+      "docId": "problems/codefun2000/huawei-ai/P5939.md",
+      "source": "复杂度分析",
+      "id": "other-P5939-complexity",
+      "type": "blank",
+      "stem": "本题最优解「一次遍历按取值累计 2\\times2 计数」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(N\\cdot m^2)",
+      "explain": "一次遍历按取值累计 2\\times2 计数的时间复杂度是 O(N\\cdot m^2)。同一张表里其他解法也是 O(N\\cdot m^2)，这题的区分点不在时间。"
+    },
+    {
+      "id": "other-P5939-space",
+      "docId": "problems/codefun2000/huawei-ai/P5939.md",
+      "type": "single",
+      "stem": "本题最优解「一次遍历按取值累计 2\\times2 计数」的空间复杂度是？",
+      "options": [
+        "O(N)",
+        "O(N\\cdot m)"
+      ],
+      "answer": 0,
+      "explain": "一次遍历按取值累计 2\\times2 计数的空间复杂度是 O(N)。每个候选特征先把节点样本切成子集列表，再各算一次熵 O(N\\cdot m) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5940.md",
+      "source": "复杂度分析",
+      "id": "other-P5940-complexity",
+      "type": "single",
+      "stem": "本题最优解「按题面流程：每个 K 各跑一次 K-Means」的时间复杂度是？",
+      "options": [
+        "O\\!\\left(I\\cdot N\\cdot d\\cdot\\sum_{K=K_{\\min}}^{K_{\\max}}K\\right)",
+        "O\\!\\left(100\\cdot N\\cdot d\\cdot\\sum K\\right)"
+      ],
+      "answer": 0,
+      "explain": "按题面流程：每个 K 各跑一次 K-Means的时间复杂度是 O\\!\\left(I\\cdot N\\cdot d\\cdot\\sum_{K=K_{\\min}}^{K_{\\max}}K\\right)。表里的其他解法分别是不判收敛、固定跑满 100 轮 O\\!\\left(100\\cdot N\\cdot d\\cdot\\sum K\\right) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5940-space",
+      "docId": "problems/codefun2000/huawei-ai/P5940.md",
+      "type": "single",
+      "stem": "本题最优解「按题面流程：每个 K 各跑一次 K-Means」的空间复杂度是？",
+      "options": [
+        "O(N\\cdot d + N)",
+        "同上"
+      ],
+      "answer": 0,
+      "explain": "按题面流程：每个 K 各跑一次 K-Means的空间复杂度是 O(N\\cdot d + N)。不判收敛、固定跑满 100 轮 同上 —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P5941.md",
+      "source": "复杂度分析",
+      "id": "other-P5941-complexity",
+      "type": "single",
+      "stem": "本题最优解「并查集预处理 + 每个询问 O(1) 查表」的时间复杂度是？",
+      "options": [
+        "O((A+B)\\,\\alpha(A) + T)",
+        "O(T\\cdot(A+B))"
+      ],
+      "answer": 0,
+      "explain": "并查集预处理 + 每个询问 O(1) 查表的时间复杂度是 O((A+B)\\,\\alpha(A) + T)。表里的其他解法分别是每个询问现做一次遍历，扫出所在块与时标源 O(T\\cdot(A+B)) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5941-space",
+      "docId": "problems/codefun2000/huawei-non-ai/P5941.md",
+      "type": "single",
+      "stem": "本题最优解「并查集预处理 + 每个询问 O(1) 查表」的空间复杂度是？",
+      "options": [
+        "O(A)",
+        "O(A+B)"
+      ],
+      "answer": 0,
+      "explain": "并查集预处理 + 每个询问 O(1) 查表的空间复杂度是 O(A)。每个询问现做一次遍历，扫出所在块与时标源 O(A+B) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P5942.md",
+      "source": "复杂度分析",
+      "id": "other-P5942-complexity",
+      "type": "single",
+      "stem": "本题最优解「只枚举平衡拆法 + 每边全排列 + 双指针求最小差」的时间复杂度是？",
+      "options": [
+        "O\\!\\left(C(K,\\lfloor K/2\\rfloor)\\cdot L!\\right)",
+        "O(K\\cdot K!)"
+      ],
+      "answer": 0,
+      "explain": "只枚举平衡拆法 + 每边全排列 + 双指针求最小差的时间复杂度是 O\\!\\left(C(K,\\lfloor K/2\\rfloor)\\cdot L!\\right)。表里的其他解法分别是枚举所有「排列 + 切分」再逐对比差 O(K\\cdot K!) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5942-space",
+      "docId": "problems/codefun2000/huawei-non-ai/P5942.md",
+      "type": "single",
+      "stem": "本题最优解「只枚举平衡拆法 + 每边全排列 + 双指针求最小差」的空间复杂度是？",
+      "options": [
+        "O(L!)",
+        "O(K!)"
+      ],
+      "answer": 0,
+      "explain": "只枚举平衡拆法 + 每边全排列 + 双指针求最小差的空间复杂度是 O(L!)。枚举所有「排列 + 切分」再逐对比差 O(K!) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P5943.md",
+      "source": "复杂度分析",
+      "id": "other-P5943-complexity",
+      "type": "single",
+      "stem": "本题最优解「颜色段均摊」的时间复杂度是？",
+      "options": [
+        "O((A+B)\\log A)",
+        "O(AB)"
+      ],
+      "answer": 0,
+      "explain": "颜色段均摊的时间复杂度是 O((A+B)\\log A)。表里的其他解法分别是逐格涂色 + 每次重扫全带 O(AB) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5943-space",
+      "docId": "problems/codefun2000/huawei-non-ai/P5943.md",
+      "type": "single",
+      "stem": "本题最优解「颜色段均摊」的空间复杂度是？",
+      "options": [
+        "O(A+B)",
+        "O(A)"
+      ],
+      "answer": 0,
+      "explain": "颜色段均摊的空间复杂度是 O(A+B)。逐格涂色 + 每次重扫全带 O(A)、线段树 + 懒标记 O(A) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
       "docId": "problems/codefun2000/huawei-ai/P5946.md",
       "source": "复杂度分析",
       "id": "other-P5946-complexity",
@@ -6153,6 +6279,94 @@
       ],
       "answer": 0,
       "explain": "按天推进、轮数做维度的时间复杂度是 O(N\\cdot K)。表里的其他解法分别是枚举所有「买日/卖日」组合 O\\!\\left(N^{2K}\\right) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P6084.md",
+      "source": "复杂度分析",
+      "id": "other-P6084-complexity",
+      "type": "single",
+      "stem": "本题最优解「排序 + 从小到大累加」的时间复杂度是？",
+      "options": [
+        "O(n\\log n)",
+        "O(n\\cdot 2^{n})"
+      ],
+      "answer": 0,
+      "explain": "排序 + 从小到大累加的时间复杂度是 O(n\\log n)。表里的其他解法分别是枚举所有子集 O(n\\cdot 2^{n}) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P6085.md",
+      "source": "复杂度分析",
+      "id": "other-P6085-complexity",
+      "type": "blank",
+      "stem": "本题最优解「每轮重统计 + 整数交叉相乘」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O\\big(T\\cdot(M L K+(N+M)L)\\big)",
+      "explain": "每轮重统计 + 整数交叉相乘的时间复杂度是 O\\big(T\\cdot(M L K+(N+M)L)\\big)。同一张表里其他解法也是 O\\big(T\\cdot(M L K+(N+M)L)\\big)，这题的区分点不在时间。"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P6086.md",
+      "source": "复杂度分析",
+      "id": "other-P6086-complexity",
+      "type": "single",
+      "stem": "本题最优解「二分答案 + 贪心判定」的时间复杂度是？",
+      "options": [
+        "O(A \\log(\\sum g))",
+        "O\\!\\left(\\binom{A-1}{B-1}\\cdot B\\right)"
+      ],
+      "answer": 0,
+      "explain": "二分答案 + 贪心判定的时间复杂度是 O(A \\log(\\sum g))。表里的其他解法分别是枚举所有切法 O\\!\\left(\\binom{A-1}{B-1}\\cdot B\\right) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P6086-space",
+      "docId": "problems/codefun2000/huawei-non-ai/P6086.md",
+      "type": "single",
+      "stem": "本题最优解「二分答案 + 贪心判定」的空间复杂度是？",
+      "options": [
+        "O(A)",
+        "O(B)"
+      ],
+      "answer": 0,
+      "explain": "二分答案 + 贪心判定的空间复杂度是 O(A)。枚举所有切法 O(B) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P6087.md",
+      "source": "复杂度分析",
+      "id": "other-P6087-complexity",
+      "type": "single",
+      "stem": "本题最优解「事件驱动 + 优先队列」的时间复杂度是？",
+      "options": [
+        "O(M \\log M)",
+        "O(\\max s + \\sum d + M \\log M)"
+      ],
+      "answer": 0,
+      "explain": "事件驱动 + 优先队列的时间复杂度是 O(M \\log M)。表里的其他解法分别是逐时刻推进模拟 O(\\max s + \\sum d + M \\log M) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P6088.md",
+      "source": "复杂度分析",
+      "id": "other-P6088-complexity",
+      "type": "single",
+      "stem": "本题最优解「按分钟背包 + 单调队列」的时间复杂度是？",
+      "options": [
+        "O(C \\cdot T)",
+        "O\\!\\left(\\prod_t (v_t-u_t+2)\\right)",
+        "O(C \\cdot T \\cdot v_{\\max})"
+      ],
+      "answer": 0,
+      "explain": "按分钟背包 + 单调队列的时间复杂度是 O(C \\cdot T)。表里的其他解法分别是枚举每名的购买时长 O\\!\\left(\\prod_t (v_t-u_t+2)\\right)、按分钟背包 + 枚举转移 O(C \\cdot T \\cdot v_{\\max}) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P6088-space",
+      "docId": "problems/codefun2000/huawei-non-ai/P6088.md",
+      "type": "single",
+      "stem": "本题最优解「按分钟背包 + 单调队列」的空间复杂度是？",
+      "options": [
+        "O(T)",
+        "O(C)"
+      ],
+      "answer": 0,
+      "explain": "按分钟背包 + 单调队列的空间复杂度是 O(T)。枚举每名的购买时长 O(C) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
     },
     {
       "docId": "problems/nowcoder/输入输出练习/PIO11.多组_字符串_T组形式.md",

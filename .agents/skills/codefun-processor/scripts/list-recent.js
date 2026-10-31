@@ -7,11 +7,12 @@
  * 固化成命令。
  *
  * 用法：
- *   node scripts/fetch-codefun.js                 # 最近 15 天，跳过模拟赛
- *   node scripts/fetch-codefun.js --days 30
- *   node scripts/fetch-codefun.js --mock          # 连模拟赛一起列
- *   node scripts/fetch-codefun.js --json
- *   node scripts/fetch-codefun.js --anchor P5950
+ *   node .agents/skills/codefun-processor/scripts/list-recent.js
+ *   node .../list-recent.js --days 30
+ *   node .../list-recent.js --mock
+ *   node .../list-recent.js --check   # 同时检查仓库里有没有对应题解
+ *   node .../list-recent.js --json
+ *   node .../list-recent.js --anchor P5950
  *
  * 默认锚点 P5950 是 2026-10-28 的题；`groups` 会带出前后所有场次。
  * 题目详情请用 https://codefun2000.com/new-p/P####（公开题面），
@@ -20,6 +21,20 @@
 
 const DEFAULT_ANCHOR = 'P5950'
 const DEFAULT_DAYS = 15
+const fs = require('node:fs')
+const path = require('node:path')
+
+const ROOT = process.cwd()
+const DOC_DIR = path.join(ROOT, 'code-training/docs/problems/codefun2000')
+
+function docPath(sessionTitle, pid) {
+  const dir = /非AI方向/.test(sessionTitle)
+    ? 'huawei-non-ai'
+    : /AI方向/.test(sessionTitle)
+      ? 'huawei-ai'
+      : null
+  return dir ? path.join(DOC_DIR, dir, `${pid}.md`) : null
+}
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(name)
@@ -72,6 +87,7 @@ async function main() {
   const days = Number(arg('--days', DEFAULT_DAYS))
   const includeMock = flag('--mock')
   const asJson = flag('--json')
+  const check = flag('--check')
 
   const url = `https://codefun2000.com/new-p/${anchor}`
   const res = await fetch(url)
@@ -95,11 +111,15 @@ async function main() {
       date,
       session: group.title,
       mock: isMock(group.title),
-      problems: items.map((x) => ({
-        pid: x.pid,
-        title: x.title,
-        difficulty: x.difficulty,
-      })),
+      problems: items.map((x) => {
+        const p = docPath(group.title, x.pid)
+        return {
+          pid: x.pid,
+          title: x.title,
+          difficulty: x.difficulty,
+          ...(check ? { hasDoc: p ? fs.existsSync(p) : null } : {}),
+        }
+      }),
     })
   }
   sessions.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
@@ -117,9 +137,19 @@ async function main() {
   console.log(`最近 ${days} 天（截至 ${today.toISOString().slice(0, 10)}，锚点 ${anchor}）：`)
   for (const s of sessions) {
     const tag = s.mock ? ' [模拟]' : ''
-    const list = s.problems.map((p) => `${p.pid} ${p.title}`).join(' / ')
+    const list = s.problems
+      .map((p) => `${check ? (p.hasDoc ? '[有] ' : '[缺] ') : ''}${p.pid} ${p.title}`)
+      .join(' / ')
     console.log(`- ${s.date}${tag} ${s.session.replace(/^\d{4}年\d{1,2}月\d{1,2}日-?/, '')}`)
     console.log(`  ${list}`)
+  }
+  if (check) {
+    const missing = sessions.flatMap((s) => s.problems.filter((p) => !p.hasDoc))
+    console.log(
+      missing.length
+        ? `\n缺 ${missing.length} 篇：${missing.map((p) => p.pid).join(' ')}`
+        : '\n最近场次的编程题都已有文档。',
+    )
   }
   console.log('\n下一步：对每个编程题读 https://codefun2000.com/new-p/P####（不是 /p/）')
 }
