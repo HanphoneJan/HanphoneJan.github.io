@@ -25,7 +25,19 @@ description: Use when pulling CodeFun2000 (codefun2000.com) Huawei exam problems
 
 ## Step 1: Find recent sessions and PIDs
 
-CodeFun 的「最新比赛」页 `/contest` 只列模拟赛；真实场次在题库分组里。
+先跑仓库里的脚本，**不要凭记忆看比赛页**：
+
+```bash
+pnpm codefun:recent                  # 最近 15 天，跳过模拟赛
+pnpm codefun:recent --days 30
+pnpm codefun:recent --mock           # 连模拟赛一起列
+```
+
+脚本读 `https://codefun2000.com/new-p/P5950` 的题库分组 `groups`，按日期过滤，
+并自动跳过 `title` 含「选择题」的条目。输出直接给出每个编程题的 `P####`。
+
+手工兜底时：打开任意近期题目的 `/new-p/P####`，页面里的 `groups: [...]`
+就是日期 + 方向 + pids；不要用 `/contest` 的模拟赛列表代替真实场次。
 
 1. 打开任意一个近期题目的 `/new-p/P####` 页面（例如 `P5339`）。
 2. 页面里的 `groups: [...]` 是题库分组，每组形如：
