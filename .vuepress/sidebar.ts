@@ -39,6 +39,7 @@ const DOC_TOP_ORDER = [
   'intro',
   '前端',
   '后端',
+  'Python',
   '嵌入式',
   '计算机基础',
   'Java与计算机基础',
@@ -48,6 +49,8 @@ const DOC_TOP_ORDER = [
   'Prompt收集',
   '项目',
   '软件配置',
+  '游戏',
+  '兴趣爱好',
   '读书笔记',
 ]
 
@@ -74,6 +77,12 @@ const DIR_LABELS: Record<string, string> = {
   sf: '顺丰科技',
   shoppee: 'Shopee',
   misc: 'misc',
+  // 三套「计算机基础」并存是刻意的：通用篇讲概念与原理，两个语言篇讲同一个概念
+  // 在 JVM / CPython 里长什么样。目录名不变（URL 已经上线），只在侧边栏标题上标视角，
+  // 否则读者分不清这是三个版本还是三种角度。
+  计算机基础: '计算机基础',
+  Java与计算机基础: '计算机基础（Java 视角）',
+  Python与计算机基础: '计算机基础（Python 视角）',
 }
 
 const collator = new Intl.Collator('zh-Hans-CN', { numeric: true })
