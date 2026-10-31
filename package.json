@@ -29,7 +29,8 @@
     "check:vis": "node scripts/check-vis.js",
     "check:runbar": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/check-run-bar.ts",
     "check:docs": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/check-docs.ts",
-    "cross:link": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/cross-link.ts"
+    "cross:link": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/cross-link.ts",
+    "check:cross": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/check-cross.ts"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
