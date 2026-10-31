@@ -6068,6 +6068,93 @@
       "explain": "位掩码 + MRV 回溯的时间复杂度是 指数级（本题规模下毫秒级）。表里的其他解法分别是固定顺序的朴素回溯 指数级 —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
+      "docId": "problems/codefun2000/huawei-ai/P5946.md",
+      "source": "复杂度分析",
+      "id": "other-P5946-complexity",
+      "type": "blank",
+      "stem": "本题最优解「一次遍历按取值分组、直接累计标签计数」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n\\cdot m^2)",
+      "explain": "一次遍历按取值分组、直接累计标签计数的时间复杂度是 O(n\\cdot m^2)。同一张表里其他解法也是 O(n\\cdot m^2)，这题的区分点不在时间。"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-ai/P5947.md",
+      "source": "复杂度分析",
+      "id": "other-P5947-complexity",
+      "type": "single",
+      "stem": "本题最优解「分层 DP + 前缀和」的时间复杂度是？",
+      "options": [
+        "O(K\\cdot N^2)",
+        "O\\!\\left(\\binom{N-1}{K-1}\\cdot N\\right)"
+      ],
+      "answer": 0,
+      "explain": "分层 DP + 前缀和的时间复杂度是 O(K\\cdot N^2)。表里的其他解法分别是枚举全部切点 O\\!\\left(\\binom{N-1}{K-1}\\cdot N\\right) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P5948.md",
+      "source": "复杂度分析",
+      "id": "other-P5948-complexity",
+      "type": "single",
+      "stem": "本题最优解「按步滚动的路径计数」的时间复杂度是？",
+      "options": [
+        "O(L\\cdot(N+M))",
+        "O\\!\\left((N-1)^L\\right)"
+      ],
+      "answer": 0,
+      "explain": "按步滚动的路径计数的时间复杂度是 O(L\\cdot(N+M))。表里的其他解法分别是DFS 枚举所有走法 O\\!\\left((N-1)^L\\right) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5948-space",
+      "docId": "problems/codefun2000/huawei-non-ai/P5948.md",
+      "type": "single",
+      "stem": "本题最优解「按步滚动的路径计数」的空间复杂度是？",
+      "options": [
+        "O(N)",
+        "O(L)"
+      ],
+      "answer": 0,
+      "explain": "按步滚动的路径计数的空间复杂度是 O(N)。DFS 枚举所有走法 O(L) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P5949.md",
+      "source": "复杂度分析",
+      "id": "other-P5949-complexity",
+      "type": "single",
+      "stem": "本题最优解「稀疏位表 + 堆上进位」的时间复杂度是？",
+      "options": [
+        "O(D\\log D)",
+        "O(10^{p})"
+      ],
+      "answer": 0,
+      "explain": "稀疏位表 + 堆上进位的时间复杂度是 O(D\\log D)。表里的其他解法分别是展开成十进制大整数再相加 O(10^{p}) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-P5949-space",
+      "docId": "problems/codefun2000/huawei-non-ai/P5949.md",
+      "type": "single",
+      "stem": "本题最优解「稀疏位表 + 堆上进位」的空间复杂度是？",
+      "options": [
+        "O(D)",
+        "O(10^{p})"
+      ],
+      "answer": 0,
+      "explain": "稀疏位表 + 堆上进位的空间复杂度是 O(D)。展开成十进制大整数再相加 O(10^{p}) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
+      "docId": "problems/codefun2000/huawei-non-ai/P5950.md",
+      "source": "复杂度分析",
+      "id": "other-P5950-complexity",
+      "type": "single",
+      "stem": "本题最优解「按天推进、轮数做维度」的时间复杂度是？",
+      "options": [
+        "O(N\\cdot K)",
+        "O\\!\\left(N^{2K}\\right)"
+      ],
+      "answer": 0,
+      "explain": "按天推进、轮数做维度的时间复杂度是 O(N\\cdot K)。表里的其他解法分别是枚举所有「买日/卖日」组合 O\\!\\left(N^{2K}\\right) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
       "docId": "problems/nowcoder/输入输出练习/PIO11.多组_字符串_T组形式.md",
       "source": "复杂度分析",
       "id": "other-PIO11.多组_字符串_T组形式-complexity",
