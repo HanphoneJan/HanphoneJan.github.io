@@ -45,10 +45,13 @@ python3 .agents/skills/codefun-processor/scripts/extract-statement.py P5948 --ou
 pnpm codefun:recent                  # 最近 15 天，跳过模拟赛
 pnpm codefun:recent --days 30
 pnpm codefun:recent --mock           # 连模拟赛一起列
+pnpm codefun:recent --check          # 再检查仓库里是否已有对应题解
 ```
 
 脚本读 `https://codefun2000.com/new-p/P5950` 的题库分组 `groups`，按日期过滤，
-并自动跳过 `title` 含「选择题」的条目。输出直接给出每个编程题的 `P####`。
+并自动跳过 `title` 含「选择题」的条目。`--check` 会按方向检查
+`codefun2000/huawei-ai|huawei-non-ai/P####.md` 是否存在，输出 `[有]/[缺]`
+和缺失清单。
 
 手工兜底时：打开任意近期题目的 `/new-p/P####`，页面里的 `groups: [...]`
 就是日期 + 方向 + pids；不要用 `/contest` 的模拟赛列表代替真实场次。
