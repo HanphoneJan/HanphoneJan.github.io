@@ -243,29 +243,17 @@ class Solution:
 
 **正确做法：** 用最小堆维护 k 个元素，空间复杂度 O(k)。
 
-### 2. heapreplace 与 heappushpop 的区别
+### 2. 堆还没满 k 个就调用 heapreplace
 
 ```python
-# heapreplace: 先替换堆顶，再调整堆
-# 已经确认新元素比堆顶更大，替换堆顶最省事
-heapq.heapreplace(heap, (freq, num))  # 推荐
+# 错误：heap 为空时 heapreplace 直接 IndexError
+heapq.heapreplace(heap, (freq, num))
 
-# heappushpop: 先入堆新元素，再弹出堆顶
-# 这里已知新元素比堆顶大，两者结果相同，只是多一次堆顶比较
-heapq.heappushpop(heap, (freq, num))  # 不推荐，多一次比较
-```
-
-### 3. Counter 的使用技巧
-
-```python
-# 获取频率最高的 k 个元素（面试时可能被禁止）
-# 一行就能写完，但面试通常要求手写堆或桶排序
-Counter(nums).most_common(k)
-
-# 遍历频率字典
-# items() 直接给出 (元素, 出现次数) 对
-for num, freq in freq_map.items():
-    pass
+# 正确：先判断容量，未满时用 heappush
+if len(heap) < k:
+    heapq.heappush(heap, (freq, num))
+elif freq > heap[0][0]:
+    heapq.heapreplace(heap, (freq, num))
 ```
 
 ---
