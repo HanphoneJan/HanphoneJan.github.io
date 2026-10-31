@@ -53,3 +53,5 @@ superpowers
 
 # 外部调研/参考项目，只作本地资料，不进 git
 .research/
+# OpenChamber 的会话产物（截图、工作区元数据），不进 git
+.openchamber/
