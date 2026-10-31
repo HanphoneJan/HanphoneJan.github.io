@@ -1,14 +1,17 @@
-[Django 文档 | Django documentation | Django](https://docs.djangoproject.com/zh-hans/5.2/)
+---
+title: Django 基础
+description: 从项目结构、ORM、视图与 DRF，到中间件、模板、Channels 与部署的一份 Django 速查。
+---
+Django 是基于 WSGI/ASGI 的 Web 框架，核心是「模型 → 视图 → 模板」这条链路；配上 DRF 之后，也可以按「模型 → 序列化器 → 视图 → 路由」走成纯 API 服务。这份笔记按这个顺序整理，最后补上中间件、模板、Channels 与部署。
 
-Django 是基于 WSGI/ASGI 的 Web 框架，设计初衷是处理 HTTP 请求和响应，对长时间连接（如 WebRTC 媒体流）的并发处理能力有限。
-开发流程：先进行数据模型开发，再创建序列化器，定义数据交互格式，再开发 RESTful API 视图，然后配置URL路由
-[PyCharm 创建 Django 项目 | 菜鸟教程](https://www.runoob.com/pycharm/pycharm-django.html
-### 为什么 Django 在 AI 场景中 “不常用”？
+**参考资料**：[Django 5.2 官方文档](https://docs.djangoproject.com/zh-hans/5.2/) · [PyCharm 创建 Django 项目（菜鸟教程）](https://www.runoob.com/pycharm/pycharm-django.html)
+
+## 为什么 Django 在 AI 场景里不常用
 1. **性能冗余**：Django 的 ORM、模板引擎、中间件等全栈功能，在 AI 推理场景中是 “无用负载”，反而增加资源消耗；
 2. **异步支持弱**：AI 推理常涉及 IO 密集型操作（如加载模型、调用第三方服务），FastAPI 的原生异步能充分利用资源，而 Django 的异步仍需依赖第三方插件（如 Channels），上手成本高；
 3. **生态适配性**：AI 社区（如 Hugging Face、PyTorch 官方示例）几乎都以 FastAPI 作为后端接口的首选示例，而 Django 相关的 AI 教程 / 插件极少。
-# 项目基础文件
-## apps.py
+## 项目基础文件
+### apps.py
 用于配置应用元数据，非启动必需但推荐自定义。核心作用是定义应用名称、配置信号接收器等，便于项目组件识别和管理。
 
 采用默认配置时，只需在settings.py的INSTALLED_APPS中注册即可（可写应用名或apps配置类路径，如`'myapp.apps.MyappConfig'`）。新增的app需手动创建migrations包（含__init__.py的文件夹）以支持数据库迁移。
@@ -27,7 +30,7 @@ class MyappConfig(AppConfig):
     def ready(self):
         import myapp.signals
 ```
-## settings.py
+### settings.py
 
 https://docs.djangoproject.com/en/5.2/ref/settings
 
@@ -66,7 +69,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']  # 开发时静态文件存放目录
 AUTH_USER_MODEL = 'myapp.User'  # 格式：应用名.模型类名
 ```
 
-## asgi.py
+### asgi.py
 
 ASGI（Asynchronous Server Gateway Interface，异步服务器网关接口）配置文件，用于支持异步处理请求。它定义了一个ASGI应用对象，允许Django项目在异步Web服务器（如Uvicorn、Hypercorn）上运行，能够更好地处理异步任务和WebSocket等实时通信场景，提高应用在高并发异步环境下的性能。
 
@@ -86,7 +89,7 @@ application = ProtocolTypeRouter({
 })
 ```
 
-## wsgi.py
+### wsgi.py
 
 WSGI（Web Server Gateway Interface，Web服务器网关接口）配置文件，是Django项目与WSGI兼容的Web服务器（如Gunicorn、uWSGI）之间的接口。它定义了一个WSGI应用对象，使得Web服务器能够正确地将请求传递给Django应用进行处理，主要用于同步请求处理场景，是传统的部署方式中常用的配置文件。
 
@@ -96,7 +99,7 @@ WSGI（Web Server Gateway Interface，Web服务器网关接口）配置文件，
 gunicorn --bind 0.0.0.0:8000 myproject.wsgi:application
 ```
 
-## manage.py
+### manage.py
 
 Django项目的命令行管理工具，封装了django-admin命令并自动加载项目配置。
 
@@ -110,7 +113,7 @@ python manage.py loaddata data.json  # 导入数据
 python manage.py collectstatic  # 收集静态文件（生产环境用）
 ```
 
-## urls.py
+### urls.py
 
 URL路由配置文件，用于定义URL路径与视图函数或类之间的映射关系。主要用于处理 HTTP 请求，是 Django 传统的 URL 路由机制。当客户端通过 HTTP 协议向服务器发送请求时，Django 会根据 `urls.py` 中定义的路由规则，将请求分发到相应的视图函数或视图集进行处理。
 ```python
@@ -141,11 +144,11 @@ url = reverse('book:detail', args=[1])  # 生成/book/detail/1/
 # 模板中反向解析（非前后端分离场景）
 # {% url 'book:detail' 1 %}
 ```
-## routing.py
+### routing.py
 主要用于处理 WebSocket 请求，是 Django Channels 引入的概念。WebSocket 是一种在单个 TCP 连接上进行全双工通信的协议，适用于实时通信场景，如聊天、实时数据更新等。routing.py 文件中定义的路由规则会将 WebSocket 连接分发到相应的消费者（`Consumer`）进行处理。
-# 模型层（ORM）
+## 模型层（ORM）
 
-## 模型定义与核心字段
+### 模型定义与核心字段
 
 Django ORM的核心，用于定义数据库结构，继承自`django.db.models.Model`。模型类的每个属性对应数据库表的字段，Django自动生成主键（id），支持自定义字段类型和约束。
 
@@ -209,9 +212,9 @@ class Author(models.Model):
         return self.name
 ```
 
-## 迁移（Migrations）
+### 迁移（Migrations）
 
-### 迁移到数据库
+#### 迁移到数据库
 
 将模型变更同步到数据库结构。每次更改models.py中的模型后，都需要执行迁移命令。迁移文件是版本化的数据库变更记录，支持回滚操作。
 
@@ -246,7 +249,7 @@ python manage.py sqlmigrate myapp 0001_initial
 - 生产环境迁移前需备份数据，避免数据丢失
     
 
-### 迁移文件
+#### 迁移文件
 
 存储在app/migrations文件夹中，命名格式为`000X_xxx.py`，包含up（应用）和down（回滚）方法。示例迁移文件核心内容：
 
@@ -272,11 +275,11 @@ class Migration(migrations.Migration):
 
 应用迁移的前提是app中存在migrations包（含__init__.py），新建app后可手动创建或通过makemigrations自动生成。
 
-## 管理器（Manager）
+### 管理器（Manager）
 
 模型与数据库交互的接口，负责处理查询操作。每个模型至少有一个管理器，默认名为`objects`。
 
-### 默认管理器
+#### 默认管理器
 
 `objects`是默认管理器，支持多种查询方法，核心方法示例：
 
@@ -309,7 +312,7 @@ Book.objects.filter(category='tech').exists()  # 判断是否存在满足条件�
 Book.objects.values('category').distinct()  # 按分类去重
 ```
 
-### 自定义管理器
+#### 自定义管理器
 
 继承`django.db.models.Manager`类实现，核心用途：添加自定义查询方法、修改初始查询集。
 
@@ -366,9 +369,9 @@ all_products = Product.objects.all()  # 所有商品
 active_products = Product.active_objects.all()  # 仅活跃商品
 ```
 
-## 自定义查询进阶
+### 自定义查询进阶
 
-### 链式查询
+#### 链式查询
 
 QuerySet对象支持链式调用，查询条件会叠加，且查询延迟执行（直到迭代、切片或调用count()等方法时才执行SQL）。
 
@@ -380,7 +383,7 @@ for book in queryset:
     print(book.title)
 ```
 
-### 注解（Annotation）与聚合（Aggregation）
+#### 注解（Annotation）与聚合（Aggregation）
 
 用于对查询结果进行数据计算，注解为每条记录添加计算字段，聚合为查询集生成统计结果。需导入`django.db.models`中的聚合函数。
 
@@ -416,7 +419,7 @@ category_stats = Book.objects.values('category').annotate(
 ).order_by('-count')
 ```
 
-### F表达式与Q对象
+#### F表达式与Q对象
 
 - **F表达式**：用于引用模型字段值，实现字段间的比较和运算，避免并发问题
     
@@ -449,11 +452,11 @@ Book.objects.filter(
 )
 ```
 
-# 视图层
+## 视图层
 
-## 请求与响应对象
+### 请求与响应对象
 
-### HttpRequest对象核心属性与方法
+#### HttpRequest对象核心属性与方法
 
 Django自动创建，封装请求信息，作为视图函数第一个参数（通常命名为request）。
 
@@ -489,7 +492,7 @@ def my_view(request):
     request.is_ajax()  # 判断是否为AJAX请求（基于X-Requested-With头）
 ```
 
-### HttpResponse对象及子类
+#### HttpResponse对象及子类
 
 视图必须返回响应对象，Django提供多种响应类满足不同需求。
 
@@ -530,9 +533,9 @@ def response_demo(request):
     book = get_object_or_404(Book, id=1)  # 不存在时自动返回404
 ```
 
-## 视图类型
+### 视图类型
 
-### 1. 函数视图（FBV）
+#### 1. 函数视图（FBV）
 
 最基础的视图类型，以函数形式定义，接收request参数并返回响应。适用于简单业务逻辑。
 
@@ -559,7 +562,7 @@ def book_detail(request, book_id):
     return HttpResponse('Method Not Allowed', status=405)
 ```
 
-### 2. 类视图（CBV）
+#### 2. 类视图（CBV）
 
 继承`django.views.View`，按HTTP方法定义不同处理函数（get()、post()等），支持继承和Mixin扩展，代码复用性高。
 
@@ -612,11 +615,11 @@ urlpatterns = [
 ]
 ```
 
-### 3. DRF视图（RESTful API）
+#### 3. DRF视图（RESTful API）
 
 基于Django REST Framework实现，简化API开发，支持序列化、认证、权限等功能。
 
-#### 核心概念：序列化器（Serializer）
+##### 核心概念：序列化器（Serializer）
 
 用于模型数据与JSON等格式的转换，实现数据验证和序列化。是DRF的核心组件。
 
@@ -670,7 +673,7 @@ class BookSerializer(serializers.ModelSerializer):
         return data
 ```
 
-#### 视图集（ViewSet）：InterviewScenarioViewSet
+##### 视图集（ViewSet）：InterviewScenarioViewSet
 
 DRF中高层次抽象，基于Mixin实现完整CRUD操作，适用于标准RESTful API场景。
 
@@ -709,7 +712,7 @@ class InterviewScenarioViewSet(viewsets.ModelViewSet):
         serializer.save(create_user=self.request.user)
 ```
 
-#### 基础API视图（APIView）：UserInterviewDataView
+##### 基础API视图（APIView）：UserInterviewDataView
 
 DRF最基础的类视图，无默认CRUD方法，灵活性极高，适用于非标准API场景（如数据聚合、跨表复杂查询）。
 
@@ -773,7 +776,7 @@ class UserInterviewDataView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 ```
 
-## URL配置（DRF）
+### URL配置（DRF）
 
 DRF提供Router工具简化ViewSet路由配置，自动生成RESTful风格URL。
 
@@ -817,11 +820,11 @@ ViewSet自动生成的路由对应关系（以scenarios为例）：
 |PATCH|/scenarios/<id>/|partial_update()|部分更新面试场景|
 |DELETE|/scenarios/<id>/|destroy()|删除面试场景|
 
-## 装饰器
+### 装饰器
 
 用于增强视图功能，Django和DRF提供丰富的装饰器支持。
 
-### 1. Django函数视图装饰器
+#### 1. Django函数视图装饰器
 
 ```python
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
@@ -860,7 +863,7 @@ def book_edit(request, book_id):
     pass
 ```
 
-### 2. DRF类视图装饰器
+#### 2. DRF类视图装饰器
 
 类视图不能直接使用函数装饰器，需通过`@method_decorator`适配，或使用DRF内置类装饰器。
 
@@ -907,10 +910,10 @@ class AuthorViewSet(viewsets.ModelViewSet):
     serializer_class = AuthorSerializer
 ```
 
-# 文件管理
+## 文件管理
 
 Django支持本地和第三方存储（如AWS S3）上传文件，核心配置和模型字段如下。
-## 1. 基础配置（本地存储）
+### 1. 基础配置（本地存储）
 
 ```python
 # settings.py
@@ -933,7 +936,7 @@ urlpatterns = [
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 ```
 
-## 2. 模型中关联文件
+### 2. 模型中关联文件
 
 使用`FileField`（通用文件）或`ImageField`（图片文件，需安装Pillow库）存储文件路径。
 
@@ -969,7 +972,7 @@ class Document(models.Model):
 # pip install pillow
 ```
 
-## 3. 视图中处理文件上传
+### 3. 视图中处理文件上传
 
 ```python
 from rest_framework.views import APIView
@@ -995,7 +998,7 @@ class DocumentUploadView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 ```
 
-## 4. 序列化器处理文件
+### 4. 序列化器处理文件
 
 ```python
 from rest_framework import serializers
@@ -1022,11 +1025,11 @@ class DocumentSerializer(serializers.ModelSerializer):
         return None
 ```
 
-# 中间件
+## 中间件
 
 介于请求与响应之间的钩子框架，用于全局处理请求/响应，实现通用功能（如认证、日志、跨域）。
 
-## 中间件工作流程
+### 中间件工作流程
 
 1. 客户端发起请求 → 依次执行所有中间件的`process_request`方法（正序）
     
@@ -1039,7 +1042,7 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 注意：若`process_request`方法返回响应对象，会直接进入`process_response`阶段，跳过后续中间件和视图。
 
-## 中间件配置与内置中间件
+### 中间件配置与内置中间件
 
 ```python
 # settings.py
@@ -1073,37 +1076,245 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True  # 允许跨域携带Cookie
 ```
 
-## 自定义中间件
+### 自定义中间件
 
-Django 1.10+支持简化的中间件编写方式，通过继承`MiddlewareMixin`实现
-## 模板层
+Django 1.10+ 用「一个可调用对象」定义中间件，不必再继承 `MiddlewareMixin`：
 
-定义前端页面。在前后端分离项目中没用，直接删除即可。
+```python
+# myapp/middleware.py
+import time, logging
 
-## Websocket集成
+logger = logging.getLogger(__name__)
 
-[Django框架下的websocket Channels 4.2.0 文档](https://channels.readthedocs.io/en/latest/introduction.html)
+def timing_middleware(get_response):
+    def middleware(request):
+        start = time.perf_counter()
+        response = get_response(request)          # 调用下一层
+        cost = (time.perf_counter() - start) * 1000
+        response["X-Response-Time"] = f"{cost:.1f}ms"
+        logger.info("%s %s %.1fms", request.method, request.path, cost)
+        return response
+    return middleware
+```
 
-- **Channel Layer 的核心作用**：实现消费者之间、消费者与异步任务之间的跨进程消息传递，支持广播、组通信等场景。
-- **是否必须**：仅在需要跨消费者 / 跨进程通信时才需要配置；基础的一对一 WebSocket 通信无需依赖它。
+- 想改**请求**就在 `get_response(request)` 之前动手，想改**响应**就在之后
+- 顺序有意义：`settings.MIDDLEWARE` 从上到下是请求的进入顺序，响应按相反的次序返回
+- 抛出 `MiddlewareNotUsed` 可以在某些条件下临时摘掉自己
 
+### 模板层
 
-# 测试
+Django 自带模板引擎（DTL），用于服务端渲染。**前后端分离的项目基本用不到**——接口返回 JSON 就行。但后台页面、邮件模板、报表这类「服务端直接出 HTML」的场景，它仍然是最省事的选择。
 
-- **测试文件命名**：通常以`test_*.py`或`*_test.py`命名（如`test_login.py`）。
-- **测试目录结构**：
-    - 标准结构：项目下创建`tests`或`test`目录，内部按功能模块划分子目录（如`tests/api/`、`tests/utils/`）。
-    - 包结构：每个测试目录需包含`__init__.py`，使其成为 Python 包。
+#### 语法速查
 
-- **pytest 框架**：
-    - 函数名以`test_`开头（如`def test_login()`）。
-    - 类名以`Test`开头且不含`__init__`方法（如`class TestLogin:`）。
-    - 模块名以`test_`开头或包含`_test`。
+| 用法 | 写法 | 说明 |
+|---|---|---|
+| 变量 | `{{ user.name }}` | 取不到时渲染成空串，不报错 |
+| 条件 | `{% if %}` / `{% elif %}` / `{% else %}` | |
+| 循环 | `{% for book in books %}` | 附带 `forloop.counter` / `first` / `last` |
+| 反向解析 | `{% url 'book:detail' 1 %}` | 别手写 URL |
+| CSRF | `{% csrf_token %}` | 表单里必须有，否则 403 |
+| 过滤器 | `{{ created\|date:"Y-m-d" }}` | `default` / `truncatechars` / `safe` 最常用 |
+| 注释 | `{# 单行 #}` | 多行用 `{% comment %}` |
 
-- **配置加载**：
-    - pytest 会读取项目根目录的`pytest.ini`、`tox.ini`或`setup.cfg`中的配置（如测试目录、标记过滤）。
-# 部署
-### Python项目的运行逻辑
+#### 继承：骨架只写一次
+
+```text
+base.html            骨架：<head>、导航、{% block content %}
+  └── book/list.html {% extends "base.html" %} + {% block content %}
+```
+
+子模板只能覆盖父模板预留的 `block`，不能插到任意位置——这是它和 React/Vue 组件最大的区别，也是模板写多了会乱的原因。
+
+#### 上下文
+
+```python
+# 1. 视图里显式传
+return render(request, "book/list.html", {"books": books, "total": total})
+
+# 2. 每个页面都要的（站点名、导航栏用户名）走上下文处理器
+# settings.py -> TEMPLATES[0]["OPTIONS"]["context_processors"]
+def site_context(request):
+    return {"site_name": "寒枫的开荒地", "current_user": request.user}
+```
+
+模板里的 `{{ }}` 不能调带参数的函数、也不做运算——要算的东西在视图里算好再传进去。
+
+#### 静态文件
+
+```bash
+python manage.py collectstatic --noinput   # 汇总到 STATIC_ROOT
+```
+
+开发期由 `staticfiles` 直接服务；生产期必须交给 Nginx，否则每个静态请求都要过一遍 Python。
+
+### Websocket 集成
+
+Django 原生是 WSGI（同步、短连接）。要在同一个项目里跑 WebSocket，得换成 ASGI，再用 Channels 补上「长连接」这一层。
+
+#### 四个部件
+
+| 部件 | 作用 | 在哪 |
+|---|---|---|
+| ASGI 入口 | 把 HTTP 与 WebSocket 分发到不同的处理器 | `asgi.py` |
+| Router | URL → Consumer 的映射 | `routing.py` |
+| Consumer | 一个连接的处理逻辑，等价于「长连接版的视图」 | `consumers.py` |
+| Channel Layer | 跨 Consumer、跨进程的消息总线 | Redis |
+
+#### 最小示例
+
+```python
+# consumers.py
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
+
+class InterviewConsumer(AsyncJsonWebsocketConsumer):
+    async def connect(self):
+        self.group = f"interview_{self.scope['user'].id}"
+        await self.channel_layer.group_add(self.group, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, code):
+        await self.channel_layer.group_discard(self.group, self.channel_name)
+
+    async def interview_message(self, event):   # 组内广播进来的消息
+        await self.send_json(event["payload"])
+```
+
+```python
+# routing.py
+from django.urls import re_path
+from . import consumers
+
+websocket_urlpatterns = [re_path(r"ws/interview/$", consumers.InterviewConsumer.as_asgi())]
+```
+
+```python
+# asgi.py
+application = ProtocolTypeRouter({
+    "http": django_asgi_app,
+    "websocket": AllowedHostsOriginValidator(AuthMiddlewareStack(URLRouter(websocket_urlpatterns))),
+})
+```
+
+#### 什么时候才需要 Channel Layer
+
+一对一连接不需要；**多个连接之间要互相转发**（面试官端 ↔ 学生端），或者要在 Consumer 之外异步推消息（Celery 算完了通知前端）才需要。
+
+内存版 `InMemoryChannelLayer` 只能单进程用，多 worker 必须换 Redis。
+
+#### 部署注意
+
+#### 一条最小可用的上线流程
+
+```bash
+# 1. 准备环境（别用 root 跑，也别用系统自带的 python）
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# 2. 收集静态文件（生产期交给 Nginx 发）
+python manage.py collectstatic --noinput
+
+# 3. 迁移数据库
+python manage.py migrate
+
+# 4. 启动应用服务器
+gunicorn config.wsgi:application -w 4 -b 127.0.0.1:8000
+# 用了 Channels 的项目换成：daphne -b 127.0.0.1 -p 8000 config.asgi:application
+```
+
+```nginx
+server {
+    listen 80;
+    server_name example.com;
+
+    location /static/ { alias /srv/app/staticfiles/; }
+    location /media/  { alias /srv/app/media/; }
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+#### settings 分环境
+
+```text
+config/settings/
+├── base.py      # 公共配置
+├── dev.py       # DEBUG=True、本地数据库
+└── prod.py      # ALLOWED_HOSTS、SECURE_*、密钥从环境变量读
+```
+
+`SECRET_KEY`、数据库密码一律从环境变量读，别写进仓库——这份文档里出现过的明文密码，上线前记得全部换掉。
+
+#### 上线前检查
+
+```bash
+python manage.py check --deploy
+```
+
+它会逐条指出 `DEBUG`、`SECRET_KEY`、`ALLOWED_HOSTS`、HTTPS 相关配置有没有漏。
+
+- 启动命令换成 `daphne` 或 `uvicorn --ws websockets`，gunicorn 只讲 WSGI
+- Nginx 必须显式转发 Upgrade 头，否则握手直接失败：
+
+```nginx
+location /ws/ {
+    proxy_pass http://127.0.0.1:8000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_read_timeout 3600s;
+}
+```
+
+- Consumer 里调用同步 ORM 要包 `database_sync_to_async`，否则会阻塞整个事件循环——这是「用了异步反而变慢」最常见的原因
+
+## 测试
+
+Django 自带 `unittest` 风格的 `TestCase`；项目里用 `pytest` + `pytest-django` 更顺手，两者可以共存。
+
+#### 该测什么
+
+| 层次 | 测什么 | 用什么 |
+|---|---|---|
+| 模型 | 约束、默认值、`__str__`、自定义 Manager | `TestCase` |
+| 视图 | 状态码、权限、重定向、模板上下文 | `Client` / `APIClient` |
+| 序列化器 | 校验规则、字段裁剪 | 直接构造、调 `is_valid()` |
+| 异步 | WebSocket 收发 | `WebsocketCommunicator` |
+
+#### pytest-django 最小配置
+
+```ini
+# pytest.ini
+[pytest]
+DJANGO_SETTINGS_MODULE = config.settings.test
+python_files = test_*.py
+```
+
+```python
+# tests/test_api.py
+import pytest
+from rest_framework.test import APIClient
+
+@pytest.mark.django_db
+def test_book_list_requires_login():
+    client = APIClient()
+    assert client.get("/api/books/").status_code == 403
+```
+
+#### 几个容易踩的点
+
+- 每个测试默认包在事务里并在结束时回滚，**不要**在测试里手动 `commit()`
+- 不打 `@pytest.mark.django_db` 就是纯 Python 测试，一碰 ORM 直接报错
+- 用 `APIClient` 而不是 `Client`，否则 DRF 的认证与限流不生效
+- 测异步代码要 `@pytest.mark.asyncio`，数据库调用必须走 `database_sync_to_async`
+
+## 部署
+#### Python项目的运行逻辑
 
 Python 是解释型语言，其项目的运行逻辑主要基于**解释器逐行执行代码**，核心流程如下：
 
@@ -1114,7 +1325,7 @@ Python 是解释型语言，其项目的运行逻辑主要基于**解释器逐�
 
 PyInstaller 是一个 Python 第三方工具，核心作用是**将 Python 脚本及其依赖打包成独立的可执行文件（.exe、.app 等）**，方便在没有安装 Python 解释器或对应依赖的环境中运行
 
-### Django部署
+#### Django部署
 
 Django 项目部署不需要像 SpringBoot 那样打包
 
