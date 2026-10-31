@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "vuepress dev . --port 3001",
-    "build": "vuepress build .",
+    "build": "NODE_OPTIONS=--max-old-space-size=6144 vuepress build .",
     "serve": "python3 -m http.server 3000 --directory .vuepress/dist",
     "typecheck": "tsc -p tsconfig.json",
     "sync:ml": "ts-node scripts/sync-machine-learning.ts",
