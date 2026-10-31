@@ -5739,24 +5739,11 @@
       "type": "single",
       "stem": "本题最优解「等长 + 短一位两类候选」的时间复杂度是？",
       "options": [
-        "$O(10\\cdot",
-        "s"
+        "O(10\\cdot\\lvert s\\rvert)",
+        "O(10^{\\lvert s\\rvert}\\cdot\\lvert s\\rvert)"
       ],
       "answer": 0,
-      "explain": "等长 + 短一位两类候选的时间复杂度是 $O(10\\cdot。表里的其他解法分别是枚举所有由 nums 拼成、长度不超过 $ s —— 答错说明还没分清它们各自慢在哪里。"
-    },
-    {
-      "id": "other-P5523-space",
-      "docId": "problems/codefun2000/huawei-ai/P5523.md",
-      "type": "single",
-      "stem": "本题最优解「等长 + 短一位两类候选」的空间复杂度是？",
-      "options": [
-        "s",
-        "$ 的数"
-      ],
-      "answer": 0,
-      "explain": "等长 + 短一位两类候选的空间复杂度是 s。枚举所有由 nums 拼成、长度不超过 $ $ 的数 —— 空间优化往往才是这题的区分点。",
-      "source": "复杂度分析"
+      "explain": "等长 + 短一位两类候选的时间复杂度是 O(10\\cdot\\lvert s\\rvert)。表里的其他解法分别是枚举所有由 nums 拼成、长度不超过 \\lvert s\\rvert 的数 O(10^{\\lvert s\\rvert}\\cdot\\lvert s\\rvert) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/codefun2000/meituan/P5562.md",
