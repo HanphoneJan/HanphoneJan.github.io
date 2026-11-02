@@ -29,6 +29,7 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 pnpm sync:pyodide     # Download the 12.9MB Pyodide runtime into static/pyodide/
 pnpm test:offline     # 离线包口径（板块归类 + 路由表解析 + dist 覆盖率）
 pnpm test:difficulty  # 难度口径（8 种写法归一 + 全库覆盖率 + 徽标接线契约）
+pnpm solutions:fetch  # 抓力扣某题的前几篇高赞题解（写题解前读，不照抄）
 ```
 
 > **环境版本必须对齐**：本地与 CI 均使用 **Node 24 + pnpm 11**（见 `.github/workflows/`）。
