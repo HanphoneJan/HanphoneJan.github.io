@@ -33,9 +33,9 @@
       "source": "复杂度分析",
       "id": "leetcode-0002-complexity",
       "type": "blank",
-      "stem": "本题最优解「递归（复用 l1）」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「迭代（哑节点）」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(max(m,n))",
-      "explain": "递归（复用 l1）的时间复杂度是 O(max(m,n))。同一张表里其他解法也是 O(max(m,n))，这题的区分点不在时间。"
+      "explain": "迭代（哑节点）的时间复杂度是 O(max(m,n))。同一张表里其他解法也是 O(max(m,n))，这题的区分点不在时间。"
     },
     {
       "docId": "problems/leetcode/0003_longest_substring_without_repeating_characters.md",
@@ -108,27 +108,10 @@
       "docId": "problems/leetcode/0006_zigzag_conversion.md",
       "source": "复杂度分析",
       "id": "leetcode-0006-complexity",
-      "type": "single",
-      "stem": "本题最优解「行号模拟」的时间复杂度是？",
-      "options": [
-        "O(n)",
-        "O(n × numRows)"
-      ],
-      "answer": 0,
-      "explain": "行号模拟的时间复杂度是 O(n)。表里的其他解法分别是二维矩阵模拟 O(n × numRows) —— 答错说明还没分清它们各自慢在哪里。"
-    },
-    {
-      "id": "leetcode-0006-space",
-      "docId": "problems/leetcode/0006_zigzag_conversion.md",
-      "type": "single",
-      "stem": "本题最优解「行号模拟」的空间复杂度是？",
-      "options": [
-        "O(n)",
-        "O(n × numRows)"
-      ],
-      "answer": 0,
-      "explain": "行号模拟的空间复杂度是 O(n)。二维矩阵模拟 O(n × numRows) —— 空间优化往往才是这题的区分点。",
-      "source": "复杂度分析"
+      "type": "blank",
+      "stem": "本题最优解「行号折返」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n)",
+      "explain": "行号折返的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
     },
     {
       "docId": "problems/leetcode/0007_reverse_integer.md",
@@ -157,21 +140,21 @@
       "source": "复杂度分析",
       "id": "leetcode-0008-complexity",
       "type": "blank",
-      "stem": "本题最优解「逐字符构建整数」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「指针版」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(n)",
-      "explain": "逐字符构建整数的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+      "explain": "指针版的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
     },
     {
       "id": "leetcode-0008-space",
       "docId": "problems/leetcode/0008_string_to_integer_atoi.md",
       "type": "single",
-      "stem": "本题最优解「逐字符构建整数」的空间复杂度是？",
+      "stem": "本题最优解「指针版」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(n)"
       ],
       "answer": 0,
-      "explain": "逐字符构建整数的空间复杂度是 O(1)。字符串拼接 O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "指针版的空间复杂度是 O(1)。切片版（strip + 反复 s[1:]） O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -227,13 +210,13 @@
       "source": "复杂度分析",
       "id": "leetcode-0011-complexity",
       "type": "single",
-      "stem": "本题最优解「双指针」的时间复杂度是？",
+      "stem": "本题最优解「双指针收缩」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n²)"
       ],
       "answer": 0,
-      "explain": "双指针的时间复杂度是 O(n)。表里的其他解法分别是暴力枚举 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "双指针收缩的时间复杂度是 O(n)。表里的其他解法分别是枚举所有线对 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0012_integer_to_roman.md",
@@ -271,21 +254,21 @@
       "source": "复杂度分析",
       "id": "leetcode-0014-complexity",
       "type": "blank",
-      "stem": "本题最优解「纵向逐列比较（推荐）」的时间复杂度是？（直接写复杂度表达式）",
-      "answer": "O(n * m)",
-      "explain": "纵向逐列比较（推荐）的时间复杂度是 O(n * m)。同一张表里其他解法也是 O(n * m)，这题的区分点不在时间。"
+      "stem": "本题最优解「纵向逐列比较」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n · m)",
+      "explain": "纵向逐列比较的时间复杂度是 O(n · m)。同一张表里其他解法也是 O(n · m)，这题的区分点不在时间。"
     },
     {
       "id": "leetcode-0014-space",
       "docId": "problems/leetcode/0014_longest_common_prefix.md",
       "type": "single",
-      "stem": "本题最优解「纵向逐列比较（推荐）」的空间复杂度是？",
+      "stem": "本题最优解「纵向逐列比较」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(m)"
       ],
       "answer": 0,
-      "explain": "纵向逐列比较（推荐）的空间复杂度是 O(1)。横向逐个合并 O(m) —— 空间优化往往才是这题的区分点。",
+      "explain": "纵向逐列比较的空间复杂度是 O(1)。横向：两两求公共前缀再合并 O(m) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -293,25 +276,25 @@
       "source": "复杂度分析",
       "id": "leetcode-0015-complexity",
       "type": "single",
-      "stem": "本题最优解「排序 + 双指针」的时间复杂度是？",
+      "stem": "本题最优解「排序 + 固定一个数 + 双指针」的时间复杂度是？",
       "options": [
         "O(n²)",
         "O(n³)"
       ],
       "answer": 0,
-      "explain": "排序 + 双指针的时间复杂度是 O(n²)。表里的其他解法分别是暴力（三重循环） O(n³) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "排序 + 固定一个数 + 双指针的时间复杂度是 O(n²)。表里的其他解法分别是三重循环 + 集合去重 O(n³) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0015-space",
       "docId": "problems/leetcode/0015_3sum.md",
       "type": "single",
-      "stem": "本题最优解「排序 + 双指针」的空间复杂度是？",
+      "stem": "本题最优解「排序 + 固定一个数 + 双指针」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(n)"
       ],
       "answer": 0,
-      "explain": "排序 + 双指针的空间复杂度是 O(1)。暴力（三重循环） O(n)、排序 + 哈希表 O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "排序 + 固定一个数 + 双指针的空间复杂度是 O(1)。三重循环 + 集合去重 O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -334,51 +317,64 @@
       "id": "leetcode-0017-complexity",
       "type": "blank",
       "stem": "本题最优解「回溯」的时间复杂度是？（直接写复杂度表达式）",
-      "answer": "O(3^m × 4^n)",
-      "explain": "回溯的时间复杂度是 O(3^m × 4^n)。"
+      "answer": "O(n · 4^n)",
+      "explain": "回溯的时间复杂度是 O(n · 4^n)。同一张表里其他解法也是 O(n · 4^n)，这题的区分点不在时间。"
+    },
+    {
+      "id": "leetcode-0017-space",
+      "docId": "problems/leetcode/0017_letter_combinations_of_a_phone_number.md",
+      "type": "single",
+      "stem": "本题最优解「回溯」的空间复杂度是？",
+      "options": [
+        "O(n)",
+        "O(n · 4^n)"
+      ],
+      "answer": 0,
+      "explain": "回溯的空间复杂度是 O(n)。itertools.product O(n · 4^n) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
     },
     {
       "docId": "problems/leetcode/0019_remove_nth_node_from_end_of_list.md",
       "source": "复杂度分析",
       "id": "leetcode-0019-complexity",
       "type": "blank",
-      "stem": "本题最优解「双指针（快慢指针）」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「快慢指针一趟扫描」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(L)",
-      "explain": "双指针（快慢指针）的时间复杂度是 O(L)。同一张表里其他解法也是 O(L)，这题的区分点不在时间。"
+      "explain": "快慢指针一趟扫描的时间复杂度是 O(L)。同一张表里其他解法也是 O(L)，这题的区分点不在时间。"
     },
     {
       "docId": "problems/leetcode/0020_valid_parentheses.md",
       "source": "复杂度分析",
       "id": "leetcode-0020-complexity",
       "type": "single",
-      "stem": "本题最优解「栈（推荐）」的时间复杂度是？",
+      "stem": "本题最优解「栈」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n²)"
       ],
       "answer": 0,
-      "explain": "栈（推荐）的时间复杂度是 O(n)。表里的其他解法分别是字符串替换 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "栈的时间复杂度是 O(n)。表里的其他解法分别是反复删掉 \"()\"、\"[]\"、\"{}\" O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0021_merge_two_sorted_lists.md",
       "source": "复杂度分析",
       "id": "leetcode-0021-complexity",
       "type": "blank",
-      "stem": "本题最优解「递归」的时间复杂度是？（直接写复杂度表达式）",
-      "answer": "O(n+m)",
-      "explain": "递归的时间复杂度是 O(n+m)。同一张表里其他解法也是 O(n+m)，这题的区分点不在时间。"
+      "stem": "本题最优解「迭代 + 哑结点」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n + m)",
+      "explain": "迭代 + 哑结点的时间复杂度是 O(n + m)。同一张表里其他解法也是 O(n + m)，这题的区分点不在时间。"
     },
     {
       "id": "leetcode-0021-space",
       "docId": "problems/leetcode/0021_merge_two_sorted_lists.md",
       "type": "single",
-      "stem": "本题最优解「递归」的空间复杂度是？",
+      "stem": "本题最优解「迭代 + 哑结点」的空间复杂度是？",
       "options": [
-        "O(n+m)",
-        "O(1)"
+        "O(1)",
+        "O(n + m)"
       ],
       "answer": 0,
-      "explain": "递归的空间复杂度是 O(n+m)。迭代（双指针） O(1) —— 空间优化往往才是这题的区分点。",
+      "explain": "迭代 + 哑结点的空间复杂度是 O(1)。递归 O(n + m) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -386,13 +382,13 @@
       "source": "复杂度分析",
       "id": "leetcode-0022-complexity",
       "type": "single",
-      "stem": "本题最优解「回溯 DFS（推荐）」的时间复杂度是？",
+      "stem": "本题最优解「回溯 + 前缀剪枝」的时间复杂度是？",
       "options": [
         "O(C_n · n)",
         "O(2^(2n) · n)"
       ],
       "answer": 0,
-      "explain": "回溯 DFS（推荐）的时间复杂度是 O(C_n · n)。表里的其他解法分别是暴力枚举 O(2^(2n) · n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "回溯 + 前缀剪枝的时间复杂度是 O(C_n · n)。表里的其他解法分别是枚举全部 2n 位再逐串校验 O(2^(2n) · n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0023_merge_k_sorted_lists.md",
@@ -414,11 +410,10 @@
       "stem": "本题最优解「最小堆」的空间复杂度是？",
       "options": [
         "O(k)",
-        "O(1)",
-        "O(log k)"
+        "O(1)"
       ],
       "answer": 0,
-      "explain": "最小堆的空间复杂度是 O(k)。逐一合并 O(1)、分治合并 O(log k) —— 空间优化往往才是这题的区分点。",
+      "explain": "最小堆的空间复杂度是 O(k)。逐一合并 O(1) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -426,21 +421,21 @@
       "source": "复杂度分析",
       "id": "leetcode-0024-complexity",
       "type": "blank",
-      "stem": "本题最优解「迭代（交换指针，推荐）」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「迭代（交换指针）」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(n)",
-      "explain": "迭代（交换指针，推荐）的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+      "explain": "迭代（交换指针）的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
     },
     {
       "id": "leetcode-0024-space",
       "docId": "problems/leetcode/0024_swap_nodes_in_pairs.md",
       "type": "single",
-      "stem": "本题最优解「迭代（交换指针，推荐）」的空间复杂度是？",
+      "stem": "本题最优解「迭代（交换指针）」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(n)"
       ],
       "answer": 0,
-      "explain": "迭代（交换指针，推荐）的空间复杂度是 O(1)。递归（交换指针） O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "迭代（交换指针）的空间复杂度是 O(1)。递归（交换指针） O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -496,25 +491,25 @@
       "source": "复杂度分析",
       "id": "leetcode-0031-complexity",
       "type": "single",
-      "stem": "本题最优解「三步法」的时间复杂度是？",
+      "stem": "本题最优解「三步扫描」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n!)"
       ],
       "answer": 0,
-      "explain": "三步法的时间复杂度是 O(n)。表里的其他解法分别是暴力（生成全排列） O(n!) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "三步扫描的时间复杂度是 O(n)。表里的其他解法分别是生成全部排列再取下一个 O(n!) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0031-space",
       "docId": "problems/leetcode/0031_next_permutation.md",
       "type": "single",
-      "stem": "本题最优解「三步法」的空间复杂度是？",
+      "stem": "本题最优解「三步扫描」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(n!)"
       ],
       "answer": 0,
-      "explain": "三步法的空间复杂度是 O(1)。暴力（生成全排列） O(n!) —— 空间优化往往才是这题的区分点。",
+      "explain": "三步扫描的空间复杂度是 O(1)。生成全部排列再取下一个 O(n!) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -535,13 +530,13 @@
       "source": "复杂度分析",
       "id": "leetcode-0033-complexity",
       "type": "single",
-      "stem": "本题最优解「改进二分查找」的时间复杂度是？",
+      "stem": "本题最优解「一次二分」的时间复杂度是？",
       "options": [
         "O(log n)",
         "O(n)"
       ],
       "answer": 0,
-      "explain": "改进二分查找的时间复杂度是 O(log n)。表里的其他解法分别是线性扫描 O(n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "一次二分的时间复杂度是 O(log n)。表里的其他解法分别是线性扫描 O(n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0034_find_first_and_last_position_of_element_in_sorted_array.md",
@@ -554,7 +549,7 @@
         "O(n)"
       ],
       "answer": 0,
-      "explain": "两次二分的时间复杂度是 O(log n)。表里的其他解法分别是线性查找 O(n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "两次二分的时间复杂度是 O(log n)。表里的其他解法分别是找到一个目标值后向两边扩展 O(n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0035_search_insert_position.md",
@@ -574,14 +569,13 @@
       "source": "复杂度分析",
       "id": "leetcode-0039-complexity",
       "type": "single",
-      "stem": "本题最优解「回溯+start+剪枝」的时间复杂度是？",
+      "stem": "本题最优解「回溯 + start」的时间复杂度是？",
       "options": [
-        "剪枝后大幅减小",
-        "指数级，含大量重复",
-        "O(n^(target/min))"
+        "指数级，剪枝后远小于上界",
+        "指数级，且含大量重复组合"
       ],
       "answer": 0,
-      "explain": "回溯+start+剪枝的时间复杂度是 剪枝后大幅减小。表里的其他解法分别是暴力（无 start、无剪枝） 指数级，含大量重复、回溯+start（无剪枝） O(n^(target/min)) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "回溯 + start的时间复杂度是 指数级，剪枝后远小于上界。表里的其他解法分别是无 start、无剪枝 指数级，且含大量重复组合 —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0041_first_missing_positive.md",
@@ -610,25 +604,25 @@
       "source": "复杂度分析",
       "id": "leetcode-0042-complexity",
       "type": "single",
-      "stem": "本题最优解「双指针（推荐）」的时间复杂度是？",
+      "stem": "本题最优解「双指针」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n²)"
       ],
       "answer": 0,
-      "explain": "双指针（推荐）的时间复杂度是 O(n)。表里的其他解法分别是逐列计算 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "双指针的时间复杂度是 O(n)。表里的其他解法分别是每列向左向右各扫一遍找最高 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0042-space",
       "docId": "problems/leetcode/0042_trapping_rain_water.md",
       "type": "single",
-      "stem": "本题最优解「双指针（推荐）」的空间复杂度是？",
+      "stem": "本题最优解「双指针」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(n)"
       ],
       "answer": 0,
-      "explain": "双指针（推荐）的空间复杂度是 O(1)。前缀最大值 + 后缀最大值 O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "双指针的空间复杂度是 O(1)。预处理前后缀最高 + 一次求和 O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -661,29 +655,10 @@
       "docId": "problems/leetcode/0046_permutations.md",
       "source": "复杂度分析",
       "id": "leetcode-0046-complexity",
-      "type": "single",
-      "stem": "本题最优解「空间」的时间复杂度是？",
-      "options": [
-        "O(n)",
-        "复杂度",
-        "O(n × n!)"
-      ],
-      "answer": 0,
-      "explain": "空间的时间复杂度是 O(n)。表里的其他解法分别是指标 复杂度、时间 O(n × n!) —— 答错说明还没分清它们各自慢在哪里。"
-    },
-    {
-      "id": "leetcode-0046-space",
-      "docId": "problems/leetcode/0046_permutations.md",
-      "type": "single",
-      "stem": "本题最优解「空间」的空间复杂度是？",
-      "options": [
-        "递归深度 + visited 数组 + path",
-        "说明",
-        "共 n! 个排列，每个排列需要 O(n) 时间构造"
-      ],
-      "answer": 0,
-      "explain": "空间的空间复杂度是 递归深度 + visited 数组 + path。指标 说明、时间 共 n! 个排列，每个排列需要 O(n) 时间构造 —— 空间优化往往才是这题的区分点。",
-      "source": "复杂度分析"
+      "type": "blank",
+      "stem": "本题最优解「回溯 + used 数组」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n · n!)",
+      "explain": "回溯 + used 数组的时间复杂度是 O(n · n!)。同一张表里其他解法也是 O(n · n!)，这题的区分点不在时间。"
     },
     {
       "docId": "problems/leetcode/0048_rotate_image.md",
@@ -699,13 +674,14 @@
       "source": "复杂度分析",
       "id": "leetcode-0049-complexity",
       "type": "single",
-      "stem": "本题最优解「哈希表」的时间复杂度是？",
+      "stem": "本题最优解「排序后的串作键」的时间复杂度是？",
       "options": [
-        "O(n × k log k)",
-        "O(n² × k log k)"
+        "O(n · k log k)",
+        "O(n² · k log k)",
+        "O(n · k)"
       ],
       "answer": 0,
-      "explain": "哈希表的时间复杂度是 O(n × k log k)。表里的其他解法分别是暴力 O(n² × k log k) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "排序后的串作键的时间复杂度是 O(n · k log k)。表里的其他解法分别是两两比较是否互为异位词 O(n² · k log k)、26 个字母计数作键 O(n · k) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0051_n_queens.md",
@@ -860,25 +836,25 @@
       "source": "复杂度分析",
       "id": "leetcode-0070-complexity",
       "type": "single",
-      "stem": "本题最优解「动态规划」的时间复杂度是？",
+      "stem": "本题最优解「两个变量滚动」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(2^n)"
       ],
       "answer": 0,
-      "explain": "动态规划的时间复杂度是 O(n)。表里的其他解法分别是暴力递归 O(2^n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "两个变量滚动的时间复杂度是 O(n)。表里的其他解法分别是直接递归 O(2^n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0070-space",
       "docId": "problems/leetcode/0070_climbing_stairs.md",
       "type": "single",
-      "stem": "本题最优解「动态规划」的空间复杂度是？",
+      "stem": "本题最优解「两个变量滚动」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(n)"
       ],
       "answer": 0,
-      "explain": "动态规划的空间复杂度是 O(1)。暴力递归 O(n)、记忆化搜索 O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "两个变量滚动的空间复杂度是 O(1)。直接递归 O(n)、记忆化搜索 O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1059,26 +1035,13 @@
       "source": "复杂度分析",
       "id": "leetcode-0095-complexity",
       "type": "single",
-      "stem": "本题最优解「递归分治」的时间复杂度是？",
+      "stem": "本题最优解「递归 + 左右笛卡尔积」的时间复杂度是？",
       "options": [
-        "O(C(n))",
-        "指数级"
+        "O(n · C(n))",
+        "指数级且远大于 C(n)"
       ],
       "answer": 0,
-      "explain": "递归分治的时间复杂度是 O(C(n))。表里的其他解法分别是穷举所有树 指数级 —— 答错说明还没分清它们各自慢在哪里。"
-    },
-    {
-      "id": "leetcode-0095-space",
-      "docId": "problems/leetcode/0095_unique_binary_search_trees_ii.md",
-      "type": "single",
-      "stem": "本题最优解「递归分治」的空间复杂度是？",
-      "options": [
-        "O(C(n))",
-        "—"
-      ],
-      "answer": 0,
-      "explain": "递归分治的空间复杂度是 O(C(n))。穷举所有树 — —— 空间优化往往才是这题的区分点。",
-      "source": "复杂度分析"
+      "explain": "递归 + 左右笛卡尔积的时间复杂度是 O(n · C(n))。表里的其他解法分别是先枚举全部二叉树再筛 BST 指数级且远大于 C(n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0096_unique_binary_search_trees.md",
@@ -1156,21 +1119,21 @@
       "source": "复杂度分析",
       "id": "leetcode-0104-complexity",
       "type": "blank",
-      "stem": "本题最优解「广度优先（队列）」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「深度优先（递归）」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(n)",
-      "explain": "广度优先（队列）的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+      "explain": "深度优先（递归）的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
     },
     {
       "id": "leetcode-0104-space",
       "docId": "problems/leetcode/0104_maximum_depth_of_binary_tree.md",
       "type": "single",
-      "stem": "本题最优解「广度优先（队列）」的空间复杂度是？",
+      "stem": "本题最优解「深度优先（递归）」的空间复杂度是？",
       "options": [
-        "O(w)",
-        "O(h)"
+        "O(h)",
+        "O(w)"
       ],
       "answer": 0,
-      "explain": "广度优先（队列）的空间复杂度是 O(w)。深度优先（递归） O(h) —— 空间优化往往才是这题的区分点。",
+      "explain": "深度优先（递归）的空间复杂度是 O(h)。广度优先（队列） O(w) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1249,22 +1212,22 @@
       "source": "复杂度分析",
       "id": "leetcode-0118-complexity",
       "type": "blank",
-      "stem": "本题最优解「最优」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「逐行递推」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(numRows²)",
-      "explain": "最优的时间复杂度是 O(numRows²)。同一张表里其他解法也是 O(numRows²)，这题的区分点不在时间。"
+      "explain": "逐行递推的时间复杂度是 O(numRows²)。同一张表里其他解法也是 O(numRows²)，这题的区分点不在时间。"
     },
     {
       "docId": "problems/leetcode/0121_best_time_to_buy_and_sell_stock.md",
       "source": "复杂度分析",
       "id": "leetcode-0121-complexity",
       "type": "single",
-      "stem": "本题最优解「贪心」的时间复杂度是？",
+      "stem": "本题最优解「一次扫描，维护前缀最小值」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n²)"
       ],
       "answer": 0,
-      "explain": "贪心的时间复杂度是 O(n)。表里的其他解法分别是暴力 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "一次扫描，维护前缀最小值的时间复杂度是 O(n)。表里的其他解法分别是枚举买入日与卖出日 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0124_binary_tree_maximum_path_sum.md",
@@ -1324,25 +1287,25 @@
       "source": "复杂度分析",
       "id": "leetcode-0136-complexity",
       "type": "single",
-      "stem": "本题最优解「异或」的时间复杂度是？",
+      "stem": "本题最优解「全部异或」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n log n)"
       ],
       "answer": 0,
-      "explain": "异或的时间复杂度是 O(n)。表里的其他解法分别是排序 O(n log n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "全部异或的时间复杂度是 O(n)。表里的其他解法分别是排序后找相邻不同的那个 O(n log n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0136-space",
       "docId": "problems/leetcode/0136_single_number.md",
       "type": "single",
-      "stem": "本题最优解「异或」的空间复杂度是？",
+      "stem": "本题最优解「全部异或」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(n)"
       ],
       "answer": 0,
-      "explain": "异或的空间复杂度是 O(1)。哈希表 O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "全部异或的空间复杂度是 O(1)。哈希表计数 O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1491,51 +1454,34 @@
       "source": "复杂度分析",
       "id": "leetcode-0155-complexity",
       "type": "single",
-      "stem": "本题最优解「getMin」的时间复杂度是？",
+      "stem": "本题最优解「主栈 + 辅助最小栈」的时间复杂度是？",
       "options": [
-        "O(1)",
-        "时间复杂度"
+        "每个操作均 O(1)",
+        "push/pop/top O(1)，getMin O(n)"
       ],
       "answer": 0,
-      "explain": "getMin的时间复杂度是 O(1)。表里的其他解法分别是操作 时间复杂度 —— 答错说明还没分清它们各自慢在哪里。"
-    },
-    {
-      "id": "leetcode-0155-space",
-      "docId": "problems/leetcode/0155_min_stack.md",
-      "type": "single",
-      "stem": "本题最优解「getMin」的空间复杂度是？",
-      "options": [
-        "O(n)",
-        "空间复杂度"
-      ],
-      "answer": 0,
-      "explain": "getMin的空间复杂度是 O(n)。操作 空间复杂度 —— 空间优化往往才是这题的区分点。",
-      "source": "复杂度分析"
+      "explain": "主栈 + 辅助最小栈的时间复杂度是 每个操作均 O(1)。表里的其他解法分别是每次 getMin 扫一遍栈 push/pop/top O(1)，getMin O(n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0160_intersection_of_two_linked_lists.md",
       "source": "复杂度分析",
       "id": "leetcode-0160-complexity",
-      "type": "single",
-      "stem": "本题最优解「双指针（推荐）」的时间复杂度是？",
-      "options": [
-        "O(m + n)",
-        "O(m * n)"
-      ],
-      "answer": 0,
-      "explain": "双指针（推荐）的时间复杂度是 O(m + n)。表里的其他解法分别是暴力枚举 O(m * n) —— 答错说明还没分清它们各自慢在哪里。"
+      "type": "blank",
+      "stem": "本题最优解「双指针换头」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(m + n)",
+      "explain": "双指针换头的时间复杂度是 O(m + n)。同一张表里其他解法也是 O(m + n)，这题的区分点不在时间。"
     },
     {
       "id": "leetcode-0160-space",
       "docId": "problems/leetcode/0160_intersection_of_two_linked_lists.md",
       "type": "single",
-      "stem": "本题最优解「双指针（推荐）」的空间复杂度是？",
+      "stem": "本题最优解「双指针换头」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(m)"
       ],
       "answer": 0,
-      "explain": "双指针（推荐）的空间复杂度是 O(1)。哈希表 O(m) —— 空间优化往往才是这题的区分点。",
+      "explain": "双指针换头的空间复杂度是 O(1)。哈希表存 A 的全部节点 O(m) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1587,7 +1533,7 @@
         "O(n)"
       ],
       "answer": 0,
-      "explain": "三次翻转的空间复杂度是 O(1)。优化 O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "三次翻转的空间复杂度是 O(1)。额外数组 O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1595,25 +1541,25 @@
       "source": "复杂度分析",
       "id": "leetcode-0198-complexity",
       "type": "single",
-      "stem": "本题最优解「空间优化DP」的时间复杂度是？",
+      "stem": "本题最优解「空间优化 DP」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(2^n)"
       ],
       "answer": 0,
-      "explain": "空间优化DP的时间复杂度是 O(n)。表里的其他解法分别是暴力递归 O(2^n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "空间优化 DP的时间复杂度是 O(n)。表里的其他解法分别是暴力递归 O(2^n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0198-space",
       "docId": "problems/leetcode/0198_house_robber.md",
       "type": "single",
-      "stem": "本题最优解「空间优化DP」的空间复杂度是？",
+      "stem": "本题最优解「空间优化 DP」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(n)"
       ],
       "answer": 0,
-      "explain": "空间优化DP的空间复杂度是 O(1)。暴力递归 O(n)、记忆化搜索 O(n)、动态规划 O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "空间优化 DP的空间复杂度是 O(1)。暴力递归 O(n)、记忆化搜索 O(n)、动态规划 O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1621,21 +1567,21 @@
       "source": "复杂度分析",
       "id": "leetcode-0199-complexity",
       "type": "blank",
-      "stem": "本题最优解「BFS」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「先右后左 DFS」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(n)",
-      "explain": "BFS的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+      "explain": "先右后左 DFS的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
     },
     {
       "id": "leetcode-0199-space",
       "docId": "problems/leetcode/0199_binary_tree_right_side_view.md",
       "type": "single",
-      "stem": "本题最优解「BFS」的空间复杂度是？",
+      "stem": "本题最优解「先右后左 DFS」的空间复杂度是？",
       "options": [
-        "O(w)",
-        "O(h)"
+        "O(h)",
+        "O(w)"
       ],
       "answer": 0,
-      "explain": "BFS的空间复杂度是 O(w)。DFS O(h)、DFS（先右后左） O(h) —— 空间优化往往才是这题的区分点。",
+      "explain": "先右后左 DFS的空间复杂度是 O(h)。按层 BFS O(w) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1643,25 +1589,25 @@
       "source": "复杂度分析",
       "id": "leetcode-0200-complexity",
       "type": "single",
-      "stem": "本题最优解「BFS」的时间复杂度是？",
+      "stem": "本题最优解「DFS」的时间复杂度是？",
       "options": [
         "O(m×n)",
         "O(m×n × α(m×n))"
       ],
       "answer": 0,
-      "explain": "BFS的时间复杂度是 O(m×n)。表里的其他解法分别是并查集 O(m×n × α(m×n)) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "DFS的时间复杂度是 O(m×n)。表里的其他解法分别是并查集 O(m×n × α(m×n)) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0200-space",
       "docId": "problems/leetcode/0200_number_of_islands.md",
       "type": "single",
-      "stem": "本题最优解「BFS」的空间复杂度是？",
+      "stem": "本题最优解「DFS」的空间复杂度是？",
       "options": [
-        "O(min(m,n))",
-        "O(m×n)"
+        "O(m×n)",
+        "O(min(m,n))"
       ],
       "answer": 0,
-      "explain": "BFS的空间复杂度是 O(min(m,n))。并查集 O(m×n)、DFS O(m×n) —— 空间优化往往才是这题的区分点。",
+      "explain": "DFS的空间复杂度是 O(m×n)。BFS O(min(m,n)) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1700,26 +1646,25 @@
       "source": "复杂度分析",
       "id": "leetcode-0208-complexity",
       "type": "single",
-      "stem": "本题最优解「startsWith」的时间复杂度是？",
+      "stem": "本题最优解「每层用长度为 26 的数组存孩子」的时间复杂度是？",
       "options": [
-        "O(m)",
-        "时间复杂度"
+        "insert / search / startsWith 均 O(m)",
+        "均 O(m)"
       ],
       "answer": 0,
-      "explain": "startsWith的时间复杂度是 O(m)。表里的其他解法分别是操作 时间复杂度 —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "每层用长度为 26 的数组存孩子的时间复杂度是 insert / search / startsWith 均 O(m)。表里的其他解法分别是每层用字典存孩子 均 O(m) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0208-space",
       "docId": "problems/leetcode/0208_implement_trie_prefix_tree.md",
       "type": "single",
-      "stem": "本题最优解「startsWith」的空间复杂度是？",
+      "stem": "本题最优解「每层用长度为 26 的数组存孩子」的空间复杂度是？",
       "options": [
-        "O(1)",
-        "空间复杂度",
-        "O(m)"
+        "O(总字符数 × 26 个指针)",
+        "O(总字符数)"
       ],
       "answer": 0,
-      "explain": "startsWith的空间复杂度是 O(1)。操作 空间复杂度、insert O(m) —— 空间优化往往才是这题的区分点。",
+      "explain": "每层用长度为 26 的数组存孩子的空间复杂度是 O(总字符数 × 26 个指针)。每层用字典存孩子 O(总字符数) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1727,27 +1672,27 @@
       "source": "复杂度分析",
       "id": "leetcode-0215-complexity",
       "type": "single",
-      "stem": "本题最优解「快速选择（推荐）」的时间复杂度是？",
+      "stem": "本题最优解「快速选择」的时间复杂度是？",
       "options": [
         "平均 O(n)，最坏 O(n²)",
         "O(n log n)",
         "O(n log k)"
       ],
       "answer": 0,
-      "explain": "快速选择（推荐）的时间复杂度是 平均 O(n)，最坏 O(n²)。表里的其他解法分别是排序 O(n log n)、最小堆 O(n log k) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "快速选择的时间复杂度是 平均 O(n)，最坏 O(n²)。表里的其他解法分别是排序 O(n log n)、最小堆 O(n log k) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0215-space",
       "docId": "problems/leetcode/0215_kth_largest_element_in_an_array.md",
       "type": "single",
-      "stem": "本题最优解「快速选择（推荐）」的空间复杂度是？",
+      "stem": "本题最优解「快速选择」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(1) 或 O(n)",
         "O(k)"
       ],
       "answer": 0,
-      "explain": "快速选择（推荐）的空间复杂度是 O(1)。排序 O(1) 或 O(n)、最小堆 O(k) —— 空间优化往往才是这题的区分点。",
+      "explain": "快速选择的空间复杂度是 O(1)。排序 O(1) 或 O(n)、最小堆 O(k) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1755,25 +1700,26 @@
       "source": "复杂度分析",
       "id": "leetcode-0221-complexity",
       "type": "single",
-      "stem": "本题最优解「DP」的时间复杂度是？",
+      "stem": "本题最优解「滚动数组 DP」的时间复杂度是？",
       "options": [
-        "O(m*n)",
-        "O(m*n*min(m,n)²)"
+        "O(m·n)",
+        "O(m·n·min(m,n)²)"
       ],
       "answer": 0,
-      "explain": "DP的时间复杂度是 O(m*n)。表里的其他解法分别是暴力 O(m*n*min(m,n)²) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "滚动数组 DP的时间复杂度是 O(m·n)。表里的其他解法分别是枚举左上角、逐层扩张检查 O(m·n·min(m,n)²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0221-space",
       "docId": "problems/leetcode/0221_maximal_square.md",
       "type": "single",
-      "stem": "本题最优解「DP」的空间复杂度是？",
+      "stem": "本题最优解「滚动数组 DP」的空间复杂度是？",
       "options": [
         "O(n)",
-        "O(1)"
+        "O(1)",
+        "O(m·n)"
       ],
       "answer": 0,
-      "explain": "DP的空间复杂度是 O(n)。暴力 O(1) —— 空间优化往往才是这题的区分点。",
+      "explain": "滚动数组 DP的空间复杂度是 O(n)。枚举左上角、逐层扩张检查 O(1)、二维 DP O(m·n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1781,22 +1727,22 @@
       "source": "复杂度分析",
       "id": "leetcode-0226-complexity",
       "type": "blank",
-      "stem": "本题最优解「BFS 迭代」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「原地递归」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(n)",
-      "explain": "BFS 迭代的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+      "explain": "原地递归的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
     },
     {
       "id": "leetcode-0226-space",
       "docId": "problems/leetcode/0226_invert_binary_tree.md",
       "type": "single",
-      "stem": "本题最优解「BFS 迭代」的空间复杂度是？",
+      "stem": "本题最优解「原地递归」的空间复杂度是？",
       "options": [
-        "O(w)",
+        "O(h)",
         "O(n)",
-        "O(h)"
+        "O(w)"
       ],
       "answer": 0,
-      "explain": "BFS 迭代的空间复杂度是 O(w)。复制新树 O(n)、原地递归 O(h) —— 空间优化往往才是这题的区分点。",
+      "explain": "原地递归的空间复杂度是 O(h)。复制新树 O(n)、BFS 迭代 O(w) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1830,21 +1776,21 @@
       "source": "复杂度分析",
       "id": "leetcode-0234-complexity",
       "type": "blank",
-      "stem": "本题最优解「快慢指针+反转」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「递归」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(n)",
-      "explain": "快慢指针+反转的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+      "explain": "递归的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
     },
     {
       "id": "leetcode-0234-space",
       "docId": "problems/leetcode/0234_palindrome_linked_list.md",
       "type": "single",
-      "stem": "本题最优解「快慢指针+反转」的空间复杂度是？",
+      "stem": "本题最优解「递归」的空间复杂度是？",
       "options": [
-        "O(1)",
-        "O(n)"
+        "O(n)",
+        "O(1)"
       ],
       "answer": 0,
-      "explain": "快慢指针+反转的空间复杂度是 O(1)。转数组 O(n)、递归 O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "递归的空间复杂度是 O(n)。快慢指针+反转 O(1) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1874,25 +1820,25 @@
       "source": "复杂度分析",
       "id": "leetcode-0238-complexity",
       "type": "single",
-      "stem": "本题最优解「优化前后缀」的时间复杂度是？",
+      "stem": "本题最优解「前后缀数组」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n²)"
       ],
       "answer": 0,
-      "explain": "优化前后缀的时间复杂度是 O(n)。表里的其他解法分别是暴力 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "前后缀数组的时间复杂度是 O(n)。表里的其他解法分别是暴力 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0238-space",
       "docId": "problems/leetcode/0238_product_of_array_except_self.md",
       "type": "single",
-      "stem": "本题最优解「优化前后缀」的空间复杂度是？",
+      "stem": "本题最优解「前后缀数组」的空间复杂度是？",
       "options": [
-        "O(1)",
-        "O(n)"
+        "O(n)",
+        "O(1)"
       ],
       "answer": 0,
-      "explain": "优化前后缀的空间复杂度是 O(1)。前后缀数组 O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "前后缀数组的空间复杂度是 O(n)。暴力 O(1)、除法 O(1)、优化前后缀 O(1) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1903,11 +1849,11 @@
       "stem": "本题最优解「单调队列」的时间复杂度是？",
       "options": [
         "O(n)",
-        "O(n*k)",
-        "O(n*log n)"
+        "O(nk)",
+        "O(n log n)"
       ],
       "answer": 0,
-      "explain": "单调队列的时间复杂度是 O(n)。表里的其他解法分别是暴力 O(n*k)、堆 O(n*log n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "单调队列的时间复杂度是 O(n)。表里的其他解法分别是每个窗口重新扫 k 个元素 O(nk)、大根堆存 (-值, 下标) O(n log n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0239-space",
@@ -1920,7 +1866,7 @@
         "O(n)"
       ],
       "answer": 0,
-      "explain": "单调队列的空间复杂度是 O(k)。暴力 O(1)、堆 O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "单调队列的空间复杂度是 O(k)。每个窗口重新扫 k 个元素 O(1)、大根堆存 (-值, 下标) O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -1928,14 +1874,14 @@
       "source": "复杂度分析",
       "id": "leetcode-0240-complexity",
       "type": "single",
-      "stem": "本题最优解「Z字形搜索」的时间复杂度是？",
+      "stem": "本题最优解「逐行二分」的时间复杂度是？",
       "options": [
-        "O(m+n)",
+        "O(m*log n)",
         "O(m*n)",
-        "O(m*log n)"
+        "O(m+n)"
       ],
       "answer": 0,
-      "explain": "Z字形搜索的时间复杂度是 O(m+n)。表里的其他解法分别是逐格扫描 O(m*n)、逐行二分 O(m*log n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "逐行二分的时间复杂度是 O(m*log n)。表里的其他解法分别是逐格扫描 O(m*n)、Z字形搜索 O(m+n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0279_perfect_squares.md",
@@ -1986,14 +1932,14 @@
       "source": "复杂度分析",
       "id": "leetcode-0287-complexity",
       "type": "single",
-      "stem": "本题最优解「Floyd 判圈算法（推荐）」的时间复杂度是？",
+      "stem": "本题最优解「Floyd 判圈算法」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n²)",
         "O(n log n)"
       ],
       "answer": 0,
-      "explain": "Floyd 判圈算法（推荐）的时间复杂度是 O(n)。表里的其他解法分别是暴力枚举（双重循环） O(n²)、二分查找（值域） O(n log n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "Floyd 判圈算法的时间复杂度是 O(n)。表里的其他解法分别是暴力枚举（双重循环） O(n²)、二分查找（值域） O(n log n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0295_find_median_from_data_stream.md",
@@ -2027,76 +1973,69 @@
       "source": "复杂度分析",
       "id": "leetcode-0297-complexity",
       "type": "blank",
-      "stem": "本题最优解「BFS层序」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「层序 BFS」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(n)",
-      "explain": "BFS层序的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+      "explain": "层序 BFS的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
     },
     {
       "docId": "problems/leetcode/0300_longest_increasing_subsequence.md",
       "source": "复杂度分析",
       "id": "leetcode-0300-complexity",
       "type": "single",
-      "stem": "本题最优解「贪心+二分」的时间复杂度是？",
+      "stem": "本题最优解「贪心 + 二分」的时间复杂度是？",
       "options": [
         "O(n log n)",
-        "O(2^n)",
-        "O(n^2)"
+        "O(n²)"
       ],
       "answer": 0,
-      "explain": "贪心+二分的时间复杂度是 O(n log n)。表里的其他解法分别是暴力 O(2^n)、动态规划 O(n^2) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "贪心 + 二分的时间复杂度是 O(n log n)。表里的其他解法分别是记忆化 / 递推 DP O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0301_remove_invalid_parentheses.md",
       "source": "复杂度分析",
       "id": "leetcode-0301-complexity",
       "type": "single",
-      "stem": "本题最优解「回溯」的时间复杂度是？",
+      "stem": "本题最优解「BFS」的时间复杂度是？",
       "options": [
-        "O(2^n)",
-        "O(2^n * n)",
-        "O(n * C(n,k))"
+        "O(n · C(n,k))",
+        "O(2ⁿ · n)"
       ],
       "answer": 0,
-      "explain": "回溯的时间复杂度是 O(2^n)。表里的其他解法分别是暴力枚举 O(2^n * n)、BFS O(n * C(n,k)) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "BFS的时间复杂度是 O(n · C(n,k))。表里的其他解法分别是回溯 O(2ⁿ · n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0301-space",
       "docId": "problems/leetcode/0301_remove_invalid_parentheses.md",
       "type": "single",
-      "stem": "本题最优解「回溯」的空间复杂度是？",
+      "stem": "本题最优解「BFS」的空间复杂度是？",
       "options": [
-        "O(n)",
-        "O(2^n)",
-        "O(C(n,k))"
+        "O(C(n,k))",
+        "O(n)"
       ],
       "answer": 0,
-      "explain": "回溯的空间复杂度是 O(n)。暴力枚举 O(2^n)、BFS O(C(n,k)) —— 空间优化往往才是这题的区分点。",
+      "explain": "BFS的空间复杂度是 O(C(n,k))。回溯 O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
       "docId": "problems/leetcode/0309_best_time_to_buy_and_sell_stock_with_cooldown.md",
       "source": "复杂度分析",
       "id": "leetcode-0309-complexity",
-      "type": "single",
-      "stem": "本题最优解「状态压缩 DP」的时间复杂度是？",
-      "options": [
-        "O(n)",
-        "O(4^n)"
-      ],
-      "answer": 0,
-      "explain": "状态压缩 DP的时间复杂度是 O(n)。表里的其他解法分别是暴力 O(4^n) —— 答错说明还没分清它们各自慢在哪里。"
+      "type": "blank",
+      "stem": "本题最优解「三变量滚动」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n)",
+      "explain": "三变量滚动的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
     },
     {
       "id": "leetcode-0309-space",
       "docId": "problems/leetcode/0309_best_time_to_buy_and_sell_stock_with_cooldown.md",
       "type": "single",
-      "stem": "本题最优解「状态压缩 DP」的空间复杂度是？",
+      "stem": "本题最优解「三变量滚动」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(n)"
       ],
       "answer": 0,
-      "explain": "状态压缩 DP的空间复杂度是 O(1)。暴力 O(n)、记忆化搜索 O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "三变量滚动的空间复杂度是 O(1)。记忆化搜索 dfs(i, hold) O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -2130,13 +2069,13 @@
       "source": "复杂度分析",
       "id": "leetcode-0322-complexity",
       "type": "single",
-      "stem": "本题最优解「完全背包 DP（推荐）」的时间复杂度是？",
+      "stem": "本题最优解「完全背包 DP」的时间复杂度是？",
       "options": [
         "O(n * amount)",
         "指数级"
       ],
       "answer": 0,
-      "explain": "完全背包 DP（推荐）的时间复杂度是 O(n * amount)。表里的其他解法分别是回溯 + 剪枝 指数级 —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "完全背包 DP的时间复杂度是 O(n * amount)。表里的其他解法分别是回溯 + 剪枝 指数级 —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0328_odd_even_linked_list.md",
@@ -2178,13 +2117,13 @@
       "source": "复杂度分析",
       "id": "leetcode-0338-complexity",
       "type": "single",
-      "stem": "本题最优解「DP」的时间复杂度是？",
+      "stem": "本题最优解「右移递推」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n log n)"
       ],
       "answer": 0,
-      "explain": "DP的时间复杂度是 O(n)。表里的其他解法分别是逐个数统计位数 O(n log n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "右移递推的时间复杂度是 O(n)。表里的其他解法分别是每个数逐位统计 O(n log n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0347_top_k_frequent_elements.md",
@@ -2218,9 +2157,9 @@
       "source": "复杂度分析",
       "id": "leetcode-0394-complexity",
       "type": "blank",
-      "stem": "本题最优解「递归」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「栈」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(n × k)",
-      "explain": "递归的时间复杂度是 O(n × k)。同一张表里其他解法也是 O(n × k)，这题的区分点不在时间。"
+      "explain": "栈的时间复杂度是 O(n × k)。同一张表里其他解法也是 O(n × k)，这题的区分点不在时间。"
     },
     {
       "docId": "problems/leetcode/0399_evaluate_division.md",
@@ -2293,40 +2232,40 @@
       "source": "复杂度分析",
       "id": "leetcode-0437-complexity",
       "type": "single",
-      "stem": "本题最优解「前缀和+哈希」的时间复杂度是？",
+      "stem": "本题最优解「前缀和 + 哈希」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n^2)"
       ],
       "answer": 0,
-      "explain": "前缀和+哈希的时间复杂度是 O(n)。表里的其他解法分别是双重 DFS O(n^2) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "前缀和 + 哈希的时间复杂度是 O(n)。表里的其他解法分别是双重 DFS O(n^2) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0438_find_all_anagrams_in_a_string.md",
       "source": "复杂度分析",
       "id": "leetcode-0438-complexity",
       "type": "single",
-      "stem": "本题最优解「数组+差值」的时间复杂度是？",
+      "stem": "本题最优解「数组 + 差值」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n × k log k)",
         "O(n × m)"
       ],
       "answer": 0,
-      "explain": "数组+差值的时间复杂度是 O(n)。表里的其他解法分别是每个窗口排序 O(n × k log k)、Counter O(n × m) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "数组 + 差值的时间复杂度是 O(n)。表里的其他解法分别是每个窗口排序 O(n × k log k)、Counter O(n × m) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0438-space",
       "docId": "problems/leetcode/0438_find_all_anagrams_in_a_string.md",
       "type": "single",
-      "stem": "本题最优解「数组+差值」的空间复杂度是？",
+      "stem": "本题最优解「数组 + 差值」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(k)",
         "O(m)"
       ],
       "answer": 0,
-      "explain": "数组+差值的空间复杂度是 O(1)。每个窗口排序 O(k)、Counter O(m) —— 空间优化往往才是这题的区分点。",
+      "explain": "数组 + 差值的空间复杂度是 O(1)。每个窗口排序 O(k)、Counter O(m) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -2393,38 +2332,38 @@
       "source": "复杂度分析",
       "id": "leetcode-0543-complexity",
       "type": "single",
-      "stem": "本题最优解「一次遍历」的时间复杂度是？",
+      "stem": "本题最优解「一次后序遍历」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n²)"
       ],
       "answer": 0,
-      "explain": "一次遍历的时间复杂度是 O(n)。表里的其他解法分别是逐节点求深度 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "一次后序遍历的时间复杂度是 O(n)。表里的其他解法分别是每个节点单独求一次深度 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/leetcode/0560_subarray_sum_equals_k.md",
       "source": "复杂度分析",
       "id": "leetcode-0560-complexity",
       "type": "single",
-      "stem": "本题最优解「前缀和+哈希」的时间复杂度是？",
+      "stem": "本题最优解「前缀和 + 哈希」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n^2)"
       ],
       "answer": 0,
-      "explain": "前缀和+哈希的时间复杂度是 O(n)。表里的其他解法分别是暴力 O(n^2) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "前缀和 + 哈希的时间复杂度是 O(n)。表里的其他解法分别是暴力 O(n^2) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0560-space",
       "docId": "problems/leetcode/0560_subarray_sum_equals_k.md",
       "type": "single",
-      "stem": "本题最优解「前缀和+哈希」的空间复杂度是？",
+      "stem": "本题最优解「前缀和 + 哈希」的空间复杂度是？",
       "options": [
         "O(n)",
         "O(1)"
       ],
       "answer": 0,
-      "explain": "前缀和+哈希的空间复杂度是 O(n)。暴力 O(1) —— 空间优化往往才是这题的区分点。",
+      "explain": "前缀和 + 哈希的空间复杂度是 O(n)。暴力 O(1) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -2485,25 +2424,26 @@
       "source": "复杂度分析",
       "id": "leetcode-0647-complexity",
       "type": "single",
-      "stem": "本题最优解「Manacher」的时间复杂度是？",
+      "stem": "本题最优解「中心扩展」的时间复杂度是？",
       "options": [
-        "O(n)",
-        "O(n²)"
+        "O(n²)",
+        "O(n)"
       ],
       "answer": 0,
-      "explain": "Manacher的时间复杂度是 O(n)。表里的其他解法分别是中心扩展 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "中心扩展的时间复杂度是 O(n²)。表里的其他解法分别是Manacher O(n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-0647-space",
       "docId": "problems/leetcode/0647_palindromic_substrings.md",
       "type": "single",
-      "stem": "本题最优解「Manacher」的空间复杂度是？",
+      "stem": "本题最优解「中心扩展」的空间复杂度是？",
       "options": [
+        "O(1)",
         "O(n)",
-        "O(1)"
+        "O(n²)"
       ],
       "answer": 0,
-      "explain": "Manacher的空间复杂度是 O(n)。中心扩展 O(1) —— 空间优化往往才是这题的区分点。",
+      "explain": "中心扩展的空间复杂度是 O(1)。Manacher O(n)、二维 DP 判回文 O(n²) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -2576,9 +2516,9 @@
       "source": "复杂度分析",
       "id": "leetcode-0761-complexity",
       "type": "blank",
-      "stem": "本题最优解「递归+排序」的时间复杂度是？（直接写复杂度表达式）",
-      "answer": "O(n^2 log n)",
-      "explain": "递归+排序的时间复杂度是 O(n^2 log n)。"
+      "stem": "本题最优解「递归 + 排序」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n² log n)",
+      "explain": "递归 + 排序的时间复杂度是 O(n² log n)。"
     },
     {
       "docId": "problems/leetcode/0947_most_stones_removed_with_same_row_or_column.md",
@@ -2676,25 +2616,25 @@
       "source": "复杂度分析",
       "id": "leetcode-1480-complexity",
       "type": "single",
-      "stem": "本题最优解「递推」的时间复杂度是？",
+      "stem": "本题最优解「另开结果数组递推」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n²)"
       ],
       "answer": 0,
-      "explain": "递推的时间复杂度是 O(n)。表里的其他解法分别是逐位置累加 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "另开结果数组递推的时间复杂度是 O(n)。表里的其他解法分别是每个位置重新累加 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "leetcode-1480-space",
       "docId": "problems/leetcode/1480_running_sum_of_1d_array.md",
       "type": "single",
-      "stem": "本题最优解「递推」的空间复杂度是？",
+      "stem": "本题最优解「另开结果数组递推」的空间复杂度是？",
       "options": [
         "O(n)",
         "O(1)"
       ],
       "answer": 0,
-      "explain": "递推的空间复杂度是 O(n)。原地累加 O(1) —— 空间优化往往才是这题的区分点。",
+      "explain": "另开结果数组递推的空间复杂度是 O(n)。原地累加回 nums O(1) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -2743,10 +2683,27 @@
       "docId": "problems/leetcode/3493_properties_graph.md",
       "source": "复杂度分析",
       "id": "leetcode-3493-complexity",
-      "type": "blank",
-      "stem": "本题最优解「两两检查+并查集」的时间复杂度是？（直接写复杂度表达式）",
-      "answer": "O(n^2 m)",
-      "explain": "两两检查+并查集的时间复杂度是 O(n^2 m)。"
+      "type": "single",
+      "stem": "本题最优解「集合交集 + 并查集」的时间复杂度是？",
+      "options": [
+        "O(n² · m)",
+        "O(n² · m²)"
+      ],
+      "answer": 0,
+      "explain": "集合交集 + 并查集的时间复杂度是 O(n² · m)。表里的其他解法分别是每对逐元素比较共有属性 O(n² · m²) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "leetcode-3493-space",
+      "docId": "problems/leetcode/3493_properties_graph.md",
+      "type": "single",
+      "stem": "本题最优解「集合交集 + 并查集」的空间复杂度是？",
+      "options": [
+        "O(n · m)",
+        "O(1)"
+      ],
+      "answer": 0,
+      "explain": "集合交集 + 并查集的空间复杂度是 O(n · m)。每对逐元素比较共有属性 O(1) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
     },
     {
       "docId": "problems/leetcode/3532_path_existence_queries_in_a_graph_i.md",
@@ -3098,13 +3055,13 @@
       "source": "复杂度分析",
       "id": "other-小欧的排列计算-complexity",
       "type": "single",
-      "stem": "本题最优解「插空法 + 递推求组合数」的时间复杂度是？",
+      "stem": "本题最优解「插空法 + 阶乘」的时间复杂度是？",
       "options": [
         "O(n)",
         "O(n! · n)"
       ],
       "answer": 0,
-      "explain": "插空法 + 递推求组合数的时间复杂度是 O(n)。表里的其他解法分别是枚举全排列逐一检查 O(n! · n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "插空法 + 阶乘的时间复杂度是 O(n)。表里的其他解法分别是枚举全排列逐一检查 O(n! · n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/nowcoder/OPPO/小欧的排列交换.md",
@@ -3114,10 +3071,10 @@
       "stem": "本题最优解「错位位置两两配对」的时间复杂度是？",
       "options": [
         "O(n)",
-        "O(n^2)"
+        "O(n²)"
       ],
       "answer": 0,
-      "explain": "错位位置两两配对的时间复杂度是 O(n)。表里的其他解法分别是逐位模拟交换（每次修好一个位置） O(n^2) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "错位位置两两配对的时间复杂度是 O(n)。表里的其他解法分别是逐位找目标值再交换 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/nowcoder/OPPO/小欧的平面连线.md",
@@ -3150,22 +3107,22 @@
       "source": "复杂度分析",
       "id": "other-小欧的前后缀交换-complexity",
       "type": "blank",
-      "stem": "本题最优解「切出两段再交换」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「数两段长度后直接拼接」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(n)",
-      "explain": "切出两段再交换的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+      "explain": "数两段长度后直接拼接的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
     },
     {
       "docId": "problems/nowcoder/OPPO/小欧的数组构造.md",
       "source": "复杂度分析",
       "id": "other-小欧的数组构造-complexity",
       "type": "single",
-      "stem": "本题最优解「通项 + 事件扫描」的时间复杂度是？",
+      "stem": "本题最优解「通项 + 端点扫描」的时间复杂度是？",
       "options": [
-        "O(n\\log n)",
-        "O(n\\cdot V)"
+        "O(n log n)",
+        "O(n · V)"
       ],
       "answer": 0,
-      "explain": "通项 + 事件扫描的时间复杂度是 O(n\\log n)。表里的其他解法分别是枚举 a_1 并逐个递推 O(n\\cdot V) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "通项 + 端点扫描的时间复杂度是 O(n log n)。表里的其他解法分别是枚举 a_1 后逐个递推 O(n · V) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/nowcoder/OPPO/小欧的数组修改.md",
@@ -3198,25 +3155,25 @@
       "source": "复杂度分析",
       "id": "other-小欧的字符串构造-complexity",
       "type": "single",
-      "stem": "本题最优解「枚举所有 t」的时间复杂度是？",
+      "stem": "本题最优解「按 k 与 n 分类构造」的时间复杂度是？",
       "options": [
-        "O(26^k)",
-        "O(n + k)"
+        "O(n + k)",
+        "O(26^k)"
       ],
       "answer": 0,
-      "explain": "枚举所有 t的时间复杂度是 O(26^k)。表里的其他解法分别是分类构造 O(n + k) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "按 k 与 n 分类构造的时间复杂度是 O(n + k)。表里的其他解法分别是枚举所有长度为 k 的 t O(26^k) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "other-小欧的字符串构造-space",
       "docId": "problems/nowcoder/OPPO/小欧的字符串构造.md",
       "type": "single",
-      "stem": "本题最优解「枚举所有 t」的空间复杂度是？",
+      "stem": "本题最优解「按 k 与 n 分类构造」的空间复杂度是？",
       "options": [
-        "O(k)",
-        "O(n + k)"
+        "O(n + k)",
+        "O(k)"
       ],
       "answer": 0,
-      "explain": "枚举所有 t的空间复杂度是 O(k)。分类构造 O(n + k) —— 空间优化往往才是这题的区分点。",
+      "explain": "按 k 与 n 分类构造的空间复杂度是 O(n + k)。枚举所有长度为 k 的 t O(k) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -3224,25 +3181,25 @@
       "source": "复杂度分析",
       "id": "other-小欧的字符串判定-complexity",
       "type": "single",
-      "stem": "本题最优解「枚举所有 2^n 种选择」的时间复杂度是？",
+      "stem": "本题最优解「逐位检查」的时间复杂度是？",
       "options": [
-        "O(2^n · n)",
-        "O(n)"
+        "O(n)",
+        "O(2^n · n)"
       ],
       "answer": 0,
-      "explain": "枚举所有 2^n 种选择的时间复杂度是 O(2^n · n)。表里的其他解法分别是逐位检查 O(n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "逐位检查的时间复杂度是 O(n)。表里的其他解法分别是枚举 2^n 种取法 O(2^n · n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "other-小欧的字符串判定-space",
       "docId": "problems/nowcoder/OPPO/小欧的字符串判定.md",
       "type": "single",
-      "stem": "本题最优解「枚举所有 2^n 种选择」的空间复杂度是？",
+      "stem": "本题最优解「逐位检查」的空间复杂度是？",
       "options": [
-        "O(n)",
-        "O(1)"
+        "O(1)",
+        "O(n)"
       ],
       "answer": 0,
-      "explain": "枚举所有 2^n 种选择的空间复杂度是 O(n)。逐位检查 O(1) —— 空间优化往往才是这题的区分点。",
+      "explain": "逐位检查的空间复杂度是 O(1)。枚举 2^n 种取法 O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -3315,21 +3272,21 @@
       "source": "复杂度分析",
       "id": "other-小欧喝水-complexity",
       "type": "blank",
-      "stem": "本题最优解「闭式累加调和级数」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「调和数累加」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(k)",
-      "explain": "闭式累加调和级数的时间复杂度是 O(k)。同一张表里其他解法也是 O(k)，这题的区分点不在时间。"
+      "explain": "调和数累加的时间复杂度是 O(k)。同一张表里其他解法也是 O(k)，这题的区分点不在时间。"
     },
     {
       "id": "other-小欧喝水-space",
       "docId": "problems/nowcoder/OPPO/小欧喝水.md",
       "type": "single",
-      "stem": "本题最优解「闭式累加调和级数」的空间复杂度是？",
+      "stem": "本题最优解「调和数累加」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(k)"
       ],
       "answer": 0,
-      "explain": "闭式累加调和级数的空间复杂度是 O(1)。按状态解方程递推 O(k) —— 空间优化往往才是这题的区分点。",
+      "explain": "调和数累加的空间复杂度是 O(1)。按状态解方程，逐个存 E(1..k) O(k) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -3364,13 +3321,26 @@
       "source": "复杂度分析",
       "id": "other-小O的矩阵变换-complexity",
       "type": "single",
-      "stem": "本题最优解「只枚举第一行/第一列」的时间复杂度是？",
+      "stem": "本题最优解「定 col[0] 直接构造」的时间复杂度是？",
       "options": [
-        "O(T \\cdot 2^{n} \\cdot n^2)",
-        "O(T \\cdot 2^{2n} \\cdot n^2)"
+        "O(T · n²)",
+        "O(T · 4^n · n²)"
       ],
       "answer": 0,
-      "explain": "只枚举第一行/第一列的时间复杂度是 O(T \\cdot 2^{n} \\cdot n^2)。表里的其他解法分别是枚举全部开关子集（本文） O(T \\cdot 2^{2n} \\cdot n^2) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "定 col[0] 直接构造的时间复杂度是 O(T · n²)。表里的其他解法分别是枚举全部 2n 个开关 O(T · 4^n · n²) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
+      "id": "other-小O的矩阵变换-space",
+      "docId": "problems/nowcoder/OPPO/小O的矩阵变换.md",
+      "type": "single",
+      "stem": "本题最优解「定 col[0] 直接构造」的空间复杂度是？",
+      "options": [
+        "O(1)",
+        "O(n²)"
+      ],
+      "answer": 0,
+      "explain": "定 col[0] 直接构造的空间复杂度是 O(1)。枚举全部 2n 个开关 O(n²) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
     },
     {
       "docId": "problems/nowcoder/OPPO/小O的树上加边.md",
@@ -3386,25 +3356,25 @@
       "source": "复杂度分析",
       "id": "other-小O的树上路径-complexity",
       "type": "single",
-      "stem": "本题最优解「树形 DP（本文）」的时间复杂度是？",
+      "stem": "本题最优解「树形 DP」的时间复杂度是？",
       "options": [
         "O(n)",
         "指数级"
       ],
       "answer": 0,
-      "explain": "树形 DP（本文）的时间复杂度是 O(n)。表里的其他解法分别是枚举所有走法 指数级 —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "树形 DP的时间复杂度是 O(n)。表里的其他解法分别是枚举所有走法 指数级 —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "other-小O的树上路径-space",
       "docId": "problems/nowcoder/OPPO/小O的树上路径.md",
       "type": "single",
-      "stem": "本题最优解「树形 DP（本文）」的空间复杂度是？",
+      "stem": "本题最优解「树形 DP」的空间复杂度是？",
       "options": [
         "O(n)",
         "指数级"
       ],
       "answer": 0,
-      "explain": "树形 DP（本文）的空间复杂度是 O(n)。枚举所有走法 指数级 —— 空间优化往往才是这题的区分点。",
+      "explain": "树形 DP的空间复杂度是 O(n)。枚举所有走法 指数级 —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -3479,7 +3449,7 @@
         "O(4^n)"
       ],
       "answer": 0,
-      "explain": "排序 + 枚举门槛 + 二分的时间复杂度是 O(n log n)。表里的其他解法分别是暴力枚举两个下标集合 O(4^n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "排序 + 枚举门槛 + 二分的时间复杂度是 O(n log n)。表里的其他解法分别是枚举两边的下标集合 O(4^n) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/nowcoder/OPPO/小O的子序列最值(二).md",
@@ -3558,13 +3528,13 @@
       "source": "复杂度分析",
       "id": "other-balance_paths-complexity",
       "type": "single",
-      "stem": "本题最优解「单链上的前缀和」的时间复杂度是？",
+      "stem": "本题最优解「枚举起点 + 向下 DFS」的时间复杂度是？",
       "options": [
-        "O(N)",
-        "O(N×H)"
+        "O(N×H)",
+        "O(N)"
       ],
       "answer": 0,
-      "explain": "单链上的前缀和的时间复杂度是 O(N)。表里的其他解法分别是枚举起点 + 向下 DFS O(N×H) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "枚举起点 + 向下 DFS的时间复杂度是 O(N×H)。表里的其他解法分别是单链上的前缀和 O(N) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/misc/bgd_resource_prediction.md",
@@ -3698,27 +3668,27 @@
       "source": "复杂度分析",
       "id": "other-BM46.最小的K个数-complexity",
       "type": "single",
-      "stem": "本题最优解「快速选择」的时间复杂度是？",
+      "stem": "本题最优解「大顶堆」的时间复杂度是？",
       "options": [
-        "平均 O(n)",
+        "O(n log k)",
         "O(n log n)",
-        "O(n log k)"
+        "平均 O(n)，最坏 O(n²)"
       ],
       "answer": 0,
-      "explain": "快速选择的时间复杂度是 平均 O(n)。表里的其他解法分别是排序 O(n log n)、大顶堆 O(n log k) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "大顶堆的时间复杂度是 O(n log k)。表里的其他解法分别是排序 O(n log n)、快速选择 平均 O(n)，最坏 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "other-BM46.最小的K个数-space",
       "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM46.最小的K个数.md",
       "type": "single",
-      "stem": "本题最优解「快速选择」的空间复杂度是？",
+      "stem": "本题最优解「大顶堆」的空间复杂度是？",
       "options": [
-        "O(1)",
+        "O(k)",
         "O(n)",
-        "O(k)"
+        "O(1)"
       ],
       "answer": 0,
-      "explain": "快速选择的空间复杂度是 O(1)。排序 O(n)、大顶堆 O(k) —— 空间优化往往才是这题的区分点。",
+      "explain": "大顶堆的空间复杂度是 O(k)。排序 O(n)、快速选择 O(1) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -3726,26 +3696,26 @@
       "source": "复杂度分析",
       "id": "other-BM47.寻找第K大-complexity",
       "type": "single",
-      "stem": "本题最优解「快速选择（最坏）」的时间复杂度是？",
+      "stem": "本题最优解「快速选择」的时间复杂度是？",
       "options": [
-        "O(n²)",
+        "平均 O(n)",
         "O(n log n)",
-        "平均 O(n)"
+        "O(n²)"
       ],
       "answer": 0,
-      "explain": "快速选择（最坏）的时间复杂度是 O(n²)。表里的其他解法分别是排序 O(n log n)、快速选择 平均 O(n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "快速选择的时间复杂度是 平均 O(n)。表里的其他解法分别是排序 O(n log n)、快速选择（最坏） O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "other-BM47.寻找第K大-space",
       "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM47.寻找第K大.md",
       "type": "single",
-      "stem": "本题最优解「快速选择（最坏）」的空间复杂度是？",
+      "stem": "本题最优解「快速选择」的空间复杂度是？",
       "options": [
         "O(1)",
         "O(n)"
       ],
       "answer": 0,
-      "explain": "快速选择（最坏）的空间复杂度是 O(1)。排序 O(n) —— 空间优化往往才是这题的区分点。",
+      "explain": "快速选择的空间复杂度是 O(1)。排序 O(n) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -3823,22 +3793,22 @@
       "source": "复杂度分析",
       "id": "other-BM81.买卖股票的最好时机(二)-complexity",
       "type": "blank",
-      "stem": "本题最优解「状态机 DP（持有/空仓）」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「贪心累加正差价」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(n)",
-      "explain": "状态机 DP（持有/空仓）的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+      "explain": "贪心累加正差价的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
     },
     {
       "docId": "problems/nowcoder/牛客题霸-模板速刷TOP101/BM82.买卖股票的最好时机(三).md",
       "source": "复杂度分析",
       "id": "other-BM82.买卖股票的最好时机(三)-complexity",
       "type": "single",
-      "stem": "本题最优解「枚举分界点」的时间复杂度是？",
+      "stem": "本题最优解「状态机 DP」的时间复杂度是？",
       "options": [
-        "O(n²)",
-        "O(n)"
+        "O(n)",
+        "O(n²)"
       ],
       "answer": 0,
-      "explain": "枚举分界点的时间复杂度是 O(n²)。表里的其他解法分别是状态机 DP O(n) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "状态机 DP的时间复杂度是 O(n)。表里的其他解法分别是枚举分界点 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/nowcoder/华为机试/HJ1.字符串最后一个单词的长度.md",
@@ -3867,9 +3837,9 @@
       "source": "复杂度分析",
       "id": "other-HJ11.数字颠倒-complexity",
       "type": "blank",
-      "stem": "本题最优解「reversed()」的时间复杂度是？（直接写复杂度表达式）",
+      "stem": "本题最优解「切片法」的时间复杂度是？（直接写复杂度表达式）",
       "answer": "O(n)",
-      "explain": "reversed()的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
+      "explain": "切片法的时间复杂度是 O(n)。同一张表里其他解法也是 O(n)，这题的区分点不在时间。"
     },
     {
       "docId": "problems/nowcoder/华为机试/HJ144.小红书推荐系统.md",
@@ -3923,28 +3893,10 @@
       "docId": "problems/nowcoder/华为机试/HJ17.坐标移动.md",
       "source": "复杂度分析",
       "id": "other-HJ17.坐标移动-complexity",
-      "type": "single",
-      "stem": "本题最优解「空间」的时间复杂度是？",
-      "options": [
-        "O(n)",
-        "复杂度"
-      ],
-      "answer": 0,
-      "explain": "空间的时间复杂度是 O(n)。表里的其他解法分别是指标 复杂度 —— 答错说明还没分清它们各自慢在哪里。"
-    },
-    {
-      "id": "other-HJ17.坐标移动-space",
-      "docId": "problems/nowcoder/华为机试/HJ17.坐标移动.md",
-      "type": "single",
-      "stem": "本题最优解「空间」的空间复杂度是？",
-      "options": [
-        "split 产生的指令列表",
-        "说明",
-        "遍历所有字符一次，正则匹配为常数时间"
-      ],
-      "answer": 0,
-      "explain": "空间的空间复杂度是 split 产生的指令列表。指标 说明、时间 遍历所有字符一次，正则匹配为常数时间 —— 空间优化往往才是这题的区分点。",
-      "source": "复杂度分析"
+      "type": "blank",
+      "stem": "本题最优解「切分 + 正则校验」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n)",
+      "explain": "切分 + 正则校验的时间复杂度是 O(n)。"
     },
     {
       "docId": "problems/nowcoder/华为机试/HJ171.排座椅.md",
@@ -4161,27 +4113,10 @@
       "docId": "problems/nowcoder/华为机试/HJ48.从单向链表中删除指定值的节点.md",
       "source": "复杂度分析",
       "id": "other-HJ48.从单向链表中删除指定值的节点-complexity",
-      "type": "single",
-      "stem": "本题最优解「真实链表」的时间复杂度是？",
-      "options": [
-        "O(n²)",
-        "时间复杂度"
-      ],
-      "answer": 0,
-      "explain": "真实链表的时间复杂度是 O(n²)。表里的其他解法分别是实现方式 时间复杂度 —— 答错说明还没分清它们各自慢在哪里。"
-    },
-    {
-      "id": "other-HJ48.从单向链表中删除指定值的节点-space",
-      "docId": "problems/nowcoder/华为机试/HJ48.从单向链表中删除指定值的节点.md",
-      "type": "single",
-      "stem": "本题最优解「真实链表」的空间复杂度是？",
-      "options": [
-        "O(n)",
-        "空间复杂度"
-      ],
-      "answer": 0,
-      "explain": "真实链表的空间复杂度是 O(n)。实现方式 空间复杂度 —— 空间优化往往才是这题的区分点。",
-      "source": "复杂度分析"
+      "type": "blank",
+      "stem": "本题最优解「列表模拟」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n²)",
+      "explain": "列表模拟的时间复杂度是 O(n²)。同一张表里其他解法也是 O(n²)，这题的区分点不在时间。"
     },
     {
       "docId": "problems/nowcoder/华为机试/HJ50.四则运算.md",
@@ -4223,26 +4158,26 @@
       "source": "复杂度分析",
       "id": "other-HJ65.查找两个字符串ab中的最长公共子串-complexity",
       "type": "single",
-      "stem": "本题最优解「滚动」的时间复杂度是？",
+      "stem": "本题最优解「二维 DP + 滚动数组」的时间复杂度是？",
       "options": [
         "O(n·m)",
         "O(n²·m)"
       ],
       "answer": 0,
-      "explain": "滚动的时间复杂度是 O(n·m)。表里的其他解法分别是暴力枚举 O(n²·m) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "二维 DP + 滚动数组的时间复杂度是 O(n·m)。表里的其他解法分别是暴力枚举 O(n²·m) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "other-HJ65.查找两个字符串ab中的最长公共子串-space",
       "docId": "problems/nowcoder/华为机试/HJ65.查找两个字符串ab中的最长公共子串.md",
       "type": "single",
-      "stem": "本题最优解「滚动」的空间复杂度是？",
+      "stem": "本题最优解「二维 DP + 滚动数组」的空间复杂度是？",
       "options": [
         "O(m)",
         "O(1)",
         "O(n·m)"
       ],
       "answer": 0,
-      "explain": "滚动的空间复杂度是 O(m)。暴力枚举 O(1)、二维 DP O(n·m) —— 空间优化往往才是这题的区分点。",
+      "explain": "二维 DP + 滚动数组的空间复杂度是 O(m)。暴力枚举 O(1)、二维 DP O(n·m) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -4311,26 +4246,26 @@
       "source": "复杂度分析",
       "id": "other-HJ75.公共子串计算-complexity",
       "type": "single",
-      "stem": "本题最优解「滚动」的时间复杂度是？",
+      "stem": "本题最优解「二维 DP + 滚动数组」的时间复杂度是？",
       "options": [
         "O(n·m)",
         "O(n²·m)"
       ],
       "answer": 0,
-      "explain": "滚动的时间复杂度是 O(n·m)。表里的其他解法分别是暴力枚举 O(n²·m) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "二维 DP + 滚动数组的时间复杂度是 O(n·m)。表里的其他解法分别是暴力枚举 O(n²·m) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "other-HJ75.公共子串计算-space",
       "docId": "problems/nowcoder/华为机试/HJ75.公共子串计算.md",
       "type": "single",
-      "stem": "本题最优解「滚动」的空间复杂度是？",
+      "stem": "本题最优解「二维 DP + 滚动数组」的空间复杂度是？",
       "options": [
         "O(m)",
         "O(1)",
         "O(n·m)"
       ],
       "answer": 0,
-      "explain": "滚动的空间复杂度是 O(m)。暴力枚举 O(1)、二维 DP O(n·m) —— 空间优化往往才是这题的区分点。",
+      "explain": "二维 DP + 滚动数组的空间复杂度是 O(m)。暴力枚举 O(1)、二维 DP O(n·m) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -4398,7 +4333,7 @@
         "O(n²)"
       ],
       "answer": 0,
-      "explain": "Manacher的时间复杂度是 O(n)。表里的其他解法分别是暴力 O(n³)、中心扩展 O(n²)、动态规划 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "Manacher的时间复杂度是 O(n)。表里的其他解法分别是暴力 O(n³)、中心扩展 O(n²)、动态规划 O(n²)、中心扩展（本篇实现） O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "id": "other-HJ85.最长回文子串-space",
@@ -4411,7 +4346,7 @@
         "O(n²)"
       ],
       "answer": 0,
-      "explain": "Manacher的空间复杂度是 O(n)。中心扩展 O(1)、动态规划 O(n²) —— 空间优化往往才是这题的区分点。",
+      "explain": "Manacher的空间复杂度是 O(n)。中心扩展 O(1)、动态规划 O(n²)、中心扩展（本篇实现） O(1) —— 空间优化往往才是这题的区分点。",
       "source": "复杂度分析"
     },
     {
@@ -4570,29 +4505,10 @@
       "docId": "problems/nowcoder/机器学习/ML23.实现k-Means聚类算法.md",
       "source": "复杂度分析",
       "id": "other-ML23.实现k-Means聚类算法-complexity",
-      "type": "single",
-      "stem": "本题最优解「空间」的时间复杂度是？",
-      "options": [
-        "O(n + k · d)",
-        "复杂度",
-        "O(T · n · k · d)"
-      ],
-      "answer": 0,
-      "explain": "空间的时间复杂度是 O(n + k · d)。表里的其他解法分别是指标 复杂度、时间 O(T · n · k · d) —— 答错说明还没分清它们各自慢在哪里。"
-    },
-    {
-      "id": "other-ML23.实现k-Means聚类算法-space",
-      "docId": "problems/nowcoder/机器学习/ML23.实现k-Means聚类算法.md",
-      "type": "single",
-      "stem": "本题最优解「空间」的空间复杂度是？",
-      "options": [
-        "存储数据点和质心",
-        "说明",
-        "T: 迭代次数, n: 点数, k: 簇数, d: 维度"
-      ],
-      "answer": 0,
-      "explain": "空间的空间复杂度是 存储数据点和质心。指标 说明、时间 T: 迭代次数, n: 点数, k: 簇数, d: 维度 —— 空间优化往往才是这题的区分点。",
-      "source": "复杂度分析"
+      "type": "blank",
+      "stem": "本题最优解「逐点重算全部距离」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(T · n · k · d)",
+      "explain": "逐点重算全部距离的时间复杂度是 O(T · n · k · d)。"
     },
     {
       "docId": "problems/nowcoder/OPPO/oppo杯手机diy大赛.md",
