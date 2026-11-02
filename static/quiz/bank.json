@@ -6210,10 +6210,11 @@
       "stem": "本题最优解「分层 DP + 前缀和」的时间复杂度是？",
       "options": [
         "O(K\\cdot N^2)",
-        "O\\!\\left(\\binom{N-1}{K-1}\\cdot N\\right)"
+        "O\\!\\left(\\binom{N-1}{K-1}\\cdot N\\right)",
+        "O(KN\\log V)"
       ],
       "answer": 0,
-      "explain": "分层 DP + 前缀和的时间复杂度是 O(K\\cdot N^2)。表里的其他解法分别是枚举全部切点 O\\!\\left(\\binom{N-1}{K-1}\\cdot N\\right) —— 答错说明还没分清它们各自慢在哪里。"
+      "explain": "分层 DP + 前缀和的时间复杂度是 O(K\\cdot N^2)。表里的其他解法分别是枚举全部切点 O\\!\\left(\\binom{N-1}{K-1}\\cdot N\\right)、二分答案 + 可达性判定 O(KN\\log V) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
       "docId": "problems/codefun2000/huawei-non-ai/P5948.md",
