@@ -7,176 +7,152 @@ url: https://leetcode.cn/problems/combination-sum/
 tags:
   - 数组
   - 回溯
+  - 组合
 topics: []
 patterns:
   - ../../patterns/backtracking.md
-date_added: 2026-03-20
+date_added: 2026-03-29
 date_reviewed: []
 ---
 
-# 0039. 组合总和
+# 39. 组合总和
 
 ## 题目描述
 
-给你一个**无重复元素**的整数数组 `candidates` 和一个目标整数 `target`，找出 `candidates` 中可以使数字和为目标数 `target` 的**所有不同组合**，并以列表形式返回。你可以按**任意顺序**返回这些组合。
+给你一个**无重复元素**的整数数组 `candidates` 和一个目标整数 `target`，找出 `candidates` 中可以使数字和为目标数 `target` 的所有**不同组合**，并以列表形式返回。你可以按**任意顺序**返回这些组合。
 
 `candidates` 中的**同一个**数字可以**无限制重复被选取**。如果至少一个数字的被选数量不同，则两种组合是不同的。
 
-对于给定的输入，保证和为 `target` 的不同组合数少于 `150` 个。
+对于给定的输入，保证和为 `target` 的不同组合数少于 150 个。
 
-**示例 1：**
-```
-输入：candidates = [2,3,6,7], target = 7
-输出：[[2,2,3],[7]]
-```
+**提示：**
 
-**示例 2：**
-```
-输入：candidates = [2,3,5], target = 8
-输出：[[2,2,2,2],[2,3,3],[3,5]]
-```
+- `1 <= candidates.length <= 30`
+- `2 <= candidates[i] <= 40`
+- `candidates` 的所有元素**互不相同**
+- `1 <= target <= 40`
 
-**示例 3：**
-```
-输入：candidates = [2], target = 1
-输出：[]
-```
+## 示例
 
----
+### 示例 1
+
+**输入：** candidates = [2,3,6,7], target = 7
+
+**输出：** [[2,2,3],[7]]
+
+**解释：** 2 和 3 可以形成 `[2,2,3]`，7 单独成立；注意 2 可以重复使用。
+
+### 示例 2
+
+**输入：** candidates = [2,3,5], target = 8
+
+**输出：** [[2,2,2,2],[2,3,3],[3,5]]
+
+### 示例 3
+
+**输入：** candidates = [2], target = 1
+
+**输出：** []
+
+**解释：** 2 比 1 大，一个数都选不了。
 
 ## 解题思路
 
-### 问题本质
+组合不关心顺序（`[2,3]` 和 `[3,2]` 是同一个），所以枚举时必须保证下标**只往后走**，否则同一个组合会被反复生成。又因为每个数可以无限次使用，递归时把起点停在原地（传 `i`）而不是 `i+1`。排序只是为了在「剩下的数已经比剩余目标大」时提前剪枝。
 
-这道题要求找出所有和为 `target` 的**组合**，且组合中元素顺序不影响结果。同一个元素可以无限次使用。搜索「所有合法组合」这类问题常用回溯（DFS）求解。
+### 用 `start` 保证下标不减
 
-### 方法一：回溯 + 起始下标 + 剪枝（推荐）
-
-**思路**：
-1. 将 `candidates` 排序，便于后续剪枝
-2. 用 DFS 构建路径 `path`，传入 `start` 控制搜索范围：每次从 `start` 开始选，且允许选当前元素本身（即传 `i` 而不是 `i+1`）以支持重复使用
-3. 当 `remain == 0` 时，将 `path` 的副本加入结果
-4. 若 `candidates[i] > remain`，由于数组已排序，后续元素更大，直接 `break` 剪枝
+`dfs(start, remain)` 表示「从 `start` 开始挑数，还差 `remain`」。下一层从 `i` 开始挑，而不是从 `0` 开始，这样 `[2,3]` 只会按 `2 → 3` 的顺序出现一次。
 
 ```python
-class Solution:
-    def combinationSum(self, candidates: List[int], target: int) -> List[List[int]]:
-        candidates.sort()
-        ans = []
-        path = []
-
-        def dfs(start: int, remain: int):
-            if remain == 0:
-                ans.append(path[:])
-                return
-            for i in range(start, len(candidates)):
-                if candidates[i] > remain:
-                    break
-                path.append(candidates[i])
-                dfs(i, remain - candidates[i])
-                path.pop()
-
-        dfs(0, target)
-        return ans
+def dfs(start, remain):
+    if remain == 0:
+        ans.append(path[:])
+        return
+    for i in range(start, n):
+        if candidates[i] > remain:      # 排序后这里可以直接 break
+            break
+        path.append(candidates[i])
+        dfs(i, remain - candidates[i])  # 传 i：同一个数还能再用
+        path.pop()
 ```
 
-**说明**：用 `start` 限制搜索起点，既能允许重复使用，又能避免生成顺序不同的同一组合。配合排序剪枝能显著减少无效分支。
+### 传 `i` 还是 `i + 1` 决定「能不能重复」
 
----
+- 传 `i`：下一层还能选当前这个数 → 可以重复使用（本题）；
+- 传 `i + 1`：下一层从下一个数开始 → 每个数至多用一次（[40. 组合总和 II](https://leetcode.cn/problems/combination-sum-ii/) 与 [216](https://leetcode.cn/problems/combination-sum-iii/)）。
+
+这一处是两道题唯一的分界线，选错就是另一道题的答案。
+
+### 剪枝依赖排序
+
+`candidates[i] > remain` 时 `break` 而不是 `continue`，前提是数组升序：后面的数只会更大，全都装不下。若没排序就 `break`，可能把后面更小的数一起跳过，导致漏解。所以代码第一行是 `candidates.sort()`。
+
+`remain` 变成负数的情况被 `break` 挡住了，不会进入递归；`remain == 0` 时立刻收答案并返回。
+
+### 推演：示例 1
+
+`candidates = [2,3,6,7]`、`target = 7`。
+
+| 路径 | 剩余 `remain` | 结果 |
+| --- | --- | --- |
+| 2 → 2 → 2 | 1 | 下一个 2 就超过 1，剪枝 |
+| 2 → 2 → 3 | 0 | 收下 `[2,2,3]` |
+| 2 → 3 → … | 2 | 只剩 2，但 2 已经用过（`start` 不小于 3），无解 |
+| 2 → 6 | −1 | 剪枝 |
+| 3 → 3 | 1 | 3 > 1，剪枝 |
+| 7 | 0 | 收下 `[7]` |
+
+两个答案：`[2,2,3]` 与 `[7]`。注意 `[3,2,2]` 不会再出现——`start` 让下标只能往后走。
 
 ## 完整代码实现
 
 ```python
 from typing import List
 
+
 class Solution:
     def combinationSum(self, candidates: List[int], target: int) -> List[List[int]]:
-        candidates.sort()  # 排序，方便剪枝
+        candidates.sort()               # 剪枝依赖有序
+        n = len(candidates)
         ans = []
         path = []
 
-        def dfs(start: int, remain: int):
+        def dfs(start: int, remain: int) -> None:
             if remain == 0:
-                ans.append(path[:])  # 找到一个合法组合，记录副本
+                ans.append(path[:])     # 复制，否则后续 pop 会清空
                 return
-            for i in range(start, len(candidates)):
+            for i in range(start, n):
                 if candidates[i] > remain:
-                    break  # 剪枝：当前数已超过剩余目标，后续更大，无需继续
+                    break               # 升序：后面的只会更大
                 path.append(candidates[i])
-                dfs(i, remain - candidates[i])  # 允许重复使用，从 i 开始（而非 i+1）
-                path.pop()                       # 回溯：撤销上一步选择
+                dfs(i, remain - candidates[i])   # 传 i 表示可以重复选
+                path.pop()
 
         dfs(0, target)
         return ans
 ```
 
-**关键点**：
-- `dfs(i, remain - candidates[i])` 中用 `i` 而非 `i+1`，允许当前数字被重复选取。
-- `path[:]` 是列表的浅拷贝，必须拷贝后再存入 `ans`，否则 `path` 后续被修改后 `ans` 中的记录也会变。
-
----
-
-## 示例推演
-
-以 `candidates = [2, 3, 6, 7]`，`target = 7` 为例（已排序）：
-
-下面展示完整的递归树搜索过程（只展示主要分支）：
-
-```
-dfs(start=0, remain=7), path=[]
-├── 选 2: path=[2], dfs(start=0, remain=5)
-│   ├── 选 2: path=[2,2], dfs(start=0, remain=3)
-│   │   ├── 选 2: path=[2,2,2], dfs(start=0, remain=1)
-│   │   │   ├── 选 2: 2>1, break（剪枝）
-│   │   │   └── 回溯 → path=[2,2]
-│   │   ├── 选 3: path=[2,2,3], dfs(start=1, remain=0)
-│   │   │   └── remain==0，记录 [2,2,3]
-│   │   ├── 选 6: 6>3, break（剪枝）
-│   │   └── 回溯 → path=[2]
-│   ├── 选 3: path=[2,3], dfs(start=1, remain=2)
-│   │   ├── 选 3: 3>2, break（剪枝）
-│   │   └── 回溯 → path=[2]
-│   ├── 选 6: 6>5, break（剪枝）
-│   └── 回溯 → path=[]
-├── 选 3: path=[3], dfs(start=1, remain=4)
-│   ├── 选 3: path=[3,3], dfs(start=1, remain=1)
-│   │   ├── 选 3: 3>1, break（剪枝）
-│   │   └── 回溯 → path=[3]
-│   ├── 选 6: 6>4, break（剪枝）
-│   └── 回溯 → path=[]
-├── 选 6: path=[6], dfs(start=2, remain=1)
-│   ├── 选 6: 6>1, break（剪枝）
-│   └── 回溯 → path=[]
-└── 选 7: path=[7], dfs(start=3, remain=0)
-    └── remain==0，记录 [7]
-```
-
-**最终结果**：`[[2, 2, 3], [7]]`，与预期一致。
-
----
-
 ## 复杂度分析
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
-|------|-----------|-----------|------|
-| 暴力（无 start、无剪枝） | 指数级，含大量重复 | O(target/min) | 每层都从头枚举，重复状态极多 |
-| 回溯+start（无剪枝） | O(n^(target/min)) | O(target/min) | min 为最小候选数，递归深度上限 |
-| 回溯+start+剪枝（最优） | 剪枝后大幅减小 | O(target/min) | 排序后遇到大数提前 break |
+| --- | --- | --- | --- |
+| 回溯 + `start`（最优） | 指数级，剪枝后远小于上界 | O(target / min(candidates)) | 递归深度不超过 `target / 最小值`；答案数题目保证少于 150 |
+| 无 `start`、无剪枝 | 指数级，且含大量重复组合 | O(target / min(candidates)) | 每层都从头枚举，`[2,3]` 与 `[3,2]` 会各生成一次 |
 
-> 注：组合数问题没有一个简洁的精确时间复杂度，通常用"指数级"描述，剪枝能显著减少实际运行时间。空间复杂度主要由递归栈深度决定，最深为 `target / min(candidates)`。
-
----
+组合类问题没有简洁的精确复杂度，通常按「指数级 + 剪枝」描述。
 
 ## 易错点总结
 
-- **`ans.append(path[:])` 而不是 `path`**：存引用时后续 `path.pop()` 会把已存入的组合清空。
-- **重复使用要写 `dfs(i, ...)`**：写成 `dfs(i + 1, ...)` 每个数只能用一次，变成另一道题（组合总和 II）。
-- **剪枝 `break` 依赖排序**：不排序就 `break`，后面可能还有更小的数被一起跳过。
+### 1. `ans.append(path)` 而不是 `path[:]`
+
+存引用的话，递归返回后的 `path.pop()` 会把已经收下的组合一起弹空。示例 1 会返回 `[[], []]`——数量对、内容全空。
+
+### 2. 递归传 `i + 1` 而不是 `i`
+
+传 `i + 1` 就变成「每个数最多用一次」，示例 1 只剩 `[[7]]`，`[2,2,3]` 永远生成不出来。能否重复使用，全看这一个参数。
 
 ## 扩展思考
 
-- **LeetCode 40. 组合总和 II**：candidates 有重复元素，每个数字只能用一次。需要在 `start` 基础上额外跳过同层重复元素（`if i > start and candidates[i] == candidates[i-1]: continue`）。
-
-- **LeetCode 216. 组合总和 III**：从 1-9 中选 k 个不重复数字，使其和为 n，每个数字最多使用一次。
-
-- **算法本质**：回溯算法是在解空间树上进行深度优先搜索，剪枝是其核心优化手段。`start` 参数的引入从根本上消除了组合重复问题（保证生成的组合字典序单调不降），比生成后去重高效得多。这种"通过限制搜索起点来去重"的技巧在所有组合/子集类问题中普遍适用。
+- 每个数最多用一次、且数组可能有重复元素时（40 题），要传 `i + 1` 并在同一层跳过 `candidates[i] == candidates[i-1]`。
+- 若问的是「组合的个数」而不是列出组合，可以改成完全背包的计数 DP：`f[j] += f[j - x]`，复杂度 O(n · target)。

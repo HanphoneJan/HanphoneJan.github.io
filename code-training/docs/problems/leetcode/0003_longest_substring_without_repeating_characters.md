@@ -102,6 +102,17 @@ class Solution:
    - 更新当前字符的位置
    - 更新最大长度
 
+```python
+last = {}                       # 字符 -> 最后一次出现的下标
+left = best = 0
+for i, ch in enumerate(s):
+    if ch in last and last[ch] >= left:
+        left = last[ch] + 1     # 左边界跳到重复字符的右边
+    last[ch] = i
+    best = max(best, i - left + 1)
+return best
+```
+
 **为什么正确**：
 - 哈希表记录字符最后出现的位置，可以在 O(1) 时间内判断重复
 - 左边界只能右移不能左移，保证滑动窗口的正确性

@@ -6,8 +6,8 @@ id: 543
 url: https://leetcode.cn/problems/diameter-of-binary-tree/
 tags:
   - 树
-  - 深度优先搜索
   - 二叉树
+  - 深度优先搜索
   - 树形DP
 topics: []
 patterns:
@@ -21,104 +21,85 @@ date_reviewed: []
 
 ## 题目描述
 
-给定一棵二叉树，你需要计算它的直径长度。一棵二叉树的直径长度是任意两个结点路径长度中的最大值。这条路径可能穿过也可能不穿过根结点。
+给你一棵二叉树的根节点，返回该树的**直径**。
 
-**示例 1：**
-```
-给定二叉树
-          1
-         / \
-        2   3
-       / \
-      4   5
-返回 3, 它的长度是路径 [4,2,1,3] 或者 [5,2,1,3]。
-```
+二叉树的**直径**是指树中任意两个节点之间最长路径的**长度**。这条路径可能经过也可能不经过根节点 `root`。
 
-**注意：** 两结点之间的路径长度是以它们之间边的数目表示。
+两节点之间路径的**长度**由它们之间边数表示。
 
----
+**提示：**
+
+- 树中节点数目在范围 `[1, 10^4]` 内
+- `-100 <= Node.val <= 100`
+
+## 示例
+
+### 示例 1
+
+**输入：** root = [1,2,3,4,5]
+
+**输出：** 3
+
+**解释：** 取路径 `[4,2,1,3]` 或 `[5,2,1,3]` 的长度，都是 3 条边。
+
+### 示例 2
+
+**输入：** root = [1,2]
+
+**输出：** 1
 
 ## 解题思路
 
-### 第一步：理解问题本质
+路径的最高点（两条链分岔的那个节点，下面叫它**拐点**）把整条直径切成左右两段。于是问题变成：对每个节点算「左边最长的链 + 右边最长的链」，取全部节点的最大值。而两边的链长恰好是一次后序遍历顺路就能带回来的东西，所以这题只需要跑一遍树。
 
-**直径的定义：** 树中任意两个节点之间路径的最大长度（以边数计算）。
+### 拐点两侧各是一条链
 
-**关键洞察：** 对于任意一个节点，经过它的最长路径 = 左子树的最大深度 + 右子树的最大深度。
+从某个节点往下走、到它子树里某个叶子为止，这条路叫一条**链**，链的长用边数算。以节点 `u` 为拐点的路径，一定是「左子树里的一条链 + 右子树里的一条链」——两条链在 `u` 这里接起来，不重不漏。
 
-因此，二叉树的直径 = 所有节点的「左深度 + 右深度」中的最大值。
+示例 1 的树是 `1(2(4,5), 3)`。把拐点放在 `2` 上：左边到 `4` 是 1 条边，右边到 `5` 是 1 条边，合起来 2；把拐点放在 `1` 上：左边最长链是 `1→2→4`（2 条边），右边是 `1→3`（1 条边），合起来 3。全部节点里最大是 3，这就是答案。
 
-### 方法一：逐节点求深度（O(n²)）
+拐点不一定在根上：如果根只有一条长链，直径会在链的内部拐弯。所以每个节点都要结算一次，不能只算根。
 
-**思路**：对每个节点分别求左右子树深度，取「左深度 + 右深度」的最大值。
+### `dfs` 一次带回两样东西
 
-```python
-class Solution:
-    def diameterOfBinaryTree(self, root: Optional[TreeNode]) -> int:
-        # 空树没有边，直径是 0
-        if not root:
-            return 0
-        
-        # 经过根节点的直径：左右两边各自往下能走多远，加起来就是穿过根的边数
-        through_root = self.depth(root.left) + self.depth(root.right)
-        # 左子树的直径
-        left_dia = self.diameterOfBinaryTree(root.left)
-        # 右子树的直径
-        right_dia = self.diameterOfBinaryTree(root.right)
-        
-        # 最长的路径可能在根上，也可能完全落在某一棵子树里，三者取最大
-        return max(through_root, left_dia, right_dia)
-    
-    def depth(self, node):
-        # depth 返回以 node 为根的子树高度（节点数），空树高度为 0
-        if not node:
-            return 0
-        # 取更深的那边，再加上自己这一层
-        return max(self.depth(node.left), self.depth(node.right)) + 1
-```
+`dfs(u)` 只回答一个问题：**从 `u` 往下最远的叶子有多远**，即一条链的长（边数）。于是
 
-**为什么不够好？** 时间复杂度 O(n^2)，因为每个节点的深度计算会重复遍历子树。
-
-### 方法二：一次后序遍历（推荐）
-
-**关键洞察：** 在计算深度的同时，可以顺便计算直径。
-
-**思路：**
-- 定义 `dfs(node)` 返回以 node 为根的最大深度
-- 在 `dfs` 中，先递归获取左右子树的深度
-- 经过当前节点的直径 = left_depth + right_depth
-- 更新全局最大值
-- 返回当前节点的深度
+- 结算：以 `u` 为拐点的路径长 = `left + right`，拿它更新答案；
+- 上报：父节点只能从 `u` 这一侧继续往下走，所以返回 `max(left, right) + 1`。
 
 ```python
-class Solution:
-    def diameterOfBinaryTree(self, root: Optional[TreeNode]) -> int:
-        # 用实例属性保存全局最大直径，递归过程中随时更新
-        self.ans = 0
-        
-        # dfs(node) 返回以 node 为根的子树高度（节点数）
-        def dfs(node):
-            # 空子树高度为 0，同时让下面的加法自动处理「只有一侧孩子」的情况
-            if not node:
-                return 0
-            # 先拿到左右两边的高度，这一步是后序遍历的顺序
-            left = dfs(node.left)
-            right = dfs(node.right)
-            # 经过当前节点的路径边数恰是左右高度之和，试着刷新答案
-            self.ans = max(self.ans, left + right)
-            # 但父节点只能沿一侧往下延伸，所以返回较高的那边再 +1
-            return max(left, right) + 1
-        
-        dfs(root)
-        return self.ans
+def dfs(node):
+    if not node:
+        return 0                              # ① 空子树的链长是 0
+    left = dfs(node.left)                     # ② 先拿到左右两条链
+    right = dfs(node.right)
+    self.ans = max(self.ans, left + right)    # ③ 以当前节点为拐点结算
+    return max(left, right) + 1               # ④ 往上报一条链
 ```
 
----
+这里的口径是**节点数**：空子树算 0，叶子算出 1。读的时候换个说法就顺了——`dfs(u)` 的值等于「从 `u` 的父节点出发，走到 `u` 子树里最深的叶子要几条边」。按这个读法，`left` 和 `right` 本身就是边数，`left + right` 自然就是经过 `u` 的那条路径的边数。
+
+也可以改成纯粹按边数计（空子树返 -1，叶子返 0），但结算式要跟着变成 `left + right + 2`。两套口径混着用是本篇唯一的坑，见「易错点」。
+
+### 推演：示例 1 的后序过程
+
+后序遍历的访问顺序是 `4 → 5 → 2 → 3 → 1`（左右根）。
+
+| 访问节点 | 左链 | 右链 | `left + right` | 更到答案 | 返回给父节点 |
+| --- | --- | --- | --- | --- | --- |
+| 4 | 0 | 0 | 0 | 0 | 1 |
+| 5 | 0 | 0 | 0 | 0 | 1 |
+| 2 | 1 | 1 | 2 | 2 | 2 |
+| 3 | 0 | 0 | 0 | 2 | 1 |
+| 1 | 2 | 1 | 3 | 3 | 3 |
+
+`2` 那一行是第一次两条链都非空：左右各一条边，合起来 2。`1` 那一行 `left = 2` 表示从 `1` 往左走到最远的叶子（`4` 或 `5`）要 2 条边，`right = 1` 表示走到 `3` 要 1 条边，合计 3。
 
 ## 完整代码实现
 
 ```python
 from typing import Optional
+
 
 class TreeNode:
     def __init__(self, val=0, left=None, right=None):
@@ -126,128 +107,44 @@ class TreeNode:
         self.left = left
         self.right = right
 
+
 class Solution:
-    """
-    二叉树的直径 - 深度优先搜索
-
-    核心思路：
-    二叉树的直径 = 左子树的最大深度 + 右子树的最大深度
-    对于每个节点，计算经过它的最长路径，然后在所有节点中取最大值。
-
-    时间复杂度: O(n)
-    空间复杂度: O(h)
-    """
     def diameterOfBinaryTree(self, root: Optional[TreeNode]) -> int:
         self.ans = 0
 
         def dfs(node: Optional[TreeNode]) -> int:
+            # 返回从 node 往下最远的一条链（边数）；空子树的链长为 0
             if not node:
                 return 0
-
-            left_depth = dfs(node.left)
-            right_depth = dfs(node.right)
-
-            # 经过当前节点的直径
-            self.ans = max(self.ans, left_depth + right_depth)
-
-            return max(left_depth, right_depth) + 1
+            left = dfs(node.left)
+            right = dfs(node.right)
+            # 以 node 为拐点：左右两条链在这里接成一条路径
+            self.ans = max(self.ans, left + right)
+            # 父节点只能沿一侧继续往下，所以只上报较长的那条
+            return max(left, right) + 1
 
         dfs(root)
         return self.ans
 ```
 
----
-
-## 示例推演
-
-以示例 1 的树为例：
-```
-      1
-     / \
-    2   3
-   / \
-  4   5
-```
-
-**DFS 过程：**
-
-| 节点 | 左深度 | 右深度 | 经过该节点的直径 | 当前最大直径 |
-|------|--------|--------|-----------------|-------------|
-| 4 | 0 | 0 | 0 | 0 |
-| 5 | 0 | 0 | 0 | 0 |
-| 2 | 1 | 1 | 2 | 2 |
-| 3 | 0 | 0 | 0 | 2 |
-| 1 | 2 | 1 | 3 | **3** |
-
-**最终结果：** 3
-
----
-
 ## 复杂度分析
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
-|------|-----------|-----------|------|
-| 逐节点求深度 | O(n²) | O(h) | 重复计算深度 |
-| 一次遍历 | O(n) | O(h) | 每个节点只访问一次 |
-
-**说明：**
-- n 是树的节点数
-- h 是树的高度，最坏情况下 h = n（链状树）
-
----
+| --- | --- | --- | --- |
+| 每个节点单独求一次深度 | O(n²) | O(h) | 每个节点都重新遍历一遍自己的子树 |
+| 一次后序遍历（最优） | O(n) | O(h) | 每个节点只进一次递归，h 是树高，最坏 O(n) |
 
 ## 易错点总结
 
-### 1. 直径的定义
+### 1. 把结算式当成返回值
 
-**注意：** 直径是边的数量，不是节点的数量。
+`return max(left, right) + 1` 写成 `return left + right + 1`：返回的是「两条链之和」，父节点拿到它再去加自己的另一侧，等于把已经拐过弯的路径又接了一次。示例 1 会输出 4（正确是 3），树越深偏得越多。`left + right` 只在结算那一行出现，返回值永远是单侧链。
 
-```
-路径 [4,2,1,3] 有 3 条边：4-2, 2-1, 1-3
-所以直径为 3，不是 4
-```
+### 2. 空子树的基准和结算式不是同一套口径
 
-### 2. 返回值的处理
-
-```python
-# 返回的是深度（节点数）
-return max(left, right) + 1
-
-# 但更新答案时用的是边数（深度之和）
-self.ans = max(self.ans, left + right)
-# 两者不能混用：返回值要往上传给父节点，答案只在当前节点结算一次
-```
-
-### 3. 空节点的处理
-
-```python
-if not node:
-    return 0  # 空节点的深度为 0
-# 不用 -1：这样叶子节点算出的 left + right 正好是 0，直径的边数直接成立
-```
-
----
+用边数口径时 `if not node: return 0`；若改成「空子树返 -1、叶子的链长为 0」（这也是常见的另一种写法），结算式就必须写成 `left + right + 2`。只把 `return 0` 改成 `return -1` 而不动结算式，示例 1 会输出 1（正确是 3），示例 2 输出 0（正确是 1）——每个叶子都少数了 2 条边。
 
 ## 扩展思考
 
-### 1. 如果需要返回具体的路径？
-
-可以在 DFS 时记录每个节点的父节点，找到直径端点后回溯路径。
-
-### 2. N 叉树的直径？
-
-对于 N 叉树，直径 = 最大的两个子树深度之和。
-
-### 3. 相关题目
-
-- [124. 二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/) - 类似思路，但求路径和
-- [687. 最长同值路径](https://leetcode.cn/problems/longest-univalue-path/) - 限制路径上的值相同
-- [1522. N 叉树的直径](https://leetcode.cn/problems/diameter-of-n-ary-tree/)
-
----
-
-## 相关题目
-
-- [124. 二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/)
-- [687. 最长同值路径](https://leetcode.cn/problems/longest-univalue-path/)
-- [1522. N 叉树的直径](https://leetcode.cn/problems/diameter-of-n-ary-tree/)
+- 把结算式换成 `left + right + node.val`、返回值换成 `max(left, right) + node.val`，就是 [124. 二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/)：骨架不变，变的是「链」上记什么。
+- 直径只要求「左右两条链」时，最大路径和还要处理负值，所以结算前要先和 0 取 `max`。

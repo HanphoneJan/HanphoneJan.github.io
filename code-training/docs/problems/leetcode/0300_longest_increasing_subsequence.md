@@ -5,16 +5,16 @@ difficulty: Medium
 id: 300
 url: https://leetcode.cn/problems/longest-increasing-subsequence/
 tags:
+  - 数组
   - 动态规划
   - 二分查找
-  - 贪心
-  - 数组
   - 最长上升子序列
+topics: []
 patterns:
   - ../../patterns/dynamic_programming.md
-  - ../../patterns/greedy.md
   - ../../patterns/search.md
-date_added: 2026-04-09
+date_added: 2026-04-30
+date_reviewed: []
 ---
 
 # 300. 最长递增子序列
@@ -23,300 +23,146 @@ date_added: 2026-04-09
 
 给你一个整数数组 `nums`，找到其中最长严格递增子序列的长度。
 
-**子序列** 是由数组派生而来的序列，删除（或不删除）数组中的元素而不改变其余元素的顺序。例如，`[3,6,2,7]` 是数组 `[0,3,1,6,2,2,7]` 的子序列。
-
-**示例 1：**
-
-```
-输入：nums = [10,9,2,5,3,7,101,18]
-输出：4
-解释：最长递增子序列是 [2,3,7,101]，因此长度为 4 。
-```
-
-**示例 2：**
-
-```
-输入：nums = [0,1,0,3,2,3]
-输出：4
-```
-
-**示例 3：**
-
-```
-输入：nums = [7,7,7,7,7,7,7]
-输出：1
-```
+**子序列**是由数组派生而来的序列，删除（或不删除）数组中的元素而不改变其余元素的顺序。例如，`[3,6,2,7]` 是数组 `[0,3,1,6,2,2,7]` 的子序列。
 
 **提示：**
+
 - `1 <= nums.length <= 2500`
 - `-10^4 <= nums[i] <= 10^4`
 
-**进阶：**
-- 你能将算法的时间复杂度降低到 `O(n log n)` 吗?
+**进阶：** 你能将算法的时间复杂度降低到 O(n log n) 吗？
 
----
+## 示例
+
+### 示例 1
+
+**输入：** nums = [10,9,2,5,3,7,101,18]
+
+**输出：** 4
+
+**解释：** 最长递增子序列是 `[2,3,7,101]`，长度为 4。
+
+### 示例 2
+
+**输入：** nums = [7,7,7,7,7,7,7]
+
+**输出：** 1
+
+### 示例 3
+
+**输入：** nums = [0,1,0,3,2,3]
+
+**输出：** 4
 
 ## 解题思路
 
-### 第一步：理解问题本质
+先想「以第 `i` 个数结尾的最长递增子序列有多长」，这是 O(n²) 的递推；再注意到**长度相同的子序列只需要留结尾最小的那一个**，于是所有有用的信息能压进一个递增数组 `g`，每一步用二分定位，复杂度降到 O(n log n)。两段是同一件事的两次收紧：先给状态，再砍掉状态里的无用部分。
 
-最长递增子序列（LIS, Longest Increasing Subsequence）是经典的动态规划问题。
+### 先给状态：以 `i` 结尾的最长长度
 
-关键理解：
-- 子序列不要求连续，但要求相对顺序不变
-- "严格递增"意味着后面的数必须大于前面的数
+设 `dp[i]` 为以 `nums[i]` 结尾的最长递增子序列长度。倒数第二个数可以是任意一个下标 `j < i` 且 `nums[j] < nums[i]` 的位置，所以
 
-### 方法一：动态规划（O(n²)）
+```
+dp[i] = max(dp[j] + 1 for j < i if nums[j] < nums[i])
+```
 
-枚举所有子序列，检查是否为递增序列，记录最大长度。
+没有可接的数时，`nums[i]` 自己就是长度 1 的序列，所以 `dp` 的初值是 1，不是 0。
 
 ```python
-def lengthOfLIS_brute(nums):
-    n = len(nums)
-    max_len = 0
-    
-    # 枚举所有子集（用位运算）
-    for mask in range(1 << n):
-        subseq = []
-        for i in range(n):
-            if mask & (1 << i):
-                subseq.append(nums[i])
-        
-        # 检查是否为递增序列
-        is_increasing = True
-        for i in range(1, len(subseq)):
-            if subseq[i] <= subseq[i-1]:
-                is_increasing = False
-                break
-        
-        if is_increasing:
-            max_len = max(max_len, len(subseq))
-    
-    return max_len
+dp = [1] * n
+for i in range(1, n):
+    for j in range(i):
+        if nums[j] < nums[i]:
+            dp[i] = max(dp[i], dp[j] + 1)
+return max(dp)
 ```
 
-**为什么不够好？**
-- 时间复杂度 O(2^n * n)，会超时
-- 没有利用子问题的重叠性质
+这里的比较必须是 `<`：题目要的是**严格**递增，`[7,7,7]` 的答案是 1。
 
-### 方法二：动态规划 O(n^2)
+### 再砍状态：同长度只留结尾最小的
 
-**定义状态：** `dp[i]` 表示以 `nums[i]` 结尾的最长递增子序列长度
+`dp` 的问题是每个 `i` 都要回头看一遍前面所有的数。观察一下：如果长度都是 `2`，一个子序列以 `99999` 结尾、另一个以 `9` 结尾，那么后面无论来什么数，`9` 都更容易接上——结尾大的那个永远用不上。
 
-**状态转移：**
+于是只保留「每种长度下，结尾最小的那个数」，记进 `g`：
+
+> `g[k]`：长度为 `k + 1` 的递增子序列，结尾最小能到多少。
+
+`g` 天然是**递增**的：长度更长的子序列，结尾不可能比长度更短的还小（否则那个更短的可以延长）。既然是递增数组，就能二分。
+
+对每个 `x = nums[i]`，在 `g` 里找第一个 `>= x` 的位置 `j`：
+
+- `j` 不存在（`x` 比 `g` 里所有数都大）：把 `x` 追加到末尾，最长长度 +1；
+- 否则把 `g[j]` 换成 `x`：长度 `j + 1` 的子序列有了更小的结尾。
+
+```python
+from bisect import bisect_left
+
+g = []
+for x in nums:
+    j = bisect_left(g, x)      # 第一个 >= x 的位置
+    if j == len(g):
+        g.append(x)
+    else:
+        g[j] = x
+return len(g)
 ```
-dp[i] = max(dp[j] + 1) 对于所有 j < i 且 nums[j] < nums[i]
-```
 
-**初始化：** `dp[i] = 1`（每个元素自身构成长度为 1 的序列）
+`bisect_left` 而不是 `bisect_right`：严格递增时，遇到与 `g[j]` 相等的 `x` 应该**替换**（结尾不变小，长度也不变），而不是追加。用 `bisect_right` 的话 `[2,2]` 会得到长度 2，正确答案是 1。
 
-### 方法三：贪心 + 二分查找 O(n log n)
+### 推演：示例 1 的 `g` 变化
 
-**核心思想：**
-- 维护一个数组 `tails`，`tails[i]` 表示长度为 `i+1` 的递增子序列的最小末尾元素
-- 对于每个新元素，用二分查找找到它应该替换的位置
-- 如果比所有 `tails` 元素都大，就扩展序列长度
+`nums = [10,9,2,5,3,7,101,18]`。
 
-**为什么这样有效？**
-- 更小的末尾元素更有利于后续扩展
-- `tails` 数组始终保持有序，可以用二分查找
+| 读入 | `bisect_left` 位置 | 操作 | `g` |
+| --- | --- | --- | --- |
+| 10 | 0 | 追加 | [10] |
+| 9 | 0 | 替换 | [9] |
+| 2 | 0 | 替换 | [2] |
+| 5 | 1 | 追加 | [2,5] |
+| 3 | 1 | 替换 | [2,3] |
+| 7 | 2 | 追加 | [2,3,7] |
+| 101 | 3 | 追加 | [2,3,7,101] |
+| 18 | 3 | 替换 | [2,3,7,18] |
 
----
+最后 `len(g) = 4`。注意 `g = [2,3,7,18]` 并不是原数组里的子序列（原数组里 18 在 101 后面），它只是「每种长度的最小结尾」——能读长度，不能直接当答案序列。
 
 ## 完整代码实现
 
 ```python
+from bisect import bisect_left
 from typing import List
-import bisect
 
 
 class Solution:
-    """
-    300. 最长递增子序列 (LIS) - 动态规划 + 贪心优化
-
-    问题定义：
-    找到数组中最长的严格递增子序列的长度。
-    子序列不要求连续，但要求相对顺序不变。
-
-    解法一：动态规划 O(n^2)
-    - dp[i] 表示以 nums[i] 结尾的最长递增子序列长度
-    - 转移方程：dp[i] = max(dp[j] + 1) 对于所有 j < i 且 nums[j] < nums[i]
-    - 初始：dp[i] = 1（每个元素自身构成长度为 1 的序列）
-
-    解法二：贪心 + 二分查找 O(n log n)
-    - 维护一个数组 tails，tails[i] 表示长度为 i+1 的递增子序列的最小末尾元素
-    - 对于每个新元素，用二分查找找到它应该替换的位置
-    - 如果比所有 tails 元素都大，就扩展序列长度
-
-    时间复杂度:
-    - DP: O(n^2)
-    - 贪心+二分: O(n log n)
-
-    空间复杂度: O(n) - DP数组或tails数组
-    """
-
     def lengthOfLIS(self, nums: List[int]) -> int:
-        """
-        动态规划解法 O(n^2)
-        dp[i] 表示以 nums[i] 结尾的最长递增子序列长度
-        """
-        if not nums:
-            return 0
-
-        n = len(nums)
-        # dp[i] 表示以 nums[i] 结尾的最长递增子序列长度
-        dp = [1] * n
-
-        for i in range(n):
-            # 检查所有在 i 之前的元素 j
-            for j in range(i):
-                if nums[i] > nums[j]:
-                    # 如果 nums[i] 可以接在 nums[j] 后面，更新 dp[i]
-                    dp[i] = max(dp[i], dp[j] + 1)
-
-        # 返回所有 dp 值中的最大值
-        return max(dp)
-
-    def lengthOfLIS_greedy(self, nums: List[int]) -> int:
-        """
-        贪心 + 二分查找解法 O(n log n)
-        tails[i] 表示长度为 i+1 的递增子序列的最小末尾元素
-        """
-        if not nums:
-            return 0
-
-        tails = []  # tails[i] = 长度为 i+1 的递增子序列的最小末尾元素
-
-        for num in nums:
-            # 在 tails 中找到第一个 >= num 的位置
-            idx = bisect.bisect_left(tails, num)
-
-            if idx == len(tails):
-                # num 比所有 tails 元素都大，可以扩展序列
-                tails.append(num)
+        g = []                      # g[k] = 长度 k+1 的递增子序列的最小结尾
+        for x in nums:
+            j = bisect_left(g, x)   # 第一个 >= x 的位置
+            if j == len(g):
+                g.append(x)         # 比所有结尾都大：最长长度 +1
             else:
-                # 替换 tails[idx] 为 num，保持更小的末尾元素
-                tails[idx] = num
-
-        return len(tails)
+                g[j] = x            # 换一个更小的结尾
+        return len(g)
 ```
-
----
-
-## 示例推演
-
-以 `nums = [10, 9, 2, 5, 3, 7, 101, 18]` 为例：
-
-### 动态规划法：
-
-| i | nums[i] | j | nums[j] | nums[i]>nums[j]? | dp[j]+1 | dp[i] |
-|---|---------|---|---------|------------------|---------|-------|
-| 0 | 10 | - | - | - | - | 1 |
-| 1 | 9 | 0 | 10 | 否 | - | 1 |
-| 2 | 2 | 0,1 | 10,9 | 否 | - | 1 |
-| 3 | 5 | 0,1,2 | 10,9,2 | 是(j=2) | 2 | 2 |
-| 4 | 3 | 0,1,2,3 | 10,9,2,5 | 是(j=2) | 2 | 2 |
-| 5 | 7 | ... | ... | 是(j=3,4) | 3,3 | 3 |
-| 6 | 101 | ... | ... | 是(所有) | 最大4 | 4 |
-| 7 | 18 | ... | ... | 是(j=3,4,5) | 3,3,4 | 4 |
-
-最终结果：`max(dp) = 4`
-
-### 贪心 + 二分查找法：
-
-```
-num=10: tails = [10]
-num=9:  tails = [9]           (替换 10)
-num=2:  tails = [2]           (替换 9)
-num=5:  tails = [2, 5]        (5 > 2，扩展)
-num=3:  tails = [2, 3]        (替换 5)
-num=7:  tails = [2, 3, 7]     (7 > 3，扩展)
-num=101: tails = [2, 3, 7, 101]  (扩展)
-num=18: tails = [2, 3, 7, 18]    (替换 101)
-
-结果: len(tails) = 4
-```
-
-**关键观察：**
-- `tails` 数组始终保持有序
-- 替换操作保持了"相同长度下末尾元素最小"的性质
-- 最终 `tails` 的长度就是 LIS 的长度
-
----
 
 ## 复杂度分析
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
-|------|-----------|-----------|------|
-| 暴力 | O(2^n) | O(n) | 枚举所有子集 |
-| 动态规划 | O(n^2) | O(n) | 经典 DP 解法 |
-| 贪心+二分 | O(n log n) | O(n) | 最优解法 |
-
----
+| --- | --- | --- | --- |
+| 记忆化 / 递推 DP | O(n²) | O(n) | 每个 `i` 都回头看一遍前缀，n = 2500 时约 300 万次 |
+| 贪心 + 二分（最优） | O(n log n) | O(n) | 每个数一次二分；`g` 长度不超过 n |
 
 ## 易错点总结
 
-1. **严格递增用 `nums[i] > nums[j]`**：写成 `>=` 就变成「非递减子序列」，`[2,2]` 会返回 2 而不是 1。
-2. **二分要 `bisect_left` 而不是 `bisect_right`**：`right` 找到的是第一个 `> num` 的位置，会把相等的元素当成新的更优解，`tails` 长度偏大。
-3. **`tails` 不是答案序列**：`nums = [1,2,3,0]` 时 `tails = [0,2,3]`，它不是原数组的子序列，只能用来读长度。
+### 1. `bisect_right` 代替 `bisect_left`
+
+`bisect_left(g, x)` 写成 `bisect_right(g, x)`，相等的 `x` 会被当成「更大的数」追加。`nums = [2,2]` 时 `g` 变成 `[2,2]`，返回 2，正确答案是 1。示例 1 里没有重复元素，照不出来。
+
+### 2. `dp` 初值写成 0
+
+`dp = [0] * n`，只在 `nums[j] < nums[i]` 时更新，没有可接的数时 `dp[i]` 就停在 0。`nums = [5]` 返回 0（正确 1），`[7,7,7]` 也返回 0。每个数自己就是长度 1 的递增子序列，初值必须是 1。
 
 ## 扩展思考
 
-### 1. 相关题目
-
-- [354. 俄罗斯套娃信封问题](https://leetcode.cn/problems/russian-doll-envelopes/) - 二维 LIS
-- [673. 最长递增子序列的个数](https://leetcode.cn/problems/number-of-longest-increasing-subsequence/) - 统计个数
-- [1626. 无矛盾的最佳球队](https://leetcode.cn/problems/best-team-with-no-conflicts/) - 排序后 LIS
-
-### 2. 如何输出具体的 LIS？
-
-使用 DP 方法，记录前驱节点：
-
-```python
-def lengthOfLIS_with_path(nums):
-    n = len(nums)
-    dp = [1] * n
-    prev = [-1] * n  # 记录前驱
-
-    for i in range(n):
-        for j in range(i):
-            if nums[i] > nums[j] and dp[i] < dp[j] + 1:
-                dp[i] = dp[j] + 1
-                prev[i] = j
-
-    # 找到最大值的索引
-    max_idx = max(range(n), key=lambda i: dp[i])
-
-    # 重建路径
-    path = []
-    while max_idx != -1:
-        path.append(nums[max_idx])
-        max_idx = prev[max_idx]
-
-    return path[::-1]  # 反转
-```
-
-### 3. 二维 LIS - 俄罗斯套娃信封
-
-问题：信封 (w, h)，一个信封能放入另一个当且仅当 w 和 h 都更小。
-
-解法：
-1. 按宽度升序排序，宽度相同按高度降序排序
-2. 对高度求 LIS
-
-```python
-def maxEnvelopes(envelopes):
-    # 按宽度升序，宽度相同按高度降序
-    envelopes.sort(key=lambda x: (x[0], -x[1]))
-    # 对高度求 LIS
-    heights = [h for _, h in envelopes]
-    return lengthOfLIS_greedy(heights)
-```
-
-### 4. 最长递减子序列
-
-将数组取反，求 LIS 即可：
-```python
-def lengthOfLDS(nums):
-    return lengthOfLIS([-x for x in nums])
-```
+- 需要输出具体的子序列时，`g` 不够用：它是「替换」出来的，下标对不上原数组。要给 O(n²) 的 `dp` 配一个 `pre[i]` 记录前驱，最后从最大值往回走。
+- 若问的是「最长非递减子序列」（`nums[j] <= nums[i]`），把 `bisect_left` 换成 `bisect_right` 正好对应这个放宽——两个函数的选择和比较符是同一件事。

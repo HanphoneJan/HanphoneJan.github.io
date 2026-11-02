@@ -7,9 +7,11 @@ url: https://leetcode.cn/problems/remove-nth-node-from-end-of-list/
 tags:
   - 链表
   - 双指针
+topics: []
 patterns:
   - ../../patterns/two_pointers.md
-date_added: 2026-03-25
+date_added: 2026-03-26
+date_reviewed: []
 ---
 
 # 19. 删除链表的倒数第 N 个结点
@@ -18,203 +20,126 @@ date_added: 2026-03-25
 
 给你一个链表，删除链表的倒数第 `n` 个结点，并且返回链表的头结点。
 
+**提示：**
+
+- 链表中结点的数目为 `sz`
+- `1 <= sz <= 30`
+- `0 <= Node.val <= 100`
+- `1 <= n <= sz`
+
+**进阶：** 你能尝试使用一趟扫描实现吗？
+
 ## 示例
 
-**示例 1：**
-```
-输入：head = [1,2,3,4,5], n = 2
-输出：[1,2,3,5]
-```
+### 示例 1
 
-**示例 2：**
-```
-输入：head = [1], n = 1
-输出：[]
-```
+**输入：** head = [1,2,3,4,5], n = 2
 
-**示例 3：**
-```
-输入：head = [1,2], n = 1
-输出：[1]
-```
+**输出：** [1,2,3,5]
 
----
+### 示例 2
+
+**输入：** head = [1], n = 1
+
+**输出：** []
+
+### 示例 3
+
+**输入：** head = [1,2], n = 1
+
+**输出：** [1]
 
 ## 解题思路
 
-### 问题本质
+要删一个节点，必须站在它的**前驱**上，也就是 `prev.next = prev.next.next`。倒数第 `n` 个的前驱就是「从头数第 `L-n` 个」，可一趟扫描里我们并不知道 `L`。解决办法是让两个指针保持 `n` 步的间隔：快指针先走 `n` 步，再一起走，快指针到尾时慢指针正好停在待删节点的前驱。前面再加一个哑结点，删除头节点时就不用单独处理。
 
-要删除链表的倒数第 `n` 个节点，本质是找到它的前驱节点 `prev`，然后执行 `prev.next = prev.next.next`。难点在于：单链表没有从后往前的索引，只能从头遍历。
+### 先加哑结点
 
-### 方法一：两次遍历（先求长度）
-
-**思路**：先遍历一遍统计链表长度 `L`，倒数第 `n` 个节点对应正数第 `L - n` 个节点（0-based），其前一个节点就是要操作的前驱。再用哑节点 `dummy` 遍历到前驱位置，直接跳过目标节点。
+如果待删的是头节点（`n == sz`），它的前驱不存在，代码要额外写一个分支。在头前面接一个 `dummy`，所有节点就都有了前驱，最后返回 `dummy.next`。
 
 ```python
-class Solution:
-    def removeNthFromEnd(self, head: Optional[ListNode], n: int) -> Optional[ListNode]:
-        length = 0
-        cur = head
-        while cur:
-            length += 1
-            cur = cur.next
-
-        dummy = ListNode(0, head)
-        cur = dummy
-        for i in range(length - n):
-            cur = cur.next
-
-        cur.next = cur.next.next
-        return dummy.next
+dummy = ListNode(0, head)
+fast = slow = dummy
 ```
 
-**说明**：思路简单直观，需要两次遍历。
-
-### 方法二：双指针（快慢指针，一次遍历，推荐）
-
-**思路**：让快指针 `first` 先走 `n` 步，然后 `first` 和慢指针 `second` 同时向后走。当 `first` 到达链表末尾时，`second` 正好位于要删除节点的前一个节点。用哑节点统一处理删除头节点的情况。
+### 快指针先走 n 步
 
 ```python
-class Solution:
-    def removeNthFromEnd(self, head: Optional[ListNode], n: int) -> Optional[ListNode]:
-        dummy = ListNode(0, head)
-        first = head
-        for i in range(n):
-            first = first.next
-
-        second = dummy
-        while first:
-            first = first.next
-            second = second.next
-
-        second.next = second.next.next
-        return dummy.next
+for _ in range(n):
+    fast = fast.next
+while fast.next:
+    fast = fast.next
+    slow = slow.next
+slow.next = slow.next.next
 ```
 
----
+走完之后 `slow` 停在待删节点的前一个位置——`fast` 到链尾（`fast.next is None`）时，两指针之间的节点数正好是 `n`，`slow.next` 就是倒数第 `n` 个。
+
+`for` 循环走 `n` 步而不是 `n + 1` 步：多走一步，`slow` 会停到待删节点的**前前驱**，删掉的就是倒数第 `n + 1` 个。
+
+### 边界：n 等于链表长度
+
+示例 2 里 `sz = n = 1`，快指针走 1 步就站到了 `dummy` 之后的唯一节点（此时 `fast.next` 为空），循环不进入，`slow` 仍指向 `dummy`，于是 `dummy.next = dummy.next.next` 把唯一的节点删掉，返回 `dummy.next = None`。整个过程没有「头节点没有前驱」的特判。
+
+### 推演：示例 1
+
+`head = [1,2,3,4,5]`，`n = 2`，初始 `fast = slow = dummy`。
+
+| 阶段 | `fast` 所在 | `slow` 所在 |
+| --- | --- | --- |
+| 走 `n` 步后 | 2 | dummy |
+| 第 1 轮 | 3 | 1 |
+| 第 2 轮 | 4 | 2 |
+| 第 3 轮 | 5 | 3 |
+| 结束（`fast.next` 为空） | 5 | 3 |
+
+`slow` 指向 3，执行 `slow.next = slow.next.next` 跳过 4，结果 `[1,2,3,5]`。
 
 ## 完整代码实现
 
 ```python
-# Definition for singly-linked list.
+from typing import Optional
+
+
 class ListNode:
     def __init__(self, val=0, next=None):
         self.val = val
         self.next = next
 
-from typing import Optional
 
 class Solution:
-    """
-    删除链表的倒数第 N 个结点 - 双指针（快慢指针）
-
-    核心思想：
-    使用两个指针，让快指针先走 n 步，然后快慢指针一起走。
-    当快指针到达末尾时，慢指针正好在倒数第 n+1 个位置（即要删除节点的前一个）。
-
-    为什么用 dummy 节点？
-    如果删除的是头节点，需要特殊处理。使用 dummy 节点可以统一逻辑，
-    让 slow 最终停在要删除节点的前一个位置。
-
-    时间复杂度：O(L)，L 是链表长度，只遍历一次
-    空间复杂度：O(1)
-    """
-
     def removeNthFromEnd(self, head: Optional[ListNode], n: int) -> Optional[ListNode]:
-        # 创建 dummy 节点，简化边界处理
-        dummy = ListNode(0, head)
-
-        # first 先走 n 步
-        first = head
-        for i in range(n):
-            first = first.next
-
-        # second 从 dummy 开始，最终停在要删除节点的前一个
-        second = dummy
-
-        # first 和 second 同时走，直到 first 到达末尾
-        while first:
-            first = first.next
-            second = second.next
-
-        # 删除倒数第 n 个节点
-        second.next = second.next.next
-
+        dummy = ListNode(0, head)      # 哑结点：让头节点也有前驱
+        fast = slow = dummy
+        for _ in range(n):             # 两指针拉开 n 步
+            fast = fast.next
+        while fast.next:               # 一起走，直到 fast 到链尾
+            fast = fast.next
+            slow = slow.next
+        slow.next = slow.next.next     # slow 停在待删节点的前驱
         return dummy.next
 ```
-
----
-
-## 示例推演
-
-以 `head = [1,2,3,4,5], n = 2` 为例：
-
-**初始状态**：
-```
-dummy -> 1 -> 2 -> 3 -> 4 -> 5
-first指向1，second指向dummy
-```
-
-**Step 1**：first 先走 2 步
-```
-dummy -> 1 -> 2 -> 3 -> 4 -> 5
-         ^        ^
-       first    (first走了2步，现在指向3)
-```
-
-**Step 2**：first 和 second 同时走
-| 步骤 | first | second | 说明 |
-|------|-------|--------|------|
-| 初始 | 3 | dummy | - |
-| 1 | 4 | 1 | 同时前进一步 |
-| 2 | 5 | 2 | 同时前进一步 |
-| 3 | None | 3 | first到达末尾，second指向3 |
-
-**Step 3**：删除 second.next（节点 4）
-```
-dummy -> 1 -> 2 -> 3 -> 5
-```
-
-返回 `dummy.next`，即 `[1,2,3,5]`
-
----
 
 ## 复杂度分析
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
-|------|-----------|-----------|------|
-| 两次遍历（先求长度） | O(L) | O(1) | 遍历两次链表 |
-| 双指针（快慢指针） | O(L) | O(1) | 只需遍历一次链表，最常用 |
+| --- | --- | --- | --- |
+| 先求长度再删 | O(L) | O(1) | 要遍历两遍，但常数更小、更好调试 |
+| 快慢指针一趟扫描（最优） | O(L) | O(1) | 只走一遍，满足进阶要求 |
 
----
+`L` 是链表长度。
 
 ## 易错点总结
 
-- **必须使用哑节点**：如果要删除的是头节点（倒数第 `n` 恰好是头节点），用 `dummy` 能统一处理，避免单独判断。
-- **快指针先走 `n` 步**：让快慢指针之间保持 `n` 个节点的间隔。快指针到达末尾时，慢指针正好指向待删除节点的前驱。
-- **真正删除节点**：要用 `second.next = second.next.next` 跳过目标节点，不能用 `second = second.next`（那只是移动指针）。
+### 1. 快指针多走了一步
 
----
+`for _ in range(n)` 写成 `range(n + 1)`，两指针间隔变成 `n + 1`，删掉的是倒数第 `n + 1` 个。示例 1 会输出 `[1,2,4,5]`——删掉的是 3，不是 4。间隔必须恰好是 `n`。
+
+### 2. 不用哑结点，删除头节点时直接返回 head
+
+`n == sz` 时要删的是头节点，它没有前驱，`slow.next = slow.next.next` 无处可写。写成 `if fast is None: return head` 的版本，示例 2 的 `[1], n = 1` 会原样返回 `[1]`，正确答案是 `[]`。
 
 ## 扩展思考
 
-### 1. 如何找到链表的中间节点？
-
-同样使用快慢指针，快指针每次走 2 步，慢指针每次走 1 步，当快指针到达末尾时，慢指针就在中间。
-
-### 2. 如何检测链表是否有环？
-
-快慢指针，快指针每次走 2 步，慢指针每次走 1 步，如果相遇则有环。
-
-### 3. 如果要求删除倒数第 n 个节点并返回被删除的值？
-
-在删除前保存 `second.next.val`，然后再删除。
-
----
-
-## 相关题目
-
-- [876. 链表的中间结点](https://leetcode.cn/problems/middle-of-the-linked-list/)
-- [141. 环形链表](https://leetcode.cn/problems/linked-list-cycle/)
-- [142. 环形链表 II](https://leetcode.cn/problems/linked-list-cycle-ii/)
-- [21. 合并两个有序链表](https://leetcode.cn/problems/merge-two-sorted-lists/)
+- 也可以先遍历一遍求长度 `L`，再从头走到第 `L - n` 个节点删除，两次遍历但不需要维护两个指针。
+- 「删除倒数第 n 个」和「找倒数第 n 个」（[剑指 Offer 22](https://leetcode.cn/problems/lian-biao-zhong-dao-shu-di-kge-jie-dian-lcof/)）是同一个间隔技巧，只是后者不用哑结点。

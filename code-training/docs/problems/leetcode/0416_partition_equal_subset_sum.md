@@ -232,7 +232,7 @@ class Solution:
 |------|-----------|-----------|------|
 | 暴力回溯 | O(2^n) | O(n) | 枚举所有子集 |
 | 记忆化搜索 | O(n × target) | O(n × target) | target = sum/2 |
-| 动态规划 | O(n × target) | O(target) | 空间优化版 |
+| 动态规划（最优） | O(n × target) | O(target) | 一维滚动，倒序枚举和 |
 
 **说明：**
 - n 是数组长度
