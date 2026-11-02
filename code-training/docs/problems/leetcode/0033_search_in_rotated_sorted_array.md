@@ -10,182 +10,142 @@ tags:
 topics: []
 patterns:
   - ../../patterns/search.md
-date_added: 2026-03-20
+date_added: 2026-04-11
 date_reviewed: []
 ---
 
-# 0033. 搜索旋转排序数组
+# 33. 搜索旋转排序数组
 
 ## 题目描述
 
 整数数组 `nums` 按升序排列，数组中的值**互不相同**。
 
-在传递给函数之前，`nums` 在预先未知的某个下标 `k`（`0 <= k < nums.length`）上进行了**旋转**，使数组变为 `[nums[k], nums[k+1], ..., nums[n-1], nums[0], nums[1], ..., nums[k-1]]`（下标从 0 开始计数）。例如，`[0,1,2,4,5,6,7]` 在下标 `3` 处经旋转后可能变为 `[4,5,6,7,0,1,2]`。
+在传递给函数之前，`nums` 在预先未知的某个下标 `k`（`0 <= k < nums.length`）上进行了**向左旋转**，使数组变为 `[nums[k], nums[k+1], ..., nums[n-1], nums[0], nums[1], ..., nums[k-1]]`。例如，`[0,1,2,4,5,6,7]` 在下标 3 上向左旋转后可能变为 `[4,5,6,7,0,1,2]`。
 
-给你旋转后的数组 `nums` 和一个整数 `target`，如果 `nums` 中存在这个目标值 `target`，则返回它的下标，否则返回 `-1`。
+给你**旋转后**的数组 `nums` 和一个整数 `target`，如果 `nums` 中存在这个目标值 `target`，则返回它的下标，否则返回 `-1`。
 
-你必须设计一个时间复杂度为 `O(log n)` 的算法解决此问题。
+你必须设计一个时间复杂度为 O(log n) 的算法解决此问题。
 
-**示例 1：**
-```
-输入：nums = [4,5,6,7,0,1,2], target = 0
-输出：4
-```
+**提示：**
 
-**示例 2：**
-```
-输入：nums = [4,5,6,7,0,1,2], target = 3
-输出：-1
-```
+- `1 <= nums.length <= 5000`
+- `-10^4 <= nums[i] <= 10^4`
+- `nums` 中的每个值都**独一无二**
+- 题目数据保证 `nums` 在预先未知的某个下标上进行了旋转
+- `-10^4 <= target <= 10^4`
 
-**示例 3：**
-```
-输入：nums = [1], target = 0
-输出：-1
-```
+## 示例
 
----
+### 示例 1
+
+**输入：** nums = [4,5,6,7,0,1,2], target = 0
+
+**输出：** 4
+
+### 示例 2
+
+**输入：** nums = [4,5,6,7,0,1,2], target = 3
+
+**输出：** -1
+
+### 示例 3
+
+**输入：** nums = [1], target = 0
+
+**输出：** -1
 
 ## 解题思路
 
-### 问题分析
+旋转数组不能直接套普通二分：`nums[mid]` 两侧不再同时有序。但它有一个不会丢的性质——**从 `mid` 切开，左右两半至少有一半是递增的**。所以每轮先认出有序的那一半，再看 `target` 的数值是否落在这一半的值域里：落在就进去找，不落在就只能去另一半。
 
-旋转排序数组是把一段升序数组从某个位置"切断"，然后把后半段挪到前面。比如 `[0,1,2,4,5,6,7]` 在下标 3 处旋转后变成 `[4,5,6,7,0,1,2]`。
+### 先认有序的一半，再看 target 在不在里面
 
-旋转后，数组**整体不再有序**，但有一个关键性质：**以任意位置 mid 为界，左半段 `[left, mid]` 或右半段 `[mid, right]` 中，必有一段是严格有序的**。
+设区间是 `[left, right]`，`mid` 为中点：
 
-这是因为旋转点只有一个，mid 要么在旋转点左侧（左半段完整有序），要么在旋转点右侧（右半段完整有序）。
+- 若 `nums[left] <= nums[mid]`，左半 `[left, mid]` 递增；
+- 否则右半 `[mid, right]` 递增。
 
-利用这个性质，我们仍然可以使用二分查找，每次缩小一半搜索范围。
-
-### 方法一：线性查找（对比）
-
-直接线性扫描整个数组。
+认出有序半段后，判断 `target` 是否在这个半段的**值域**内（左半是 `nums[left] <= target < nums[mid]`，右半是 `nums[mid] < target <= nums[right]`）。在就收缩到这个半段，不在就整体去另一半。
 
 ```python
-class Solution:
-    def search(self, nums: List[int], target: int) -> int:
-        # 逐个比较：旋转只打乱了先后顺序，扫到 target 时的下标就是答案
-        for i in range(len(nums)):
-            if nums[i] == target:
-                return i   # 元素互不相同，第一次命中就是唯一解
-        return -1
+if nums[left] <= nums[mid]:                 # 左半有序
+    if nums[left] <= target < nums[mid]:
+        right = mid - 1                     # target 在左半的值域里
+    else:
+        left = mid + 1                      # 不在，只能去右半
+else:                                       # 右半有序
+    if nums[mid] < target <= nums[right]:
+        left = mid + 1
+    else:
+        right = mid - 1
 ```
 
-**为什么不够好**：时间复杂度 O(n)，没有利用数组的有序性。题目明确要求 O(log n)，线性扫描不符合要求。
+`nums[mid] == target` 在进入这两个分支之前就已经返回了，所以值域的两端一边闭一边开：写不写等号都不影响结果，但写成开区间更能说明「`mid` 已经检查过」。
 
-### 方法二：改进的二分查找
+### 收缩失败时往哪边走
 
-**标准二分查找**的前提是数组完全有序。旋转后数组不完全有序，但每次取 mid 时，总有一侧是有序的。
+两个分支的 `else` 都是「有序半段里没有 target」，那就只能去另一半——这不是猜测：如果 target 存在，它不可能在有序半段的值域之外，而整个区间只有这两半。
 
-**判断哪侧有序**：比较 `nums[left]` 和 `nums[mid]`：
-- 若 `nums[left] <= nums[mid]`：左半段 `[left, mid]` 是有序的。
-- 否则：右半段 `[mid, right]` 是有序的。
+循环用闭区间 `while left <= right`，收缩一律 `mid - 1` / `mid + 1`。`right = mid` 在 `mid == left` 时区间不缩小，会死循环。
 
-**在有序段内判断 target 是否落入**：对于有序段，可以直接比较 target 是否在范围内：
-- 若 target 在有序段内：将搜索范围缩小到有序段（舍弃另一侧）。
-- 若 target 不在有序段内：将搜索范围缩小到另一侧（舍弃有序段）。
+### 推演：示例 1
 
-**为什么每次都能缩小一半**：每次我们都能明确地排除一半元素（要么 target 在有序的左半，要么在右半），这正是二分查找的精髓。
+`nums = [4,5,6,7,0,1,2]`，`target = 0`。
 
-### 方法三：边界条件处理
+| 轮次 | `left, right` | `mid` | `nums[mid]` | 有序半段 | target 在值域内？ | 动作 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 0, 6 | 3 | 7 | 左 `[4,5,6,7]` | `4 <= 0 < 7` 否 | `left = 4` |
+| 2 | 4, 6 | 5 | 1 | 左 `[0,1]` | `0 <= 0 < 1` 是 | `right = 4` |
+| 3 | 4, 4 | 4 | 0 | —（命中） | — | 返回 4 |
 
-**左边界的判断用 `<=`**：`nums[left] <= nums[mid]` 使用 `<=` 而非 `<`，是为了处理 `left == mid` 时（数组长度为 1 或 2）的情况，此时左半段只有一个元素，仍视为有序。
-
-**target 在有序左半段的判断**：`nums[left] <= target < nums[mid]`，两端均需覆盖 `nums[left]`（target 可能等于 left 处的值）。
-
----
+第 1 轮 `mid` 落在第一段（`4..7`），target 比这一段的最小值还小，所以整段第一段都不可能，直接跳到第二段。第 2 轮才真正把 target 收进区间。
 
 ## 完整代码实现
 
 ```python
 from typing import List
 
+
 class Solution:
     def search(self, nums: List[int], target: int) -> int:
-        left, right = 0, len(nums)  # 右边界设为 len(nums)，左闭右开区间
-
-        while left < right:  # 不使用 <=：左闭右开写法更统一
+        left, right = 0, len(nums) - 1
+        while left <= right:
             mid = (left + right) // 2
-
             if nums[mid] == target:
                 return mid
-
-            if nums[left] <= nums[mid]:  # 左半段 [left, mid] 有序
+            if nums[left] <= nums[mid]:
+                # 左半 [left, mid] 递增
                 if nums[left] <= target < nums[mid]:
-                    right = mid      # target 在左半段内，舍弃右半
+                    right = mid - 1
                 else:
-                    left = mid + 1       # target 不在左半段，搜索右半
-            else:                        # 右半段 [mid, right-1] 有序
-                if nums[mid] < target <= nums[right - 1]:
-                    left = mid + 1       # target 在右半段内，舍弃左半
+                    left = mid + 1
+            else:
+                # 右半 [mid, right] 递增
+                if nums[mid] < target <= nums[right]:
+                    left = mid + 1
                 else:
-                    right = mid      # target 不在右半段，搜索左半
-
+                    right = mid - 1
         return -1
 ```
-
----
-
-## 示例推演
-
-以 `nums = [4, 5, 6, 7, 0, 1, 2]`，`target = 0` 为例：
-
-初始：`left = 0`，`right = 7`（`len(nums) = 7`，左闭右开）
-
-**第一轮**：
-- `mid = (0+7)//2 = 3`，`nums[3] = 7`，不等于 target=0
-- 判断有序段：`nums[0]=4 <= nums[3]=7`，左半段 `[4,5,6,7]` 有序
-- target=0 在 `[4, 7)` 范围内吗？`4 <= 0 < 7`？否
-- target 不在左半段，搜索右半：`left = 4`
-
-**第二轮**：`left=4`，`right=7`
-- `mid = (4+7)//2 = 5`，`nums[5] = 1`，不等于 target=0
-- 判断有序段：`nums[4]=0 <= nums[5]=1`，左半段 `[0,1]` 有序
-- target=0 在 `[0, 1)` 范围内吗？`0 <= 0 < 1`？是
-- target 在左半段，搜索左半：`right = mid = 5`
-
-**第三轮**：`left=4`，`right=5`
-- `mid = (4+5)//2 = 4`，`nums[4] = 0`，等于 target=0
-
-**返回下标 4**，正确。
-
----
-
-**再看 target 不存在的情况**：`nums = [4,5,6,7,0,1,2]`，`target = 3`
-
-**第一轮**：`left=0`，`right=7`，`mid=3`，`nums[3]=7`
-- 左半段有序，`4 <= 3 < 7`？否，搜索右半：`left=4`
-
-**第二轮**：`left=4`，`right=7`，`mid=5`，`nums[5]=1`
-- 左半段有序（`nums[4]=0 <= nums[5]=1`），`0 <= 3 < 1`？否，搜索右半：`left=6`
-
-**第三轮**：`left=6`，`right=7`，`mid=6`，`nums[6]=2`
-- 左半段（单个元素）有序，`2 <= 3 < 2`？否，搜索右半：`left=7`
-
-**循环结束**（`left == right == 7`，不满足 `left < right`），返回 `-1`，正确。
-
----
 
 ## 复杂度分析
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
-|------|-----------|-----------|------|
-| 线性扫描 | O(n) | O(1) | 逐个比较，未利用有序性 |
-| 改进二分查找 | O(log n) | O(1) | 每轮排除一半元素 |
-
----
+| --- | --- | --- | --- |
+| 线性扫描 | O(n) | O(1) | 没有利用「两段各自有序」 |
+| 一次二分（最优） | O(log n) | O(1) | 每轮丢弃一半，只做常数次比较 |
 
 ## 易错点总结
 
-- **`nums[left] <= nums[mid]` 的等号**：写成 `<` 时，`left == mid`（数组只剩两个元素）会把有序段判错。
-- **目标区间的端点开闭**：左半段是 `nums[left] <= target < nums[mid]`，右半段是 `nums[mid] < target <= nums[right]`。把 `nums[mid]` 再包含进去，等于忽略了它已被单独判断过。
-- **二分收缩要写 `right = mid - 1` / `left = mid + 1`**：写成 `right = mid` 在找不到目标时会死循环。
+### 1. 直接拿 `nums[mid]` 和 target 比大小丢掉一半
+
+普通二分可以「比 target 大就去左边」，旋转数组不行。示例 1 第一轮 `mid = 3` 是 7，target 是 0，按大小关系会丢掉右半去左边找——可左边是 `[4,5,6]`，`0` 恰恰在被丢掉的那一段里，最后返回 -1。必须先认出有序半段，再看 target 是否落在它的值域里。
+
+### 2. `nums[left] <= nums[mid]` 少写等号
+
+`left == mid` 时（区间只剩一两个元素）左半只有一个数，它当然是「有序」的，但 `nums[left] < nums[mid]` 会判成「右半有序」，接着按右半的值域去筛，把 target 筛掉。`nums = [3,1]`、`target = 1` 时返回 -1，正确结果是 1。
 
 ## 扩展思考
 
-- **LeetCode 81. 搜索旋转排序数组 II**：数组中存在重复元素，当 `nums[left] == nums[mid]` 时无法判断哪侧有序，需要 `left++` 跳过，最坏情况退化到 O(n)。
-
-- **LeetCode 153. 寻找旋转排序数组中的最小值**：找旋转点，也是利用"总有一侧有序"的性质。
-
-- **算法本质**：旋转数组的二分查找，关键是打破"二分必须完全有序"的思维定势。只要每次能判断 target 在哪一侧并排除另一侧，就能实现 O(log n)。"局部有序"已经足够支撑二分决策。
+- 数组里允许重复元素时（[81. 搜索旋转排序数组 II](https://leetcode.cn/problems/search-in-rotated-sorted-array-ii/)），`nums[left] == nums[mid]` 无法判断哪半有序，只能 `left += 1` 缩一格，最坏退化成 O(n)。
+- 另一条路是先二分找出最小值下标（[153. 寻找旋转排序数组中的最小值](https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array/)），把数组切成两段递增区间，再在对应那段里二分。两次二分，同样是 O(log n)，代码更长但每一步都是普通二分。

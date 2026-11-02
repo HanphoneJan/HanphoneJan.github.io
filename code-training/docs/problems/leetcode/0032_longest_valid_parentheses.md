@@ -158,6 +158,21 @@ class Solution:
   - 若栈变为空：当前 `')'` 无法匹配，将其下标压栈作为新哨兵。
   - 若栈非空：有效括号区间为从栈顶下标到当前下标，长度为 `i - stack[-1]`。
 
+```python
+stack = [-1]                       # 哨兵：分界线的前一个位置
+best = 0
+for i, ch in enumerate(s):
+    if ch == '(':
+        stack.append(i)
+    else:
+        stack.pop()
+        if not stack:
+            stack.append(i)        # 这个 ')' 成了新的分界线
+        else:
+            best = max(best, i - stack[-1])
+return best
+```
+
 ---
 
 ## 完整代码实现

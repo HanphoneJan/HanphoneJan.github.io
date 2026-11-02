@@ -175,6 +175,17 @@ class Solution:
     空间复杂度：O(n)
     """
 
+    def maximalRectangle(self, matrix: List[List[str]]) -> int:
+        # 入口放在第一个方法：页面「跑样例」与录制器都取第一个带 self 的方法
+        n = len(matrix[0])
+        heights = [0] * (n + 1)  # 末尾多一个0
+        ans = 0
+        for row in matrix:
+            for j, c in enumerate(row):
+                heights[j] = 0 if c == '0' else heights[j] + 1
+            ans = max(ans, self.largestRectangleArea(heights))
+        return ans
+
     def largestRectangleArea(self, heights: List[int]) -> int:
         st = [-1]
         ans = 0
@@ -184,16 +195,6 @@ class Solution:
                 left = st[-1]
                 ans = max(ans, heights[i] * (right - left - 1))
             st.append(right)
-        return ans
-
-    def maximalRectangle(self, matrix: List[List[str]]) -> int:
-        n = len(matrix[0])
-        heights = [0] * (n + 1)  # 末尾多一个0
-        ans = 0
-        for row in matrix:
-            for j, c in enumerate(row):
-                heights[j] = 0 if c == '0' else heights[j] + 1
-            ans = max(ans, self.largestRectangleArea(heights))
         return ans
 ```
 

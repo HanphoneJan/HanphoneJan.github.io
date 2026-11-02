@@ -167,13 +167,14 @@ class Solution:
     空间复杂度：O(h)，h 是树的高度
     """
 
+    def isSymmetric(self, root: Optional[TreeNode]) -> bool:
+        # 入口放在第一个方法：页面「跑样例」与录制器都取第一个带 self 的方法
+        return self.isSameTree(root.left, root.right)
+
     def isSameTree(self, p: Optional[TreeNode], q: Optional[TreeNode]) -> bool:
         if p is None or q is None:
             return p is q
         return p.val == q.val and self.isSameTree(p.left, q.right) and self.isSameTree(p.right, q.left)
-
-    def isSymmetric(self, root: Optional[TreeNode]) -> bool:
-        return self.isSameTree(root.left, root.right)
 ```
 
 ---

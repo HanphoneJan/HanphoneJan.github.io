@@ -170,6 +170,8 @@ def kmeans_clustering(points, K, max_iters=1000, tol=1e-4):
     对 points 进行 K-means 聚类，返回最终的中心点列表。
     """
     # 初始化中心：按到原点距离升序排序，取前 K 个
+    # K 可能大于点数（示例 2 就是 K=5、N=3），此时每个点各自成簇
+    K = min(K, len(points))
     sorted_points = sorted(points, key=lambda p: math.hypot(p[0], p[1]))
     centers = sorted_points[:K]
 
@@ -267,7 +269,7 @@ if __name__ == "__main__":
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 | ---- | ---------- | ---------- | ---- |
-| K-Means | O(max_iters · N · K) | O(N + K) | N 为点数，K 为簇数 |
+| K-Means（最优） | O(max_iters · N · K) | O(N + K) | N 为点数，K 为簇数 |
 
 ---
 

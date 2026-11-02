@@ -7,9 +7,11 @@ url: https://leetcode.cn/problems/find-first-and-last-position-of-element-in-sor
 tags:
   - 数组
   - 二分查找
+topics: []
 patterns:
   - ../../patterns/search.md
-date_added: 2026-03-25
+date_added: 2026-04-02
+date_reviewed: []
 ---
 
 # 34. 在排序数组中查找元素的第一个和最后一个位置
@@ -20,233 +22,129 @@ date_added: 2026-03-25
 
 如果数组中不存在目标值 `target`，返回 `[-1, -1]`。
 
-你必须设计并实现时间复杂度为 `O(log n)` 的算法解决此问题。
+你必须设计并实现时间复杂度为 O(log n) 的算法解决此问题。
+
+**提示：**
+
+- `0 <= nums.length <= 10^5`
+- `-10^9 <= nums[i] <= 10^9`
+- `nums` 是一个非递减数组
+- `-10^9 <= target <= 10^9`
 
 ## 示例
 
-**示例 1：**
-```
-输入：nums = [5,7,7,8,8,10], target = 8
-输出：[3,4]
-```
+### 示例 1
 
-**示例 2：**
-```
-输入：nums = [5,7,7,8,8,10], target = 6
-输出：[-1,-1]
-```
+**输入：** nums = [5,7,7,8,8,10], target = 8
 
-**示例 3：**
-```
-输入：nums = [], target = 0
-输出：[-1,-1]
-```
+**输出：** [3,4]
 
----
+### 示例 2
+
+**输入：** nums = [5,7,7,8,8,10], target = 6
+
+**输出：** [-1,-1]
+
+### 示例 3
+
+**输入：** nums = [], target = 0
+
+**输出：** [-1,-1]
 
 ## 解题思路
 
-### 问题本质
+要找的是一个连续区间的两端，而**这两个端点是两个独立的二分问题**：左端点是「第一个 `>= target` 的位置」，右端点是「第一个 `> target` 的位置再减一」。两次二分都是 O(log n)，合起来仍然是 O(log n)。
 
-这是二分查找的变体。普通二分找到一个目标值即可返回，这道题要求找到**目标值在数组中的起始位置和结束位置**。且必须实现时间复杂度 O(log n) 的解法。
+### 一个函数解决两个端点
 
-### 方法一：线性查找（不满足题目要求）
+记 `lower_bound(x)` 为「第一个 `>= x` 的下标」。那么：
 
-**思路**：先用 `index()` 找到任意一个 `target` 的位置，再向左右两边扩展，直到遇到不同值。
+- 左端点 = `lower_bound(target)`；
+- 右端点 = `lower_bound(target + 1) - 1`。
+
+写成一个函数，`target` 和 `target + 1` 各调一次：
 
 ```python
-class Solution:
-    def searchRange(self, nums: List[int], target: int) -> List[int]:
-        try:
-            idx = nums.index(target)
-        except ValueError:
-            return [-1, -1]
-        left = right = idx
-        while left > 0 and nums[left - 1] == target:
-            left -= 1
-        while right < len(nums) - 1 and nums[right + 1] == target:
-            right += 1
-        return [left, right]
+def lower_bound(x):
+    left, right = 0, n          # 左闭右开，答案落在 [0, n]
+    while left < right:
+        mid = (left + right) // 2
+        if nums[mid] >= x:
+            right = mid         # 答案可能是 mid，也可能是更左边
+        else:
+            left = mid + 1
+    return left                 # 第一个 >= x 的位置，可能等于 n
 ```
 
-**说明**：思路简单，但 `index()` 和扩展都是 O(n)，不满足题目对 O(log n) 的要求。
+`right` 取 `n`（而不是 `n - 1`）是为了让「所有数都小于 `x`」这种情况也有答案 `n`，不用额外写分支。
 
-### 方法二：两次二分查找（推荐）
+### 判定不存在
 
-**核心洞察**：
-- 找左边界：当 `nums[mid] == target` 时，不立即返回，而是收缩右边界，继续向左查找
-- 找右边界：当 `nums[mid] == target` 时，收缩左边界，继续向右查找
+左端点可能落在 `n`（全数组都小于 `target`），也可能落在某个不等于 `target` 的数上（示例 2 落在 `7`）。两种都要先挡掉：
 
-**算法步骤**：
-1. 第一次二分查找：找左边界
-   - `nums[mid] == target`：记录位置，继续向左找（`right = mid`）
-   - `nums[mid] < target`：目标在右半区（`left = mid + 1`）
-   - `nums[mid] > target`：目标在左半区（`right = mid`）
+```python
+left = lower_bound(target)
+if left == n or nums[left] != target:
+    return [-1, -1]
+right = lower_bound(target + 1) - 1
+```
 
-2. 第二次二分查找：找右边界
-   - `nums[mid] == target`：记录位置，继续向右找（`left = mid + 1`）
-   - `nums[mid] < target`：目标在右半区（`left = mid + 1`）
-   - `nums[mid] > target`：目标在左半区（`right = mid`）
+先判左端点还有一个好处：只要 `nums[left] == target`，`left` 就是合法起点，右端点必然不小于它，不会出现 `[-1, 3]` 这种半截答案。
 
-**为什么正确**：
-- 每次找到 target 时不立即返回，而是继续向一边查找，确保找到的是最左/最右的位置
-- 两次二分查找都是 O(log n)，满足题目要求
+### 推演：示例 1
 
----
+`nums = [5,7,7,8,8,10]`，`target = 8`。
+
+| 调用 | `left, right` | `mid` | `nums[mid]` | 动作 |
+| --- | --- | --- | --- | --- |
+| `lower_bound(8)` | 0, 6 | 3 | 8 | `right = 3` |
+|  | 0, 3 | 1 | 7 | `left = 2` |
+|  | 2, 3 | 2 | 7 | `left = 3` |
+|  | 3, 3 | — | — | 返回 3 |
+| `lower_bound(9)` | 0, 6 | 3 | 8 | `left = 4` |
+|  | 4, 6 | 5 | 10 | `right = 5` |
+|  | 4, 5 | 4 | 8 | `left = 5` |
+|  | 5, 5 | — | — | 返回 5 |
+
+左端点 3，右端点 `5 - 1 = 4`，答案 `[3,4]`。
 
 ## 完整代码实现
 
 ```python
+from bisect import bisect_left
 from typing import List
 
+
 class Solution:
-    """
-    在排序数组中查找元素的第一个和最后一个位置 - 二分查找
-
-    核心思想：
-    排序数组中找 target 的范围，等价于找 target 的左边界和右边界。
-    用两次二分查找分别定位左边界和右边界。
-
-    找左边界的技巧：
-    当 nums[mid] == target 时，不立即返回，而是收缩右边界（right = mid - 1），
-    继续向左查找，看是否还有更小的索引也是 target。
-
-    找右边界的技巧：
-    当 nums[mid] == target 时，收缩左边界（left = mid + 1），
-    继续向右查找，看是否还有更大的索引也是 target。
-
-    时间复杂度：O(log n)，两次二分查找
-    空间复杂度：O(1)
-    """
-
     def searchRange(self, nums: List[int], target: int) -> List[int]:
         n = len(nums)
-        result_left, result_right = -1, -1
-
-        # 第一次二分：找左边界
-        left, right = 0, n  # 左闭右开区间
-        while left < right:  # 不使用 <=：左闭右开写法更统一
-            mid = left + (right - left) // 2
-            if nums[mid] == target:
-                result_left = mid   # 记录当前位置
-                right = mid         # 继续向左查找
-            elif nums[mid] < target:
-                left = mid + 1      # 目标在右半区
-            else:
-                right = mid         # 目标在左半区
-
-        # 第二次二分：找右边界
-        left, right = 0, n
-        while left < right:  # 不使用 <=：左闭右开写法更统一
-            mid = left + (right - left) // 2
-            if nums[mid] == target:
-                result_right = mid  # 记录当前位置
-                left = mid + 1      # 继续向右查找
-            elif nums[mid] > target:
-                right = mid
-            else:
-                left = mid + 1
-
-        return [result_left, result_right]
+        left = bisect_left(nums, target)          # 第一个 >= target 的位置
+        if left == n or nums[left] != target:     # 全比它小，或落在一个更大的数上
+            return [-1, -1]
+        right = bisect_left(nums, target + 1) - 1  # 第一个 > target 的位置再减一
+        return [left, right]
 ```
 
----
-
-## 示例推演
-
-以 `nums = [5,7,7,8,8,10], target = 8` 为例：
-
-**找左边界**：
-
-| 步骤 | left | right | mid | nums[mid] | 操作 |
-|------|------|-------|-----|-----------|------|
-| 1 | 0 | 5 | 2 | 7 | 7 < 8，left = 3 |
-| 2 | 3 | 5 | 4 | 8 | 找到！result_left=4，继续向左，right=3 |
-| 3 | 3 | 3 | 3 | 8 | 找到！result_left=3，继续向左，right=2 |
-| 4 | 3 | 2 | - | - | left > right，结束 |
-
-左边界 = 3
-
-**找右边界**：
-
-| 步骤 | left | right | mid | nums[mid] | 操作 |
-|------|------|-------|-----|-----------|------|
-| 1 | 0 | 5 | 2 | 7 | 7 < 8，left = 3 |
-| 2 | 3 | 5 | 4 | 8 | 找到！result_right=4，继续向右，left=5 |
-| 3 | 5 | 5 | 5 | 10 | 10 > 8，right = 4 |
-| 4 | 5 | 4 | - | - | left > right，结束 |
-
-右边界 = 4
-
-**结果**：[3, 4]
-
----
+`bisect_left` 就是上面的 `lower_bound`：返回第一个 `>= x` 的下标，找不到时返回 `len(nums)`。
 
 ## 复杂度分析
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
-|------|-----------|-----------|------|
-| 线性查找 | O(n) | O(1) | 找到任意一个目标值后向两边扩展 |
-| **两次二分（最优）** | **O(log n)** | **O(1)** | 满足题目要求 |
-
----
+| --- | --- | --- | --- |
+| 找到一个目标值后向两边扩展 | O(n) | O(1) | 全是 `target` 时退化成扫全数组 |
+| 两次二分（最优） | O(log n) | O(1) | 两次 `lower_bound`，各自独立 |
 
 ## 易错点总结
 
-### 1. 找左边界时，找到后还要向左找
+### 1. 右端点也用了 `bisect_left(nums, target)`
 
-```python
-if nums[mid] == target:
-    result_left = mid      # 记录
-    right = mid - 1        # 继续向左！
-```
+左端点算对了，右端点直接复用同一个值，示例 1 会输出 `[3,3]`——把「第一个 8」当成了「最后一个 8」。右端点要找的是第一个 **`> target`** 的位置减一，参数是 `target + 1`（或改用 `bisect_right(nums, target) - 1`）。
 
-不要直接返回，要继续向左查找是否有更小的索引也是 target。
+### 2. 跳过存在性检查
 
-### 2. 两次二分查找要独立进行
-
-不能在一次二分中同时找左右边界，因为找到目标后的搜索方向不同。
-
-### 3. mid 的计算要防溢出
-
-```python
-mid = left + (right - left) // 2  # 正确
-mid = (left + right) // 2         # 可能溢出
-```
-
----
+少了 `if left == n or nums[left] != target` 这一句，示例 2 会输出 `[1,0]`：`bisect_left(nums, 6) = 1`、`bisect_left(nums, 7) - 1 = 0`，起止颠倒，区间里根本没有 6。`target` 比所有数都大时更离谱，输出 `[6,5]`——左端点已经越过数组末尾。
 
 ## 扩展思考
 
-### 1. 如果只需要找第一个 >= target 的位置？
-
-这就是 lower_bound，是找左边界问题的简化版。
-
-### 2. 如果只需要找第一个 > target 的位置？
-
-这就是 upper_bound，可以在找右边界的基础上稍作修改。
-
-### 3. 二分查找的通用模板
-
-```python
-def binary_search(nums, target):
-    left, right = 0, len(nums)  # 左闭右开区间
-    while left < right:  # 不使用 <=：左闭右开写法更统一
-        mid = left + (right - left) // 2
-        if nums[mid] == target:
-            return mid
-        elif nums[mid] < target:
-            left = mid + 1
-        else:
-            right = mid  # 收缩右边界到 mid
-    return -1 if left >= len(nums) or nums[left] != target else left
-```
-
----
-
-## 相关题目
-
-- [35. 搜索插入位置](https://leetcode.cn/problems/search-insert-position/)
-- [33. 搜索旋转排序数组](https://leetcode.cn/problems/search-in-rotated-sorted-array/)
-- [704. 二分查找](https://leetcode.cn/problems/binary-search/)
-- [278. 第一个错误的版本](https://leetcode.cn/problems/first-bad-version/)
+- 需要「严格小于 `target` 的个数」时，`lower_bound(target)` 直接就是答案；`lower_bound(target + 1)` 则是「小于等于 `target` 的个数」。同一个函数换个参数就是不同口径的计数。
+- 若数组可能含重复元素但要求「返回任意一个 `target` 的下标」，一次普通二分就够；本题要区间端点，所以必须做两次边界二分。

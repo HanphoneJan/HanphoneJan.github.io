@@ -114,6 +114,13 @@ dp[i] = max(dp[i-2] + nums[i], dp[i-1])
 **空间优化**：
 由于 `dp[i]` 只依赖于 `dp[i-1]` 和 `dp[i-2]`，可以用两个变量代替数组。
 
+```python
+prev2 = prev1 = 0                    # dp[i-2] 与 dp[i-1]，初始都对应「前 0 间」
+for x in nums:
+    prev2, prev1 = prev1, max(prev1, prev2 + x)
+return prev1
+```
+
 ---
 
 ## 完整代码实现
@@ -174,7 +181,7 @@ class Solution:
 | 暴力递归 | O(2^n) | O(n) | 递归栈空间，大量重复计算 |
 | 记忆化搜索 | O(n) | O(n) | 需要 memo 数组和递归栈 |
 | 动态规划 | O(n) | O(n) | 需要 dp 数组 |
-| 空间优化DP | O(n) | O(1) | 只用两个变量，最优 |
+| 空间优化 DP（最优） | O(n) | O(1) | 只用两个变量滚动 |
 
 ---
 
