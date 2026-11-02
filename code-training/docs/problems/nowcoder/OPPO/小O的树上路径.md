@@ -122,6 +122,23 @@ $$
 主链走的是最大值那个孩子，支链就用次大值；主链走别的孩子时，支链可以用
 最大值。
 
+```python
+for u in reversed(order):                 # 迭代后序，避免递归爆栈
+    d1 = d2 = 0                           # 孩子里 d_c 的最大值、次大值
+    top = -1                              # 最大值来自哪个孩子
+    for i, (v, w) in enumerate(children[u]):
+        d = w + down[v]
+        if d > d1:
+            d1, d2, top = d, d1, i
+        elif d > d2:
+            d2 = d
+    down[u] = max(0, d1)                  # 支链可以为空，所以和 0 取大
+    best[u] = down[u]
+    for i, (v, w) in enumerate(children[u]):
+        side = d2 if i == top else d1     # 主链走 top，支链就用次大值
+        best[u] = max(best[u], w + best[v] + side)
+```
+
 答案是 `best[1]`。
 
 ---
@@ -243,7 +260,7 @@ if __name__ == "__main__":
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 | ---- | ---------- | ---------- | ---- |
 | 枚举所有走法 | 指数级 | 指数级 | 走法数量随点数爆炸，不可行 |
-| 树形 DP（本文） | $O(n)$ | $O(n)$ | 每个点只统计一次孩子，另加两次遍历 |
+| 树形 DP（最优） | $O(n)$ | $O(n)$ | 每个点只统计一次孩子，另加两次遍历 |
 
 $n \le 10^5$，$O(n)$ 的两次遍历（建父节点、倒序转移）在 Python 里也是毫秒级。
 

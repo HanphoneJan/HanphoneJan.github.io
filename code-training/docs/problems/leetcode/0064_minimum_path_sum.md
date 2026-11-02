@@ -88,6 +88,20 @@ dp[i][j] = min(dp[i-1][j], dp[i][j-1]) + grid[i][j]
 - 第一行：只能从左边来，`dp[0][j] = dp[0][j-1] + grid[0][j]`
 - 第一列：只能从上面来，`dp[i][0] = dp[i-1][0] + grid[i][0]`
 
+```python
+dp = [[0] * n for _ in range(m)]
+for i in range(m):
+    for j in range(n):
+        if i == 0 and j == 0:
+            dp[i][j] = grid[i][j]            # 起点
+        elif i == 0:
+            dp[i][j] = dp[i][j - 1] + grid[i][j]
+        elif j == 0:
+            dp[i][j] = dp[i - 1][j] + grid[i][j]
+        else:
+            dp[i][j] = min(dp[i - 1][j], dp[i][j - 1]) + grid[i][j]
+```
+
 ---
 
 ## 完整代码实现

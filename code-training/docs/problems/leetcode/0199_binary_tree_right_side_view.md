@@ -6,14 +6,14 @@ id: 199
 url: https://leetcode.cn/problems/binary-tree-right-side-view/
 tags:
   - 树
-  - 深度优先搜索
-  - 广度优先搜索
   - 二叉树
+  - 广度优先搜索
+  - 深度优先搜索
 topics: []
 patterns:
   - ../../patterns/bfs.md
   - ../../patterns/dfs.md
-date_added: 2026-04-09
+date_added: 2026-04-18
 date_reviewed: []
 ---
 
@@ -23,259 +23,156 @@ date_reviewed: []
 
 给定一个二叉树的根节点 `root`，想象自己站在它的右侧，按照从顶部到底部的顺序，返回从右侧所能看到的节点值。
 
+**提示：**
+
+- 二叉树的节点个数的范围是 `[0, 100]`
+- `-100 <= Node.val <= 100`
+
 ## 示例
 
-**示例 1：**
-```
-输入: [1,2,3,null,5,null,4]
-输出: [1,3,4]
-解释:
-       1            <---
-     /   \
-    2     3         <---
-     \     \
-      5     4       <---
-```
+### 示例 1
 
-**示例 2：**
-```
-输入: [1,2,3,4,null,null,null,5]
-输出: [1,3,4,5]
-解释:
-       1            <---
-     /   \
-    2     3         <---
-   /
-  4               <---
- /
-5                 <---
-```
+**输入：** root = [1,2,3,null,5,null,4]
 
----
+**输出：** [1,3,4]
+
+**解释：** 第 1 层看到 1，第 2 层看到 3，第 3 层看到 4。
+
+### 示例 2
+
+**输入：** root = [1,2,3,4,null,null,null,5]
+
+**输出：** [1,3,4,5]
+
+**解释：** 第 3 层最靠右的是节点 4，第 4 层只有节点 5——它挂在了左边那条链上，但那一层只有它。
+
+### 示例 3
+
+**输入：** root = [1,null,3]
+
+**输出：** [1,3]
+
+### 示例 4
+
+**输入：** root = []
+
+**输出：** []
 
 ## 解题思路
 
-### 第一步：理解问题本质
+右视图就是**每一层最靠右的那个节点**，从上到下一层取一个。拿到它的办法有两种：按层把节点摆开、取每层最后一个（BFS）；或者先钻右子树、每个深度第一次到达时记下来（DFS）。后一种不用存整层节点，代码也更短。
 
-"右视图"意味着：**从右侧看，每层只能看到最右边的那个节点**。
+### 按层扫：每层最后一个就是答案
 
-所以问题转化为：获取二叉树每一层最右侧的节点值。
-
-### 方法一：DFS（先序遍历）
-
-用 DFS 遍历整棵树，记录每个节点所在的深度。对于每个深度，保留最后访问到的节点值。
+用两个列表交替：`cur` 是当前层的全部节点，`nxt` 收集下一层。`cur[-1]` 是本层最右，直接记进答案；扫完本层再把 `nxt` 换成新的 `cur`。
 
 ```python
-# DFS 走完整棵树，用 depth 记层号：最右边看到的就是该层最后被访问的节点
-def rightSideView(self, root: Optional[TreeNode]) -> List[int]:
-    result = []
-
-    def dfs(node, depth):
-        # 空节点直接返回，不占任何一层
-        if not node:
-            return
-        # 如果是该深度第一次访问，添加新元素
-        # 否则覆盖（后面的就是更靠右的）
-        if depth == len(result):
-            result.append(node.val)
-        else:
-            result[depth] = node.val
-        # 先左后右：右子节点后访问，所以会覆盖左子节点留在这一层的值
-        dfs(node.left, depth + 1)
-        dfs(node.right, depth + 1)
-
-    # 根节点在第 0 层
-    dfs(root, 0)
-    return result
+if not root:
+    return []
+ans, cur = [], [root]
+while cur:
+    ans.append(cur[-1].val)          # 本层最右
+    nxt = []
+    for node in cur:                 # 从左到右摊开下一层
+        if node.left: nxt.append(node.left)
+        if node.right: nxt.append(node.right)
+    cur = nxt
 ```
 
-**分析**：时间复杂度 O(n)，空间复杂度 O(h)。
+关键在于「同一层的节点在 `cur` 里是按从左到右排的」：只要按 `left`、`right` 的顺序摊开，这个顺序就自动保持，`cur[-1]` 自然是最右。
 
-### 方法二：DFS 先右后左
+### 先右后左：第一次到某个深度，就是那个深度的最右
 
-调整遍历顺序，先访问右子节点，这样每层第一个访问到的就是最右侧节点。
+换个角度想：如果 DFS **先走右子树再走左子树**，那么第一次到达深度 `d` 的节点，一定是第 `d` 层最靠右的那个——因为所有更靠左的节点要等右边整棵树走完才会被访问。
+
+于是只需要一个「已经记录到第几层」的计数器，也就是 `len(ans)`：
 
 ```python
-def rightSideView(self, root: Optional[TreeNode]) -> List[int]:
-    result = []
-
-    def dfs(node, depth):
-        # 走到空节点就回退，不产生任何记录
-        if not node:
-            return
-        # 先右后左时，每层第一次到这个深度的一定是最右侧的节点
-        # 只在第一次填，后面的（更靠左的）直接跳过
-        if depth == len(result):
-            result.append(node.val)
-        # 先右后左
-        dfs(node.right, depth + 1)
-        dfs(node.left, depth + 1)
-
-    # 从根的第 0 层开始
-    dfs(root, 0)
-    return result
+def dfs(node, depth):
+    if not node:
+        return
+    if depth == len(ans):            # 这个深度第一次到达
+        ans.append(node.val)
+    dfs(node.right, depth + 1)       # 先右：保证首次到达的是最右
+    dfs(node.left, depth + 1)
 ```
 
-**分析**：每层只记录第一个访问的节点，代码更简洁。
+`depth == len(ans)` 的意思是「`ans` 里还没有第 `depth` 层」。空树进不去 `dfs`，`ans` 自然是空列表，不用额外判。
 
-### 方法三：BFS 层序遍历
+### 推演：示例 2 的 DFS
 
-BFS 天然按层遍历，对于每一层，最后一个出队的节点就是最右侧的节点。
+层序 `[1,2,3,4,null,null,null,5]` 还原出的树是：
 
----
+```
+      1
+     / \
+    2   3
+   /
+  4
+ /
+5
+```
+
+3 没有孩子，所以第 3 层只有左边那条链上的 4。
+
+| 访问顺序 | 深度 | `len(ans)` | 是否记录 | `ans` |
+| --- | --- | --- | --- | --- |
+| 1 | 0 | 0 | 是 | [1] |
+| 3 | 1 | 1 | 是 | [1,3] |
+| 2 | 1 | 2 | 否（第 1 层已有） | [1,3] |
+| 4 | 2 | 2 | 是 | [1,3,4] |
+| 5 | 3 | 3 | 是 | [1,3,4,5] |
+
+第 4 层的 5 挂在最左边的链上，但那一层只有它一个，所以它也是「最右」。走完 3 这一支再回到 2 时，深度 1 已经记录过，`depth == len(ans)` 不成立，直接跳过——这就是「先右后左」省下的判断。
 
 ## 完整代码实现
 
 ```python
 from typing import List, Optional
-from collections import deque
+
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
 
 class Solution:
-    """
-    二叉树的右视图 - BFS层序遍历
-
-    核心思路：
-    本质上是返回每一层最右侧的节点。
-    使用 BFS 层序遍历，对于每一层，最后一个出队的节点就是该层最右侧的节点。
-
-    时间复杂度：O(n)
-    空间复杂度：O(w) - w 为树的最大宽度
-    """
-
     def rightSideView(self, root: Optional[TreeNode]) -> List[int]:
-        if not root:
-            return []
+        ans = []
 
-        result = []
-        queue = deque([root])
+        def dfs(node: Optional[TreeNode], depth: int) -> None:
+            if not node:
+                return
+            # 这个深度第一次到达：当前节点就是这一层最右
+            if depth == len(ans):
+                ans.append(node.val)
+            dfs(node.right, depth + 1)   # 先右，保证首次到达的是最右
+            dfs(node.left, depth + 1)
 
-        while queue:
-            current_level_size = len(queue)
-
-            for i in range(current_level_size):
-                node = queue.popleft()
-
-                # 当前层的最后一个节点，加入结果
-                if i == current_level_size - 1:
-                    result.append(node.val)
-
-                if node.left:
-                    queue.append(node.left)
-                if node.right:
-                    queue.append(node.right)
-
-        return result
+        dfs(root, 0)
+        return ans
 ```
-
----
-
-## 示例推演
-
-以 `[1,2,3,null,5,null,4]` 为例：
-
-```
-       1
-     /   \
-    2     3
-     \     \
-      5     4
-```
-
-**BFS 过程**：
-
-| 步骤 | 队列内容 | 当前层大小 | 出队节点 | 是否最右 | 结果 |
-|------|----------|------------|----------|----------|------|
-| 初始 | [1] | - | - | - | [] |
-| 第1层 | [1] | 1 | 1 | 是 | [1] |
-| 第2层 | [2,3] | 2 | 2 | 否 | [1] |
-| | | | 3 | 是 | [1,3] |
-| 第3层 | [5,4] | 2 | 5 | 否 | [1,3] |
-| | | | 4 | 是 | [1,3,4] |
-
-最终结果：`[1, 3, 4]`
-
----
 
 ## 复杂度分析
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
-|------|-----------|-----------|------|
-| DFS | O(n) | O(h) | h 为树高度，递归栈空间 |
-| DFS（先右后左） | O(n) | O(h) | 每层只记录第一个 |
-| BFS | O(n) | O(w) | w 为树的最大宽度 |
-
-**注意**：对于平衡二叉树，h = O(log n)，w = O(n)；对于链状树，h = O(n)，w = O(1)。
-
----
+| --- | --- | --- | --- |
+| 按层 BFS | O(n) | O(w) | `w` 是树的最大宽度，宽树上要存整层节点 |
+| 先右后左 DFS（最优） | O(n) | O(h) | `h` 是树高，只压递归栈；平衡树 O(log n)，链状树 O(n) |
 
 ## 易错点总结
 
-### 1. BFS 中判断最右节点的时机
+### 1. 以为右视图就是「一路走右孩子」
 
-**错误**：在加入子节点时判断
+沿着 `root.right` 走到底，示例 2 会输出 `[1,3]`：3 没有右孩子就停了，而题目要的是每一层的最右——第 3 层是 3 左子树里的 4，第 4 层是最左边那条链上的 5。右视图是「每层取一个」，不是「一条路径」。
 
-**正确**：在出队时判断是否是当前层最后一个
+### 2. DFS 先左后右，却还写 `depth == len(ans)`
 
-```python
-# current_level_size 在进入循环前就固定下来，这一层新加的孩子不会算进来
-for i in range(current_level_size):
-    node = queue.popleft()
-    if i == current_level_size - 1:  # 正确：判断是否是最后一个
-        result.append(node.val)
-```
-
-### 2. DFS 先左后右 vs 先右后左
-
-```python
-# 先右后左：每层第一个就是最右，代码更简洁
-dfs(node.right, depth + 1)
-dfs(node.left, depth + 1)
-
-# 先左后右：右节点后访问，得用「覆盖」保住这一层最后一个
-dfs(node.left, depth + 1)
-dfs(node.right, depth + 1)
-```
-
-### 3. 空树处理
-
-```python
-# 空树没有层，返回空列表；题目约定的返回类型是 List[int]，不是 None
-if not root:
-    return []  # 不是 return None
-```
-
----
+先左后右时，每个深度第一次到达的是**最左**节点。示例 1 会输出 `[1,2,5]`（正确 `[1,3,4]`），示例 2 会输出 `[1,2,4,5]`。要么把两行递归换成先 `right` 后 `left`，要么保留先左后右但改成「每层覆盖」：`if depth == len(ans): append` 换成 `ans[depth] = node.val`。
 
 ## 扩展思考
 
-### 1. 求左视图？
-
-与右视图类似，每层取第一个节点即可：
-
-```python
-# 左视图只要每层出队的第一个节点，所以判断条件换成 i == 0
-if i == 0:  # 第一个节点
-    result.append(node.val)
-```
-
-### 2. 求俯视图？
-
-这是 [987. 二叉树的垂序遍历](https://leetcode.cn/problems/vertical-order-traversal-of-a-binary-tree/) 的简化版。
-
-需要记录每个节点的水平位置（列号），按列号分组，每列取最上面的节点。
-
-### 3. 相关题目
-
-- [102. 二叉树的层序遍历](https://leetcode.cn/problems/binary-tree-level-order-traversal/)
-- [107. 二叉树的层序遍历 II](https://leetcode.cn/problems/binary-tree-level-order-traversal-ii/)
-- [103. 二叉树的锯齿形层序遍历](https://leetcode.cn/problems/binary-tree-zigzag-level-order-traversal/)
-- [987. 二叉树的垂序遍历](https://leetcode.cn/problems/vertical-order-traversal-of-a-binary-tree/)
-
----
-
-## 相关题目
-
-- [102. 二叉树的层序遍历](https://leetcode.cn/problems/binary-tree-level-order-traversal/)
-- [103. 二叉树的锯齿形层序遍历](https://leetcode.cn/problems/binary-tree-zigzag-level-order-traversal/)
-- [107. 二叉树的层序遍历 II](https://leetcode.cn/problems/binary-tree-level-order-traversal-ii/)
-- [116. 填充每个节点的下一个右侧节点指针](https://leetcode.cn/problems/populating-next-right-pointers-in-each-node/)
+- 把「每层一个值」换成「每层一串值」，就是 [102. 二叉树的层序遍历](https://leetcode.cn/problems/binary-tree-level-order-traversal/)；BFS 骨架完全一样，只是收集方式变了。
+- 把 `cur[-1]` 换成 `cur[0]`、先左后右换成先右后左，就是左视图——两题只差一个端点。

@@ -7,9 +7,11 @@ url: https://leetcode.cn/problems/search-insert-position/
 tags:
   - 数组
   - 二分查找
+topics: []
 patterns:
   - ../../patterns/search.md
 date_added: 2026-03-25
+date_reviewed: []
 ---
 
 # 35. 搜索插入位置
@@ -84,6 +86,19 @@ class Solution:
    - `nums[mid] >= target`：target 在左半区（或已找到），`right = mid`
    - `nums[mid] < target`：target 在右半区，`left = mid + 1`
 3. 循环结束 `left == right`，返回 left
+
+```python
+left, right = 0, len(nums)       # 左闭右开：right 是取不到的上界
+while left < right:
+    mid = (left + right) // 2
+    if nums[mid] >= target:
+        right = mid              # mid 可能就是答案，不能跳过
+    else:
+        left = mid + 1           # mid 一定不是答案，可以跳过
+return left
+```
+
+`right = mid` 而不是 `mid - 1`，是因为这一格可能就是「第一个 `>= target` 的位置」；`left = mid + 1` 则因为 `nums[mid] < target` 已经排除了它自己。
 
 ---
 
@@ -171,37 +186,17 @@ class Solution:
 
 ### 1. 右边界初始化与循环写法要自洽
 
-本题用**左闭右开**写法：`right = n`，循环条件 `left < right`，收缩时 `right = mid`。
-循环收在 `left == right` 处，这个下标就是第一个 `>= target` 的位置：
+本题用**左闭右开**写法：`right = n`，循环条件 `left < right`，收缩时 `right = mid`。循环收在 `left == right` 处，这个下标就是第一个 `>= target` 的位置。
 
-```python
-# 左闭右开：left 是候选答案，right 是「取不到」的上界
-left, right = 0, n
-while left < right:
-    mid = left + (right - left) // 2
-    if nums[mid] >= target:
-        right = mid
-    else:
-        left = mid + 1
-return left  # 此时 left == right，就是插入位置
-```
+混用两种写法的症状很直接：保留 `right = n`、却把循环条件写成 `left <= right`，当 `left` 走到 `n` 时 `mid` 也会取到 `n`，下一行 `nums[n]` 立刻抛 `IndexError`。要么整套改成闭区间（`right = n - 1`、`<=`、`right = mid - 1`），要么整套保持左闭右开，不要只改其中一处。
 
-如果改成闭区间 `right = n - 1`、`while left <= right`，循环结束时 `left = right + 1`，
-返回的仍然是 `left`，但中间所有边界都要跟着改。**两种写法不能混用**，
-混用才会出现少算一格或多算一格。
+### 2. 右边界保留 `n - 1`，却还写 `right = mid`
 
-### 2. 注意边界条件
+左闭右开写法要求 `right` 是「取不到的上界」，初值必须是 `n`。改成 `n - 1` 后，最后一个元素永远进不了 `mid`：`nums = [1,3,5,6]`、`target = 7` 时，`left` 最多走到 3 就停（循环条件 `left < right` 不再成立），返回 3，而正确答案是 4。
 
-- `target` 比所有元素都小：返回 0
-- `target` 比所有元素都大：返回 `len(nums)`
-- `target` 等于某个元素：返回该元素的索引
+### 3. 把 `right = mid` 写成 `right = mid - 1`
 
-### 3. mid 的计算
-
-```python
-# 等价于 (left + right) // 2，但避免两数先相加时溢出
-mid = left + (right - left) // 2  # 防止溢出
-```
+这一格可能就是答案，减一会把它排除掉。`nums = [1,3,5,6]`、`target = 5` 时，第一轮 `mid = 2` 命中 5，写成 `right = 1` 后区间缩到 `[0,1]`，最终返回 1，而正确答案是 2。`nums[mid] < target` 那一侧才可以 `+1`，因为那个 `mid` 已经被证明不是答案。
 
 ---
 
@@ -214,7 +209,7 @@ mid = left + (right - left) // 2  # 防止溢出
 
 ### 2. 如果数组中有重复元素？
 
-本题返回任意一个 target 的位置都可以，如果要返回最左/最右的位置，需要修改二分查找逻辑。
+这份二分收在「第一个 `>= target` 的位置」，也就是最左边的那一个，不会因为重复而改变。若题目改要求最后一个等于 `target` 的位置，判定要换成 `nums[mid] <= target` 时收左界，并在循环结束后回退一位检查。
 
 ---
 

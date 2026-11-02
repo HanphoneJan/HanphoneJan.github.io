@@ -6,11 +6,12 @@ id: 21
 url: https://leetcode.cn/problems/merge-two-sorted-lists/
 tags:
   - 链表
+  - 双指针
   - 递归
 topics: []
 patterns:
-  - ../../patterns/recursion.md
-date_added: 2026-03-20
+  - ../../patterns/two_pointers.md
+date_added: 2026-03-23
 date_reviewed: []
 ---
 
@@ -18,43 +19,97 @@ date_reviewed: []
 
 ## 题目描述
 
-将两个升序链表合并为一个新的升序链表并返回。新链表是通过拼接给定的两个链表的所有节点组成的。
+将两个升序链表合并为一个新的**升序**链表并返回。新链表是通过拼接给定的两个链表的所有节点组成的。
 
-**示例：**
-```
-输入：list1 = [1,2,4], list2 = [1,3,4]
-输出：[1,1,2,3,4,4]
+**提示：**
 
-输入：list1 = [], list2 = []
-输出：[]
-
-输入：list1 = [], list2 = [0]
-输出：[0]
-```
-
-**约束：**
 - 两个链表的节点数目范围是 `[0, 50]`
 - `-100 <= Node.val <= 100`
-- `list1` 和 `list2` 均按非递减顺序排列
+- `list1` 和 `list2` 均按**非递减顺序**排列
 
----
+## 示例
+
+### 示例 1
+
+**输入：** list1 = [1,2,4], list2 = [1,3,4]
+
+**输出：** [1,1,2,3,4,4]
+
+### 示例 2
+
+**输入：** list1 = [], list2 = []
+
+**输出：** []
+
+### 示例 3
+
+**输入：** list1 = [], list2 = [0]
+
+**输出：** [0]
 
 ## 解题思路
 
-### 问题本质
+两条链各自有序，所以每次只需要比较**两边的当前头节点**，把较小的那个接到结果链尾，然后让它那一侧前进一格。某个链表先空掉时，另一条剩下的部分整段接上去就完事了。
 
-两个链表都已升序，要求将它们合并成一个新的升序链表。由于两条链本身有序，只需每次比较头节点，取较小的节点接到结果链表即可（归并思想）。
+### 哑结点省掉头节点的特判
 
-### 方法一：迭代（双指针，推荐）
-
-**思路**：使用哑节点 `dummy` 和尾指针 `cur`，每次从 `list1`、`list2` 的头部取较小的节点接到 `cur.next`，再将对应指针后移。任意一条链表遍历结束后，将另一条链表剩余部分直接接到 `cur` 尾部。
+结果链的第一个节点是「两边较小的那个」，如果不用哑结点，就得先判断哪条链非空、再单独处理第一个节点。加一个虚拟头 `dummy`，`cur` 从它出发，之后的每一步都是同一件事：`cur.next = 较小的节点`、`cur = cur.next`。
 
 ```python
+dummy = ListNode()
+cur = dummy
+while list1 and list2:
+    if list1.val <= list2.val:
+        cur.next = list1
+        list1 = list1.next
+    else:
+        cur.next = list2
+        list2 = list2.next
+    cur = cur.next
+```
+
+`<=` 保证了相等时先取 `list1`——题目只要求非递减，顺序不影响正确性，但固定一种让结果可复现。
+
+### 一条链空了就整段接上
+
+```python
+cur.next = list1 if list1 else list2
+return dummy.next
+```
+
+循环结束时至少有一条链为空，另一条**本身就是有序的**，直接接到 `cur` 后面即可，不需要再逐个搬。这一步少写，结果会丢掉尾部的一截。
+
+返回的是 `dummy.next`，不是 `dummy`——哑结点只是一个占位，不属于结果。
+
+### 推演：示例 1
+
+`list1 = [1,2,4]`，`list2 = [1,3,4]`。
+
+| 步骤 | 比较 | 接上 | 结果链 | 剩余 |
+| --- | --- | --- | --- | --- |
+| 1 | 1 ≤ 1 | list1 的 1 | 1 | l1=[2,4], l2=[1,3,4] |
+| 2 | 2 > 1 | list2 的 1 | 1,1 | l1=[2,4], l2=[3,4] |
+| 3 | 2 ≤ 3 | list1 的 2 | 1,1,2 | l1=[4], l2=[3,4] |
+| 4 | 4 > 3 | list2 的 3 | 1,1,2,3 | l1=[4], l2=[4] |
+| 5 | 4 ≤ 4 | list1 的 4 | 1,1,2,3,4 | l1=None, l2=[4] |
+| 收尾 | l1 空 | 整段接上 l2 | 1,1,2,3,4,4 | — |
+
+## 完整代码实现
+
+```python
+from typing import Optional
+
+
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+
 class Solution:
     def mergeTwoLists(self, list1: Optional[ListNode], list2: Optional[ListNode]) -> Optional[ListNode]:
-        dummy = ListNode(0)
+        dummy = ListNode()          # 哑结点，省掉「第一个节点」的特判
         cur = dummy
-
         while list1 and list2:
             if list1.val <= list2.val:
                 cur.next = list1
@@ -63,153 +118,30 @@ class Solution:
                 cur.next = list2
                 list2 = list2.next
             cur = cur.next
-
-        cur.next = list1 if list1 else list2
+        cur.next = list1 if list1 else list2   # 剩下的那段本身有序，整段接上
         return dummy.next
 ```
-
-**说明**：利用了两链表已有的有序性，避免了全量排序。使用哑节点能统一头节点处理逻辑，也便于构建链表。
-
-### 方法二：递归
-
-**思路**：比较头节点，较小的节点的 `next` 应该是「剩余两链表合并」的结果。递归到其中一条为空时返回另一条链表。
-
-```python
-class Solution:
-    def mergeTwoLists(self, list1, list2):
-        if not list1:
-            return list2
-        if not list2:
-            return list1
-        if list1.val <= list2.val:
-            list1.next = self.mergeTwoLists(list1.next, list2)
-            return list1
-        else:
-            list2.next = self.mergeTwoLists(list1, list2.next)
-            return list2
-```
-
-**取舍**：
-- **优点**：代码极简，能直观体现归并递归思路
-- **缺点**：递归栈深度等于合并后的链表长度，链表较长时有栈溢出风险；复用了部分节点（也等价于原地拼接指针）
-
----
-
-## 完整代码实现
-
-```python
-from typing import Optional
-
-class ListNode:
-    def __init__(self, val=0, next=None):
-        self.val = val
-        self.next = next
-
-class Solution:
-    def mergeTwoLists(self, list1: Optional[ListNode], list2: Optional[ListNode]) -> Optional[ListNode]:
-        # 哑节点：统一处理头节点，避免特判
-        dummy = ListNode(0)
-        cur = dummy
-
-        while list1 and list2:
-            if list1.val <= list2.val:
-                cur.next = list1        # 将 list1 的当前节点接入结果
-                list1 = list1.next      # list1 指针后移
-            else:
-                cur.next = list2        # 将 list2 的当前节点接入结果
-                list2 = list2.next      # list2 指针后移
-            cur = cur.next              # 结果链表末尾后移
-
-        # 某一链表已空，将另一链表剩余部分直接接上
-        cur.next = list1 if list1 else list2
-
-        return dummy.next  # 哑节点的下一个才是真实头节点
-```
-
----
-
-## 示例推演
-
-以 `list1 = [1, 2, 4]`，`list2 = [1, 3, 4]` 为例，逐步追踪：
-
-**初始状态：**
-```
-dummy -> (空)
-cur = dummy
-list1: 1 -> 2 -> 4
-list2: 1 -> 3 -> 4
-```
-
-**第 1 次循环：** `list1.val=1`，`list2.val=1`，1 <= 1，选 list1
-```
-dummy -> 1
-cur 移到 1
-list1: 2 -> 4
-list2: 1 -> 3 -> 4
-```
-
-**第 2 次循环：** `list1.val=2`，`list2.val=1`，2 > 1，选 list2
-```
-dummy -> 1 -> 1
-cur 移到第二个 1
-list1: 2 -> 4
-list2: 3 -> 4
-```
-
-**第 3 次循环：** `list1.val=2`，`list2.val=3`，2 <= 3，选 list1
-```
-dummy -> 1 -> 1 -> 2
-cur 移到 2
-list1: 4
-list2: 3 -> 4
-```
-
-**第 4 次循环：** `list1.val=4`，`list2.val=3`，4 > 3，选 list2
-```
-dummy -> 1 -> 1 -> 2 -> 3
-cur 移到 3
-list1: 4
-list2: 4
-```
-
-**第 5 次循环：** `list1.val=4`，`list2.val=4`，4 <= 4，选 list1
-```
-dummy -> 1 -> 1 -> 2 -> 3 -> 4
-cur 移到第一个 4
-list1: (空)
-list2: 4
-```
-
-**退出循环：** list1 为空，将 list2 剩余部分（节点 4）接上
-```
-dummy -> 1 -> 1 -> 2 -> 3 -> 4 -> 4
-```
-
-返回 `dummy.next`，得到 `[1, 1, 2, 3, 4, 4]`，正确。
-
----
 
 ## 复杂度分析
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
-|------|-----------|-----------|------|
-| 迭代（双指针） | O(n+m) | O(1) | 只用常数额外指针，复用已有节点 |
-| 递归 | O(n+m) | O(n+m) | 时间线性，空间主要为递归栈深度 |
+| --- | --- | --- | --- |
+| 迭代 + 哑结点（最优） | O(n + m) | O(1) | 只移动指针，复用原有节点 |
+| 递归 | O(n + m) | O(n + m) | 每层一个栈帧，长链表有溢出风险 |
 
-其中 n、m 分别为两个链表的节点数。
-
----
+`n`、`m` 分别是两条链的节点数。
 
 ## 易错点总结
 
-- **忘记返回 `dummy.next`**：`dummy` 是哑节点，真实头节点是 `dummy.next`。
-- **循环结束未接尾**：其中一条链表为空后，另一条剩余链表仍然有序，直接赋给 `cur.next` 即可，不能忘记这一步。
-- **递归栈深度**：极长链表时递归版可能栈溢出，更推荐用迭代版。
+### 1. 返回 `dummy` 而不是 `dummy.next`
 
----
+`return dummy` 会把哑结点也带进结果：示例 1 输出 `[0,1,1,2,3,4,4]`，多了一个值为 0 的头节点。`dummy` 的值是构造函数默认的 0，看起来像数据，其实只是占位。
+
+### 2. 循环结束后忘记接尾
+
+少了 `cur.next = list1 if list1 else list2`，示例 1 只输出 `[1,1,2,3,4]`——最后那个 4 被丢掉了。循环的退出条件是「有一边空了」，另一边剩下的节点还没搬。
 
 ## 扩展思考
 
-- **题目 23（合并 K 个升序链表）** 是本题的扩展：将 K 个有序链表合并，可以用分治（两两调用本题的合并函数）或最小堆实现。
-- **归并排序的 Merge 步骤** 和本题完全一致：归并排序的合并阶段，就是把两个有序数组（或链表）合并成一个有序序列。
-- **迭代 vs 递归：** 递归代码更简洁，迭代代码更高效（无栈开销）。理解两种写法，可以加深对链表操作和递归思维的认识。
+- 递归写法是 `l1.next = mergeTwoLists(l1.next, l2)`，代码四行，但栈深度等于 `n + m`。
+- 合并 k 条有序链表时，逐个合并是 O(k²n)，用堆或分治两两合并可以降到 O(kn log k)。

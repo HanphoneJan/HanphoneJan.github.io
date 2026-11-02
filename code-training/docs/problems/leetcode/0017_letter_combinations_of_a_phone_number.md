@@ -8,214 +8,168 @@ tags:
   - 字符串
   - 回溯
   - 递归
-  - 哈希表
+topics: []
 patterns:
   - ../../patterns/backtracking.md
-  - ../../patterns/hash_map.md
   - ../../patterns/recursion.md
 date_added: 2026-03-25
+date_reviewed: []
 ---
 
 # 17. 电话号码的字母组合
 
 ## 题目描述
 
-给定一个仅包含数字 `2-9` 的字符串，返回所有它能表示的字母组合。答案可以按 **任意顺序** 返回。
+给定一个仅包含数字 `2-9` 的字符串，返回它能表示的所有字母组合。答案可以按任意顺序返回。
 
-给出数字到字母的映射如下（与电话按键相同）。注意 1 不对应任何字母。
+数字与字母的对应关系：
 
-```
-2: abc
-3: def
-4: ghi
-5: jkl
-6: mno
-7: pqrs
-8: tuv
-9: wxyz
+```text
+2: abc    3: def    4: ghi    5: jkl
+6: mno    7: pqrs   8: tuv    9: wxyz
 ```
 
 ## 示例
 
-**示例 1：**
-```
-输入：digits = "23"
-输出：["ad","ae","af","bd","be","bf","cd","ce","cf"]
-```
+### 示例 1
 
-**示例 2：**
-```
-输入：digits = ""
-输出：[]
-```
+**输入：** digits = "23"
+**输出：** ["ad","ae","af","bd","be","bf","cd","ce","cf"]
 
-**示例 3：**
-```
-输入：digits = "2"
-输出：["a","b","c"]
-```
+### 示例 2
 
----
+**输入：** digits = ""
+**输出：** []
+
+### 示例 3
+
+**输入：** digits = "2"
+**输出：** ["a","b","c"]
 
 ## 解题思路
 
-### 第一步：理解问题本质
+### 路线：每一位各盖一个字母
 
-这是一个**组合问题**，需要枚举所有可能的字母组合。每个数字对应多个字母，需要将所有可能的组合都列举出来。
+答案是各位字母集合的笛卡尔积：第一位有 3 或 4 种盖法，第二位又各有 3 或 4 种，乘起来就是全部组合。每一位互不影响，也没有「选过的不能再用」这类约束，所以不需要排序、去重或剪枝。
 
-### 方法一：回溯（递归构建）
+整题只有一个决定：第 `i` 位现在该盖哪个字母。把「盖到第几位」写成递归参数，函数返回时把这一位换下一个字母继续试，走完 `n` 位就收一个答案。
 
-**思路**：按位枚举每一位的字母，再把所有组合拼起来。
+### 手法：逐位盖章
+
+`path` 一开始就开成 `n` 个空位，`dfs(i)` 负责给第 `i` 位盖章：
+
+1. **落章**：`path[i] = c`；
+2. **递归**：`dfs(i + 1)`，交给下一位；
+3. **换下一个字母**：循环自然推进到 `MAPPING[数字]` 的下一个字符。
+
+```python
+MAPPING = ["", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"]
+
+def dfs(i: int) -> None:
+    if i == n:                       # 每一位都盖完了
+        ans.append(''.join(path))
+        return
+    for c in MAPPING[int(digits[i])]:
+        path[i] = c                  # ① 落章
+        dfs(i + 1)                   # ② 交给下一位
+```
+
+这里**不需要撤销**：`path[i]` 是一个固定槽位，下一轮循环直接用新字母覆盖它，不会留下上一位的残值。只有把 `path` 写成会增长的列表、靠 `append` / `pop` 维护时，才需要显式弹出。
+
+`digits` 为空时，`dfs(0)` 会立刻命中 `i == n`，收下一个空串 `""`；而答案应当是空列表，所以入口要先单独挡掉。
+
+### 另一条写法：交给 `itertools.product`
+
+同一个笛卡尔积也可以不写递归，让标准库在 C 层展开：
 
 ```python
 from itertools import product
 
-
-class Solution:
-    def letterCombinations(self, digits: str) -> List[str]:
-        if not digits:
-            return []
-
-        mapping = ["", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"]
-
-        # 第 i 位有 len(mapping[int(digits[i])]) 种选择，逐位做笛卡尔积
-        choices = [mapping[int(d)] for d in digits]
-        return [''.join(combo) for combo in product(*choices)]
+choices = [MAPPING[int(d)] for d in digits]
+return [''.join(combo) for combo in product(*choices)]
 ```
 
-**缺点**：组合数是各位字母数之积（`2^n` 起步），位数一多就爆炸，而且每一位都要重新拼一遍字符串。
+两条路生成的组合完全相同、顺序也相同（都是按映射表的字符顺序做笛卡尔积）。递归版多一层函数调用，但每一步都能停下来做判断；本题没有可剪枝的地方，`product` 反而更短。要按条件筛掉部分组合时，递归版才有优势。
 
-### 方法二：回溯
+### 推演：`digits = "23"`
 
-**核心洞察**：
-- 这是一个经典的回溯/DFS 问题
-- 逐位处理数字，对每个数字尝试所有可能的字母
-- 递归处理下一位，直到处理完所有数字
+`n = 2`，`MAPPING[2] = "abc"`、`MAPPING[3] = "def"`。按「①落章 ②递归」走一遍：
 
-**回溯三要素**：
-1. **路径**：当前已构建的字母组合（path）
-2. **选择列表**：当前数字对应的所有字母
-3. **终止条件**：path 长度等于 digits 长度
+```text
+dfs(0)：第 0 位取 'a'
+  ① path = ['a', '']
+  ② dfs(1)：第 1 位依次取 d、e、f
+       ① path = ['a','d'] → 收 "ad"
+       ① path = ['a','e'] → 收 "ae"
+       ① path = ['a','f'] → 收 "af"
+dfs(0)：第 0 位取 'b'
+  ① path = ['b', '']
+  ② dfs(1)：收 "bd"、"be"、"bf"
+dfs(0)：第 0 位取 'c'
+  ② dfs(1)：收 "cd"、"ce"、"cf"
+```
 
----
+`ans` 依次得到 `["ad","ae","af","bd","be","bf","cd","ce","cf"]`，与示例一致。
 
 ## 完整代码实现
 
 ```python
 from typing import List
 
-# 电话号码到字母的映射
 MAPPING = ["", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"]
 
+
 class Solution:
-    """
-    电话号码的字母组合 - 回溯算法
-
-    核心思想：
-    每个数字对应多个字母，需要枚举所有可能的字母组合。
-    使用回溯（DFS）逐位选择字母，构建所有组合。
-
-    回溯框架：
-    1. 路径：当前已构建的字母组合（path）
-    2. 选择列表：当前数字对应的所有字母
-    3. 终止条件：path 长度等于 digits 长度
-
-    时间复杂度：O(3^m * 4^n)，m 是映射到3个字母的数字个数，n 是映射到4个字母的数字个数
-    空间复杂度：O(m+n)，递归深度
-    """
-
     def letterCombinations(self, digits: str) -> List[str]:
         n = len(digits)
         if n == 0:
             return []
 
         ans = []
-        path = [''] * n  # 预分配空间，存储当前路径
+        path = [''] * n                  # 固定 n 个槽位，逐位覆盖
 
-        def dfs(num: int):
-            """
-            处理第 num 个数字
-            num: 当前处理的数字索引（0-based）
-            """
-            if num == n:
-                # 所有数字都处理完毕，得到一个完整组合
+        def dfs(i: int) -> None:
+            if i == n:
                 ans.append(''.join(path))
                 return
-
-            # 遍历当前数字对应的所有字母
-            for word in MAPPING[int(digits[num])]:
-                path[num] = word      # 做选择
-                dfs(num + 1)          # 递归处理下一个数字
-                # 撤销选择（回溯）：path[num] 会被覆盖，无需显式恢复
+            for c in MAPPING[int(digits[i])]:
+                path[i] = c              # ① 落章
+                dfs(i + 1)               # ② 交给下一位
 
         dfs(0)
         return ans
 ```
 
----
-
-## 示例推演
-
-以 `digits = "23"` 为例：
-
-**MAPPING**：
-- `MAPPING[2] = "abc"`
-- `MAPPING[3] = "def"`
-
-**DFS 过程**：
-
-```
-dfs(0): 处理 '2'
-  ├─ 选 'a': path=['a', '']
-  │   └─ dfs(1): 处理 '3'
-  │       ├─ 选 'd': path=['a', 'd'] → 得到 "ad"
-  │       ├─ 选 'e': path=['a', 'e'] → 得到 "ae"
-  │       └─ 选 'f': path=['a', 'f'] → 得到 "af"
-  ├─ 选 'b': path=['b', '']
-  │   └─ dfs(1): 处理 '3'
-  │       ├─ 选 'd': path=['b', 'd'] → 得到 "bd"
-  │       ├─ 选 'e': path=['b', 'e'] → 得到 "be"
-  │       └─ 选 'f': path=['b', 'f'] → 得到 "bf"
-  └─ 选 'c': path=['c', '']
-      └─ dfs(1): 处理 '3'
-          ├─ 选 'd': path=['c', 'd'] → 得到 "cd"
-          ├─ 选 'e': path=['c', 'e'] → 得到 "ce"
-          └─ 选 'f': path=['c', 'f'] → 得到 "cf"
-```
-
-**结果**：`["ad","ae","af","bd","be","bf","cd","ce","cf"]`
-
----
-
 ## 复杂度分析
 
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
-|------|-----------|-----------|------|
-| **回溯（最优）** | **O(3^m × 4^n)** | **O(m+n)** | m是3字母数字个数，n是4字母数字个数 |
+| --- | --- | --- | --- |
+| 回溯（最优） | O(n · 4^n) | O(n) | 最多 4^n 个答案，每个答案拼接一次要 O(n)；递归深度为 n |
+| `itertools.product` | O(n · 4^n) | O(n · 4^n) | 组合由标准库生成，但结果列表本身要占满输出规模 |
 
----
+指数来自答案规模，不是实现选择：任何写法都要把 `4^n` 个长度为 `n` 的串交出来。
 
 ## 易错点总结
 
-1. **空输入返回 `[]` 而不是 `[""]`**：`digits` 为空时没有任何组合，返回 `[""]` 会让页面多出一个空字符串，答案长度直接错。
-2. **数字到字母的映射表下标错位**：`digits` 里是字符 `'2'`~`'9'`，映射表要按 `int(d)` 取，不能直接用 `d` 当列表下标（字符不能索引列表）。
+### 1. `path` 用空列表起手，却按下标赋值
 
----
+写成 `path = []` 再执行 `path[i] = c`，第一个字符就抛 `IndexError: list assignment index out of range`。`path` 的长度必须一开始就是 `n`（`[''] * n`），因为这里的下标表示「第几位」，不是「追加到末尾」。
+
+### 2. 空输入返回了 `[""]`
+
+`digits = ""` 时如果不提前返回，`dfs(0)` 会命中 `i == n` 并把 `''.join([])` 收进答案，结果是 `[""]` 而不是 `[]`。长度差 1，判题直接判错。
+
+### 3. 映射表用字符当下标
+
+`MAPPING[digits[i]]` 里的 `digits[i]` 是字符 `'2'`，列表下标必须是整数，会抛 `TypeError: list indices must be integers or slices, not str`。要写成 `MAPPING[int(digits[i])]`。
 
 ## 扩展思考
 
-### 1. 如果要求按字典序返回？
-
-回溯天然按字典序生成，当前实现已经满足。
-
-### 2. 如果数字可以重复按？
-
-修改 MAPPING，或者添加额外的映射逻辑。
-
----
+- **顺序**：回溯按 `MAPPING` 的字符顺序展开，结果天然是字典序；换成 `product` 也一样。题目允许任意顺序，但如果判题改成要求字典序，这两份代码都不用改。
+- **有非法数字时**：若输入可能含 `0` 或 `1`，它们的字母表是空串，`for` 循环一次都不进，该分支自然消失；若希望整体判为无解，则要在入口另加检查。
 
 ## 相关题目
 
-- [39. 组合总和](https://leetcode.cn/problems/combination-sum/)
-- [46. 全排列](https://leetcode.cn/problems/permutations/)
-- [78. 子集](https://leetcode.cn/problems/subsets/)
+- [39. 组合总和](0039_combination_sum.md)：同样逐位做选择，但候选可以重复使用，需要额外的起点参数
+- [46. 全排列](0046_permutations.md)：每一位的选择集相同，且要排除已用过的元素
+- [22. 括号生成](0022_generate_parentheses.md)：逐位盖章，但每一步的合法选择由前面的状态决定

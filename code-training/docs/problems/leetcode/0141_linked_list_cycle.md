@@ -158,15 +158,14 @@ class Solution:
 | 解法 | 时间复杂度 | 空间复杂度 | 说明 |
 |------|-----------|-----------|------|
 | 哈希表 | O(n) | O(n) | 直观易懂 |
-| 快慢指针（Floyd 判圈） | O(n) | O(1) | 推荐做法 |
+| 快慢指针（Floyd 判圈）（最优） | O(n) | O(1) | 只用两个指针，不需要额外容器 |
 
 ---
 
 ## 易错点总结
 
-- **循环条件**：要用 `while fast and fast.next`，而不是 `while fast.next`，否则链表为空或只有一个节点时可能出错。
-- **比较的是引用**：要比较节点对象本身（`slow == fast`），而不是 `slow.val == fast.val`。
-- **快指针必须走两步**：只有速度差才能让快指针在环内追上慢指针。
+- **循环条件写成 `while fast.next`**：漏掉 `fast` 自身的非空判断。`head = [1,2]`、`pos = -1`（无环）时，第二轮 `fast` 已经是 `None`，再取 `fast.next` 直接抛 `AttributeError: 'NoneType' object has no attribute 'next'`。
+- **比较的是引用**：要比较节点对象本身（`slow is fast`），而不是 `slow.val == fast.val`。值相等的两个不同节点会让无环链表误判成有环，例如 `[1,1]`、`pos = -1`。
 
 ---
 

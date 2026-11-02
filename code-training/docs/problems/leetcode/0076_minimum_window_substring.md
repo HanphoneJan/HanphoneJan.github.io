@@ -225,7 +225,7 @@ class Solution:
 ## 易错点总结
 
 1. **`while cnt_s >= cnt_t` 写成 `while cnt_s == cnt_t`**：窗口一旦多出任何字符，两个 `Counter` 就不可能相等，收缩分支永远进不去。示例 1 直接返回 `""`。
-2. **收缩时先 `left += 1` 再 `cnt_s[s[left]] -= 1`**：减掉的是新窗口的第一格，计数与窗口错位一格。示例 1 会返回 `"OBEC"` —— 长度同样是 4，但不含 `A`；`s = "aa", t = "aa"` 时 `left` 还会走过 `right`，抛 `IndexError: string index out of range`。
+2. **收缩时先 `left += 1` 再 `cnt_s[s[left]] -= 1`**：减掉的是新窗口的第一格，计数与窗口错位一格。示例 1 会抛 `IndexError: string index out of range` —— 窗口一路收缩到 `left` 越过末尾时，`s[left]` 已经越界；即使没有越界，计数和窗口也对不上，收缩会停不下来。
 3. **用 `ans_left = 0` 当初值**（想省掉 `-1` 那次判断）：`return "" if ans_left < 0` 这个「没找到」的信号就永远不成立。示例 3 `s = "a", t = "aa"` 会返回 `"a"` 而不是 `""`。要保留 `-1`，或者像方法二那样用 `len(s) + 1` 当哨兵。
 
 ---

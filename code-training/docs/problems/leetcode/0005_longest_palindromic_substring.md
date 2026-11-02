@@ -133,6 +133,21 @@ def longestPalindrome(s: str) -> str:
 
 扩展时只要 `s[left] == s[right]` 就继续向外，函数返回最终回文范围的左右端点。
 
+```python
+def expand(left, right):
+    while left >= 0 and right < n and s[left] == s[right]:
+        left -= 1
+        right += 1
+    return left + 1, right - 1      # 退回最后一次成功扩展的范围
+
+start = end = 0
+for i in range(n):
+    for l, r in (expand(i, i), expand(i, i + 1)):   # 奇数中心、偶数中心
+        if r - l > end - start:
+            start, end = l, r
+return s[start:end + 1]
+```
+
 ---
 
 ## 完整代码实现
@@ -224,7 +239,7 @@ class Solution:
 |------|-----------|-----------|------|
 | 暴力枚举 | O(n³) | O(n) | 枚举所有子串并逐一验证 |
 | 动态规划 | O(n²) | O(n²) | 需要 n×n 的 dp 表 |
-| 中心扩展 | O(n²) | O(1) | **最优解**，时间同 dp 但空间降至常数 |
+| 中心扩展（最优） | O(n²) | O(1) | 时间与 dp 同阶，空间降到常数 |
 
 ---
 
