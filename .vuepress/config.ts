@@ -61,6 +61,17 @@ export default defineUserConfig({
       { name: 'apple-mobile-web-app-title', content: '寒枫的开荒地' },
     ],
     ['meta', { name: 'mobile-web-app-capable', content: 'yes' }],
+    // 冷启动时应用外壳（2.3MB）还没执行完，此刻点站内链接，浏览器会做
+    // **整页导航**：目标页 HTML 走 NetworkFirst，等于再等一次网络 + 再解析
+    // 一遍外壳。这就是「刚打开 PWA 时点哪都慢、过一会儿正常」里最刺眼的
+    // 一段。这里把 `dataset.appReady` 之前的站内点击先扣下，等 client.ts
+    // 在 `router.isReady()` 之后取回走 SPA；应用始终没起来时 2.5 秒后按
+    // 原地址整页跳转，不改变「JS 坏了也能点」。
+    [
+      'script',
+      {},
+      `(function(){var pending=null,timer=0;window.__hanphoneTakePendingNav=function(){var h=pending;pending=null;clearTimeout(timer);return h};document.addEventListener('click',function(e){if(document.documentElement.dataset.appReady==='1')return;if(e.defaultPrevented||e.button!==0)return;if(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;if(!a)return;if(a.target&&a.target!=='_self')return;if(a.hasAttribute('download'))return;var h=a.getAttribute('href');if(!h||h.charAt(0)!=='/'||h.indexOf('//')===0)return;e.preventDefault();pending=h;clearTimeout(timer);timer=setTimeout(function(){if(pending===h){pending=null;location.assign(h)}},2500)},true)})();`,
+    ],
     // 状态栏颜色：浅色白、深色黑。
     //
     // 不能写两条带 media 的 theme-color —— VuePress 的 head 去重按

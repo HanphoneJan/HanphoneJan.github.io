@@ -170,28 +170,31 @@ export default hopeTheme({
       cacheImage: false,
       // 默认的 precache 会把 **1047 个 js/css/svg（46MB）** 全塞进来，
       // 首次安装先下 46MB —— 文档站不需要「一次装完所有页面」。
-      // 这里只预缓存应用外壳（约 2.5MB），其余按需缓存：
-      // 访问过的页面离线可看，没访问过的走网络。
+      // 这里只预缓存应用外壳（约 3.9MB，外壳 2.34 + 两张 logo 1.42 +
+      // 样式 0.25），其余按需缓存：访问过的页面离线可看，没访问过的走网络。
       generateSWConfig: {
-        // **别让预缓存里的 index.html 应答 `/`。**
+        // **让预缓存里的 index.html 应答 `/`（manifest 的 `start_url`）。**
         //
-        // `directoryIndex` 默认是 `'index.html'`：Workbox 的预缓存路由会把
-        // 「以 `/` 结尾」的请求补成 `index.html` 去预缓存里查，而预缓存是
-        // **cache-first** —— 命中之后既不回网络、也不会自己更新。
-        // 而 manifest 的 `start_url` 正是 `/`，安装版 PWA 每次都从这里启动，
-        // 于是它会一直跑**首次安装时那份应用外壳**（旧的 `app-<hash>.js`），
-        // 直到新 SW 被 skipWaiting 激活为止。
+        // 这里曾经是 `null`，理由是「预缓存是 cache-first，`/` 会一直命中
+        // 首次安装时那份 HTML」。代价是安装版 PWA 每次冷启动都要为启动页
+        // 等一次**真实网络往返**（document 走下面的 NetworkFirst，且没有
+        // 超时）：手机刚唤醒时 DNS / TCP / TLS / HTTP/2 全是冷的，那几百
+        // 毫秒到几秒就是读者感知到的「暖机」——缓存了整站也一样，因为
+        // 缓存只在网络**失败**时才被读。
         //
-        // 外壳里的页面 chunk 名字带构建哈希，部署一次就换名、旧文件被删；
-        // 点站内链接时 `import()` 拿不到那些旧 chunk → vue-router 的这次导航
-        // 直接中止，页面上「点了没反应」（见 client.ts 的 `router.onError`）。
-        // 浏览器网页里大多是从搜索结果/书签直接落到某个深路径上，
-        // 那个 HTML 走 NetworkFirst，所以拿得到新外壳 —— 这就是
-        // 「PWA 里切换路由会卡、网页里不会」的由来。
+        // 设回 `'index.html'` 之后 `/` 直接从预缓存出。关键是：预缓存里的
+        // `index.html` 与 `assets/app-*.js` 是**同一个 SW 版本的一对**，
+        // 不可能出现「新 HTML 配旧外壳」。
         //
-        // 置空之后导航一律落到下面的 NetworkFirst：在线时永远是新 HTML，
-        // 离线才回退到 html-v2 里缓存的那份（首次接管后的那次重载就会写进去）。
-        directoryIndex: null,
+        // 剩下的风险只有「外壳比线上旧一个版本」：旧外壳去 import 已经被
+        // 删掉的页面 chunk。这一条现在有兜底——
+        //   - `client.ts` 的 `router.onError` 把这次导航改成**整页打开**
+        //     目标地址，目标页的 HTML 仍走 NetworkFirst，拿到新外壳后自愈；
+        //   - 离线包的 prune 会保留被缓存 HTML 引用的旧外壳/旧 chunk；
+        //   - 深路径（书签、搜索结果、站内整页跳转）没有变，仍是
+        //     NetworkFirst，在线永远拿新 HTML。
+        // 所以只有「PWA 的启动页」走了预缓存，其余照旧。
+        directoryIndex: 'index.html',
         globPatterns: [
           'index.html',
           '404.html',
@@ -230,7 +233,15 @@ export default hopeTheme({
             urlPattern: ({request}: {request: Request}) =>
               request.destination === 'script' ||
               request.destination === 'style',
-            handler: 'StaleWhileRevalidate' as const,
+            // **CacheFirst，不是 StaleWhileRevalidate。**
+            //
+            // `assets/` 下的文件名全部带内容哈希（`app-CPr9befZ.js`、
+            // `Python速查-DVU0rnNB.js`），内容变了名字就变，不存在「缓存
+            // 到旧内容」的问题。SWR 的代价是每次命中都再发一次网络请求：
+            // 切一页要过好几个 chunk，冷启动时这些后台请求正和首屏抢
+            // 带宽，弱网下每个都要挂到超时。CacheFirst 直接返回缓存，
+            // 一条网络请求都不发。
+            handler: 'CacheFirst' as const,
             options: {
               cacheName: 'assets',
               expiration: {maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 60},
