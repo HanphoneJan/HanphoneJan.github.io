@@ -282,7 +282,7 @@ React root 里：
 
 ### 已知的取舍
 
-- **PWA**：用 `@vuepress/plugin-pwa`，只 precache 外壳（3.7MB），页面/图片/
+- **PWA**：用 `@vuepress/plugin-pwa`，只 precache 外壳（3.9MB），页面/图片/
   轨迹走运行时缓存。**`maxSize` 必须是 4096**：它是 Workbox 的
   `maximumFileSizeToCacheInBytes`，而应用外壳 `app-*.js` 已经 2.04MB，改回
   2048 之后它会被**静默剔除**（日志照常、构建不报错），全新安装后第一次断网
@@ -291,13 +291,18 @@ React root 里：
   静默不注册。**HTML 的 `NetworkFirst` 不能设 `networkTimeoutSeconds`**：
   超时回退的旧 HTML 指向已删除的哈希 chunk，会卡在
   `Failed to fetch dynamically imported module`。
-  **预缓存也不能应答 `/`**（`generateSWConfig.directoryIndex: null`）：
-  Workbox 默认的 `directoryIndex: 'index.html'` 会把 `start_url`（`/`）
-  在预缓存里命中成首次安装时那份 `index.html`，安装版 PWA 于是永远跑旧外壳
-  —— 新部署删掉旧 chunk 后，站内跳转静默失败（浏览器网页从深路径进来，
-  HTML 走 NetworkFirst，所以不容易撞上）。`client.ts` 的 `router.onError`
-  兜住这类 chunk 错误，改为整页打开目标地址；`visibilitychange` 里顺带
-  每 30 分钟查一次 SW 更新。首页手写的链接必须带 `.html`，否则也不走路由。
+  **启动页 `/` 走预缓存**（`generateSWConfig.directoryIndex: 'index.html'`）：
+  2026-11 为「PWA 冷启动要暖机」改回来的。之前置空是为了修「永远跑旧外壳」，
+  现在那类失败由 `client.ts` 的 `router.onError`（整页打开目标地址）和离线包
+  prune（保留被缓存 HTML 引用的旧外壳/旧 chunk）兜住；而 `/` 走 NetworkFirst
+  的代价是每次冷启动都等一次真实网络往返（手机刚唤醒时 DNS/TCP/TLS 全冷）。
+  预缓存里的 `index.html` 与 `assets/app-*.js` 是同一个 SW 版本的一对，深路径
+  仍走 NetworkFirst。**JS/CSS 用 `CacheFirst`**（哈希文件名不可变），别改回
+  `StaleWhileRevalidate`：SWR 每次命中都会再回源，切页时白占带宽。
+  `visibilitychange` 里 30 分钟查一次 SW 更新（时间戳落 localStorage，冷启动
+  前 30 秒不查）；安装版里申请 `navigator.storage.persist()`；外壳执行完之前
+  的站内点击会先扣下，等初始路由就绪再走 SPA（2.5 秒兜底整页跳转）。首页
+  手写的链接必须带 `.html`，否则也不走路由。
 - **离线包在 `/settings.html`**：`offline-manifest.json` 由
   `plugins/offline-package.ts` 在构建期生成（889 页 + 206 份轨迹 + 约 3MB
   懒加载共享脚本 + 12.9MB 的 Python 运行时 ≈ 127MB；运行时的文件清单与缓存名在
