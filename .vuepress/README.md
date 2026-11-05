@@ -20,7 +20,7 @@
 | 数学 | `remark-math` + `rehype-katex` | `@vuepress/plugin-markdown-math`（KaTeX） |
 | 图片放大 | 无 | PhotoSwipe（`plugins.photoSwipe`） |
 | 沉浸模式 | 无 | hope `focus`（滚动进正文后自动隐藏导航/侧栏） |
-| PWA | `@docusaurus/plugin-pwa`（全量 precache） | `@vuepress/plugin-pwa`（precache 外壳 3.7MB + 运行时缓存 + `/settings.html` 离线包） |
+| PWA | `@docusaurus/plugin-pwa`（全量 precache） | `@vuepress/plugin-pwa`（precache 外壳 3.9MB + 运行时缓存 + `/settings.html` 离线包） |
 | 归档 | 仅 code-training 的分类/标签页 | `/article/`、`/category/`、`/tag/`、`/timeline/`（hope blog 插件） |
 | 部署 | 上传 `build/` | 上传 `.vuepress/dist/` |
 
@@ -264,22 +264,32 @@ oxc: { jsx: { runtime: 'automatic' } }
 
 几条刻意的取舍（每条都对应一个线上症状，改之前先看注释里的因果）：
 
-- **只 precache 应用外壳**（`index.html` / `404.html` / `app-*.js` / `style-*.css`，
-  约 2.5MB）。默认行为会把 622 个页面 chunk（39MB）全部塞进 precache，
-  首次安装要下 42MB —— 文档站不需要「一次装完所有页面」。其余资源走
-  Workbox 运行时缓存：页面 `NetworkFirst`、JS/CSS `StaleWhileRevalidate`、
-  图片 `CacheFirst`、轨迹 JSON 与题库单独分桶。
-- **`generateSWConfig.directoryIndex: null` —— 预缓存不许应答 `/`。**
-  Workbox 默认 `directoryIndex: 'index.html'`：预缓存路由会把「以 `/` 结尾」
-  的请求补成 `index.html` 去查预缓存，而预缓存是 **cache-first**。manifest 的
-  `start_url` 恰好就是 `/`，于是安装版 PWA 每次启动都拿到**首次安装时那份
-  `index.html`**，里面的 `app-<hash>.js` 也是旧的；新部署删掉旧 chunk 之后，
-  站内跳转（`beforeResolve` 里 `await import(页面 chunk)`）拿不到文件，
-  这次导航直接中止 —— 页面上就是「点了没反应」。
-  浏览器网页里大多从搜索结果 / 书签落到深路径，那些 HTML 走 `NetworkFirst`，
-  所以不会出现；这就是「PWA 里切路由会卡、网页里不会」的由来。
-  置空后 `/` 也走 `NetworkFirst`：在线永远是新 HTML，离线回退到 `html-v2`
-  里缓存的那份（首次被 SW 接管后的那次重载就会写进去，实测离线启动正常）。
+- **只 precache 应用外壳**（`index.html` / `404.html` / `app-*.js` / `style-*.css`
+  与两张 logo，约 3.9MB）。默认行为会把 600 多个页面 chunk（39MB）全部塞进
+  precache，首次安装要下 42MB —— 文档站不需要「一次装完所有页面」。其余资源走
+  Workbox 运行时缓存：页面 `NetworkFirst`、JS/CSS `CacheFirst`（文件名带
+  内容哈希，不可变，见下）、图片 `CacheFirst`、轨迹 JSON 与题库单独分桶。
+- **`generateSWConfig.directoryIndex: 'index.html'` —— 预缓存的 `index.html`
+  应答 `/`。** 这一条改过两次，两次的理由都记在这里：
+  - 最初是默认值 `'index.html'`：`start_url` 是 `/`，预缓存又是 cache-first，
+    安装版 PWA 于是可能长期跑**首次安装时那份外壳**；新部署删掉旧 chunk 后
+    站内跳转失败。当时的修法是置空（`null`），让 `/` 也走 `NetworkFirst`。
+  - 置空的代价是**每次冷启动都为启动页等一次真实网络往返**：`NetworkFirst`
+    没有超时，手机刚唤醒时 DNS/TCP/TLS 全是冷的，缓存了整站也要等 ——
+    这就是「打开 PWA 后要暖机一阵」的主要来源。
+  - 现在设回 `'index.html'`：`/` 从预缓存出，而预缓存里的 `index.html` 与
+    `assets/app-*.js` 是**同一个 SW 版本的一对**（同时安装、同时换版），
+    不存在「新 HTML 配旧外壳」。剩下的「外壳旧一个版本」由三件事兜住：
+    `client.ts` 的 `router.onError` 把失败的站内跳转改成**整页打开目标
+    地址**（目标页仍走 NetworkFirst，拿到新外壳后自愈）；离线包 prune 保留
+    被缓存 HTML 引用的旧外壳/旧 chunk；深路径（书签、搜索、整页跳转）没有
+    变，仍在线取新 HTML。
+- **JS/CSS 用 `CacheFirst`，不是 `StaleWhileRevalidate`。** `assets/` 下的
+  文件名都带内容哈希，缓存到的永远不会是「旧内容」；而 SWR 每次命中都会
+  再发一次网络请求 —— 切一页要过好几个 chunk，冷启动时这些后台请求正和
+  首屏抢带宽，弱网下每个都挂到超时。改成 CacheFirst 后命中就返回，一条
+  网络请求都不发。默认的 cacheability 插件只缓存 200，404 不会被记住。
+
 - **HTML 的 `NetworkFirst` 不能设 `networkTimeoutSeconds`。** 设了之后
   Workbox 在超时（原来的 3 秒）就回退到缓存 HTML，而 HTML 引用的
   `assets/app-<hash>.js` 每次部署都会换名 —— 旧 HTML 指向的 chunk 已不存在，
@@ -291,9 +301,23 @@ oxc: { jsx: { runtime: 'automatic' } }
   `Failed to fetch dynamically imported module` 这一类错误，**整页打开目标地址**
   （HTML 是服务端渲染的，内容一定在），而不是留一个点不动的页面。同一目标
   60 秒内只救一次，防止「跳转 → 新文档又失败」的刷新循环。
-- **回到前台时查一次 SW 更新**（`visibilitychange`，30 分钟节流）。安装版 PWA
-  很少整页导航，浏览器就不会去检查 `service-worker.js`；主动查一次，
-  新版本才会通过插件自带的「新内容已就绪」按钮生效。
+- **回到前台时查一次 SW 更新**（`visibilitychange`，30 分钟节流，时间戳落
+  `localStorage`）。安装版 PWA 很少整页导航，浏览器就不会去检查
+  `service-worker.js`；主动查一次，新版本才会通过插件自带的「新内容已就绪」
+  按钮生效。时间戳持久化 + **冷启动后前 30 秒不查**：`registration.update()`
+  一旦发现新版本就要下约 3.9MB 预缓存，不能在首屏还在解析外壳时跟它抢带宽。
+- **安装版里申请持久存储**（`navigator.storage.persist()`）。离线包有 160MB，
+  而 CacheStorage 默认是 best-effort：磁盘紧张或长期不用会被整桶回收，之后
+  「缓存过的页面」又要逐页重新走网络，表现和暖机一模一样。只在
+  `display-mode: standalone` 下自动申请（网页里 Firefox 会弹权限框，设置页
+  留了手动按钮）。
+- **冷启动期间的站内点击先扣下**（`config.ts` 的 head 脚本 + `client.ts` 的
+  `router.isReady()`）。外壳 2.3MB 执行完之前，`<a>` 还是普通链接，点一下就是
+  **整页导航**：目标页 HTML 走 NetworkFirst，再解析一遍外壳 —— 这是「刚打开
+  PWA 时点哪都慢、过一会儿正常」里最刺眼的一段。head 脚本在
+  `documentElement.dataset.appReady` 之前 `preventDefault()` 并记下 href，
+  初始路由就绪后交给客户端路由；应用 2.5 秒还没起来就按原地址整页跳转，
+  JS 坏了也点得动。
 - **`register-service-worker` 必须在 `load` 之前求值**。这个包的模块顶层就
   挂了 `addEventListener('load')`，而插件是在 `onMounted` 里**动态 import**
   它的；动态 import 落到 load 之后，那个 Promise 永远不会 resolve，
@@ -310,8 +334,7 @@ oxc: { jsx: { runtime: 'automatic' } }
   **静默跳过**：构建日志一切正常，而 `service-worker.js` 的预缓存清单里
   只剩 index / 404 / style / 两张 logo（约 1.6MB）。后果是全新安装（或清过
   站点数据）之后第一次断网，`start_url` 拿不到外壳 → 浏览器离线错误页；
-  网页端靠 `assets` 路由的 StaleWhileRevalidate 在**第二次**访问时补上，
-  所以平时看不出来。改回 4MB 后预缓存是 3.68MB（外壳 2.04 + 两张 logo
+  网页端靠 `assets` 路由在**第二次**访问时补上，所以平时看不出来。改回 4MB 后预缓存是 3.68MB（外壳 2.04 + 两张 logo
   1.38 + 样式 0.24）。
 
 ### 离线包与缓存管理（`/settings.html`）
@@ -323,7 +346,7 @@ oxc: { jsx: { runtime: 'automatic' } }
 | 内容 | 缓存桶 | 策略 |
 |---|---|---|
 | 页面 HTML | `html-v2` | `NetworkFirst`（在线永远是新的，离线回退缓存） |
-| 页面 chunk | `assets` | `StaleWhileRevalidate`（文件名带内容哈希，不可变） |
+| 页面 chunk | `assets` | `CacheFirst`（文件名带内容哈希，不可变） |
 | 共享脚本（懒加载 chunk） | `assets` | 同上 |
 | 题解轨迹 JSON | `traces` | `CacheFirst` |
 | 自测题库 | `quiz` | `StaleWhileRevalidate` |
