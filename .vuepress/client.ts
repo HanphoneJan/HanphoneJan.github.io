@@ -38,6 +38,38 @@ const isChunkLoadError = (error: unknown): boolean =>
   )
 
 /**
+ * 深链接带锚点（`/x.html#section`）时的滚动校正。
+ *
+ * 浏览器在**外壳执行之前**就按当时的布局滚了一次，而这时字体、表格宽度都
+ * 还没稳定；代码块又用 `content-visibility: auto` 把屏幕外的高度按估算
+ * 参与排版（见 `styles/index.scss`）。两者叠加，实测直接打开
+ * `Python速查.html#字典-dict` 会偏到一屏之外。
+ *
+ * 做法：等初始路由就绪后再定位一次，然后补掉「目标顶边离视口顶部」的残差。
+ * 用 `behavior: 'instant'`，不与主题的平滑滚动抢动画；只校正一次，之后
+ * 读者怎么滚都不再干预。
+ */
+function fixHashScroll(): void {
+  const raw = window.location.hash
+  if (!raw || raw === '#') return
+  let id = raw.slice(1)
+  try {
+    id = decodeURIComponent(id)
+  } catch {
+    /* 非法转义就按原样找 */
+  }
+  const el = document.getElementById(id)
+  if (!el) return
+  el.scrollIntoView({behavior: 'instant' as ScrollBehavior, block: 'start'})
+  requestAnimationFrame(() => {
+    const top = el.getBoundingClientRect().top
+    if (Math.abs(top) > 2) {
+      window.scrollBy({top, behavior: 'instant' as ScrollBehavior})
+    }
+  })
+}
+
+/**
  * 这些组件由 markdown-it 直接写进页面 token 流（见 plugins/training.ts），
  * 所以必须**全局注册** —— 页面模板里没有 import 语句可写。
  */
@@ -149,6 +181,7 @@ export default defineClientConfig({
         .then(() => {
           document.documentElement.dataset.appReady = '1'
           consumePendingNav()
+          if (window.location.hash) requestAnimationFrame(fixHashScroll)
         })
     }
   },

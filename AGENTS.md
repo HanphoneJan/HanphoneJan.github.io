@@ -58,7 +58,7 @@ code-training/docs/         # 算法训练：/code-training/**
   client.ts                 # 全局注册 React 孤岛组件 + 加载自定义样式
   plugins/                  # 构建期插件：permalink / 组件注入 / 分类页 / 离线包清单
   data/training-data.ts     # 构建期汇总题库、轨迹、样例、知识图谱
-  markdown/                 # markdown-it 规则（转义散落尖括号）
+  markdown/                 # markdown-it 规则（转义尖括号、代码块行数注入）
   components/*.vue          # 首页 HomePage + React 孤岛壳子 + 沉浸阅读 LayoutToggle + 导航图标
   styles/                   # config.scss / palette.scss / index.scss
 src/components/             # 交互件（React：Pyodide 运行条、算法播放器、自测）
@@ -279,6 +279,24 @@ React root 里：
   下的 `light.css` / `dark.css` 是 hope 模板主题 CSS + 末尾字体覆盖，
   `theme.ts` 的 `lightTheme` / `darkTheme` 指向线上绝对地址；升级 hope 时
   同步更新这两个文件。
+
+### 切页性能：代码块的 `content-visibility`
+
+长文档切页的耗时几乎全在 **layout / style**，不在脚本：4 倍 CPU 节流下切一篇
+47KB 正文、11000 个节点的文档约 500ms，其中 Layout 150ms、RecalcStyle
+150ms、Script 只有 4ms。代码块是最重的部分 —— `pre.vp-code` 加了
+`content-visibility: auto`，屏幕外的代码块不参与排版与绘制，同样一次切换
+降到 ~300ms。
+
+估算高度必须准，否则 TOC 锚点会跳偏：按固定 `12rem` 估算时 24000px 的页面上
+偏 2600px。所以 `.vuepress/markdown/code-block-lines.ts` 在**构建期**把行数
+写进代码块外层 div 的 `--cv-lines`，`index.scss` 用
+`calc(var(--cv-lines) * 1.6em + 2.29em)` 算高度。**末尾不要再加经验常数**：
+实测 `+3.5px` 会让点 TOC 之后标题跑到视口上方 119px，不加常数是 +3~9px。
+
+深链接带锚点（`/x.html#section`）时浏览器在外壳执行前就滚过一次，`client.ts`
+的 `fixHashScroll()` 会在初始路由就绪后重新定位并补掉残差；不补时实测能偏出
+一屏（-1006px）。
 
 ### 已知的取舍
 
