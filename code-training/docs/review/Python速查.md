@@ -1,7 +1,7 @@
 ---
 title: Python速查
 category: 参考手册
-last_updated: 2026-10-31
+last_updated: 2026-11-05
 ---
 # Python速查
 
@@ -622,6 +622,48 @@ dict.fromkeys(iterable, value=None)  # 用可迭代对象批量建键，统一�
 
 > **`pop` vs `del`**：`pop` 带默认值、安全；`del` 快但键不存在会抛 `KeyError`。**`get` vs `setdefault`**：`get` 只读不改，`setdefault` 会在缺键时**写回**默认值。
 
+### 提取键 / 值 / 键值对
+
+`.keys()` / `.values()` / `.items()` 返回的是**视图**：能 `len()`、`in`、迭代，会随字典变化，但**不能下标**。要一份独立的列表就套 `list()`（O(n) 复制）。
+
+| 想要 | 写法 | 结果 |
+|---|---|---|
+| 键列表 | `list(d)` / `list(d.keys())` | `['a', 'b', 'c']` |
+| 值列表 | `list(d.values())` | `[3, 2, 2]` |
+| 键值对列表 | `list(d.items())` | `[('a', 3), ('b', 2), ('c', 2)]` |
+| 键的元组 | `tuple(d)` | `('a', 'b', 'c')` |
+
+```python
+d = {'a': 3, 'b': 2, 'c': 2}
+
+list(d)              # 键列表，等价 list(d.keys())
+list(d.values())     # 值列表
+list(d.items())      # [(键, 值), ...]
+
+d.keys() | {'z'}     # 键视图支持集合运算 → {'a', 'b', 'c', 'z'}
+```
+
+**聚合**（值都是数字时）：
+
+```python
+sum(d.values())                        # 所有值求和 → 7
+sum(v for v in d.values() if v > 2)    # 带条件求和 → 3
+min(d.values()) / max(d.values())      # 最值
+len(d)                                 # 键的个数 → 3（不是值的和）
+```
+
+> **`sum(d)` 累加的是键，不是值。** 键是字符串时（`{'a': 1}`）会抛 `TypeError: unsupported operand type(s) for +: 'int' and 'str'`，要值的和必须写 `sum(d.values())`。`Counter` 另有 `cnt.total()`（3.10+），普通字典没有这个方法。
+
+**合并**（重复键以后面的为准）：
+
+```python
+merged = d1 | d2        # 3.9+，返回新字典，d1 不变
+merged = {**d1, **d2}   # 3.5+ 的等价写法
+d1.update(d2)           # 原地合并进 d1，返回 None
+```
+
+> **`|` 与 `|=` 不是一回事**：`d1 | d2` 产出新字典；`d1 |= d2` 等价于 `d1.update(d2)`，会改掉 `d1`。`{**d1, **d2}` 与 `|` 结果相同，但对 3.9 以前的版本也可用。
+
 ### 迭代技巧
 
 ```python
@@ -640,10 +682,6 @@ for k, v in sorted(d.items(), key=lambda x: x[1]):
 # 按值排序遍历（降序）
 for k, v in sorted(d.items(), key=lambda x: -x[1]):
     print(k, v)
-
-# 字典合并（Python 3.9+）
-merged = d1 | d2               # 返回新字典
-d1 |= d2                       # 原地合并
 
 # 判断键是否存在
 key in d                       # O(1)
