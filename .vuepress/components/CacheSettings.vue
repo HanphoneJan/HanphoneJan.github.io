@@ -265,6 +265,12 @@ interface OfflineEntry extends Array<string | number | null> {
   3: number
   /** 内容指纹（sha1 前 10 位），见 plugins/offline-package.ts 的 hashOf */
   4: string
+  /**
+   * 整页孤岛的附加页面代码 `[[chunk 路径, 字节数], …]`（只有 `/stars.html`
+   * 与 `/projects.html` 有）。它们的组件是从外壳里 `import()` 的，路由表里
+   * 找不到，得跟着页面一起下，否则离线打开是一片空白。
+   */
+  5?: Array<[string, number]> | null
 }
 
 interface OfflineSection {
@@ -297,7 +303,7 @@ interface PackageMeta {
    * （而不是重下 HTML）才能做到「只改文档时只下改到的那几页」：
    * 旧 HTML + 旧 app + 旧 chunk 三件套一起留在缓存里，离线照样能启动。
    */
-  pages: Record<string, {app: string; chunk: string}>
+  pages: Record<string, {app: string; chunk: string; islands?: string[]}>
   /** 外壳文件 -> 它的静态依赖（目前只有 rolldown-runtime-*.js），prune 时一并保留 */
   appDeps: Record<string, string[]>
 }
@@ -523,12 +529,16 @@ function computeRows(): void {
 
       cached++
       // 「缺脚本」要对着**缓存里那份 HTML 实际引用的 chunk** 判断：
-      // 保留旧页面时，清单里那个新 chunk 名本来就不该被下载。
-      const chunkToCheck = meta.value?.pages?.[entry[0]]?.chunk ?? entry[1]
+      // 保留旧页面时，清单里那个新 chunk 名本来就不该被下载。整页孤岛的
+      // 附加脚本同理 —— 旧 HTML 配的外壳 import 的是旧那份。
+      const record = meta.value?.pages?.[entry[0]]
+      const chunkToCheck = record?.chunk ?? entry[1]
+      const islandsToCheck = record?.islands ?? (entry[5] ?? []).map(([rel]) => rel)
       if (
         withChunks.value &&
-        chunkToCheck &&
-        !keysOf(ASSET_CACHE).has(absolute(`/${chunkToCheck}`))
+        [chunkToCheck, ...islandsToCheck].some(
+          (rel) => rel && !keysOf(ASSET_CACHE).has(absolute(`/${rel}`)),
+        )
       ) {
         chunkMissing++
       }
@@ -657,8 +667,10 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
 
   // 记录每版外壳的静态依赖（目前只有 rolldown-runtime-*.js）
   const appDeps: Record<string, string[]> = {...(meta.value?.appDeps ?? {})}
-  // 页面 URL -> 缓存这份 HTML 时用的外壳
-  const pages: Record<string, {app: string; chunk: string}> = {...(meta.value?.pages ?? {})}
+  // 页面 URL -> 缓存这份 HTML 时用的外壳（以及它懒加载的孤岛代码）
+  const pages: Record<string, {app: string; chunk: string; islands?: string[]}> = {
+    ...(meta.value?.pages ?? {}),
+  }
 
   /**
    * 把外壳（以及它的静态依赖）留在 `assets` 里。
@@ -695,11 +707,17 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
       const entry = queue.shift()
       if (!entry) return
       const [url, chunk, htmlBytes, chunkBytes, hash] = entry
+      const scriptFiles = entry[5] ?? []
       const target = targetCache(url)
       const targetKeys = knownOf(target)
       const assetKeys = knownOf(ASSET_CACHE)
       const chunkRel = chunk ?? ''
       const chunkUrl = chunkRel ? `/${chunkRel}` : ''
+      /** 页面自己的代码：入口 chunk + 整页孤岛的附加脚本 */
+      const scriptUrls = [
+        ...(chunkUrl ? [chunkUrl] : []),
+        ...scriptFiles.map(([rel]) => `/${rel}`),
+      ]
 
       /**
        * 增量判断：**内容没变 + HTML 还在 + 它引用的外壳还在** 就整条跳过。
@@ -711,14 +729,16 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
       const cachedThere = targetKeys.has(absolute(url))
       const contentSame = Boolean(hash) && meta.value?.content?.[url] === hash
       const record = pages[url]
-      // 旧 HTML 能不能继续用，取决于「它引用的那份外壳 + 那个页面 chunk」还在
+      // 旧 HTML 能不能继续用，取决于「它引用的那份外壳 + 那个页面 chunk」
+      // （以及整页孤岛的页面代码）还在
       const shellKept =
         !chunkRel ||
         (Boolean(record) &&
           assetKeys.has(absolute(`/${record!.app}`)) &&
-          assetKeys.has(absolute(`/${record!.chunk}`)))
+          assetKeys.has(absolute(`/${record!.chunk}`)) &&
+          (record!.islands ?? []).every((rel) => assetKeys.has(absolute(`/${rel}`))))
       const needChunk = Boolean(
-        chunkUrl && withChunks.value && !assetKeys.has(absolute(chunkUrl)),
+        withChunks.value && scriptUrls.some((rel) => !assetKeys.has(absolute(rel))),
       )
       const needHtml = !(contentSame && cachedThere && shellKept)
 
@@ -755,14 +775,17 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
         }
 
         if (needChunk) {
-          const script = await fetch(chunkUrl, {
-            cache: 'reload',
-            signal: controller.signal,
-          })
-          if (!script.ok) throw new Error(`HTTP ${script.status}（${chunk}）`)
-          const assetCache = await cacheOf(ASSET_CACHE)
-          await assetCache.put(new Request(absolute(chunkUrl)), script.clone())
-          assetKeys.add(absolute(chunkUrl))
+          for (const rel of scriptUrls) {
+            if (assetKeys.has(absolute(rel))) continue
+            const script = await fetch(rel, {
+              cache: 'reload',
+              signal: controller.signal,
+            })
+            if (!script.ok) throw new Error(`HTTP ${script.status}（${rel}）`)
+            const assetCache = await cacheOf(ASSET_CACHE)
+            await assetCache.put(new Request(absolute(rel)), script.clone())
+            assetKeys.add(absolute(rel))
+          }
           bytes += chunkBytes
         }
 
@@ -775,7 +798,11 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
           const app = appRefOf(htmlText)
           if (app) {
             await ensureAsset(app)
-            pages[url] = {app, chunk: chunkRel}
+            pages[url] = {
+              app,
+              chunk: chunkRel,
+              islands: scriptFiles.map(([rel]) => rel),
+            }
           }
         }
 
@@ -852,7 +879,7 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
 
     // 只留下仍然缓存着的页面的外壳记录：清掉的分区、被删掉的页面不该继续
     // 拖着旧外壳不放（每份外壳 2MB）。
-    const pageRefs: Record<string, {app: string; chunk: string}> = {}
+    const pageRefs: Record<string, {app: string; chunk: string; islands?: string[]}> = {}
     for (const [key, value] of Object.entries(pages)) {
       if (!hashByUrl.has(key)) continue
       if (!knownOf(targetCache(key)).has(absolute(key))) continue
@@ -906,6 +933,8 @@ async function pruneStaleAssets(): Promise<void> {
         keep.add(absolute(entry[0]))
       }
       if (entry[1]) keep.add(absolute(`/${entry[1]}`))
+      // 整页孤岛的页面代码（`stars-*.js`）不在 `chunk` 字段里
+      for (const [rel] of entry[5] ?? []) keep.add(absolute(`/${rel}`))
     }
   }
 
@@ -915,6 +944,7 @@ async function pruneStaleAssets(): Promise<void> {
     keep.add(absolute(`/${item.app}`))
     // 旧 app 的路由表指向**当时那个** chunk 名，它也得留着
     keep.add(absolute(`/${item.chunk}`))
+    for (const rel of item.islands ?? []) keep.add(absolute(`/${rel}`))
     for (const dep of deps[item.app] ?? []) keep.add(absolute(`/${dep}`))
   }
 
@@ -981,12 +1011,33 @@ async function clearSection(id: string): Promise<void> {
   const section = manifest.value?.sections[id]
   if (!section) return
 
+  // 有些脚本同时属于几个板块（整页孤岛的 React 运行时与依赖也都在「共享脚本」
+  // 里）。清一个板块时不能把它们删掉 —— 那会让**别的**板块离线失效。
+  const usedElsewhere = new Set<string>()
+  for (const [otherId, other] of Object.entries(manifest.value?.sections ?? {})) {
+    if (otherId === id) continue
+    for (const entry of other.entries) {
+      // `/assets/*` 的裸条目（共享脚本、整页孤岛的依赖）必须算上：它们没有
+      // 页面 chunk 字段，但同样是「别的板块还要用」
+      if (entry[0].startsWith('/assets/')) usedElsewhere.add(absolute(entry[0]))
+      if (entry[1]) usedElsewhere.add(absolute(`/${entry[1]}`))
+      for (const [rel] of entry[5] ?? []) usedElsewhere.add(absolute(`/${rel}`))
+    }
+  }
+
   const assetCache = await caches.open(ASSET_CACHE)
   await Promise.all(
     section.entries.map(async (entry) => {
       const cache = await caches.open(targetCache(entry[0]))
       await cache.delete(absolute(entry[0]))
-      if (entry[1]) await assetCache.delete(absolute(`/${entry[1]}`))
+      const scripts = [
+        ...(entry[1] ? [entry[1]] : []),
+        ...(entry[5] ?? []).map(([rel]) => rel),
+      ]
+      for (const rel of scripts) {
+        if (usedElsewhere.has(absolute(`/${rel}`))) continue
+        await assetCache.delete(absolute(`/${rel}`))
+      }
     }),
   )
 
