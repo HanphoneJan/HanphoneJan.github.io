@@ -35,8 +35,9 @@ check('板块划分：文档 / 代码训练 / 归档 / 首页', () => {
   const cases: Array<[string, string]> = [
     ['/', 'start'],
     ['/settings.html', 'start'],
-    ['/stars.html', 'start'],
     ['/markdown-page.html', 'start'],
+    ['/stars.html', 'stars'],
+    ['/projects.html', 'projects'],
     ['/docs.html', 'docs'],
     ['/docs/前端/Vue基础.html', 'docs'],
     ['/code-training.html', 'training'],
@@ -57,6 +58,9 @@ check('板块划分：文档 / 代码训练 / 归档 / 首页', () => {
 check('板块划分：查询串与锚点不影响归类', () => {
   assert.equal(sectionOf('/docs/x.html?from=search'), 'docs')
   assert.equal(sectionOf('/tag/x/#top'), 'archive')
+  // `/star/` 是全站归档的星标页，与 `/stars.html` 是两件事
+  assert.equal(sectionOf('/star/'), 'archive')
+  assert.equal(sectionOf('/stars.html?from=home'), 'stars')
 })
 
 check('从压缩后的路由表里读出页面 chunk', () => {
@@ -159,6 +163,51 @@ if (!fs.existsSync(assetsDir)) {
         `${url} 同时被当成页面 chunk 和共享脚本`,
       )
       assert.ok(fs.existsSync(path.join(dist, url)), `${url} 不存在于 dist`)
+    }
+  })
+
+  check('真实产物：整页孤岛带着自己的页面代码', () => {
+    const manifestPath = path.join(dist, 'offline-manifest.json')
+    if (!fs.existsSync(manifestPath)) return
+
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
+      sections: Record<
+        string,
+        {
+          entries: Array<
+            [
+              url: string,
+              chunk: string | null,
+              htmlBytes: number,
+              chunkBytes: number,
+              hash: string,
+              extras?: Array<[string, number]> | null,
+            ]
+          >
+        }
+      >
+    }
+    const shared = new Set((manifest.sections.shared?.entries ?? []).map(([url]) => url))
+    for (const [id, page] of [
+      ['stars', '/stars.html'],
+      ['projects', '/projects.html'],
+    ] as const) {
+      const section = manifest.sections[id]
+      assert.ok(section, `清单里没有 ${id} 板块`)
+      const entry = section!.entries.find(([url]) => url === page)
+      assert.ok(entry, `${id} 板块里没有 ${page}`)
+      const extras = entry![5] ?? []
+      // 孤岛的组件是从外壳里 import 的，路由表里没有；漏掉它离线打开是一片空白
+      assert.ok(extras.length > 0, `${page} 没带上页面代码（离线会是一片空白）`)
+      // 第一个是页面自己的组件；它不能同时又出现在共享脚本里（会白下两遍）
+      assert.ok(
+        !shared.has(`/${extras[0][0]}`),
+        `${extras[0][0]} 同时出现在共享脚本里`,
+      )
+      for (const [rel, bytes] of extras) {
+        assert.ok(fs.existsSync(path.join(dist, rel)), `${rel} 不存在于 dist`)
+        assert.ok(bytes > 0, `${rel} 的体积算成了 0`)
+      }
     }
   })
 

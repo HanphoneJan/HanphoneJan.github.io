@@ -322,8 +322,8 @@ React root 里：
   的站内点击会先扣下，等初始路由就绪再走 SPA（2.5 秒兜底整页跳转）。首页
   手写的链接必须带 `.html`，否则也不走路由。
 - **离线包在 `/settings.html`**：`offline-manifest.json` 由
-  `plugins/offline-package.ts` 在构建期生成（889 页 + 206 份轨迹 + 约 3MB
-  懒加载共享脚本 + 12.9MB 的 Python 运行时 ≈ 127MB；运行时的文件清单与缓存名在
+  `plugins/offline-package.ts` 在构建期生成（997 页 + 249 份轨迹 + 约 3MB
+  懒加载共享脚本 + 12.9MB 的 Python 运行时 ≈ 162MB；运行时的文件清单与缓存名在
   `src/components/training/pyrunner/runtime-files.ts`，客户端 fetch 拦截与
   设置页共用；两个 `.mjs` 要同时进 `pyodide-runtime-v1` 与 `assets`，
   否则离线跑代码卡在 import 那一步）。清单每条带 sha1 指纹，设置页按指纹做增量；
@@ -331,6 +331,14 @@ React root 里：
   引用的那一版 `app-<hash>.js` 一起留住，所以重新部署后**一个请求都不发**
   （实测 121 页文档「都已是最新」）。prune 要保留被缓存 HTML 引用的旧外壳/旧
   chunk，别按「不在当前清单里就删」一刀切。
+  **`/stars.html` 与 `/projects.html` 各自一个板块**（不是并进「首页与固定页」）：
+  它们是整页 React 孤岛，页面代码从外壳 `import()`、路由表里没有，数据内联在
+  那份 JS 里且**每天刷新** —— 混进「共享脚本」会让那 3MB 天天显示有更新。
+  页面代码连同它静态依赖的那 1.4KB（`jsx-runtime` / `Layout` / `rolldown-runtime`）
+  写进条目的第 6 项（`[[chunk, 字节数]]`），所以单独缓存这个板块离线就能打开；
+  这些依赖同时还在「共享脚本」里，`clearSection` 要跳过被别的板块引用的文件。
+  页面指纹把孤岛 chunk 的字节也混进去，`pages[url].islands` 让 prune 留住旧 HTML
+  配的那份。
   下载时按目标桶写进**已有的** `html-v2` / `assets` / `traces` / `quiz`，
   所以不需要新增 SW 路由。清单带构建版本，部署后旧包会被标成「需要更新」并
   删掉上一版遗留的页面 chunk。只下 HTML 也能读（SSR 产物在 HTML 里），但站内

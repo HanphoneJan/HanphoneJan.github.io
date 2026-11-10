@@ -8,6 +8,11 @@
 
 export type SectionId =
   | 'start'
+  // 两个整页 React 孤岛。内容是**每天刷新**的 GitHub 数据，而数据内联在
+  // 各自的页面代码里（`stars-*.js` / `projects-*.js`），所以它们既不该跟
+  // 「首页与固定页」一起永远不变，也不该把每天一次的改名传染给「共享脚本」。
+  | 'stars'
+  | 'projects'
   | 'docs'
   | 'training'
   | 'archive'
@@ -18,6 +23,8 @@ export type SectionId =
 
 export const SECTION_LABELS: Record<SectionId, string> = {
   start: '首页与固定页',
+  stars: 'GitHub Stars',
+  projects: '我的项目',
   docs: '技术文档',
   training: '代码训练',
   archive: '归档页',
@@ -32,13 +39,25 @@ export const SECTION_LABELS: Record<SectionId, string> = {
 
 /**
  * 一条待缓存资源：
- * `[url, 页面 chunk | null, HTML 字节数, chunk 字节数, 内容指纹]`
+ * `[url, 页面 chunk | null, HTML 字节数, chunk 字节数, 内容指纹, 页面附加脚本?]`
  *
  * 第 5 项是**文件内容的短哈希**（sha1 前 10 位）。设置页把它连同「已缓存」
  * 一起记在 localStorage：重新部署后只要指纹没变、缓存里也还在，就**一个请求
  * 都不发**地跳过这一项 —— 否则每次部署都要重下 100MB 才能「更新」。
+ *
+ * 第 6 项只对整页 React 孤岛（`/stars.html`、`/projects.html`）有值：
+ * `[[chunk 路径, 字节数], …]`。它们的页面代码是从外壳里 `import()` 的，
+ * 路由表里没有，不跟着页面一起下的话离线打开是一片空白。字节数已经算进
+ * 第 4 项，所以「同时缓存页面脚本」开关照样管得住它。
  */
-export type OfflineEntry = [string, string | null, number, number, string]
+export type OfflineEntry = [
+  url: string,
+  chunk: string | null,
+  htmlBytes: number,
+  chunkBytes: number,
+  hash: string,
+  extras?: Array<[string, number]> | null,
+]
 
 export interface OfflineSection {
   label: string
@@ -60,6 +79,10 @@ export interface OfflineManifest {
  */
 export function sectionOf(url: string): SectionId {
   const clean = url.split(/[?#]/)[0]
+  // 两个整页孤岛单独成板块：它们的数据每天刷新（`stars-*.js` 里内联着
+  // GitHub 数据），与「首页与固定页」的指纹语义完全不同。
+  if (clean === '/stars.html') return 'stars'
+  if (clean === '/projects.html') return 'projects'
   if (clean === '/docs.html' || clean.startsWith('/docs/')) return 'docs'
   if (clean === '/code-training.html' || clean.startsWith('/code-training/')) {
     return 'training'

@@ -91,7 +91,7 @@ function hashOf(file: string): string {
  * 抹平这一处之后，指纹只随页面自身内容变 —— 设置页据此保留旧 HTML（连同它
  * 引用的那份 app），真正做到只下改到的页面。
  */
-function contentHashOfHtml(file: string): string {
+function contentHashOfHtml(file: string, extraFiles: string[] = []): string {
   try {
     // 把所有「构建产物引用」抹成常量：app-<hash>.js 之外还有 style-<hash>.css
     // （它每次构建也会改名），以及以后可能加的其它 `src=/assets/...`。
@@ -99,10 +99,54 @@ function contentHashOfHtml(file: string): string {
     const html = fs
       .readFileSync(file, 'utf8')
       .replace(/\b(src|href)="\/assets\/[^"]*"/g, '$1="/assets/BUILD"')
-    return createHash('sha1').update(html).digest('hex').slice(0, 10)
+    const hash = createHash('sha1').update(html)
+    // 整页孤岛的「内容」全在它自己的 chunk 里（GitHub 数据内联在那份 JS 中），
+    // 只看 HTML 的话，每天的定时刷新不会让这页被标记成「有更新」。
+    for (const extra of extraFiles) hash.update('\0').update(fs.readFileSync(extra))
+    return hash.digest('hex').slice(0, 10)
   } catch {
     return ''
   }
+}
+
+/**
+ * 整页 React 孤岛的页面代码：从应用外壳里 `import()`，路由表里没有。
+ *
+ * `StarsMount` / `ProjectsMount` 在 `client.ts` 里全局注册，挂进页面的只是
+ * 一个空 div；真正的组件（连同内联的 GitHub 数据）由外壳懒加载
+ * （`` import(`./stars-*.js`) ``）。它和页面入口 chunk 用同一个 basename
+ * （Vite 按入口模块所在目录命名），所以按 stem 配对。
+ *
+ * 键是页面 URL，值是 chunk 名的 stem。
+ */
+const ISLAND_CHUNK_STEMS: Record<string, string> = {
+  '/stars.html': 'stars',
+  '/projects.html': 'projects',
+}
+
+/**
+ * 一个 chunk 的静态依赖闭包（`from"./x.js"` / `import"./x.js"`），含它自己。
+ *
+ * 整页孤岛要能**单独**缓存（设置页上点「GitHub Stars」→ 缓存 → 断网打开
+ * 就该有内容），而它 import 的 `jsx-runtime-*.js` / `Layout-*.js` 只有几 KB，
+ * 却在「共享脚本」那 95 个文件里。所以按闭包收进自己的板块；应用外壳
+ * （`app-*.js`）不算 —— 下页面时 `ensureAsset` 会连它一起留住。
+ */
+function staticClosure(entryFile: string, assetsDir: string): string[] {
+  const seen = new Set<string>()
+  const walk = (file: string): void => {
+    if (seen.has(file)) return
+    seen.add(file)
+    const full = path.join(assetsDir, file)
+    if (!fs.existsSync(full)) return
+    const source = fs.readFileSync(full, 'utf8')
+    for (const match of source.matchAll(/(?:from|import)\s*"\.\/([^"]+\.js)"/g)) {
+      if (match[1].startsWith('app-')) continue
+      walk(match[1])
+    }
+  }
+  walk(entryFile)
+  return [...seen]
 }
 
 /**
@@ -160,6 +204,28 @@ export function buildManifest(app: App): OfflineManifest {
    * 再补一遍 —— 后者覆盖「路由表没写、靠文件名兜底匹配到」的情况。
    */
   const pageChunks = new Set<string>(routeChunks.values())
+  /** 整页孤岛的页面代码（`stars-*.js` / `projects-*.js`），别在共享脚本里再来一份 */
+  const islandFiles = new Set<string>()
+  let islandMissing = 0
+
+  /**
+   * 页面自己的那份懒加载代码。按 stem 配对，且要求**恰好一个候选**：
+   * `stars-<hash>.js` 可能既是页面入口 chunk 又是孤岛组件，路由表里的那个
+   * 先扣掉，剩下的才是孤岛。
+   */
+  const islandChunkFor = (page: Page): string | null => {
+    const stem = ISLAND_CHUNK_STEMS[page.path]
+    if (!stem) return null
+    const candidates = (byStem.get(stem) ?? []).filter(
+      (file) => !pageChunks.has(file) && !islandFiles.has(file),
+    )
+    if (candidates.length !== 1) {
+      islandMissing++
+      return null
+    }
+    islandFiles.add(candidates[0])
+    return `assets/${candidates[0]}`
+  }
 
   for (const page of app.pages) {
     // 404 已经进了预缓存，不必再下一份
@@ -168,8 +234,20 @@ export function buildManifest(app: App): OfflineManifest {
     if (!fs.existsSync(file)) continue
 
     const chunk = chunkFor(page)
+    const island = islandChunkFor(page)
+    const extras: Array<[string, number]> = []
+    if (island) {
+      const own = island.replace(/^assets\//, '')
+      for (const file of staticClosure(own, assetsDir)) {
+        // 别的页面的入口 chunk 不当依赖重复下发；应用外壳由 ensureAsset 处理
+        if (file !== own && (pageChunks.has(file) || file.startsWith('app-'))) continue
+        extras.push([`assets/${file}`, sizeOf(path.join(assetsDir, file))])
+      }
+    }
     const htmlBytes = sizeOf(file)
-    const chunkBytes = chunk ? sizeOf(path.join(dest, chunk)) : 0
+    const chunkBytes =
+      (chunk ? sizeOf(path.join(dest, chunk)) : 0) +
+      extras.reduce((sum, [, bytes]) => sum + bytes, 0)
     if (!chunk) chunkless++
 
     if (chunk) pageChunks.add(chunk.replace(/^assets\//, ''))
@@ -180,7 +258,11 @@ export function buildManifest(app: App): OfflineManifest {
       chunk,
       htmlBytes,
       chunkBytes,
-      contentHashOfHtml(file),
+      contentHashOfHtml(
+        file,
+        extras.map(([rel]) => path.join(dest, rel)),
+      ),
+      extras.length ? extras : null,
     ]
     section.entries.push(entry)
     section.bytes += htmlBytes + chunkBytes
@@ -217,7 +299,10 @@ export function buildManifest(app: App): OfflineManifest {
   // chunk、也不是已进预缓存的外壳」筛出来。
   const sharedFiles = assets.filter(
     (file) =>
-      file.endsWith('.js') && !file.startsWith('app-') && !pageChunks.has(file),
+      file.endsWith('.js') &&
+      !file.startsWith('app-') &&
+      !pageChunks.has(file) &&
+      !islandFiles.has(file),
   )
   if (sharedFiles.length > 0) {
     const section = bucket('shared')
@@ -262,6 +347,8 @@ export function buildManifest(app: App): OfflineManifest {
   // 页面少的板块排在前面，读者一眼能看到「首页那点东西就几十 KB」
   const order: SectionId[] = [
     'start',
+    'stars',
+    'projects',
     'shared',
     'pyodide',
     'quiz',
@@ -279,6 +366,13 @@ export function buildManifest(app: App): OfflineManifest {
     console.warn(
       `[offline-package] ${chunkless}/${pageCount} 个页面没在路由表里找到 chunk：` +
         '离线时这些页仍能读到正文（SSR 产物），但不会水合（没有交互）。',
+    )
+  }
+
+  if (islandMissing > 0) {
+    console.warn(
+      `[offline-package] ${islandMissing} 个整页孤岛没配上页面代码（chunk 名不再等于页面名？）：` +
+        '设置页里这些页面只会下到空壳，离线打开是一片空白。',
     )
   }
 

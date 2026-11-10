@@ -373,13 +373,31 @@ oxc: { jsx: { runtime: 'automatic' } }
   本地没 `pnpm sync:pyodide` 时这块直接不出现。
   实测（`localhost` 断网、题解页点「▶ 跑样例」）：三组样例全过。
 - **清单是构建期生成的**：`.vuepress/plugins/offline-package.ts` 在
-  `onGenerated` 里写 `offline-manifest.json`（889 页 + 206 份轨迹 + 13MB
-  运行时 ≈ 123MB，
-  `docs` 121 / `training` 529 / `archive` 235 / `start` 4 / `traces` 206 /
-  `quiz` 1）。页面 chunk 名从产物路由表读（`assets/app-*.js` 里的
+  `onGenerated` 里写 `offline-manifest.json`（997 页 + 249 份轨迹 + 12.9MB
+  运行时 ≈ 162MB，
+  `start` 2 / `stars` 1 / `projects` 1 / `shared` 95 / `pyodide` 5 /
+  `quiz` 1 / `traces` 249 / `docs` 174 / `training` 571 / `archive` 248）。页面 chunk 名从产物路由表读
+  （`assets/app-*.js` 里的
   `` [`/路径`,{loader:()=>import(`./xxx.js`)``），**不能靠猜**：`/tag/*`
   这类生成页没有 md 文件，不同目录还有同名 `intro.md`。`sitemap.xml` 少
   240 条（标签页、分类页、归档页），也不能当清单来源。
+- **`/stars.html` 与 `/projects.html` 各自成一个板块，别并回「首页与固定页」。**
+  这两页是整页 React 孤岛：HTML 里只有一个空 div，真正的组件（GitHub 数据
+  **内联**在那份 JS 里）是从外壳动态 `import()` 的，路由表里找不到 ——
+  所以以前它的页面代码会被算进「共享脚本」，而数据每天的定时刷新会让
+  `stars-*.js` / `projects-*.js` 每天改名，于是「共享脚本」永远显示有更新、
+  而这两页本身反而看不出变了。现在：
+  - 页面代码按 chunk stem（`stars` / `projects`）认出来，连同它静态依赖
+    那一小串（`jsx-runtime-*.js` / `Layout-*.js` / `rolldown-runtime-*.js`，
+    合计约 1.4KB）写进条目的第 6 项（`[[chunk, 字节数]]`），跟着页面一起下；
+    这样设置页上只点「GitHub Stars → 缓存」，断网打开就是完整页面（实测）；
+  - 这些依赖**同时仍在「共享脚本」里**（其它孤岛也要用），所以清一个板块时
+    `clearSection` 会跳过还被别的板块引用的脚本，否则会把别人的离线页面删坏；
+  - 页面内容指纹**把孤岛 chunk 的字节也混进去**，否则只改数据不会标记成更新；
+  - `pages[url].islands` 记下缓存这份 HTML 时用的那份孤岛代码，prune 时保留，
+    旧 HTML + 旧外壳 + 旧孤岛代码仍然能离线打开；
+  - 读不到（chunk 名不再等于页面名）时构建会 warn，设置页里那页只剩空壳。
+
 - **`ExpirationPlugin` 不会淘汰页面用 `cache.put()` 塞进去的条目。** 它只按
   IndexedDB 里的时间戳结算**自己写进去的**那些（workbox-expiration 的
   `CacheExpiration.expireEntries`），所以 1100 条离线包待在
