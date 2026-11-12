@@ -15,6 +15,7 @@ import CacheSettings from './components/CacheSettings.vue'
 import DifficultyInfo from './components/DifficultyInfo.vue'
 import LayoutToggle from './components/LayoutToggle.vue'
 import NavbarHomeLink from './components/NavbarHomeLink.vue'
+import NavbarSettingsLink from './components/NavbarSettingsLink.vue'
 import NoVisStepsMount from './components/NoVisStepsMount.vue'
 import PatternGraphMount from './components/PatternGraphMount.vue'
 import RecordedVisualizerMount from './components/RecordedVisualizerMount.vue'
@@ -93,6 +94,21 @@ export default defineClientConfig({
      * 不需要改主题、也不需要动 md。详见 `components/DifficultyInfo.vue` 文件头。
      */
     app.component('DifficultyInfo', DifficultyInfo)
+
+    /**
+     * 导航栏右侧的两个图标链接（个人主页 / 缓存与离线）。
+     *
+     * 名字必须与 `theme.ts` 的 `navbarLayout.end` 里写的那两项**逐字一致** ——
+     * hope 的 Navbar 对布局项做 `hasGlobalComponent(item)` 再
+     * `resolveComponent(item)`，注册即生效；漏注册会被换成 noopComponent，
+     * 图标**静默消失**（构建照常成功）。
+     *
+     * 不要改回 rootComponent + `onMounted` 里插 DOM：归档页用的是 Blog 布局，
+     * 与默认布局是两棵不同的组件树，站内切换会把 Navbar 重挂，插进去的节点
+     * 不会跟着回来。详见 `components/NavbarHomeLink.vue` 文件头。
+     */
+    app.component('NavbarHomeLink', NavbarHomeLink)
+    app.component('NavbarSettingsLink', NavbarSettingsLink)
 
     /**
      * 页面 chunk 加载失败时，别把读者晾在一个「点了没反应」的页面上。
@@ -186,7 +202,7 @@ export default defineClientConfig({
     }
   },
   // 沉浸阅读模式的悬浮按钮（桌面端），见 LayoutToggle.vue
-  rootComponents: [LayoutToggle, NavbarHomeLink],
+  rootComponents: [LayoutToggle],
 
   /**
    * 状态栏颜色跟随主题。

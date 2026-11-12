@@ -53,6 +53,29 @@ export default hopeTheme({
   themeColor: true,
 
   navbar,
+  /**
+   * 导航栏右侧多两个图标链接（个人主页 / 缓存与离线）。
+   *
+   * **必须走 `navbarLayout`，不要再用 rootComponent + `onMounted` 往 DOM 里插。**
+   * 布局项是组件名，Navbar 用 `hasGlobalComponent` 解析（注册在 `client.ts`），
+   * 所以它们随 Navbar 一起渲染、SSR 就写进 HTML，且在「归档页的 Blog 布局」
+   * 与「默认 Layout」之间切换（会把整个 Navbar 卸载重挂）之后依然在。
+   *
+   * 顺序就是显示顺序：个人主页、缓存与离线、[语言]、GitHub、外观、搜索。
+   * `Language` 在未开 i18n 时是 noop，保留它是为了与主题默认布局一致。
+   */
+  navbarLayout: {
+    start: ['Brand'],
+    center: ['Links'],
+    end: [
+      'NavbarHomeLink',
+      'NavbarSettingsLink',
+      'Language',
+      'Repo',
+      'Outlook',
+      'Search',
+    ],
+  },
   sidebar: {
     '/docs/': docsSidebar(sourceDir),
     '/docs.html': docsSidebar(sourceDir),

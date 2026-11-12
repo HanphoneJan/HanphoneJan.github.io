@@ -258,9 +258,13 @@ React root 里：
   移动端无按钮、窄屏强制退出。
 - 状态栏 theme-color 跟随主题（浅白 / 深黑）：静态白 + 首屏脚本按系统偏好
   改黑 + MutationObserver 跟随手动切换（head 按 name 去重，不能写两条 media）。
-- 导航栏不再有「GitHub / 个人主页」文字项；个人主页是右侧的图标链接
-  （`NavbarHomeLink.vue` 在挂载后插进 `.vp-navbar-end`），GitHub 仓库图标
-  由 `repo` 配置提供。
+- 导航栏不再有「GitHub / 个人主页」文字项；右侧两个图标链接（个人主页、
+  缓存与离线/齿轮）是 `theme.ts` 的 `navbarLayout.end` 里的两项
+  （`NavbarHomeLink` / `NavbarSettingsLink`，在 `client.ts` 全局注册）。
+  **别再改回 rootComponent + `onMounted` 插 DOM**：归档页用的是 hope 的 Blog
+  布局，与默认 `Layout` 是两棵组件树，站内切过去会把 Navbar 卸载重挂，
+  插进去的节点回不来 —— 现象是「从归档页回首页，两个图标不见了」，
+  安装版 PWA 里尤其像「首页经常没有按钮」。GitHub 仓库图标由 `repo` 配置提供。
 - **stars / projects 是整宽页面**：`stars.md` / `projects.md` 的
   `containerClass` 挂 `stars-page` / `projects-page`，`index.scss` 里把
   `[vp-content]` 放宽到 100% 并去掉主题页面标题（React 头部自带 h1，
@@ -331,6 +335,11 @@ React root 里：
   引用的那一版 `app-<hash>.js` 一起留住，所以重新部署后**一个请求都不发**
   （实测 121 页文档「都已是最新」）。prune 要保留被缓存 HTML 引用的旧外壳/旧
   chunk，别按「不在当前清单里就删」一刀切。
+  **归档条目页的指纹还抹掉了顶部那张全站标签云/分类计数表**（217 张标签页
+  各约 44KB，一次新增标签就全变），否则「归档页」板块几乎每次部署都整片
+  重下 14MB。日期按 `config.ts` 钉死的 `Asia/Shanghai` 渲染 —— 不钉的话
+  CI（UTC）与本地（+08:00）构建差 8 小时，跨午夜的文章在时间轴上会差一天，
+  两边产物互相算「内容更新」。
   **`/stars.html` 与 `/projects.html` 各自一个板块**（不是并进「首页与固定页」）：
   它们是整页 React 孤岛，页面代码从外壳 `import()`、路由表里没有，数据内联在
   那份 JS 里且**每天刷新** —— 混进「共享脚本」会让那 3MB 天天显示有更新。
