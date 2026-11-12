@@ -10,6 +10,20 @@ import { catalogsPlugin } from './plugins/catalogs.js'
 import { taxonomyPlugin } from './plugins/taxonomy.js'
 import { offlinePackagePlugin } from './plugins/offline-package.js'
 
+/**
+ * 构建与预览一律按北京时区渲染日期。
+ *
+ * 归档页的时间轴/文章日期、每页页脚的「最近更新」都来自 git 提交时间，而
+ * 格式化用的是**构建机的本地时区**：CI 是 UTC，本地是 +08:00。同一篇文档
+ * 线上显示 `2026/10/5 16:19`、本地显示 `2026/10/6 00:19`；时间轴上同一批
+ * 文章会差一天（实测线上 11/3、本地 11/4）。两边产物的 HTML 因此互相算
+ * 「内容更新」，离线包也就跟着整站重下。
+ *
+ * Node 16+ 支持运行时改 `process.env.TZ`（会触发 V8 的时区重载），这里在
+ * 配置模块求值时钉一次，之后 SSR 渲染与 plugin-git 的日期都按 +08:00 走。
+ */
+process.env.TZ = 'Asia/Shanghai'
+
 const __dirname = getDirname(import.meta.url)
 
 /**

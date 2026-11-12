@@ -84,6 +84,26 @@ function hashOf(file: string): string {
 }
 
 /**
+ * 归档页顶部那张「全站标签云 / 分类计数表」。
+ *
+ * `/tag/<名>/` 与 `/category/<名>/` 的 HTML 一上来就是这张**全站**列表：
+ * 216 个标签及各自条数（单页 56KB 里约 44KB 是它），分类页同理 27 项。
+ * 新增一篇文档就会改动相关计数，217 张标签页的 HTML 跟着全变 —— 指纹是按
+ * 整页 HTML 算的，于是设置页每次都报「归档页 200+ 项内容更新」，要把 14MB
+ * 重下一遍。而这张表对「这一页离线能不能看」没有意义（在线走 NetworkFirst
+ * 永远是最新的），所以算指纹时先抹掉它，只留文章列表这一段的差异。
+ *
+ * **只抹条目页**：`/tag/`、`/category/` 两个索引页整页就是这张表，抹掉等于
+ * 让它永不更新，所以用 `id="article-list"` 区分。
+ */
+const GLOBAL_LIST_RE = /<ul class="(?:vp-tag-list|vp-category-list)">[\s\S]*?<\/ul>/g
+
+function stripGlobalArchiveLists(html: string): string {
+  if (!html.includes('id="article-list"')) return html
+  return html.replace(GLOBAL_LIST_RE, '<ul class="GLOBAL"></ul>')
+}
+
+/**
  * 页面的「内容」指纹：**先把 app 的构建哈希抹平**再算 sha1。
  *
  * 每页 HTML 里都写着 `<script src="/assets/app-<hash>.js">`，而它每次构建都会
@@ -96,9 +116,11 @@ function contentHashOfHtml(file: string, extraFiles: string[] = []): string {
     // 把所有「构建产物引用」抹成常量：app-<hash>.js 之外还有 style-<hash>.css
     // （它每次构建也会改名），以及以后可能加的其它 `src=/assets/...`。
     // 只动 src/href 属性里的资源路径，正文里的代码示例不受影响。
-    const html = fs
-      .readFileSync(file, 'utf8')
-      .replace(/\b(src|href)="\/assets\/[^"]*"/g, '$1="/assets/BUILD"')
+    const html = stripGlobalArchiveLists(
+      fs
+        .readFileSync(file, 'utf8')
+        .replace(/\b(src|href)="\/assets\/[^"]*"/g, '$1="/assets/BUILD"'),
+    )
     const hash = createHash('sha1').update(html)
     // 整页孤岛的「内容」全在它自己的 chunk 里（GitHub 数据内联在那份 JS 中），
     // 只看 HTML 的话，每天的定时刷新不会让这页被标记成「有更新」。

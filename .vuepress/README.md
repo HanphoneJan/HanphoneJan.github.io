@@ -414,6 +414,11 @@ oxc: { jsx: { runtime: 'automatic' } }
   都会变**（`__vite__mapDeps` 里 mermaid 那些 chunk 名不稳定），所以不能拿
   HTML 字节当内容指纹。`contentHashOfHtml()` 先把 `src|href="/assets/..."` 全部
   抹成常量再算 sha1 —— 指纹只随页面内容变。
+  归档条目页（`/tag/<名>/`、`/category/<名>/`）还要再抹掉顶部那张**全站**
+  列表（标签云 216 项 / 分类计数 27 项）：它随任何一篇新文档的标签、分类计数
+  变化，217 张标签页的 HTML 会一起变，不抹的话设置页每次部署都报「归档页
+  200+ 项内容更新」、重下 14MB。用 `id="article-list"` 区分条目页与两个索引页
+  （索引页整页就是那张表，不能抹）。
   缓存一份 HTML 时，把它引用的 `app-<hash>.js`（以及它唯一的静态依赖
   `rolldown-runtime-*.js`）一起写进 `assets`，并记下「这份 HTML 配哪版外壳、
   哪个 chunk」。于是**旧 HTML + 旧 app + 旧 chunk** 三者一起留在缓存里，
