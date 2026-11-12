@@ -11,5 +11,11 @@ $sidebar-width: 280px;
 // Songti SC、Linux/Android 的 Noto Serif CJK、Windows 的 SimSun（宋体），
 // 这些系统字体都缺席时才回落到苹方 / 雅黑 / Noto Sans。
 // 手机没装任何衬线中文字体时仍会显示无衬线，这是系统字体方案的上限。
-$vp-font: 'Georgia, "Nimbus Roman No9 L", "Songti SC", "Noto Serif CJK SC", "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif';
+//
+// **`SiteDigits` 打头，只为了让 0-9 换一套字形。** Georgia 用的是旧式数字
+// （3/4/5/7/9 沉到基线下、0/1/2 只有 x-height 高），而它没有 lnum 特性，
+// `font-variant-numeric` 改不动；所以在这里挂一个只覆盖 U+0030-0039 的字族
+// （@font-face 定义在 index.scss，挑的是中文衬线那一族），字母与中文不受影响。
+// 这个家族名不能从栈里删掉，删了数字就退回 Georgia 的旧式数字。
+$vp-font: '"SiteDigits", Georgia, "Nimbus Roman No9 L", "Songti SC", "Noto Serif CJK SC", "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif';
 $vp-font-heading: $vp-font;

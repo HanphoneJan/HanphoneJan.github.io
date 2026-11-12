@@ -12,6 +12,43 @@
   }
 }
 
+// ============================================
+// 数字专用字体：只吃 0-9
+// ============================================
+//
+// 正文栈里 Georgia 排第一（见 palette.scss），而 Georgia 的数字是**旧式数字**：
+// 3 4 5 7 9 沉到基线下 0.18em，0 1 2 只有 x-height 高，6 8 顶到 ascender ——
+// 字高在 0.54–0.73em 之间来回跳（用 fontTools 逐字量过）。一段话里只有一两个
+// 数字时这叫优雅，但这是技术文档：索引、复杂度、字数、日期、样例值成片出现，
+// 高低不平的数字明显拖慢扫读，跟一行中文的基线也对不齐。
+//
+// `font-variant-numeric: lining-nums` 救不了：Georgia 的 GSUB 里没有
+// lnum / onum / tnum（同样量过），CSS 只能把旧式数字原样画出来。
+//
+// 所以登记一个**只覆盖 0-9** 的字族（unicode-range 限定 U+0030-0039），
+// 并把它放在 `$vp-font` 最前面：数字落在这族，字母与中文照旧走下一条。
+// 挑的是中文衬线那一族（宋体），版面不至于变成「衬线正文 + 无衬线数字」，
+// 也没有引入任何网络字体。
+//
+// **只登记常规字重，故意不写 700 面。** 粗体交给浏览器合成：如果另外登记
+// 一个 700 面、而某个平台的粗体 local 名不存在（Windows 的 SimSun 就没有真
+// 粗体），那一面会按常规字重加载，标题里的数字反而比汉字细一圈 —— 实测如此。
+// 单一 400 面的合成加粗在各平台上都均匀。
+@font-face {
+  font-family: 'SiteDigits';
+  src:
+    local('Songti SC'),
+    local('STSong'),
+    local('Noto Serif CJK SC'),
+    local('Source Han Serif SC'),
+    local('Noto Serif SC'),
+    local('SimSun'),
+    local('Noto Serif'),
+    local('Times New Roman'),
+    local('Nimbus Roman No9 L');
+  unicode-range: U+0030-0039;
+}
+
 // 正文行高稍微松一点，长文更好读
 #markdown-content {
   line-height: 1.75;

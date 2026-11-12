@@ -253,6 +253,19 @@ React root 里：
   `index.md` 只留 `home: true` + `<HomePage />`，主题 hero 用 CSS 藏掉。
 - 字体与 JavaGuide 同一套栈（`palette.scss` 的 `$vp-font`），
   >=960px 根字号 17px；导航栏阴影压到几乎不可见。
+- **数字单独走一套字形（`SiteDigits`）**：`$vp-font` 的第一项是
+  `index.scss` 里的 `@font-face`，`unicode-range: U+0030-0039`，只吃 0-9，
+  字母与中文照旧走 Georgia / 宋体。原因是 Georgia 的数字是**旧式数字** ——
+  3/4/5/7/9 沉到基线下、0/1/2 只有 x-height 高（字高在 0.54–0.73em 之间跳），
+  技术文档里索引、复杂度、字数、日期成片出现时看着乱、基线也对不齐。而
+  **`font-variant-numeric: lining-nums` 改不动它**：Georgia 的 GSUB 里没有
+  lnum/onum/tnum（fontTools 量过），CSS 没有别的抓手。
+  两个别改的地方：`SiteDigits` 不能从 `$vp-font` 里删；那个 `@font-face`
+  **只登记 400 面、故意不写 700 面** —— 粗体交给浏览器合成。登记 700 面
+  反而会在「该平台没有粗体 local 名」（Windows 的 SimSun 就没有真粗体）
+  时加载成常规字重，标题里的数字比汉字细一圈（实测如此）。
+  验证办法：`google-chrome --headless=new --remote-debugging-port=…`
+  后走 CDP 的 `CSS.getPlatformFontsForNode`，看数字那几格落在哪个字体上。
 - 沉浸阅读是 `LayoutToggle.vue` 的显式开关（`html.layout-hidden`），
   不用 hope 的 `focus`（那是滚动自动隐藏，不能手动进出）。
   移动端无按钮、窄屏强制退出。
