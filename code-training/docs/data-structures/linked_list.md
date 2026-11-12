@@ -2,7 +2,7 @@
 title: 链表
 category: 数据结构
 difficulty_range: [简单, 较难]
-last_updated: 2026-10-27
+last_updated: 2026-11-13
 ---
 
 # 链表
@@ -33,6 +33,16 @@ last_updated: 2026-10-27
 | 长度 | 静态或扩容拷贝 | 天然动态 |
 
 选型依据就是这张表：按位置读多、写少 → 数组；在头部或中部频繁增删、总长不可预知 → 链表。工程上的双向链表（如 LRU 缓存）额外换来 O(1) 的「已知节点处删除」——单链表删除要 O(n) 找前驱，双向链表 `node.prev` 一步到位。
+
+## 结构剖面
+
+链表的节点是**堆上各自独立的对象**，彼此只通过指针认识，地址毫无规律。
+
+![单链表与双链表的节点字段：val/next 与 prev/val/next，节点地址互不相邻](/diagrams/linked-list-shape.png)
+
+这一张图解释了两件常被问到的事：为什么「按下标取」是 O(n)（没有地址公式，只能顺着 `next` 数过去），以及为什么「已知节点处删除」是 O(1)（改两根指针，一个元素都不搬）。代价落在缓存上：数组读一次能带进一整条缓存行，链表每跳一次都可能是一次新的内存访问。
+
+双链表多一个 `prev`，换来「不用找前驱也能删」——LRU 缓存必须是双向链表，原因就在这一格。
 
 ## 节点定义（LeetCode Python 口径）
 
@@ -82,12 +92,7 @@ def reverseList(head):
 
 不变量是循环开始时：`prev` 是 `cur` 之前的所有节点组成的已反转链头，`cur` 及其后仍保持原顺序。每次迭代把 `cur` 从未处理段搬进已反转段，未处理段逐个清空后 `cur = None`，返回 `prev`。`1 → 2 → 3` 的演化：
 
-```text
-初始   prev=None  cur=1
-第1轮  nxt=2      1.next=None    prev=1  cur=2     None ← 1   2 → 3
-第2轮  nxt=3      2.next=1       prev=2  cur=3     None ← 1 ← 2   3
-第3轮  nxt=None   3.next=2       prev=3  cur=None  None ← 1 ← 2 ← 3
-```
+![反转的三根指针：prev 指向已反转段的头，cur 待处理，nxt 已先存下后半段](/diagrams/linked-list-reverse.png)
 
 四步里最容易漏的是第 1 步。变形只改边界：反转一部分（92，dummy 定位 `left` 前驱、反转区间后接回）；K 个一组反转（25，每组套区间反转、不足 K 的尾巴保持原样）。相关题：[206](../problems/leetcode/0206_reverse_linked_list.md)、[92](https://leetcode.cn/problems/reverse-linked-list-ii/)、[25](../problems/leetcode/0025_reverse_nodes_in_k_group.md)。
 
