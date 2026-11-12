@@ -105,7 +105,7 @@ LoRA 开山论文：[LORA: LOW-RANK ADAPTATION OF LARGE LAN GUAGE MODELS](https:
 **核心操作**：在 Transformer 的 attention 层中插入 LoRA 模块；训练时冻结原模型参数，仅更新 LoRA 的 A、B 矩阵；训练后合并 LoRA 权重与原权重（升维）
 
 #### QLoRA
-**LoRA 的量化版本**，面向**低资源场景**，- 将基座模型量化为 4-bit/8-bit，同时结合 LoRA 低秩微调，在极小显存下实现高效微调
+**LoRA 的量化版本**，面向**低资源场景**：将基座模型量化为 4-bit/8-bit，同时结合 LoRA 低秩微调，在极小显存下实现高效微调。
 - 核心操作：
     1. 模型量化：用 NF4（NormalFloat4）量化方案压缩模型权重
     2. 冻结量化模型参数，插入 LoRA 模块并使用双量化、分页优化等技术减少显存占用
@@ -114,3 +114,36 @@ LoRA 开山论文：[LORA: LOW-RANK ADAPTATION OF LARGE LAN GUAGE MODELS](https:
 - **Llama-Factory**：由国内北航开源的低代码大模型训练框架，可以实现**零代码微调**
 - **transformers.Trainer**：由 **Hugging Face** 提供的高层 **API**，适用于各种 NLP 任务的微调，提供标准化的训练流程和多种监控工具，适合需要更多**定制化**的场景，尤其在**部署和生产环境**中表现出色。
 ![大模型微调框架表格整理.webp](https://hanphone.top/gh/HanphoneJan/public-pictures/learn/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%E6%A1%86%E6%9E%B6%E8%A1%A8%E6%A0%BC%E6%95%B4%E7%90%86.webp)
+
+## 数据：标注、清洗与顺序
+
+微调的上限常常是数据定的。三件事的顺序比做法更常出错：**先划分再清洗**（在训练集上统计均值、缺失率，否则测试集信息漏进清洗规则，评估虚高）；**增强只做在训练集内部**，验证/测试集保持原始分布；**去重放在划分之前**，否则同一条样本可能同时落进训练集和测试集。
+
+标注工具选两个够用：**CVAT**（视觉，Web 前端 + 后端服务分离，支持多人协作与权限分配）与 **Label Studio**（通用，文本/图像/音频都能标）。都建议**本地或私有服务器部署**而不是用在线版——数据不出内网，也能改代码定制。
+
+清洗的常规动作：去重（`duplicated` / 近似去重）、缺失值（删除、均值或前后填充、模型填补）、异常值（删除、当缺失处理、盖帽法）、文本规范化（空格、全半角、大小写）、时间格式统一。
+
+## 上手资源
+
+- [self-llm](https://github.com/datawhalechina/self-llm)：Linux 下全参数 / LoRA 微调与部署国内外开源模型的实操手册
+- [llm-action](https://github.com/liguodongiot/llm-action)：大模型工程化与落地的项目经验
+- [PyTorch 实用教程（第二版）](https://tingsongyu.github.io/PyTorch-Tutorial-2nd/)
+- 算力：[AutoDL](https://www.autodl.com/)（消费级显卡）、[魔搭社区](https://www.modelscope.cn/)（免费算力 + 中文数据集）
+- 评测：[Open LLM Leaderboard](https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard)、[LMSYS Chatbot Arena](https://lmarena.ai/)、[OpenCompass](https://opencompass.org.cn/)、[MTEB](https://huggingface.co/spaces/mteb/leaderboard)
+- 语音方向：[whisper](https://github.com/openai/whisper)（识别）、[GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS)（合成）
+
+项目目录可以直接抄：
+
+```text
+ai_learning_project/
+├── data/            # 数据文件
+├── notebooks/       # Jupyter notebooks
+├── src/
+│   ├── models.py
+│   ├── dataset.py
+│   ├── train.py
+│   └── utils.py
+├── models/          # 保存的模型
+├── results/         # 结果和图表
+└── requirements.txt
+```

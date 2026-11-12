@@ -53,7 +53,7 @@ const MANUAL_PAIRS: Record<string, string> = {
   计算机组成原理知识要点: 'docs/计算机基础/计组知识要点.md',
   编译原理笔记: 'docs/计算机基础/编译原理复习重点.md',
   软件工程学习笔记2025: 'docs/计算机基础/软件工程复习笔记.md',
-  吴恩达深度学习课程笔记: 'docs/机器学习/吴恩达ML学习笔记.md',
+  吴恩达深度学习课程笔记: 'docs/机器学习/机器学习入门.md',
   Docker入门教程: 'docs/后端/Docker基础教程.md',
   Shell知识笔记: 'docs/计算机基础/Shell知识笔记.md',
   数字电路笔记: 'docs/嵌入式/数电设计.md',
