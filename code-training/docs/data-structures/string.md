@@ -2,7 +2,7 @@
 title: 字符串
 category: 数据结构
 difficulty_range: [简单, 中等]
-last_updated: 2026-10-27
+last_updated: 2026-11-13
 ---
 
 # 字符串
@@ -30,6 +30,20 @@ for piece in pieces:
     parts.append(piece)
 s = ''.join(parts)
 ```
+
+## 结构剖面
+
+`str` 不是「字符的列表」，而是一段**定长的字节块**加一个长度字段：取第 i 个字符 = 基址 + i × 每字符字节数。
+
+![CPython str 与 Java String 的对象布局：长度字段加一段连续字符数据](/diagrams/string-layout.png)
+
+CPython 按串里最大的码点决定每字符占 1 / 2 / 4 字节（PEP 393）；Java 9 起用 `byte[]` + `coder`，纯拉丁字符每字符 1 字节，出现其它字符才整串切成 UTF-16。两边都用「定宽」换 O(1) 下标——变长编码（UTF-8）做不到按下标直接定位。
+
+「不可变」的代价也在同一处：没有「就地写一个字符」这条路，任何修改都只能新申请一整块。
+
+![不可变：拼接与切片都生成新对象，原串不动](/diagrams/string-immutable.png)
+
+所以 `s += c` 在循环里是 O(n²)：每轮都复制一遍已有内容。把片段攒进 list 再 `''.join()`，一次分配、一次拷贝，回到 O(n)。
 
 ## 常用 API 速查（笔试现场省时）
 

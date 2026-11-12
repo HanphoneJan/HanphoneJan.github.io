@@ -2,7 +2,7 @@
 title: 栈
 category: 数据结构
 difficulty_range: [简单, 较难]
-last_updated: 2026-10-27
+last_updated: 2026-11-13
 ---
 
 # 栈
@@ -19,6 +19,14 @@ last_updated: 2026-10-27
 | pop | O(1) | |
 | peek | O(1) | |
 | 查找任意元素 | O(n) | 只能逐个弹出，没有随机访问 |
+
+## 结构剖面
+
+栈在内存里**没有任何额外结构**：一块数组，一个 `top` 下标。
+
+![栈的数组表示：top 指向栈顶，右边那一格是下一次 push 的位置](/diagrams/stack-layout.png)
+
+`push` 是「写到 top+1，top 加一」，`pop` 是「读 top，top 减一」。所谓 LIFO 不是容器自带的魔法，而是「只在同一端进出」这条约定推出来的顺序。也正因为如此，从头部模拟栈（`insert(0, x)` / `pop(0)`）会把 O(1) 变成 O(n)：那一端没有游标，只有「整体后移」。
 
 ## 实现：list 的尾巴就是栈顶
 

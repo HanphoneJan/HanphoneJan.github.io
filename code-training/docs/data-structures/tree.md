@@ -2,7 +2,7 @@
 title: 树
 category: 数据结构
 difficulty_range: [简单, 困难]
-last_updated: 2026-10-27
+last_updated: 2026-11-13
 ---
 
 # 树
@@ -26,6 +26,16 @@ last_updated: 2026-10-27
 | 森林 | 互不相交的多棵树 | 删根即得森林 |
 
 「深度」「高度」易混的原因就是方向相反：**深度从根向下计数，高度从该节点向上（至最深叶）计数**，同一节点两个数不必相等。
+
+## 结构剖面
+
+树的节点长什么样，取决于是「往下找孩子」还是「往上找父亲」——一根指针只能指一个方向。
+
+![孩子表示法与父指针法：同一棵树，指针方向相反](/diagrams/tree-storage.png)
+
+算法题默认是孩子表示法：节点里放 `children` 列表（二叉就是 `left`/`right` 两根），往下走一步就到子树。并查集用父指针法：每个元素只存 `parent`，`fa[x] == x` 就是根——往上一步 O(1)，代价是往下找孩子要扫整个数组。
+
+两者都要求「每个节点至多一个父」，这正是「树无环」在实现层的含义。多叉树要编码成二叉树，就用「左孩子右兄弟」：把孩子关系换成「第一个孩子 + 下一个兄弟」两根指针。
 
 ## 存储表示
 
@@ -106,16 +116,17 @@ class Trie:
         return node
 ```
 
-插入 / 查询都是 O(m)（m 为词长），**与词典里有多少词无关**。`search` 与 `startsWith` 的区别只有一点：前者要求走到终点**且** `is_word` 为真，后者只要求走得到。插入 `["apple"]` 后查：
+插入 / 查询都是 O(m)（m 为词长），**与词典里有多少词无关**。`search` 与 `startsWith` 的区别只有一点：前者要求走到终点**且** `is_word` 为真，后者只要求走得到。
 
-```text
-root --a-- p --p-- l --e (is_word)
-            └── p ──┘            （"app" 段被 "apple" 共享）
+![Trie 的共享前缀：插入 apple 时 a-p-p 三段复用已有路径，词的结尾靠节点上的 is_word 标记](/diagrams/trie-shared-prefix.png)
 
-search("app")      走得到但 is_word=False → False
-search("apple")    走到底且 is_word=True → True
-startsWith("appl") 走得到 → True
-```
+插入 `["app", "apple", "apt"]` 之后，三个查询各自停在哪：
+
+| 查询 | 走到的位置 | 判定 |
+|---|---|---|
+| `search("app")` | 第三段之后 | `is_word` 为真 → True |
+| `search("appl")` | 第四段之后（节点存在） | `is_word` 为假 → False |
+| `startsWith("appl")` | 同上 | 走得到就为真 → True |
 
 适用场景：单词接龙、自动补全、词频统计、拼写检查；「用 Trie 解异或最大值」属于口头了解的定位。节点 `children` 用 dict（字符任意）或长 26 的数组（纯小写字母）等价。
 
