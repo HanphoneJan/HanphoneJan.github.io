@@ -83,6 +83,12 @@ emb
 - 预训练嵌入：如Word2Vec、GloVe、FastText，可直接加载预训练矩阵作为初始化，加速模型收敛
 - 微调：预训练嵌入加载后，可继续在下游任务中微调参数，适配任务场景
 
+##### 用现成的 Embedding 模型时
+
+各家接口并不统一：OpenAI 的请求格式不能直接套到阿里百炼、智谱 Embedding-3、LlamaIndex 上，字段名与批量方式都不一样，换一家就要重写一层适配。
+
+选型看 MTEB 这类榜单，但要挑**自己语种和领域那一栏**：总榜第一未必适合中文或垂直领域。[MTEB Leaderboard](https://huggingface.co/spaces/mteb/leaderboard)。
+
 
 
 
