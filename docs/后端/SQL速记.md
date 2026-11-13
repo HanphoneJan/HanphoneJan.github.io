@@ -1,4 +1,6 @@
 ---
+title: SQL 速记
+description: MySQL 方言的语法表：建表、查询、约束、索引、事务与存储过程，写 SQL 时对一眼。
 ---
 [SQL语法基础知识总结 | JavaGuide](https://javaguide.cn/database/sql/sql-syntax-summary.html)
 ## SQL语法

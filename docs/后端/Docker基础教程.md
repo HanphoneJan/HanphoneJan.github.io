@@ -1,8 +1,12 @@
 ---
+title: Docker 基础教程
+description: 镜像、容器、Dockerfile、网络与 Compose 的最小够用命令，附三平台安装。
 ---
-非常好的入门教学视频！！[Bilibili：40分钟的Docker实战攻略，一期视频精通Docker](https://www.bilibili.com/video/BV1THKyzBER6/?share_source=copy_web&vd_source=186f482d5782bc8b1831fb6379b26ea2)
-以下笔记中大部分也是转载了该视频评论区的一条热评。
-该UP主给出的资源 [tech-shrimp/docker_installer： Docker官方安装包，用来解决因国内网络无法安装使用Docker的问题](https://github.com/tech-shrimp/docker_installer)
+Docker 的东西不多，但顺序重要：先让容器跑起来（命令），再看它由什么组成（镜像与分层、网络、卷），最后才谈多容器编排（Compose）。这份笔记按这个顺序排，主体转载自下面这个视频评论区的一条热评，外加自己用下来补的几条。
+
+- 视频：[40 分钟的 Docker 实战攻略，一期视频精通 Docker](https://www.bilibili.com/video/BV1THKyzBER6/?share_source=copy_web&vd_source=186f482d5782bc8b1831fb6379b26ea2)
+- 安装包：[tech-shrimp/docker_installer](https://github.com/tech-shrimp/docker_installer) —— Docker 官方安装包，用来解决国内网络装不上 Docker 的问题
+
 ## 常用docker命令
 ```shell
 # 查看运行状态

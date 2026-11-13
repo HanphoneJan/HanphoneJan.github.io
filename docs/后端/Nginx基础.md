@@ -1,4 +1,6 @@
 ---
+title: Nginx 基础
+description: 反向代理、负载均衡、缓存与 location 匹配，附一份能直接改的完整配置。
 ---
 视频入门：[Nginx是什么？Nginx高并发架构拆解指南_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1gMX1YSEtm/?spm_id_from=333.337.search-card.all.click&vd_source=d70e94afe69a097aca14b8a5978d641d)
 教程参考：[Nginx是什么 | Nginx 教程](https://nginx.mosong.cc/guide/nginx_intro.html)

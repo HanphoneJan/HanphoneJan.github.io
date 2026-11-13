@@ -1,14 +1,36 @@
 ---
+title: 实时通信：WebSocket、SSE 与 WebRTC
+sidebar_label: 实时通信
+description: 服务端主动推数据的三条路：WebSocket 全双工、SSE 单向推送、WebRTC 点对点，各自协议怎么走、该选哪个。
 ---
-# WebSocket
+
+> 三种方案解决的是同一个需求——服务器有数据要主动给客户端。选型只看三个问题：要不要双向、要不要传二进制、能不能为每个客户端留一条长连接。
+
+## 先看对比
+
+| 对比维度  | HTTP                       | WebSocket                | SSE                      |
+| ----- | -------------------------- | ------------------------ | ------------------------ |
+| 协议基础  | HTTP/1.1/2/3               | 独立WebSocket协议（RFC 6455）  | 基于HTTP，属HTTP应用层扩展        |
+| 通信方向  | 客户端→服务器（请求-响应），单向          | 全双工，双向通信                 | 半双工，仅服务器→客户端单向推送         |
+| 连接特性  | 短连接（默认），可通过Keep-Alive实现长连接 | 持久化长连接，需特殊握手             | 基于HTTP Keep-Alive的持久化长连接 |
+| 浏览器支持 | 所有浏览器原生支持                  | 现代浏览器原生支持                | 现代浏览器原生支持（EventSource接口） |
+| 自动重连  | 无，需手动实现                    | 无，需手动实现                  | 内置自动重连，支持重试间隔配置          |
+| 消息格式  | 任意格式（需指定Content-Type）      | 文本、二进制（Blob/ArrayBuffer） | 仅UTF-8文本，遵循SSE字段格式       |
+| 头部开销  | 每个请求/响应均带完整HTTP头，开销大       | 仅握手阶段有HTTP头开销，后续无额外头     | 连接建立有HTTP头开销，后续消息无额外头    |
+| 适用场景  | 常规请求-响应（页面加载、接口调用）         | 双向实时通信（聊天、游戏、视频会议）       | 单向实时推送（通知、监控数据、新闻更新）     |
+| 运维成本  | 低，兼容现有HTTP基础设施             | 高，需额外处理协议、端口、负载均衡        | 低，复用HTTP基础设施，防火墙友好       |
+
+## WebSocket
 
 WebSocket 是一种网络传输协议，可在单个 TCP 连接上进行全双工通信，位于 OSI 模型的应用层。
 
-### 轮询推送技术
+### 轮询与长轮询
 
 早期，很多网站为了实现推送技术，所用的技术都是轮询（也叫短轮询）。轮询是指由浏览器每隔一段时间向服务器发出 HTTP 请求，然后服务器返回最新的数据给客户端。浏览器需要不断的向服务器发出请求，然而 HTTP 请求与响应可能会包含较长的头部，其中真正有效的数据可能只是很小的一部分，会消耗很多带宽资源。
 常见的轮询方式分为轮询与长轮询
 ![770a4455-5eae-4893-af7b-ab720e34cb51.webp](https://hanphone.top/gh/HanphoneJan/public-pictures/learn/%E8%BD%AE%E8%AF%A2%E5%92%8C%E9%95%BF%E8%BD%AE%E8%AF%A2%E7%A4%BA%E6%84%8F%E5%9B%BE.webp)
+
+### 握手与数据传输
 
 WebSocket 协议的工作原理分为握手和数据传输两个阶段：
 
@@ -16,7 +38,7 @@ WebSocket 协议的工作原理分为握手和数据传输两个阶段：
 
 2. **数据传输阶段**：握手成功后，数据直接通过 TCP 通道传输，不再依赖 HTTP 协议。WebSocket 协议的数据帧格式定义了标识、操作代码、掩码、数据、数据长度等字段。
 
-### WebsocketAPI
+### 浏览器 API
 
 [awesome-websockets](https://github.com/facundofarias/awesome-websockets?tab=readme-ov-file)
 
@@ -38,10 +60,10 @@ WebSocket 对象的属性
 - \_7）onopen：用于指定连接成功后的回调函数；
 - \_8）protocol（只读）：用于返回服务器端选中的子协议的名字；
 - \_9）readyState（只读）：返回当前 WebSocket 的连接状态，共有 4 种状态：
-- - *CONNECTING — 正在连接中，对应的值为 0；*
-- - *OPEN — 已经连接并且可以通讯，对应的值为 1；*
-- - *CLOSING — 连接正在关闭，对应的值为 2；*
-- - *CLOSED — 连接已关闭或者没有连接成功，对应的值为 3*
+- - *CONNECTING — 正在连接中，对应的值为 0；*
+- - *OPEN — 已经连接并且可以通讯，对应的值为 1；*
+- - *CLOSING — 连接正在关闭，对应的值为 2；*
+- - *CLOSED — 连接已关闭或者没有连接成功，对应的值为 3*
 - \_10）url（只读）：返回值为当构造函数创建 WebSocket 实例对象时 URL 的绝对路径。
 
 WebSocket 的方法
@@ -56,31 +78,136 @@ WebSocket 事件
 - \_3）message：当通过 WebSocket 收到数据时触发，也可以通过 onmessage 属性来设置；
 - \_4）open：当一个 WebSocket 连接成功时触发，也可以通过 onopen 属性来设置。
 
-## Socket.io
+### Socket.IO：不是 WebSocket 的封装
 
 [介绍 | Socket.IO](https://socket.io/zh-CN/docs/v4/)
 
-Socket.IO 是一个库。尽管 Socket.IO 确实在可能的情况下使用 WebSocket 进行传输，但它**为每个数据包添加了额外的元数据**。这就是为什么 WebSocket 客户端将无法成功连接到 Socket.IO 服务器，而 Socket.IO 客户端也将无法连接到普通 WebSocket 服务器。Socket.IO 服务器 (Node.js) 和 Socket.IO 客户端（浏览器, Node.js 或   其他编程语言）之间的双向通道尽可能使用 WebSocket 连接建立，并将使用 HTTP 长轮询作为后备。
+Socket.IO 是一个库。尽管 Socket.IO 确实在可能的情况下使用 WebSocket 进行传输，但它**为每个数据包添加了额外的元数据**。这就是为什么 WebSocket 客户端将无法成功连接到 Socket.IO 服务器，而 Socket.IO 客户端也将无法连接到普通 WebSocket 服务器。Socket.IO 服务器 (Node.js) 和 Socket.IO 客户端（浏览器, Node.js 或   其他编程语言）之间的双向通道尽可能使用 WebSocket 连接建立，并将使用 HTTP 长轮询作为后备。
 
 Socket.IO 代码库分为两个不同的层：
 
 - 底层通道：我们称之为 Engine.IO，Socket.IO 内部的引擎
 - 高级 API：Socket.IO 本身
 
-# WebRTC
+## SSE：只有服务器说话
+
+内容主要参考自：[SSE协议深度解析：被低估的HTTP服务器推送标准 - 若-飞 - 博客园](https://www.cnblogs.com/zhanchenjin/p/19449682)
+
+- 官方定位：W3C正式推荐标准（2015年2月发布），非HTTP hack用法，浏览器通过原生EventSource接口支持
+- 协议栈：基于HTTP构建，传输层依赖HTTP/1.1或HTTP/2（Keep-Alive连接），底层为TCP/IP协议
+- 核心作用：实现服务器向客户端的单向实时数据推送，适用于实时通知（用户登录提醒）、数据流推送（传感器数据）、实时监控面板、新闻更新等单向推送场景
+
+### 三要素
+
+![sse连接过程图.webp](https://hanphone.top/gh/HanphoneJan/public-pictures/network/sse%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B%E5%9B%BE.webp)
+
+#### 1. 必备响应头：text/event-stream
+
+```http
+HTTP/1.1 200 OK
+Content-Type: text/event-stream      # 核心标识
+Cache-Control: no-cache               # 禁止缓存
+Connection: keep-alive                # 保持连接
+Transfer-Encoding: chunked            # 分块传输（可选）
+```
+
+**关键点**：`text/event-stream`是IANA注册的标准MIME类型（RFC 2046），不是随意字符串。
+
+#### 2. 数据格式规范：严格的文本协议
+
+```javascript
+// 一个完整的SSE消息单元
+data: 这是消息内容\n            // 数据行（可多行）
+data: 继续上一消息的第二行\n
+id: 42\n                         // 消息ID（用于重连）
+event: message\n                 // 事件类型
+retry: 10000\n                   // 重连间隔（毫秒）
+\n                               // 空行表示消息结束
+
+// 浏览器接收到的对象：
+{
+  data: "这是消息内容\n继续上一消息的第二行",
+  lastEventId: "42",
+  type: "message"
+}
+```
+
+#### 3. 连接管理：HTTP Keep-Alive的创造性应用
+
+基于HTTP Keep-Alive实现长连接，服务器持续推送数据，连接随客户端断开或服务器终止而结束；服务器需通过Flusher强制立即发送数据。
+
+### 握手与消息流
+
+#### 建立连接流程
+
+```
+客户端->服务器: GET /stream HTTP/1.1
+客户端->服务器: Accept: text/event-stream
+服务器->客户端: HTTP/1.1 200 OK
+服务器->客户端: Content-Type: text/event-stream
+服务器->客户端: Connection: keep-alive
+服务器->客户端: 
+服务器->客户端: data: 欢迎连接\n\n
+服务器->客户端: data: 实时数据...\n\n
+服务器->客户端: data: 持续推送...\n\n
+Note right of 客户端: 连接保持打开
+Note left of 服务器: 可随时推送新消息
+```
+
+#### 消息流示例
+
+```
+客户端请求：
+GET /api/events HTTP/1.1
+Host: example.com
+Accept: text/event-stream
+
+服务器响应流：
+HTTP/1.1 200 OK
+Content-Type: text/event-stream
+Connection: keep-alive
+
+: 心跳保持连接
+data: 用户alice登录
+event: user-login
+id: 101
+
+data: {"temperature": 23.5}
+event: sensor-data
+id: 102
+
+data: 系统即将维护
+event: system-alert
+id: 103
+retry: 30000
+
+... 持续不断 ...
+```
+
+### 重要特性与机制
+
+- 自动重连：浏览器内置机制，断线后按retry间隔重试（默认3秒），重连自动携带Last-Event-ID
+
+- 事件ID追踪：通过id字段记录消息序列，重连时服务器可补发遗漏消息
+
+- 多事件类型：支持自定义event字段，客户端可针对性监听
+
+- HTTP/2适配：HTTP2支持多路复用，一个TCP连接可并行多个SSE流，规避HTTP/1.1并发连接限制（每个域名最多6个并发HTTP/1.1连接）
+
+## WebRTC：浏览器之间直接连
 
 [WebRTC API - Web API 接口 |MDN 系列](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API)
 
 [WebRTC 示例](https://webrtc.github.io/samples/)
 
-**WebRTC** （Web Real-Time Communication） 是一种技术，它使 Web 应用程序和站点能够捕获和选择性地流式传输音频和/或视频媒体，以及在浏览器之间交换任意数据，而无需中介。
-WebRTC 有多种用途;它们与  [Media Capture 和 Streams API](https://developer.mozilla.org/en-US/docs/Web/API/Media_Capture_and_Streams_API)  一起，为 Web 提供了强大的多媒体功能，包括支持音频和视频会议、文件交换、屏幕共享、身份管理以及与旧式电话系统的接口.
+**WebRTC** （Web Real-Time Communication） 是一种技术，它使 Web 应用程序和站点能够捕获和选择性地流式传输音频和/或视频媒体，以及在浏览器之间交换任意数据，而无需中介。
+WebRTC 有多种用途;它们与  [Media Capture 和 Streams API](https://developer.mozilla.org/en-US/docs/Web/API/Media_Capture_and_Streams_API)  一起，为 Web 提供了强大的多媒体功能，包括支持音频和视频会议、文件交换、屏幕共享、身份管理以及与旧式电话系统的接口.
 
-两个对等体之间的连接由  [`RTCPeerConnection`](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection)  接口表示。使用 建立并打开连接后，可以将媒体流 （[`MediaStream`](https://developer.mozilla.org/en-US/docs/Web/API/MediaStream)） 和/或数据通道 （[`RTCDataChannel`](https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel)） 添加到连接中。`RTCPeerConnection`媒体流可以包含任意数量的媒体信息轨道;轨道由基于  `MediaStreamTrack`  接口的对象表示，可能包含多种类型的媒体数据之一，包括音频、视频和文本（如字幕甚至章节名称）。
+两个对等体之间的连接由  [`RTCPeerConnection`](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection)  接口表示。使用 建立并打开连接后，可以将媒体流 （[`MediaStream`](https://developer.mozilla.org/en-US/docs/Web/API/MediaStream)） 和/或数据通道 （[`RTCDataChannel`](https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel)） 添加到连接中。`RTCPeerConnection`媒体流可以包含任意数量的媒体信息轨道;轨道由基于  `MediaStreamTrack`  接口的对象表示，可能包含多种类型的媒体数据之一，包括音频、视频和文本（如字幕甚至章节名称）。
 
 ### STUN 和 TURN
 
-**STUN（Session Traversal Utilities for NAT）**  和  **TURN（Traversal Using Relays around NAT）**  是两个关键的网络协议，用于解决 NAT（网络地址转换）和防火墙导致的连接问题。
+**STUN（Session Traversal Utilities for NAT）**  和  **TURN（Traversal Using Relays around NAT）**  是两个关键的网络协议，用于解决 NAT（网络地址转换）和防火墙导致的连接问题。
 
 #### STUN 协议
 

@@ -1,4 +1,6 @@
 ---
+title: Flask 基础
+description: 从最小应用、应用工厂与蓝图到 Jinja2 与 SQLAlchemy，Flask 项目骨架怎么搭。
 ---
 参考教程：[Flask 基本概念 | 菜鸟教程](https://www.runoob.com/flask/flask-basic-concept.html)
 ## Flask核心基础
@@ -25,7 +27,6 @@ def index():
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
     # host='0.0.0.0'允许外部网络访问，port指定端口号
-}
 ```
 
 ### Flask请求与响应对象

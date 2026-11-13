@@ -1,4 +1,6 @@
 ---
+title: FastAPI 基础
+description: Starlette + Pydantic 的分层、路由与校验、依赖注入与自动文档，一份可以照着改的接口模板。
 ---
 FastAPI 是基于 Python 3.8+ 的异步 Web 框架，主打**快速开发**+**自动生成接口文档**，底层基于 Starlette（异步Web框架）和 Pydantic（数据校验），适合做 **后端API、实时通信、微服务**，适合处理IO密集型任务，性能接近 Node.js、Go 级别。FastAPI 使用 Uvicorn 作为其默认的 Web 服务器。
 ## 核心架构
@@ -22,25 +24,10 @@ uvicorn main:app --reload --port 8001
 #（main 是文件名，app 是 FastAPI 实例，--reload 开发时自动重启）
 ```
 访问 `http://localhost:8001/docs` 可以Swagger查看接口。不指定端口是uvicorn会默认使用8000。
-#### 模板文件
+#### 完整示例
+
 ```python
-from fastapi import FastAPI, Depends
-from pydantic import BaseModel
-
-app = FastAPI()
-
-# 依赖函数：模拟登录校验
-def check_login(token: str = Depends()):
-    if token != "valid_token":
-        raise ValueError("token无效")
-    return {"user_id": 1}
-
-# Pydantic模型：定义请求体规则
-class Item(BaseModel):
-    name: str
-    price: float
-
-# 接口：新增商品from fastapi import FastAPI, Depends, Query, Header, HTTPException, Path
+from fastapi import FastAPI, Depends, Query, Header, HTTPException, Path
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 import asyncio
