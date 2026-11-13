@@ -271,8 +271,18 @@ export default hopeTheme({
             },
           },
           {
-            urlPattern: ({request}: {request: Request}) =>
-              request.destination === 'image',
+            // **只缓存同源图片。**
+            //
+            // 跨域图（`hanphone.top` 上那 500 多张）在 SW 里拿到的都是 opaque
+            // 响应，而浏览器会给 opaque 响应**加随机填充**：实测一张 39KB 的
+            // 图占 6.02MB 配额，417 张吃掉 2.87GB。读者只要把编译原理 / 嵌入式
+            // 那几页翻一遍，存储就会被撑爆（配额 13GB 也经不起第二次）。
+            //
+            // 所以跨域图交给浏览器自己的 HTTP 缓存（host 发 `max-age=14400`），
+            // 不进 CacheStorage。代价是这些图离线看不到 —— 但「离线看得到」
+            // 只能靠把图搬进仓库（同源、无填充），不是在 SW 里硬塞。
+            urlPattern: ({request, url}: {request: Request; url: URL}) =>
+              request.destination === 'image' && url.origin === self.location.origin,
             handler: 'CacheFirst' as const,
             options: {
               cacheName: 'images',
