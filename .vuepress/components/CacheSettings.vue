@@ -388,9 +388,10 @@ function targetCache(url: string): string {
   if (url.startsWith('/quiz/')) return QUIZ_CACHE
   // 12.9MB 的 Python 解释器有自己的桶，不归 SW 管（见 pyrunner/runtime.ts）
   if (url.startsWith('/pyodide/')) return PYODIDE_CACHE
-  // 结构图（`static/diagrams/*.png`）：SW 的 image 路由是 CacheFirst，
-  // 读的就是 `images` 桶。写进 html-v2 的话离线打开页面仍然是裂图。
-  if (url.startsWith('/diagrams/')) return IMAGE_CACHE
+  // 正文插图（`static/diagrams` 结构图 + `static/img` 项目配图）：SW 的
+  // image 路由是 CacheFirst，读的就是 `images` 桶。写进 html-v2 的话离线
+  // 打开页面仍然是裂图。
+  if (url.startsWith('/diagrams/') || url.startsWith('/img/')) return IMAGE_CACHE
   // 「共享脚本」也要进 `assets`：那是 SW 的 script 路由读的桶（SWR，
   // 文件名带内容哈希所以不可变）。塞进 html-v2 的话永远不会被用到。
   if (url.startsWith('/assets/')) return ASSET_CACHE
@@ -1046,13 +1047,18 @@ async function clearSection(id: string): Promise<void> {
     }),
   )
 
-  // 结构图是「同一路径、不同 ?v」的版本化资源。上面的精确删除只清掉当前
-  // 清单里那一版，旧版本（改过图、重新部署之前下的）会一直躺在 `images`
-  // 里 —— 清一次板块仍然占着几百 KB。这里按路径前缀一并收掉。
+  // 插图是「同一路径、不同 ?v」的版本化资源。上面的精确删除只清掉当前清单
+  // 里那一版，旧版本（改过图、重新部署之前下的）会一直躺在 `images` 里 ——
+  // 清一次板块仍然占着几 MB。这里按**路径**一并收掉清单里那些图的所有版本，
+  // 再加上已经从清单里消失的结构图（`/diagrams/` 整个目录归这个板块管）。
   if (id === 'images') {
+    const owned = new Set(
+      section.entries.map(([url]) => new URL(url, location.origin).pathname),
+    )
     const cache = await caches.open(IMAGE_CACHE)
     for (const request of await cache.keys()) {
-      if (new URL(request.url).pathname.startsWith('/diagrams/')) {
+      const pathname = new URL(request.url).pathname
+      if (owned.has(pathname) || pathname.startsWith('/diagrams/')) {
         await cache.delete(request)
       }
     }

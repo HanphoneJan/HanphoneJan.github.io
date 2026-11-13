@@ -53,9 +53,14 @@
 - **图里只画结构。** 格子、节点、箭头、≤6 字的标签是图的内容；整句解释
   属于正文。底部加一条通栏说明框是最常见的错误 —— 读者会把它当图的一部分
   硬读，而它和正文重复。
-- 本站 `/diagrams/*.png` 在构建期由 `.vuepress/markdown/diagram-images.ts`
-  挂上 `?v=<内容哈希>` 并补 `width`/`height`，所以**改图不用改名**：
-  重新导出同名文件，构建后 URL 自动变，PWA 的 `CacheFirst` 不会给旧图。
+- 本站 `static/diagrams/**` 与 `static/img/**` 下的图，构建期由
+  `.vuepress/static-images.ts` + `.vuepress/markdown/image-tags.ts` 统一处理：
+  挂 `?v=<内容哈希>`、补 `width`/`height`（PNG）、正文里手写的 `<img>` 也一起管。
+  所以**改图不用改名**：重新导出同名文件，构建后 URL 自动变，PWA 的
+  `CacheFirst` 不会给旧图。外链图（`https://hanphone.top/...`）算不出哈希，
+  只补 `loading="lazy"`。
+- 这些图会被列进 `/settings.html` 的「页面插图」板块（构建期只收正文真引用
+  过的那些），读者可以一次性下完，断网也能看。
 
 ## 导出 SVG 还是 PNG
 

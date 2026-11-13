@@ -4,7 +4,7 @@ import path from 'node:path'
 import type { App, Page } from 'vuepress/core'
 import { PYODIDE_RUNTIME_FILES } from '../../src/components/training/pyrunner/runtime-files'
 import { BUILD_ID } from '../build-id'
-import { allDiagrams } from '../diagram-assets'
+import { allUsedImages } from '../static-images'
 import {
   chunkStem,
   extractRouteChunks,
@@ -367,15 +367,17 @@ export function buildManifest(app: App): OfflineManifest {
     }
   }
 
-  // 结构图：`static/diagrams/*.png`。
+  // 正文插图：`static/diagrams/**` 的结构图 + `static/img/**` 的项目配图。
   //
-  // URL 必须用**带内容版本**的那一份（与 markdown 规则共用
-  // `diagram-assets.ts`）：页面请求的是 `/diagrams/x.png?v=<hash>`，
-  // 这里写裸文件名的话，下完一轮离线仍然是裂图 —— 缓存键对不上。
-  const diagrams = allDiagrams()
-  if (diagrams.length > 0) {
+  // URL 必须用**带内容版本**的那一份（与 markdown 规则共用 `static-images.ts`）：
+  // 页面请求的是 `/img/x.png?v=<hash>`，这里写裸文件名的话，下完一轮离线仍然
+  // 是裂图 —— 缓存键对不上。
+  // 只收「正文真的引用过」的那些（`noteUsedImage` 登记），没引用的图标与旧稿
+  // 残留不必下发。
+  const images = allUsedImages()
+  if (images.length > 0) {
     const section = bucket('images')
-    for (const { url, info } of diagrams) {
+    for (const { url, info } of images) {
       section.entries.push([url, null, info.bytes, 0, info.version])
       section.bytes += info.bytes
     }
