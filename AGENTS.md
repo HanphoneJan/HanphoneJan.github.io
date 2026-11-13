@@ -83,6 +83,16 @@ VuePress 的 `inferRoutePath` 会把不以 `.html` 结尾的路由补成 `.html`
 （`/docs`、`/code-training/problems/leetcode/1`）由 GitHub Pages 的
 `X -> X.html` 解析兜住，书签和外链不受影响。
 
+**`导读.md` 映射为所在目录本身**：`docs/机器学习/导读.md` -> `/docs/机器学习.html`，
+所以侧边栏分组标题点进去就是导读。`/docs/机器学习` 这种无后缀写法由
+GitHub Pages 兜住（`X.html` 优先于同名目录）。规则写在 `paths.ts` 里，
+**不要给导读加 `slug`**：`slug: /` 是板块根，会把页面抢到 `/docs.html`。
+
+**搬家、改名、删除都不补重定向。** 2026-11 起取消了「旧地址一律保留」的口径：
+页面换地址后旧 URL 直接 404，站内链接改源头。`theme.ts` 里不再配置
+`redirect`（迁移时代的 `/docs/intro` 等几条已删除）——重定向表要跟着每次
+搬家手工维护，还会让「哪些地址是真的、哪些是壳」变得不可判断。
+
 ### 侧边栏：每个分组必须带自己的 `prefix`
 
 `.vuepress/sidebar.ts` 现场扫描目录生成侧边栏，每个目录是一个可折叠分组。
@@ -435,6 +445,7 @@ React root 里：
 **旧地址为什么不直接让它 404**：`/code-training/intro` 与 `/docs/intro`
 都是**已经上线**的 URL（书签、搜索引擎、外链都指着它们）。仓库里「博客旧 URL 故意 404」那条
 规矩针对的是**被删掉**的内容，这里是**搬家**，性质不同。
+（此口径已于 2026-11 反转：搬家不留旧地址，不再补重定向，见「URL 规则」。）
 3.9.2 的 `plugin-content-docs` 已经**没有** `redirects` 选项了
 （整个包里搜不到 `redirect` 这个词），`docusaurus-plugin-client-redirects`
 又没装，所以 `plugins/static-redirects` 在 `postBuild` 里直接写 HTML：

@@ -24,7 +24,8 @@ slug: /
 
 - **前端开发** - Web 开发、React、Vue、TypeScript、Next.js、工具链
 - **后端开发** - Spring、Django、FastAPI、Node.js、Docker、数据库
-- **机器学习** - 深度学习、大模型、Transformer、LangChain
+- **机器学习** - 深度学习、大模型、Transformer、多模态
+- **Agent** - 提示词、Agent 范式与工程、框架、部署
 - **嵌入式** - STM32、ARM、RTOS、数电设计、汇编语言
 - **读书笔记** - 读书心得与摘录
 
