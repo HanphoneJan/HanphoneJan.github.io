@@ -1,5 +1,6 @@
 ---
 title: Vue 基础
+sidebar_position: 10
 description: 响应式与生命周期、模板与指令、组件与通信、Vue Router 与 Pinia，以及把现成 HTML 改成 Vue。
 ---
 资料参考：[前端面试 Vue篇_w3cschool](https://www.w3cschool.cn/web_interview/web_interview-ncsq3pv3.html)
@@ -168,6 +169,63 @@ export default defineConfig({
   }
 })
 ```
+
+## UI 组件库：Element Plus
+
+Vue 3 项目里最常用的一套组件库，表格、表单、弹窗、日期选择器都齐。[组件文档](https://element-plus.org/zh-CN/component/overview.html)
+
+```bash
+npm install element-plus
+```
+
+全量引入：
+
+```js
+import { createApp } from 'vue'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+
+createApp(App).use(ElementPlus).mount('#app')
+```
+
+按需引入（推荐，体积小很多）：
+
+```js
+// vite.config.js
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    AutoImport({ resolvers: [ElementPlusResolver()] }),
+    Components({ resolvers: [ElementPlusResolver()] }),
+  ],
+})
+```
+
+组件直接用，不再手写 import：
+
+```vue
+<template>
+  <el-button type="primary" @click="submit">提交</el-button>
+  <el-input v-model="keyword" placeholder="搜索" />
+  <el-table :data="rows">
+    <el-table-column prop="name" label="姓名" />
+    <el-table-column prop="age" label="年龄" />
+  </el-table>
+</template>
+```
+
+暗色模式要额外引一份变量，并在 `<html>` 上切 `dark` 类：
+
+```js
+import 'element-plus/theme-chalk/dark/css-vars.css'
+document.documentElement.classList.toggle('dark')
+```
+
+同类可选：**Ant Design Vue**（组件风格贴近 antd）、**Naive UI**（TypeScript 友好、主题灵活）、**Vuetify**（Material Design）。
 
 ## 模板语法
 
@@ -1102,7 +1160,6 @@ const goBack = () => {
     - hash值变化会触发hashchange事件
     - hash值变化会在浏览器的历史中留下记录，使用的浏览器的后退按钮可以回到上一个hash值
     - hash永远不会提交到服务器，即使刷新页面也不会。
-
 
 在HTML5规范中，history中增加了新的API
 

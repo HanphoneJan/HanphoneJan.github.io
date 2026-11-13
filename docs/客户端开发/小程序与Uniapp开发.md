@@ -1,5 +1,6 @@
 ---
 title: 小程序与 Uniapp 开发
+sidebar_position: 4
 description: 用 Vue 语法写多端：Uniapp 的迁移、权限、插件与打包，微信小程序的结构与运行机制，以及登录、手机号与支付的接入。
 ---
 
@@ -9,7 +10,6 @@ description: 用 Vue 语法写多端：Uniapp 的迁移、权限、插件与打�
 使用 Vue.js 语法，搭配 HTML、CSS（支持 Less/Sass），**支持多平台应用编译打包**，无需懂原生开发就能做出完整的跨平台应用，对中国生态适应极强。类似的有taro和kbone。对于APP，flutter、react native是跨Android和IOS的框架，但仍旧需要写两套UI（Google和Apple的应用风格不一致）。
 **项目选型**：[uni-app选型评估| uni-app官网](https://uniapp.dcloud.net.cn/select.html)
 ![](https://hanphone.top/gh/HanphoneJan/public-pictures/frontend/uniapp%E5%8A%9F%E8%83%BD%E6%A1%86%E6%9E%B6%E5%9B%BE.webp)
-
 
 ### 迁移学习
 
@@ -22,7 +22,6 @@ description: 用 Vue 语法写多端：Uniapp 的迁移、权限、插件与打�
 ##### 如果熟悉小程序，但不熟悉vue
 
 参考总结[https://segmentfault.com/a/1190000015684864](https://segmentfault.com/a/1190000015684864)
-
 
 ### 权限
 
@@ -42,7 +41,6 @@ description: 用 Vue 语法写多端：Uniapp 的迁移、权限、插件与打�
 [uni.createInnerAudioContext() | uni-app官网](https://uniapp.dcloud.net.cn/api/media/audio-context.html)
 
 [uni-app官网](https://uniapp.dcloud.net.cn/api/media/video.html#choosevideo)
-
 
 #### H5嵌入Uniapp
 
@@ -93,7 +91,6 @@ mainfest.json中。本地html页面要放在static中
 [uni_modules | uni-app官网](https://uniapp.dcloud.net.cn/plugin/uni_modules.html)
 
 [Uniapp接入插件的三种方式_uniapp安装插件-CSDN博客](https://blog.csdn.net/qq_23257451/article/details/129460416)
-
 
 [manifest.json 应用配置 | uni-app官网](https://uniapp.dcloud.net.cn/collocation/manifest.html#mp-weixin)
 ### 部署打包
@@ -175,8 +172,6 @@ uni-app发布到App(非nvue)、小程序时，显示页面仍然由webview渲染
 - div等元素选择器改为view、span和font改为text、a改为navigator、img改为image...（编译到非H5时，**编译器会自动处理**。所以不改也行）
 - 不同端的浏览器兼容性仍然存在，避免使用太新的css语法，否则发布为App时，Android低端机（Android 4.4、5.x），会有样式错误。当然在App端也可以引用x5浏览器内核来抹平浏览器差异。
 
-
-
 ## 微信小程序
 
 #### 项目基本结构
@@ -230,7 +225,6 @@ miniprogram/                   # 项目根目录
     └── wxp.js                 # Promise化API封装库
 ```
 
-
 ### 页面
 
 每个页面有4个基本组件
@@ -280,8 +274,6 @@ WXML 的模板语法和指令系统直接借鉴了 Vue，但功能更简化，�
 
 加载解析页面的.json配置文件，加载页面的.wxml模板和.wxss样式，执行页面的js文件，调用Page()创建页面实例，页面渲染完成
 
-
-
 组件
 
 ### API
@@ -302,9 +294,7 @@ WXML 的模板语法和指令系统直接借鉴了 Vue，但功能更简化，�
 特点：类似于jQuery中的$.ajax(options)函数,需要通过success、fail、complete接收调用的结果
 ●举例：wx.request()发起网络数据请求，通过success回调函数接收数据
 
-
 ### 协同工作
-
 
 ### 发布
 
@@ -320,7 +310,7 @@ WXML 的模板语法和指令系统直接借鉴了 Vue，但功能更简化，�
 
 ## 微信生态接入
 
-> 这一节原来单独成篇（《微信公众号接入》），讲的是公众号接入自己的服务器，以及小程序拿手机号和做支付时要过的关。文中的 AppID / AppSecret / EncodingAESKey / 地图 key 都已换成占位符，照着做时换成自己的，别提交进仓库。
+下面的 AppID / AppSecret / EncodingAESKey / 地图 key 都是占位符，照着做时换成自己的，不要提交进仓库。
 
 ### 公众号接入自己的服务器
 

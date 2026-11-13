@@ -1,6 +1,7 @@
 ---
 title: React 基础
-description: 虚拟 DOM 与 JSX、组件与 props、State 与生命周期、Hooks 的常用写法。
+sidebar_position: 11
+description: 虚拟 DOM 与 JSX、组件与 props、State 与生命周期、Hooks、Context 状态管理，以及常用生态库。
 ---
 [React 官方文档](https://react.dev/)
 
@@ -240,6 +241,147 @@ const RefDemo = () => {
 #### （4）其他常用 Hooks
 - `useContext`：跨组件共享数据，减少 props 逐层传递（如用户信息、主题配置）；
 - `useCallback/useMemo`：性能优化钩子，分别缓存函数和计算结果，避免重复渲染；
+
+## 状态管理与 Context
+
+`useState` 管组件内部状态；要跨层共享（登录用户、主题、语言），用 Context，避免 props 一层层往下传。
+
+```tsx
+// src/contexts/AuthContext.tsx
+import React, { createContext, useContext, useState, ReactNode } from 'react'
+
+interface User {
+  id: string
+  name: string
+}
+
+interface AuthContextType {
+  user: User | null
+  login: (name: string) => void
+  logout: () => void
+  isAuthenticated: boolean
+}
+
+// 默认值只用于类型提示，实际由 Provider 提供
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+
+  const login = (name: string) => {
+    const mockUser = { id: Date.now().toString(), name }
+    setUser(mockUser)
+    localStorage.setItem('user', JSON.stringify(mockUser))
+  }
+
+  const logout = () => {
+    setUser(null)
+    localStorage.removeItem('user')
+  }
+
+  // 挂载时从本地存储恢复
+  React.useEffect(() => {
+    const saved = localStorage.getItem('user')
+    if (saved) setUser(JSON.parse(saved))
+  }, [])
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+// 自定义 Hook 简化调用，顺带处理「不在 Provider 里」的情况
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
+}
+```
+
+用法：根组件包一层 `AuthProvider`，子组件里 `const { user, login } = useAuth()`。
+
+Context 的可见范围由 Provider 在树里的位置决定：只有被它包裹的组件能读到。Provider 先于子组件初始化，所以放在最外层（`layout` / `App`）最稳。
+
+状态再复杂就上状态库：**Zustand**（轻、无 Provider）、**Redux Toolkit**（规范、生态大）、**Jotai**（原子化）。中小项目 Context 就够，别一开始就引 Redux。
+
+## 生命周期
+
+函数组件没有类组件那套生命周期方法，用 `useEffect` 表达：
+
+| 类组件 | 函数组件等效 | 时机 |
+|---|---|---|
+| `componentDidMount` | `useEffect(() => {}, [])` | 挂载后执行一次（请求、订阅） |
+| `componentDidUpdate` | `useEffect(() => {}, [deps])` | 依赖变化后执行 |
+| `componentWillUnmount` | `useEffect(() => { return () => {} }, [])` | 卸载前清理 |
+
+```tsx
+const SubscriptionComponent = () => {
+  const [data, setData] = React.useState('')
+
+  React.useEffect(() => {
+    const subscription = someService.subscribe(setData)
+    return () => subscription.unsubscribe() // 卸载或依赖变化时清理
+  }, [])
+
+  return <p>{data}</p>
+}
+```
+
+页面刷新等于整棵树重新挂载：`constructor` → `render` → `useEffect` 都会再走一遍。开发环境下 StrictMode 会**故意**把挂载/卸载执行两次，用来暴露没写清理函数的副作用。
+
+## 生态与 UI 库
+
+| 类别 | 常用 | 说明 |
+|---|---|---|
+| UI 组件库 | **antd** | 企业级后台首选，表格、表单、弹窗齐全 |
+| 图标 | **lucide-react** / Font Awesome | 前者是按需引入的 SVG 图标集，后者图标最全 |
+| 动画 | **Framer Motion**（现 motion）/ React Spring | 声明式动画，布局动画与手势支持好 |
+| 图表 | **ECharts**（echarts-for-react） | 与框架无关，配置式，国内文档全 |
+| Markdown | **react-markdown** + remark-gfm + rehype | 渲染 Markdown，配 `react-syntax-highlighter` 做高亮 |
+| 样式 | **Tailwind CSS** / CSS Modules | Tailwind 的 preflight 会重置默认样式，接在已有站点里要注意 |
+
+antd 的安装与用法：
+
+```bash
+npm install antd
+```
+
+```tsx
+import { Button, Input, Table } from 'antd'
+import 'antd/dist/reset.css'
+
+function App() {
+  return (
+    <div>
+      <Button type="primary">Primary Button</Button>
+      <Input placeholder="Basic usage" />
+    </div>
+  )
+}
+```
+
+图标示例：
+
+```tsx
+// npm install lucide-react
+import { Search, User, LogOut } from 'lucide-react'
+
+export function IconDemo() {
+  return (
+    <div>
+      <Search size={20} color="#666" />
+      <User size={24} strokeWidth={1.5} />
+      <LogOut size={18} />
+    </div>
+  )
+}
+```
+
+TypeScript 项目里第三方的无类型包（如 `md5`）会报「找不到声明文件」，装 `@types/md5` 或补一个 `declare module 'md5'` 即可。
 
 ## React其他
 - **Portals**：将组件渲染到当前 DOM 树之外的节点，适用于弹窗、模态框等场景；

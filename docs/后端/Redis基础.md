@@ -3,8 +3,6 @@ title: Redis 基础
 description: 用 Docker 起一个 Redis（含持久化开关），以及容器权限和国内镜像加速这两件必做的前置。
 ---
 
-这一篇目前只到「能起来」：把 Redis 跑起来，再把 Docker 那两件常见的前置（权限、镜像源）处理掉。Redis 的命令、持久化原理、过期与淘汰策略还没整理，别把它当完整速查用。
-
 官方不建议在 Windows 下直接装 Redis（微软维护过 Windows 版本，但已不是主流做法），用 Docker 跑最省事：
 
 ```shell

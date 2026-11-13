@@ -38,6 +38,7 @@ export interface SidebarItem {
 const DOC_TOP_ORDER = [
   'intro',
   '前端',
+  '客户端开发',
   '后端',
   'Python',
   '嵌入式',

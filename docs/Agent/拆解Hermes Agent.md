@@ -3,12 +3,10 @@ title: 拆解 Hermes Agent
 description: 自进化学习机制：分层记忆、经验提炼与自我改进的闭环。
 ---
 
-Hermes Agent 主打「随着使用而变好」。这篇拆的是它凭什么能变好：记忆分几层、经验在什么时候被提炼成规则、规则又如何反过来影响下一次决策。
-
+Hermes Agent 主打「随着使用而变好」。
 
 [GitHub - NousResearch/hermes-agent: The agent that grows with you · GitHub](https://github.com/nousresearch/hermes-agent)
 ## 自进化学习机制
-
 
 Hermes-Agent 的自进化学习机制，并非单一技术，而是一个精密设计的系统闭环。其核心思想是赋予智能体从自身经验中学习与优化的能力，模拟人类 “**实践-反思-沉淀-复用**” 的成长过程。这个机制主要包含以下五个紧密协作的层次：
 

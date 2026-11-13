@@ -2,7 +2,7 @@
 title: Django 基础
 description: 从项目结构、ORM、视图与 DRF，到中间件、模板、Channels 与部署的一份 Django 速查。
 ---
-Django 是基于 WSGI/ASGI 的 Web 框架，核心是「模型 → 视图 → 模板」这条链路；配上 DRF 之后，也可以按「模型 → 序列化器 → 视图 → 路由」走成纯 API 服务。这份笔记按这个顺序整理，最后补上中间件、模板、Channels 与部署。
+Django 是基于 WSGI/ASGI 的 Web 框架，核心是「模型 → 视图 → 模板」这条链路；配上 DRF 之后，也可以按「模型 → 序列化器 → 视图 → 路由」走成纯 API 服务。
 
 **参考资料**：[Django 5.2 官方文档](https://docs.djangoproject.com/zh-hans/5.2/) · [PyCharm 创建 Django 项目（菜鸟教程）](https://www.runoob.com/pycharm/pycharm-django.html)
 
@@ -1352,7 +1352,6 @@ python manage.py runserver  # 启动开发服务器
 wsgi.py：适用于同步请求处理（默认生成）
 asgi.py：适用于异步请求处理（Django 3.0+ 支持）  
 这两个文件定义了供服务器加载的 `application` 对象。
-
 
 启动异步服务器：
 

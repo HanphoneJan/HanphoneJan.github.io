@@ -1,5 +1,6 @@
 ---
 title: HTML / CSS / JS 速查
+sidebar_position: 1
 description: 三件套的语法速查：标签与语义化、选择器与布局、DOM 与事件、ES6+ 常用特性。
 ---
 内容主要参考自：[html css js（这一篇就够了） - 小liii - 博客园](https://www.cnblogs.com/xxctx/p/18426729)
@@ -117,7 +118,6 @@ JS是脚本语言，核心是操作DOM（文档对象模型）实现动态交互
 - **ES6+特性**：解构赋值、模板字符串、Promise、async/await、class类、import/export模块
 ### ⭐JS的DOM操作
 ![DOM树示例图.webp](https://hanphone.top/gh/HanphoneJan/public-pictures/frontend/DOM%E6%A0%91%E7%A4%BA%E4%BE%8B%E5%9B%BE.webp)
-
 
 #### JS获取DOM元素
 ```javascript
@@ -300,7 +300,6 @@ function throttle(func, limit) {
   }
 }
 ```
-
 
 #### 懒加载
 页面元素（如图片）仅在进入可视区域时才加载资源，优化首屏加载性能。

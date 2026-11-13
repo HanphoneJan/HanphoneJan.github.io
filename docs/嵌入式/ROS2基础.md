@@ -4,7 +4,7 @@
 
 [ROS 2 Documentation — ROS 2 Documentation: Jazzy documentation](https://docs.ros.org/en/jazzy/)
 
-[ROS 2 文档 — ROS 2 文档：Humble 文档](https://docs.ros.org/en/humble/index.html) 非常成熟的一个版本！本文档默认使用该版本。
+[ROS 2 文档：Humble](https://docs.ros.org/en/humble/index.html)，本站笔记默认使用这个版本。
 
 [ROS 2 文档 — ROS 2 文档：Jazzy 文档](https://ros-doc.armfun.cn/jazzy/index.html) ros2rolling 滚动版本始终是最新版本
 
@@ -623,13 +623,11 @@ git clone https://github.com/turtlebot/turtlebot4.git -b jazzy
 # 如果不行就手动下载解压并放到相关目录
 unzip turtlebot4_simulator-jazzy.zip -d ~/turtlebot4_ws/src/```
 
-
 ### Turtlebot3
 
 **TurtleBot3** 对 ROS 2 Humble 全面支持
 
 [海龟机器人3](https://emanual.robotis.com/docs/en/platform/turtlebot3/overview/)
-
 
 # ROS项目
 
@@ -638,7 +636,6 @@ unzip turtlebot4_simulator-jazzy.zip -d ~/turtlebot4_ws/src/```
 ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py world:=~/custom_corridor
 
 ````
-
 
 ```bash
 cd ~/ros2_ws

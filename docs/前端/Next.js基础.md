@@ -1,19 +1,13 @@
 ---
 title: Next.js 基础
-description: 项目结构、四种渲染模式的写法、路由与中间件、状态与生命周期、PWA 与部署。
+sidebar_position: 12
+description: 项目结构、四种渲染模式的写法、路由与中间件、Suspense、PWA 与部署。
 ---
 
+Next.js 是 Vercel 维护的 React 框架，支持 CSR、SSR、SSG、ISR 四种渲染模式，内置文件系统路由、代码分割、图片优化、TypeScript 与 ESLint。核心依赖是 `next`、`react`、`react-dom`。
 
-“基于 React 的服务端渲染（SSR）/ 静态站点生成（SSG）框架”
-
-1. **渲染模式优化**：支持 SSR（服务端渲染）、SSG（静态站点生成）、ISR（增量静态再生）、CSR（客户端渲染），核心目标是提升前端页面的性能和 SEO 表现；
-2. **前端工程化**：内置路由（文件系统路由）、代码分割、图片优化、TypeScript 支持、ESLint 集成等，简化前端开发流程；
-
-[Next.js - React 应用开发框架 | Next.js中文网](https://www.nextjs.cn/)   由vercel维护支持
-
-[Nextjs全栈详细开发教程，完整版Nextjs是一个使用react作为前端框架底层的支持SSR(请求时渲染)、SSG( - 掘金](https://juejin.cn/post/7203180600818581563)
-
-内置对sass，tailwindcss，css-in-js的支持，内置状态管理。推荐创建`typescript`加持下的项目，有更好的开发体验和对项目更高的掌控力。项目核心依赖库`next`、`react`、`react-dom`三个库。
+- [Next.js 中文文档](https://www.nextjs.cn/)
+- [Next.js 全栈开发教程](https://juejin.cn/post/7203180600818581563)
 
 ```shell
 npx create-next-app@latest
@@ -50,10 +44,25 @@ package.json 项目npm相关文件。
 tsconfig.json。typescript相关配置文件。
 ```
 
+## 渲染模式：CSR / SSR / SSG / ISR
 
-## Next.js 渲染模式代码实现
+| 模式 | 页面在哪生成 | 什么时候拿到内容 | 适合 |
+|---|---|---|---|
+| **CSR** 客户端渲染 | 浏览器 | 先拿到空壳，JS 执行后再请求数据 | 后台管理、登录后的页面 |
+| **SSR** 服务端渲染 | 每次请求时在服务器 | 首屏 HTML 就带数据 | 内容实时、要 SEO |
+| **SSG** 静态生成 | 构建时 | 首屏 HTML 就带数据，最快 | 博客、文档、营销页 |
+| **ISR** 增量静态再生 | 构建时生成，之后按间隔重新生成 | 首屏是静态 HTML | 内容会变但不要求实时 |
 
-#### 1. SSG 静态站点生成（Pages Router）
+- **CSR**：服务器只发 `index.html` 和 JS，首屏白屏时间长，SEO 差，但部署最简单（一份静态文件）。
+- **SSR**：服务器按请求渲染完整 HTML，首屏快、SEO 好；代价是要有 Node 服务，且每次请求都要等数据。
+- **SSG**：构建时把每个页面生成成 HTML，直接放 CDN；内容更新要重新构建。
+- **ISR** 是 Next.js 在 SSG 上加的：页面照样静态发布，但超过 `revalidate` 秒后，下一个请求会触发后台重新生成。
+
+同一套代码里可以混用：列表页 SSG、详情页 ISR、登录后的面板 CSR。
+
+## 四种渲染模式的写法
+
+### 1. SSG 静态站点生成（Pages Router）
 
 ```tsx
 // pages/posts/[id].tsx
@@ -91,7 +100,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 };
 ```
 
-#### 2. ISR 增量静态再生（Pages Router）
+### 2. ISR 增量静态再生（Pages Router）
 
 ```tsx
 // pages/products/[id].tsx
@@ -105,7 +114,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 };
 ```
 
-#### 3. SSR 服务端渲染（App Router）
+### 3. SSR 服务端渲染（App Router）
 
 ```tsx
 // app/users/[id]/page.tsx
@@ -132,8 +141,6 @@ export default async function UserPage({ params }: UserPageProps) {
   );
 }
 ```
-
-
 
 ## 页面与路由
 
@@ -464,308 +471,6 @@ export default function Home() {
   );
 }
 ```
-
-## 状态管理
-
-`useState` 是 React 提供的最基础的状态管理 Hook，适用于组件内部状态
-
-### 1. Context API 跨组件状态共享
-
-Context 提供了一种在组件树中共享数据的方式，无需逐层传递Props。
-
-```tsx
-// src/contexts/AuthContext.tsx
-'use client';
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-// 定义Context类型
-interface User {
-  id: string;
-  name: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  login: (name: string) => void;
-  logout: () => void;
-  isAuthenticated: boolean;
-}
-
-// 创建Context（默认值用于类型提示，实际由Provider提供）
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// 创建Provider组件
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-
-  const login = (name: string) => {
-    // 模拟登录逻辑
-    const mockUser = { id: Date.now().toString(), name };
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-  };
-
-  // 组件挂载时从本地存储恢复状态
-  React.useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) setUser(JSON.parse(savedUser));
-  }, []);
-
-  return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-// 自定义Hook简化使用
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
-```
-
-#### Context 使用示例
-
-```tsx
-// 1. 在根布局中包裹Provider
-// app/layout.tsx
-import { AuthProvider } from '@/src/contexts/AuthContext';
-
-export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <body>
-        <AuthProvider>{children}</AuthProvider>
-      </body>
-    </html>
-  );
-}
-
-// 2. 在组件中使用
-// app/login/page.tsx
-'use client';
-import { useAuth } from '@/src/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-
-export default function LoginPage() {
-  const { login, isAuthenticated } = useAuth();
-  const router = useRouter();
-  const [name, setName] = useState('');
-
-  // 已登录则跳转首页
-  React.useEffect(() => {
-    if (isAuthenticated) router.push('/');
-  }, [isAuthenticated, router]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    login(name);
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Enter your name"
-        required
-      />
-      <button type="submit">Login</button>
-    </form>
-  );
-}
-```
-
-
-
-Context 的作用域由其「提供者（Provider）」在组件树中的位置决定。只有被 Provider 包裹的子组件（包括深层嵌套组件）才能访问该 Context 的数据，未被包裹的组件无法获取。React 组件树是**自上而下渲染**的：
-
-- 父组件先初始化，再渲染子组件。
-- Context Provider 必须包裹使用它的组件，且 Provider 会先于子组件初始化。
-
-## 生命周期管理
-
-页面刷新会导致 React 组件完全重新挂载（从 `constructor` 到 `render` 再到 `useEffect` 执行）
-
-### 类组件与函数组件生命周期对比
-
-| 类组件生命周期       | 函数组件等效实现（Hooks）                | 作用                               |
-| :------------------- | :--------------------------------------- | :--------------------------------- |
-| componentDidMount    | useEffect(() => {}, [])                  | 组件挂载后执行（初始化请求、订阅） |
-| componentDidUpdate   | useEffect(() => {}, [依赖项])            | 依赖项变化时执行（更新后操作）     |
-| componentWillUnmount | useEffect(() => { return () => {} }, []) | 组件卸载前执行（清理资源）         |
-
-#### 生命周期清理示例
-
-```tsx
-const SubscriptionComponent = () => {
-  const [data, setData] = React.useState('');
-
-  React.useEffect(() => {
-    // 订阅数据
-    const subscription = someService.subscribe((newData) => {
-      setData(newData);
-    });
-
-    // 清理函数：组件卸载或依赖变化前执行
-    return () => {
-      subscription.unsubscribe(); // 取消订阅
-    };
-  }, []); // 空依赖：只执行一次
-
-  return <p>{data}</p>;
-};
-```
-
-## 图标
-
-### lucide-react
-
-图标库Lucide
-
-[What is Lucide? | Lucide](https://lucide.dev/guide/)
-
-#### Lucide 使用示例
-
-```tsx
-// 1. 安装
-// npm install lucide-react
-
-// 2. 组件中使用
-import { Search, User, LogOut } from 'lucide-react';
-
-export default function IconDemo() {
-  return (
-    <div className="flex items-center gap-4">
-      <Search size={20} color="#666" />
-      <User size={24} strokeWidth={1.5} />
-      <button className="flex items-center gap-2">
-        <LogOut size={18} />
-        <span>Logout</span>
-      </button>
-    </div>
-  );
-}
-```
-
-### font-awesome
-
-[CSS 如何在 Next.js 项目中添加 Font Awesome|极客教程](https://geek-docs.com/css/css-ask-answer/918_css_how_to_add_font_awesome_to_nextjs_project.html)
-
-```shell
-npm install --save @fortawesome/fontawesome-svg-core
-npm install @fortawesome/free-solid-svg-icons
-npm install --save @fortawesome/free-brands-svg-icons
-npm install @fortawesome/react-fontawesome
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { faGithub } from '@fortawesome/free-brands-svg-icons';
-
-export default function FontAwesomeDemo() {
-  return (
-    <div>
-      <FontAwesomeIcon icon={faPen} className="text-blue-500" />
-      <FontAwesomeIcon icon={faTrash} className="text-red-500 ml-2" />
-      <a href="https://github.com" target="_blank" rel="noreferrer">
-        <FontAwesomeIcon icon={faGithub} size="2x" />
-      </a>
-    </div>
-  );
-}
-```
-
-
-## 样式
-
-### tailwind.css
-
-浏览器默认的 样式被覆盖的原因是 **Tailwind CSS 的基础样式重置** 和 **自定义 prose 类样式** 的共同作用
-标题没有样式(Headings are unstyled
-有序和无序列表默认无样式，没有项目符号或数字：
-默认情况下，所有标题元素均完全未设置样式，并且具有与普通文本相同的字体大小和粗细
-[预检 - 基本样式 - Tailwind CSS 中文网](https://tailwind.nodejs.cn/docs/preflight)
-
-```
-User Request
-    ↓
-Next.js Server → Server Components (JSX + Tailwind classes)
-    ↓
-Tailwind CSS compiled at build-time (only used classes included)
-    ↓
-Optimized HTML + Single CSS bundle sent to client
-    ↓
-Browser caches CSS; Fast subsequent page loads
-```
-
-原代码中直接导入 `globals.css` 会导致样式全局生效（这是 Next.js 全局样式的特性）。最彻底的隔离方案是使用 **CSS Modules** 或 **CSS-in-JS**，推荐优先选择 CSS Modules，它既能保持 CSS 书写习惯，又能实现样式隔离
-### ant-design
-
-
-无法找到模块“md5”的声明文件。“e:/front-project/blog3-front/node_modules/md5/md5.js”隐式拥有 "any" 类型。 尝试使用 `npm i --save-dev @types/md5` (如果存在)，或者添加一个包含 `declare module 'md5';` 的新声明(.d.ts)文件
-
-1. `md5` 库本身是用 JavaScript 编写的，没有自带 TypeScript 类型定义
-2. TypeScript 需要类型定义文件来提供类型检查和代码提示
-3. 当找不到类型定义时，TypeScript 会默认将模块视为 `any` 类型，并抛出这个提示
-
-```shell
-npm install --save-dev @types/md5
-```
-
-
-### FramerMotion/React-Spring
-
-[Motion for React — Install & first React animation | Motion](https://motion.dev/docs/react)
-
-强大的动画库
-
-### Echarts
-
-图标库
-
-[快速上手 - 使用手册 - Apache ECharts](https://echarts.apache.org/handbook/zh/get-started/)
-
-GeoJSON是一种基于JSON的地理编码格式，用于表示地理空间信息。
-一个GeoJSON文档可能包含以下类型的数据：Feature（特征）、FeatureCollection（特征集合）、Geometry（几何）、Point（点）、LineString（线）、Polygon（多边形）等。
-
-
-[如何将next 15的 react 19 降级为react 18稳定版本胆子大且吃过亏的同学应该知道，最近next 15 - 掘金](https://juejin.cn/post/7441925700297244681)
-
-请仿照文件中的代码，使用axios代替fetch重构以下代码的api请求
-
-将以下vue组件更改为next.js项目中的page.tsx页面,不要使用element，样式可以使用antd或者taidwind.css
-请修改以下代码，使得其样式风格与api格式与文件中的样式风格与api格式保持一致
-请修改以下代码，使用apiClient，使得api格式与文件中的api格式保持一致
-
-
-[TypeScript 参数隐式具有 ‘any’ 类型|极客笔记](https://deepinout.com/typescript/typescript-questions/891_typescript_parameter_implicitly_has_an_any_type.html)
-
-##### DOMPurify
-
-##### Prismjs
-
-data-fns
-
-### React-Markdown
-
-[React-Markdown 完全上手指南这份 React-Markdown 上手指南，详解其核心用法、插件和代码高亮， - 掘金](https://juejin.cn/post/7515393471542312995)
-
-[react-markdown - npm](https://www.npmjs.com/package/react-markdown)
-react-markdown
-remark-gfm
-react-syntax-highlighter
-rehype
-
-用 `npm i --save-dev @types/react-syntax-highlighter` 
 
 ## PWA
 
