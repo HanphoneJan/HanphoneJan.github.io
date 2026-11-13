@@ -1,4 +1,6 @@
 ---
+title: React 基础
+description: 虚拟 DOM 与 JSX、组件与 props、State 与生命周期、Hooks 的常用写法。
 ---
 [React 官方文档](https://react.dev/)
 

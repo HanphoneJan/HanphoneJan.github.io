@@ -1,4 +1,6 @@
 ---
+title: Vue 基础
+description: 响应式与生命周期、模板与指令、组件与通信、Vue Router 与 Pinia，以及把现成 HTML 改成 Vue。
 ---
 资料参考：[前端面试 Vue篇_w3cschool](https://www.w3cschool.cn/web_interview/web_interview-ncsq3pv3.html)
 ## Vue3简介
@@ -77,6 +79,10 @@ app.use(router) // 挂载路由
 app.use(pinia) // 挂载状态管理
 app.mount('#app') // 替代 Vue2 的 new Vue({el: '#app'})
 ```
+
+#### Vue3 生态里常用的工具
+
+TypeScript、JSX 支持、Router（单页面应用开发）、Pinia（状态管理）、Vitest（单元测试）、端到端测试、ESLint（错误预防）、Prettier（代码格式化）。
 
 #### 项目结构
 
