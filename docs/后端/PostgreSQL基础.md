@@ -1,4 +1,6 @@
 ---
+title: PostgreSQL 基础
+description: MVCC、VACUUM、WAL 与 JSONB：它和 MySQL、ClickHouse 各自适合什么。
 ---
 # PostgreSQL
 

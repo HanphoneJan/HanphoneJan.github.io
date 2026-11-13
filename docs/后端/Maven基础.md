@@ -1,4 +1,6 @@
 ---
+title: Maven 基础
+description: 项目结构与坐标、依赖 scope、生命周期，以及国内仓库怎么配。
 ---
 Maven 是一个 项目管理与构建自动化工具，主要用于 Java 项目，但也可用于其他语言（如 Kotlin、Scala）。
 Maven 的核心功能包括：
@@ -8,11 +10,11 @@ Maven 的核心功能包括：
 - **标准化项目结构**（约定优于配置）
 - **插件扩展**（支持自定义构建流程）
 
-### Maven 模型
+## Maven 模型
 
 ![maven模型](https://hanphone.top/gh/HanphoneJan/public-pictures/learn/maven模型.webp)
 
-##### 推荐项目目录
+### 推荐项目目录
 
 ```
 myproject/
@@ -27,7 +29,7 @@ myproject/
         `-- resources
 ```
 
-### Maven 安装与配置
+## Maven 安装与配置
 
 Maven 下载地址：http://maven.apache.org/download.cgi
 
@@ -48,7 +50,7 @@ Maven 下载地址：http://maven.apache.org/download.cgi
 
 (配置私服，减少从中央仓库下载的时间)
 
-### 依赖管理
+## 依赖管理
 
 <img src="https://hanphone.top/gh/HanphoneJan/public-pictures/backend/maven仓库交互图.webp" alt="maven仓库交互图" />
 
@@ -94,21 +96,21 @@ maven 会自动管理传递性依赖，Maven 使用三个基本坐标来唯一�
 </dependencies>
 ```
 
-### Maven 命令
+## Maven 命令
 
 mvn+compile, clean, test, package(打包成 jar 包), install(将当前项目安装到本地仓库)
 
-### Maven 生命周期
+## Maven 生命周期
 
 clean： 生命周期负责清理项目的临时文件和目录（主要是 target/）
 
-dafault（build）：Maven 构建（build）生命周期是由以下几个阶段的序列组成的
+default（build）：Maven 构建（build）生命周期是由以下几个阶段的序列组成的
 
 <img src="https://hanphone.top/gh/HanphoneJan/public-pictures/backend/maven生命周期图.webp" alt="maven生命周期图" />
 
 site： 生命周期用于生成项目站点文档
 
-### IDEA 配置 Maven
+## IDEA 配置 Maven
 
 IDEA 已经内置了对 Maven 的支持
 
@@ -116,11 +118,12 @@ settings-->maven-->使用本地安装的 maven，并修改配置文件路径（/
 
 Maven 使用原型 **archetype** 插件创建项目
 
-#### Maven Compiler Plugin-Maven 编译插件
+### Maven Compiler Plugin（编译插件）
 
 **Maven Compiler Plugin**  是一个用于编译项目代码的 Maven 插件。它允许开发者指定项目源码和目标编译的 JDK 版本，以及编码格式，从而确保项目在不同环境下编译的一致性
 
 **推荐使用插件：maven-helper**
 
-**构建工具（Maven/Gradle）报错**
- 像 Maven 这类工具依赖 JDK 进行编译和打包操作。如果未配置 JDK 环境变量，可能会出现类似 “找不到 Java_HOME” 或 “无法执行编译” 的错误（例如你之前遇到的编译失败问题，也可能与此相关）。
+### 常见问题
+
+- **构建工具（Maven/Gradle）报错**：像 Maven 这类工具依赖 JDK 进行编译和打包，没配好 `JAVA_HOME` 时会报「找不到 Java_HOME」或「无法执行编译」。

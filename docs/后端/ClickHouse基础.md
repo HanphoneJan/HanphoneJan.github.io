@@ -1,4 +1,6 @@
 ---
+title: ClickHouse 基础
+description: 为什么分析查询要列存：MergeTree 的写入与合并、稀疏索引、向量化执行，以及它不适合哪些场景。
 ---
 
 ## 一、为什么需要 ClickHouse？

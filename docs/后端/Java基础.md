@@ -1,4 +1,6 @@
 ---
+title: Java 基础
+description: 语法、继承与接口、线程与等待唤醒、泛型与异常；==、equals 与 hashCode 的速查也在这一篇。
 ---
 教程：[简介 - Java 教程 - 廖雪峰的官方网站 (liaoxuefeng.com)](https://liaoxuefeng.com/books/java/introduction/index.html)
 
@@ -368,9 +370,9 @@ List 是接口，因此无法从中创建对象。为了使用 List 接口的功
 - [堆栈（Stack 类）](https://www.cainiaojc.com/java/java-stack.html)
 
 ```java
-List<String> phone=new ArrayList<>();
-person.add("jackie");   //索引为0  //.add(e)
-            person.add("peter");    //索引为1
+List<String> person = new ArrayList<>();
+person.add("jackie");   // 索引为 0
+person.add("peter");    // 索引为 1
 ```
 
 ## 类、包
@@ -447,18 +449,19 @@ java 是强类型编程语言
 #### 例程 基本语法
 
 ```java
-class 类名称 <泛型标识> {
-  private 泛型标识 /*（成员变量类型）*/ 变量名;
-  .....
-  }
+class 类名称<泛型标识> {
+    private 泛型标识 变量名;
+    // ...
 }
-泛型标识是任意设置的,常见的如下
-  T ：代表一般的任何类。
-  E ：代表 Element 元素的意思，或者 Exception 异常的意思。
-  K ：代表 Key 的意思。
-  V ：代表 Value 的意思，通常与 K 一起配合使用。
-  S ：代表 Subtype 的意思，文章后面部分会讲解示意。
 ```
+
+泛型标识是任意设置的，常见的如下：
+
+- `T`：代表一般的任何类。
+- `E`：代表 Element 元素的意思，或者 Exception 异常的意思。
+- `K`：代表 Key 的意思。
+- `V`：代表 Value 的意思，通常与 `K` 一起配合使用。
+- `S`：代表 Subtype 的意思。
 
 **泛型类中的静态方法和静态变量不可以使用泛型类所声明的类型参数**
 
@@ -565,13 +568,17 @@ try{
 
 常用于嵌套异常，对异常进行进一步处理
 
-```java
-throws 当 readFile 方法内部发生 IOException 异常时，会将该异常传递给调用该方法的代码。在调用该方法的代码中，必须捕获或声明处理 IOException 异常。
-public void readFile() throws IOException {
-    // 可能会抛出IOException的代码
-}
+`throws` 写在方法声明上：`readFile` 内部发生 `IOException` 时，异常会传递给调用方，调用方必须捕获或继续声明。
 
-throw 关键字用于在当前方法中抛出一个异常,创建⾃定义异常
+```java
+public void readFile() throws IOException {
+    // 可能会抛出 IOException 的代码
+}
+```
+
+`throw` 用在方法体里，抛出一个具体的异常对象（自定义异常也走这个关键字）：
+
+```java
 public void checkNumber(int num) {
   if (num < 0) {
     throw new IllegalArgumentException("Number must be positive");

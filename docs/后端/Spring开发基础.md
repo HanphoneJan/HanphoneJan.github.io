@@ -1,10 +1,12 @@
 ---
+title: Spring 开发基础
+description: 从 SpringMVC 的执行流程到 Spring Boot 的配置与数据访问，一条 Java Web 的入门路线。
 ---
 [Spring Boot 官方文档](https://spring.io/projects/spring-boot)
 
 [SpringBoot 教程 - SpringBoot 教程 - 菜鸟教程](https://www.cainiaojc.com/springboot/springboot-tutorial.html)
 
-**Spring**：是一个**全面的企业级应用开发框架**，提供了 IoC（控制反转）、AOP（面向切面编程）、事务管理、MVC 等基础功能，旨在通过 “模块化” ；；方式解决企业级开发的复杂性。开发者需自行配置和整合各种组件（如数据库连接、Web 服务器、安全认证等）。
+**Spring**：是一个**全面的企业级应用开发框架**，提供了 IoC（控制反转）、AOP（面向切面编程）、事务管理、MVC 等基础功能，旨在通过「模块化」的方式解决企业级开发的复杂性。开发者需自行配置和整合各种组件（如数据库连接、Web 服务器、安全认证等）。
 
 **Spring Boot**：是一个 Spring 模块，提供了 **RAD(快速应用程序开发)**功能。遵循 “约定优于配置”（Convention Over Configuration）原则，不需要 XML 配置(部署描述符)，旨在通过自动配置和简化依赖管理，让开发者**快速搭建独立运行的 Spring 应用**，减少样板代码和配置文件。
 
@@ -113,9 +115,9 @@ Lombok 是一个 Java 库，能自动插入编辑器并构建工具，简化 Jav
 `@Data`注解是一个组合注解，包含了 `@Getter`、`@Setter`、`@ToString`、`@EqualsAndHashCode`、`@RequiredArgsConstructor`的功能。
 但是有可能导致编译错误，建议使用最新版。
 
-#### 为什么不推荐用Autowired?
+#### 为什么不推荐用 @Autowired 做字段注入
 
-（不推荐使用字段注入）是依赖注入（DI）框架（如 Spring）中常见的代码检查提示。
+「不推荐使用字段注入」是依赖注入（DI）框架（如 Spring）中常见的代码检查提示。
 字段注入直接通过反射修改类的私有字段，绕过了类的构造方法和 setter 方法。这违背了面向对象的封装原则 —— 类应该通过自身提供的方法来控制内部状态的修改，而不是允许外部直接访问私有字段。
 使用字段注入时，依赖项被隐藏在私有字段中，没有显式的构造方法或 setter 方法来设置依赖。
 
@@ -522,17 +524,8 @@ Tomcat是一个Servlet 容器（实现了 Java Servlet、JSP 和 WebSocket 标�
 启动后，通过浏览器访问 `http://localhost:8080` 能看到 Apache Tomcat 的内容就说明 Tomcat 已经
 启动成功。
 
-## 项目日志配置
+## 项目配套
 
-定义日志工具类
-创建一个全局日志工具类，通过统一的日志工具类获取 logger 实例，避免在每个类中重复创建 logger，确保使用方式一致。
-
-## 项目测试工具
-
-### Postman
-
-后端接口测试
-
-### 内网穿透
-
-工具：cpolar
+- **日志**：不要在每个类里各建一个 logger，统一从全局日志工具类取 —— 避免重复创建实例，格式也统一。
+- **接口测试**：Postman。
+- **内网穿透**：cpolar。

@@ -7,18 +7,8 @@ description: 环境配置、变量作用域、模板混编与现代语言特性�
 
 ## 开发环境配置
 
-eclipse集成环境配置
-
-[eclipse配置php开发环境-CSDN博客](https://blog.csdn.net/qq_40750972/article/details/103261409)
-
-[Eclipse install new software 失败 解决方案_eclipse点击install new software没反应-CSDN博客](https://blog.csdn.net/qq_36554582/article/details/94958680)
-
-vscode中配置
-
-配置php路径以及下载扩展，serve project的逻辑？
-
-
-：
+- **Eclipse**：[eclipse 配置 php 开发环境](https://blog.csdn.net/qq_40750972/article/details/103261409)；装不上插件时见 [Eclipse install new software 失败 的解法](https://blog.csdn.net/qq_36554582/article/details/94958680)。
+- **VS Code**：指定 php 可执行文件路径、装上 PHP 扩展就能调试；Serve Project 的具体配置还没整理。
 
 ## **灵活的变量与作用域**
 
