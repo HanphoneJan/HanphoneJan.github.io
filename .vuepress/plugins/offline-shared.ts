@@ -31,10 +31,10 @@ export const SECTION_LABELS: Record<SectionId, string> = {
   archive: '归档页',
   traces: '题解可视化',
   quiz: '自测题库',
-  // 数据结构页的 draw.io 结构图（`static/diagrams/*.png`）。
+  // 正文插图：数据结构页的结构图 + 项目文档的架构图（`static/{diagrams,img}`）。
   // 不进预缓存（会变成每个访客首次安装多下几 MB），但读者可以在这里
   // 一次下完 —— 否则没访问过的页面里的图离线时是裂的。
-  images: '结构图',
+  images: '页面插图',
   // 不是页面，是 12.9MB 的 Python 解释器（题解里「▶ 运行」用）
   pyodide: 'Python 运行时',
   // 页面之外被懒加载的脚本：跑代码的 SnippetBar/runner、改代码的
