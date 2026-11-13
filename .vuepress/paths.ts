@@ -105,6 +105,14 @@ export function legacyPathFor(
   // `slug: /` = 板块落地页（旧的 /docs、/code-training）
   if (meta.slug === '/') return `${base}.html`
 
+  // 目录的导读页就是那个目录的落地页：`docs/机器学习/导读.md` -> `/docs/机器学习.html`。
+  // 目录 URL（`/docs/机器学习`）由 GitHub Pages 的 `X -> X.html` 兜住，和板块首页
+  // `/docs` 同一套规则；`X.html` 优先于同名目录，所以不会和 `机器学习/` 撞车。
+  // 侧边栏分组的 link 取自这里，于是分组标题直接指向导读。
+  if (name === '导读' && parts.length > 0) {
+    return `${base}/${parts.join('/')}.html`
+  }
+
   let segment = name
   if (typeof meta.slug === 'string' && meta.slug.trim()) {
     segment = meta.slug.trim().replace(/^\/+|\/+$/g, '')

@@ -151,12 +151,9 @@ omitClaudeMd: true
 ---
 ```
 
-### Agent代理
+### 装与配置
 
-[Agent System Overview | Claude AI Dev](https://claudeai.dev/docs/mechanics/agents/overview/)
-            + 权限治理
-
-
-### Agent代理
-
-[Agent System Overview | Claude AI Dev](https://claudeai.dev/docs/mechanics/agents/overview/)
+- 挂梯子要开虚拟网卡（TUN 模式），否则登录和更新都会失败。
+- 配置文件是 `~/.claude.json`（注意文件名前面的点）。追加 `"hasCompletedOnboarding": true` 可以跳过首次引导；`autoUpdatesChannel`、`model`、`language` 也在这个文件里改。
+- 它有时会留下 `NUL` 文件，定期清掉（Windows 上尤其常见）。
+- 代理与权限的完整说明见 [Agent System Overview](https://claudeai.dev/docs/mechanics/agents/overview/)。

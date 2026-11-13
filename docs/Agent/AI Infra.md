@@ -1,8 +1,11 @@
 ---
+title: AI Infra：部署与推理优化
+description: 一个能跑 vLLM 的推理镜像长什么样，以及推理侧还能从算子、量化、并行三个层面榨出多少。
 ---
-https://infrasys-ai.github.io/
 
-### 大模型云端部署
+参考：[infrasys-ai](https://infrasys-ai.github.io/)
+
+## 大模型云端部署
 ```dockerfile
 # 基础镜像选择：构建GPU加速环境的基石
 # nvidia/cuda:12.1.1-runtime-ubuntu22.04：包含CUDA 12.1.1运行时和Ubuntu 22.04系统
@@ -47,18 +50,24 @@ EXPOSE 8000
 CMD ["python", "api_server.py", "--model", "/app/model", "--port", "8000"]
 ```
 
-### 模型推理系统层面优化
-**算子级优化**
+## 推理系统层面的优化
+
+### 算子级优化
 算子融合：将多个连续的算子（如 Conv + BN + Relu）合并为单个算子，减少 GPU 显存读写次数和 Kernel Launch 开销。
 工具：TensorRT、ONNX Runtime 的graph optimization、TVM 的算子融合 Pass。
+
 算子替换：用高性能定制算子替换原生算子，例如用 Winograd 算法优化卷积计算，减少乘法运算量；针对 Transformer 模型，替换自注意力算子为 FlashAttention，降低显存占用和访存开销。
 硬件指令集优化：针对 CPU/GPU 架构优化算子实现，例如 x86 的 AVX-512、ARM 的 NEON、GPU 的 CUDA Core/Tensor Core 指令集。
-**精度量化**
+
+### 精度量化
+
 低精度推理：将模型权重和激活值从 FP32 降至 FP16/ BF16（无损或微损）、INT8（需校准）、甚至 INT4/INT2（极端压缩场景），降低计算量和显存占用。
 原理：FP16 可使 GPU Tensor Core 算力翻倍；INT8 能减少 75% 显存占用，同时提升吞吐量。
 工具：TensorRT 量化工具、PyTorch 的torch.quantization、ONNX Runtime 的量化引擎。
 注意：需通过校准集避免精度损失，对量化敏感的层（如分类头）可保留高精度。
-**并行计算策略**
+
+### 并行策略
+
 模型并行：将大模型的不同层分配到多个 GPU（流水线并行）或拆分同层参数到多个 GPU（张量并行），解决单卡显存不足问题。
 典型应用：GPT-3、LLaMA 等大模型推理，依赖 Megatron-LM、vLLM 等框架。
 数据并行：批量输入数据分配到多个 GPU 同时推理，提升吞吐量，适用于高并发场景。
