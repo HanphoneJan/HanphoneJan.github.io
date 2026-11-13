@@ -3,8 +3,6 @@ title: PHP 基础
 description: 环境配置、变量作用域、模板混编与现代语言特性，一份快速过一遍的 PHP 笔记。
 ---
 
-为了看懂和维护老项目过了一遍 PHP，记的是「和 Java/Python 不一样的地方」：变量作用域、模板里直接混编、弱类型比较的坑，以及现在的 PHP 补齐了哪些语法。
-
 ## 开发环境配置
 
 - **Eclipse**：[eclipse 配置 php 开发环境](https://blog.csdn.net/qq_40750972/article/details/103261409)；装不上插件时见 [Eclipse install new software 失败 的解法](https://blog.csdn.net/qq_36554582/article/details/94958680)。
@@ -42,7 +40,6 @@ description: 环境配置、变量作用域、模板混编与现代语言特性�
    • 使用`.`连接字符串（而非`+`）；
    • 支持heredoc语法定义多行文本块。
 
-
 ## **Web开发集成特性**
 
 1. **数据库操作接口**  
@@ -61,7 +58,6 @@ description: 环境配置、变量作用域、模板混编与现代语言特性�
 
 3. **类型声明与返回值类型**  
    PHP7+支持参数类型提示和返回类型声明（如`function sum(int $a, int $b): int { ... }`）。
-
 
 ## 常用框架、工具
 

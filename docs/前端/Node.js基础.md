@@ -1,5 +1,6 @@
 ---
 title: Node.js 基础
+sidebar_position: 13
 description: 事件循环与多进程、模块化、安装与项目初始化，以及用 Express 起一个服务。
 ---
 Node.js不是编程语言，而是基于Chrome V8引擎的JavaScript运行时环境，使JS能脱离浏览器在服务器端运行。

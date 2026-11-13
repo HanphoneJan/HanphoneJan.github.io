@@ -1,5 +1,6 @@
 ---
 title: JavaScript 构建工具
+sidebar_position: 7
 description: 构建与打包的分工、底层原理、Vite / Webpack / Rollup / Parcel 的取舍，以及 Vite 的常用配置与排错。
 ---
 ## 什么是JS构建工具
@@ -30,7 +31,6 @@ description: 构建与打包的分工、底层原理、Vite / Webpack / Rollup /
     通过 Loader（处理非 JS 文件）、Plugin（执行打包优化）对源码进行编译、转译、优化。比如TS Loader 把 TS 转 JS，CSS Loader 处理 CSS 模块化，TerserPlugin 压缩 JS 代码。
 3. **输出（打包生成）**
     将转换后的模块，按照配置的规则打包成一个或多个「产物文件」（如 `main.js`、`style.css`），输出到指定目录。
-
 
 ## 前端主流打包工具对比
 
@@ -99,7 +99,6 @@ export default defineConfig({
   }
 })
 ```
-
 
 ### 问题记录
 [VSCode 中，TS 提示 ”无法找到 *.vue 声明文件“ 的解决方案 - 前端三昧 - SegmentFault 思否](https://segmentfault.com/a/1190000040753312)

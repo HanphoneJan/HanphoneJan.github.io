@@ -1,5 +1,6 @@
 ---
 title: TypeScript 使用笔记
+sidebar_position: 3
 description: 类型收窄的优先级、any 的代价、接口与泛型怎么选，以及几个 VSCode 里的假报错。
 ---
 

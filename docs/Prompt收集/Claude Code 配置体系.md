@@ -3,7 +3,7 @@ title: Claude Code 的 Hooks / Skills / Commands / Agents
 description: 用 .claude 配置体系把技能激活率从 25% 提到 90%：四类扩展各自的职责与最小可用配置。
 ---
 
-Claude Code 的默认技能激活率只有两成多，项目规范写了也常被忽略。这份笔记整理四类扩展各自解决什么问题、在什么时机被触发，以及一套能直接落地的最小配置。
+Claude Code 的默认技能激活率只有两成多，项目规范写了也常被忽略。
 
 结论先给：能用 Hooks 拦住的，不要靠提示词自律；能写成 Skill 的，不要塞进 CLAUDE.md。
 
@@ -177,7 +177,6 @@ const skills = [
 - **Skills是知识**：把项目规范固化为AI可学习的文档
 - **Commands是流程**：把最佳实践编排为可重复步骤
 - **Agents是分工**：子任务交给专业代理并行处理
-
 
 ## Agent Skills 相关资源整理
 

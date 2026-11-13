@@ -3,11 +3,9 @@ title: 拆解 Claude Code
 description: 从源码和实际行为反推 Claude Code 的架构：工具系统、上下文管理、子代理与任务编排。
 ---
 
-读完源码之后整理的一份架构拆解，重点不在「它有哪些功能」，而在「哪些设计让它能长时间跑而不失控」：工具协议怎么定义、上下文怎么压、子代理怎么隔离、权限怎么拦。
-
 ## Claude Code
 
-Claude Code 是 Anthropic 推出的官方 CLI 工具，代表了当前 AI 辅助编程工具的工程化巅峰。以下基于对其源代码的深入分析，总结其架构设计与核心范式。
+Claude Code 是 Anthropic 推出的官方 CLI 工具。
 
 ### 整体架构
 

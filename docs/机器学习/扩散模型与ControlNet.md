@@ -3,7 +3,7 @@ title: 扩散模型与 ControlNet
 description: DDPM 的前向加噪与反向去噪、Stable Diffusion 的三块拼图、ComfyUI 的目录管理，以及用 ControlNet 把构图、姿态、线稿约束住。
 ---
 
-扩散模型是「从噪声里一步步还原出图」，Stable Diffusion 把它搬进潜空间，ComfyUI 把它搭成节点图，ControlNet 再给它加一条结构约束。这一篇按这四层顺序读。
+扩散模型是「从噪声里一步步还原出图」，Stable Diffusion 把它搬进潜空间，ComfyUI 把它搭成节点图，ControlNet 再给它加一条结构约束。
 
 ## 扩散模型（DDPM）
 

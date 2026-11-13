@@ -23,6 +23,7 @@ slug: /
 ## 文档分类
 
 - **前端开发** - Web 开发、React、Vue、TypeScript、Next.js、工具链
+- **客户端开发** - Qt、Flutter、Android 原生、小程序与 Uniapp
 - **后端开发** - Spring、Django、FastAPI、Node.js、Docker、数据库
 - **机器学习** - 深度学习、大模型、Transformer、多模态、生成模型
 - **Agent** - 提示词、Agent 范式与工程、框架

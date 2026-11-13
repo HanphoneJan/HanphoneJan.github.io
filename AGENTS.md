@@ -498,7 +498,7 @@ classic preset 里的 `blog` 选项、导航栏「博客」项、`src/theme/Blog
 Microsoft YaHei / Noto Sans CJK SC），定义在 `src/css/custom.css` 顶部。
 中文交给系统 CJK 字体渲染，零网络请求、零 FOUT。
 
-**注意**：`docs/前端/前端基础.md` 里仍有 `fonts.googleapis` —— 那是教程正文里
+**注意**：`docs/前端/UI设计基础.md` 里仍有 `fonts.googleapis` —— 那是教程正文里
 教别人用 Google Fonts 的代码示例，不是站点配置，别删。
 
 ### Key config details
