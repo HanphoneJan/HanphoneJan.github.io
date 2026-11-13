@@ -22,13 +22,13 @@ last_updated: 2026-11-13
 
 「哈希表是数组还是链表」是个假二选一：**桶数组是共有的那一层，链不链取决于冲突处理方案**。
 
-![拉链法：桶数组的每个格子挂着一条链，同下标的键排在同一条链里](/diagrams/hash-chaining.png)
+![同下标的键挂在同一条链里](/diagrams/hash-chaining.png)
 
 Java 的 `HashMap` 走这条：`Node[] table` 是桶数组，`index = (h ^ h >>> 16) & (n-1)` 算出桶号，落进同一个桶的键用链表串起来；链长到 8 且表长到 64，这条链就换成红黑树。数组里存的是「链头」，链表节点才是真正的键值对。
 
 CPython 的 `dict`（3.6+）连链都没有，是**两层数组**：
 
-![CPython dict：稀疏的 indices 表与紧凑的 entries 表](/diagrams/hash-compact-dict.png)
+![一张存行号，一张按插入顺序存键值](/diagrams/hash-compact-dict.png)
 
 - `indices` 是一张 2^k 格的稀疏表，每格只存「entries 的行号」或 EMPTY / DUMMY，冲突探测（开放寻址）只发生在这一层；
 - `entries` 是一张紧凑数组，每条是 `(hash, key, value)`，按插入顺序**只追加、从不搬动**。

@@ -4,6 +4,7 @@ import path from 'node:path'
 import type { App, Page } from 'vuepress/core'
 import { PYODIDE_RUNTIME_FILES } from '../../src/components/training/pyrunner/runtime-files'
 import { BUILD_ID } from '../build-id'
+import { allDiagrams } from '../diagram-assets'
 import {
   chunkStem,
   extractRouteChunks,
@@ -366,6 +367,20 @@ export function buildManifest(app: App): OfflineManifest {
     }
   }
 
+  // 结构图：`static/diagrams/*.png`。
+  //
+  // URL 必须用**带内容版本**的那一份（与 markdown 规则共用
+  // `diagram-assets.ts`）：页面请求的是 `/diagrams/x.png?v=<hash>`，
+  // 这里写裸文件名的话，下完一轮离线仍然是裂图 —— 缓存键对不上。
+  const diagrams = allDiagrams()
+  if (diagrams.length > 0) {
+    const section = bucket('images')
+    for (const { url, info } of diagrams) {
+      section.entries.push([url, null, info.bytes, 0, info.version])
+      section.bytes += info.bytes
+    }
+  }
+
   // 页面少的板块排在前面，读者一眼能看到「首页那点东西就几十 KB」
   const order: SectionId[] = [
     'start',
@@ -374,6 +389,7 @@ export function buildManifest(app: App): OfflineManifest {
     'shared',
     'pyodide',
     'quiz',
+    'images',
     'traces',
     'docs',
     'training',

@@ -24,13 +24,13 @@ last_updated: 2026-11-13
 
 队列的数组实现要把「头」和「尾」都变成游标，并且让下标在末尾绕回开头——否则出队一次就得整体前移。
 
-![循环队列：head 指向队头、tail 指向下一个入队位置，越界后取模回到 0](/diagrams/queue-ring.png)
+![两个游标在数组上绕圈](/diagrams/queue-ring.png)
 
 `head` 与 `tail` 各自只朝一个方向走，走到数组末尾就 `% cap` 回到 0。判空判满用 `size` 计数最省事；「留一格不用」也能判，但白少存一个元素。
 
 Python 的 `deque` 走另一条路：不把元素铺在一块数组里，而是每 64 个指针一块，块与块之间双向链接。
 
-![deque 的块状双向链表：append 与 popleft 只动两端游标](/diagrams/queue-deque-blocks.png)
+![每 64 个槽位一块，块间双向链接](/diagrams/queue-deque-blocks.png)
 
 两端操作因此都是 O(1)（块没满就不申请新块），而按下标取中间元素要跨块走，仍是 O(n)。
 
