@@ -31,7 +31,7 @@ last_updated: 2026-11-13
 
 并查集的全部状态就是一个 `fa` 数组：`fa[x]` 是 x 的父亲，`fa[x] == x` 说明它是某个集合的代表元。
 
-![并查集：parent 链与两种优化——路径压缩拍扁链、按大小合并防深](/diagrams/unionfind-compress.png)
+![拍扁一条链，把小树挂到大树上](/diagrams/unionfind-compress.png)
 
 朴素版的 `find` 顺着父指针往上爬，`union` 把一棵树挂到另一棵下面。两个动作各有一个退化来源：合并方向选错会长出一条越来越长的链，反复查同一条链则每次都白爬一遍。
 

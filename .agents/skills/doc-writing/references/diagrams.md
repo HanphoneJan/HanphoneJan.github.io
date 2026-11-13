@@ -46,6 +46,16 @@
 - `<slug>` 用 kebab-case，语义化：`ingest-pipeline`、`retrieval-legs`、`delete-flow`。
 - 没有 `static/` 的项目放 `docs/diagrams/src/` 与 `docs/diagrams/`，在写作方案里写明。
 - `.drawio` 源文件必须进仓库；只提交 SVG/PNG 视为不合格。
+- **画布宽度按正文栏定，别按屏幕宽度定。** 本站正文栏在 1440 宽的窗口里
+  只显示 **~673px**：画布压到 700 以内、正文字号 14，页面上才接近 1:1；
+  按 1100–1200 宽设计时 12px 的字会被缩到 7–8px，读者只能点开看。
+  导出用 `--scale 1.5`（显示尺寸的 1.5 倍足够清晰，2 倍只是徒增体积）。
+- **图里只画结构。** 格子、节点、箭头、≤6 字的标签是图的内容；整句解释
+  属于正文。底部加一条通栏说明框是最常见的错误 —— 读者会把它当图的一部分
+  硬读，而它和正文重复。
+- 本站 `/diagrams/*.png` 在构建期由 `.vuepress/markdown/diagram-images.ts`
+  挂上 `?v=<内容哈希>` 并补 `width`/`height`，所以**改图不用改名**：
+  重新导出同名文件，构建后 URL 自动变，PWA 的 `CacheFirst` 不会给旧图。
 
 ## 导出 SVG 还是 PNG
 

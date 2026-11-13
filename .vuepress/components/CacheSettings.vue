@@ -329,6 +329,8 @@ const HTML_CACHE = 'html-v2'
 const ASSET_CACHE = 'assets'
 const TRACE_CACHE = 'traces'
 const QUIZ_CACHE = 'quiz'
+// 结构图：与 `theme.ts` 的 image 路由同名，离线打开页面时 SW 从这一桶取
+const IMAGE_CACHE = 'images'
 // 缓存名与文件清单在 runtime-files.ts 里（客户端 fetch 拦截也用那一份）
 const PYODIDE_CACHE = PYODIDE_CACHE_NAME
 const META_KEY = 'hanphone:offline-package'
@@ -386,6 +388,9 @@ function targetCache(url: string): string {
   if (url.startsWith('/quiz/')) return QUIZ_CACHE
   // 12.9MB 的 Python 解释器有自己的桶，不归 SW 管（见 pyrunner/runtime.ts）
   if (url.startsWith('/pyodide/')) return PYODIDE_CACHE
+  // 结构图（`static/diagrams/*.png`）：SW 的 image 路由是 CacheFirst，
+  // 读的就是 `images` 桶。写进 html-v2 的话离线打开页面仍然是裂图。
+  if (url.startsWith('/diagrams/')) return IMAGE_CACHE
   // 「共享脚本」也要进 `assets`：那是 SW 的 script 路由读的桶（SWR，
   // 文件名带内容哈希所以不可变）。塞进 html-v2 的话永远不会被用到。
   if (url.startsWith('/assets/')) return ASSET_CACHE
@@ -501,7 +506,7 @@ async function readCacheKeys(): Promise<void> {
   cacheKeys.clear()
   if (typeof caches === 'undefined') return
   await Promise.all(
-    [HTML_CACHE, ASSET_CACHE, TRACE_CACHE, QUIZ_CACHE, PYODIDE_CACHE].map(async (name) => {
+    [HTML_CACHE, ASSET_CACHE, TRACE_CACHE, QUIZ_CACHE, IMAGE_CACHE, PYODIDE_CACHE].map(async (name) => {
       const keys = await caches.open(name).then((cache) => cache.keys())
       cacheKeys.set(name, new Set(keys.map((request) => request.url)))
     }),
@@ -1040,6 +1045,18 @@ async function clearSection(id: string): Promise<void> {
       }
     }),
   )
+
+  // 结构图是「同一路径、不同 ?v」的版本化资源。上面的精确删除只清掉当前
+  // 清单里那一版，旧版本（改过图、重新部署之前下的）会一直躺在 `images`
+  // 里 —— 清一次板块仍然占着几百 KB。这里按路径前缀一并收掉。
+  if (id === 'images') {
+    const cache = await caches.open(IMAGE_CACHE)
+    for (const request of await cache.keys()) {
+      if (new URL(request.url).pathname.startsWith('/diagrams/')) {
+        await cache.delete(request)
+      }
+    }
+  }
 
   if (meta.value) {
     const sections = meta.value.sections.filter((s) => s !== id)

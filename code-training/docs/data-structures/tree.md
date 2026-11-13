@@ -31,7 +31,7 @@ last_updated: 2026-11-13
 
 树的节点长什么样，取决于是「往下找孩子」还是「往上找父亲」——一根指针只能指一个方向。
 
-![孩子表示法与父指针法：同一棵树，指针方向相反](/diagrams/tree-storage.png)
+![往下走，还是往上走](/diagrams/tree-storage.png)
 
 算法题默认是孩子表示法：节点里放 `children` 列表（二叉就是 `left`/`right` 两根），往下走一步就到子树。并查集用父指针法：每个元素只存 `parent`，`fa[x] == x` 就是根——往上一步 O(1)，代价是往下找孩子要扫整个数组。
 
@@ -118,7 +118,7 @@ class Trie:
 
 插入 / 查询都是 O(m)（m 为词长），**与词典里有多少词无关**。`search` 与 `startsWith` 的区别只有一点：前者要求走到终点**且** `is_word` 为真，后者只要求走得到。
 
-![Trie 的共享前缀：插入 apple 时 a-p-p 三段复用已有路径，词的结尾靠节点上的 is_word 标记](/diagrams/trie-shared-prefix.png)
+![共享前缀就是共享路径](/diagrams/trie-shared-prefix.png)
 
 插入 `["app", "apple", "apt"]` 之后，三个查询各自停在哪：
 
