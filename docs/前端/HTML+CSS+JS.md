@@ -1,4 +1,6 @@
 ---
+title: HTML / CSS / JS 速查
+description: 三件套的语法速查：标签与语义化、选择器与布局、DOM 与事件、ES6+ 常用特性。
 ---
 内容主要参考自：[html css js（这一篇就够了） - 小liii - 博客园](https://www.cnblogs.com/xxctx/p/18426729)
 

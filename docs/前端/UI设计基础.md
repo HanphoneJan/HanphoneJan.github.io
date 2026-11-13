@@ -1,9 +1,9 @@
 ---
 title: UI 设计基础
-description: 给写前端的人补的一课：设计四原则、常用工具，以及从设计稿到 HTML 的那条路。
+description: 设计工具、素材站与书单：即时设计 / 墨刀 / Figma / Axure 各自适合做什么。
 ---
 
-写前端绕不开「这个间距为什么是 12 不是 14」。这篇把对齐、对比、重复、亲密性四条原则讲清楚，再列一遍 Figma / 即时设计 / 墨刀 / Axure 各自适合做什么。
+写前端绕不开「这个间距为什么是 12 不是 14」。设计原则那部分还没整理，这里先把工具、素材站和书单记下来。
 
 UI设计（User Interface Design）是指对用户界面的设计，通过在用户界面上设计各种元素，以提供用户友好的交互方式和良好的用户体验。UI设计不仅仅包括界面的外观设计，还包括用户界面的布局、交互方式、操作流程等方面。
 
@@ -49,7 +49,3 @@ figma中加入插件：html to design
 [开始使用Axure_RP | 学习Axure，从这里开始](https://docs.axurehub.com/docs/axure9%E4%B8%AD%E6%96%87%E6%89%8B%E5%86%8C/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8Axure_RP)
 
 【Axure 15分钟入门教程】 https://www.bilibili.com/video/BV1bG4y1f7yY/?share_source=copy_web&vd_source=186f482d5782bc8b1831fb6379b26ea2
-
-## 布局
-
-## 交互

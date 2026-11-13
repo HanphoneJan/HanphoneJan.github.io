@@ -1,4 +1,6 @@
 ---
+title: JavaScript 构建工具
+description: 构建与打包的分工、底层原理、Vite / Webpack / Rollup / Parcel 的取舍，以及 Vite 的常用配置与排错。
 ---
 ## 什么是JS构建工具
 前端构建工具是将 TS、JSX 等源码转为浏览器可运行代码的自动化工具集（代表工具：Webpack、Vite 等）。

@@ -1,4 +1,6 @@
 ---
+title: Node.js 基础
+description: 事件循环与多进程、模块化、安装与项目初始化，以及用 Express 起一个服务。
 ---
 Node.js不是编程语言，而是基于Chrome V8引擎的JavaScript运行时环境，使JS能脱离浏览器在服务器端运行。
 
@@ -70,28 +72,12 @@ Node.js不是编程语言，而是基于Chrome V8引擎的JavaScript运行时环
 
 简单来说：做网络服务用 `cluster`，做 CPU 密集计算用 `Worker Threads`，做独立任务 / 调用外部脚本用 `child_process`
 
-## Node.js模块化机制
-Node.js采用CommonJS模块规范：
-**模块导出**：通过module.exports或exports暴露模块内容
-**模块导入**：通过require()加载模块，会缓存已加载模块（多次require同一模块仅执行一次）
+## Node.js 模块化机制
 
-```javascript
-// 导出模块（utils.js）
-function add(a, b) {
-  return a + b;
-}
-module.exports = { add }; // 批量导出
-// 或 exports.add = add;（单一导出）
+Node.js 最早采用 CommonJS：`require()` 加载、`module.exports` 导出，模块会被缓存（多次 `require` 同一模块只执行一次）。现在也可以直接开 ESM（`.mjs`，或 `package.json` 里写 `"type": "module"`）。
 
-// 导入模块（main.js）
-const { add } = require('./utils'); // 相对路径，可省略.js后缀
-console.log(add(2, 3)); // 输出5
-```
+两套规范的加载机制、循环依赖、`.cjs` / `.mjs` 的区别在 [CommonJS 与 ES 模块](./CommonJS与ES模块.md)，这里不重复。
 
-|模块系统|规范|文件扩展名|导入方式|导出方式|
-|---|---|---|---|---|
-|**CommonJS**|Node.js 早期使用|`.js`|`require()`|`module.exports` / `exports`|
-|**ES Module (ESM)**|ECMAScript 标准|`.mjs` 或 `"type": "module"`|`import`|`export` / `export default`|
 ## 安装与配置
 ### 直接安装（不推荐）
 **前置步骤**：从Node.js官网（https://nodejs.org/）下载对应系统的LTS版本（长期支持版，稳定性高），默认安装或自定义路径（建议路径不含中文空格，如D:\nodejs）。

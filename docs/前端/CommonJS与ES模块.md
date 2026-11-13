@@ -1,4 +1,6 @@
 ---
+title: CommonJS 与 ES 模块
+description: 两套模块规范从哪来、加载机制差在哪、扩展名怎么选，以及混用时报的那几个错怎么解。
 ---
 转载自： [CommonJS与ES模块：新手完全指南 | 吉森的技术小站](http://www.gsein.cn/pages/commonjs-vs-es/#%E9%80%89%E6%8B%A9%E6%8C%87%E5%8D%97)
 
@@ -10,7 +12,7 @@
 | 支持环境 | 浏览器 + Node.js（v12+）                                     | 主要用于 Node.js 服务器端，可通过打包工具适配浏览器                        |
 | 核心语法 | 导入：`import ... from '...'`；导出：`export`/`export default` | 导入：`require('...')`；导出：`module.exports`/`exports.xxx` |
 
-## 📚 历史背景：为什么会有两套规范？
+## 历史背景：为什么会有两套规范？
 
 ### JavaScript的模块化之路
 
@@ -56,7 +58,7 @@ var myLibrary = {
 - 异步加载（适合浏览器环境）
 - 更好的Tree Shaking支持
 
-## 🔍 基础语法对比
+## 基础语法对比
 
 让我们通过实际例子来看看两种模块系统的语法差异。
 
@@ -138,7 +140,7 @@ console.log(divide(10, 2)); // 5
 console.log(math.add(2, 3)); // 5
 ```
 
-## ⚡ 核心差异详解
+## 核心差异详解
 
 CommonJS和ES模块不仅仅是语法上的差异，它们就像大黄蜂和蜜蜂一样，长的很像，但是原理却完全不同。下面，将简要介绍二者的差异：
 
@@ -228,7 +230,7 @@ console.log('b.js:', aName); // 可以正确获取到值
 export const name = 'module-b';
 ```
 
-## 📁 文件扩展名：.js、.cjs、.mjs
+## 文件扩展名：.js、.cjs、.mjs
 
 这是很多新手困惑的地方。让我们来理清楚：
 
@@ -276,7 +278,7 @@ const require = createRequire(import.meta.url);
 const { helper } = require('./utils.cjs');
 ```
 
-## 🌍 使用场景
+## 使用场景
 
 ### 什么时候使用CommonJS？
 
@@ -344,7 +346,7 @@ import { readFile } from 'fs/promises';
 const app = express();
 ```
 
-## 🔧 常见问题与解决方案
+## 常见问题与解决方案
 
 ### 问题1：Cannot use import statement outside a module
 

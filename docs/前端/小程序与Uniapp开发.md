@@ -1,6 +1,9 @@
 ---
+title: 小程序与 Uniapp 开发
+description: 用 Vue 语法写多端：Uniapp 的迁移、权限、插件与打包，微信小程序的结构与运行机制，以及登录、手机号与支付的接入。
 ---
-# Uniapp
+
+## Uniapp
 [uni-app 快速入门_w3cschool](https://www.w3cschool.cn/uni_app/uni_app-k8zg370b.html)
 
 使用 Vue.js 语法，搭配 HTML、CSS（支持 Less/Sass），**支持多平台应用编译打包**，无需懂原生开发就能做出完整的跨平台应用，对中国生态适应极强。类似的有taro和kbone。对于APP，flutter、react native是跨Android和IOS的框架，但仍旧需要写两套UI（Google和Apple的应用风格不一致）。
@@ -8,26 +11,26 @@
 ![](https://hanphone.top/gh/HanphoneJan/public-pictures/frontend/uniapp%E5%8A%9F%E8%83%BD%E6%A1%86%E6%9E%B6%E5%9B%BE.webp)
 
 
-## 迁移学习
+### 迁移学习
 
-#### 如果熟悉h5，但不熟悉vue和小程序
+##### 如果熟悉h5，但不熟悉vue和小程序
 
 1. 看完这篇[白话uni-app](https://uniapp.dcloud.net.cn/vernacular.html)
 2. DCloud与vue合作，在vue.js官网提供了免费视频教程，直达[教程地址](https://learning.dcloud.io/)
 3. 不需要专门去学习小程序的语法，uni-app使用的是vue的语法，不是小程序自定义的语法。
 
-#### 如果熟悉小程序，但不熟悉vue
+##### 如果熟悉小程序，但不熟悉vue
 
 参考总结[https://segmentfault.com/a/1190000015684864](https://segmentfault.com/a/1190000015684864)
 
 
-## 权限
+### 权限
 
 [uni.openSetting(OBJECT) | uni-app官网](https://uniapp.dcloud.net.cn/api/other/setting.html#getsetting)
 
 [uni.authorize(OBJECT) | uni-app官网](https://uniapp.dcloud.net.cn/api/other/authorize.html#authorize)
 
-#### 音频视频控制
+##### 音频视频控制
 
 （`<video/>` 组件编译到 H5 时会替换为标准 html 的 video 标签）
 [【报Bug】使用video组件，内置浏览器报错：Uncaught (in promise)DOMException: The element has no supported sources. - DCloud问答](https://ask.dcloud.net.cn/question/117999#:~:text=%E8%BF%99%E4%B8%AA%E9%94%99%E8%AF%AF%E7%9A%84%E5%8E%9F%E5%9B%A0%E9%80%9A%E5%B8%B8%E6%98%AF%20video%20%E7%BB%84%E4%BB%B6%E7%9A%84%20src%20%E5%B1%9E%E6%80%A7%E8%AE%BE%E7%BD%AE%E4%B8%8D%E6%AD%A3%E7%A1%AE%E6%88%96%E8%80%85%E8%A7%86%E9%A2%91%E8%B5%84%E6%BA%90%E8%B7%AF%E5%BE%84%E4%B8%8D%E6%AD%A3%E7%A1%AE%E3%80%82,%E5%8F%AF%E8%83%BD%E6%98%AF%E4%BB%A5%E4%B8%8B%E5%87%A0%E4%B8%AA%E5%8E%9F%E5%9B%A0%E5%AF%BC%E8%87%B4%E7%9A%84%EF%BC%9A%20%E8%A7%86%E9%A2%91%E8%B5%84%E6%BA%90%E8%B7%AF%E5%BE%84%E4%B8%8D%E6%AD%A3%E7%A1%AE%EF%BC%8C%E9%9C%80%E8%A6%81%E6%A3%80%E6%9F%A5%E8%A7%86%E9%A2%91%E6%96%87%E4%BB%B6%E7%9A%84%E8%B7%AF%E5%BE%84%E6%98%AF%E5%90%A6%E6%AD%A3%E7%A1%AE%E3%80%82%20%E8%A7%86%E9%A2%91%E8%B5%84%E6%BA%90%E7%9A%84%E6%A0%BC%E5%BC%8F%E4%B8%8D%E8%A2%AB%E5%86%85%E7%BD%AE%E6%B5%8F%E8%A7%88%E5%99%A8%E6%94%AF%E6%8C%81%EF%BC%8C%E8%BF%99%E7%A7%8D%E6%83%85%E5%86%B5%E4%B8%8B%E9%9C%80%E8%A6%81%E6%A3%80%E6%9F%A5%E8%A7%86%E9%A2%91%E6%96%87%E4%BB%B6%E7%9A%84%E6%A0%BC%E5%BC%8F%E6%98%AF%E5%90%A6%E6%AD%A3%E7%A1%AE%EF%BC%8C%E5%B9%B6%E4%B8%94%E8%A6%81%E6%B3%A8%E6%84%8F%E4%B8%8D%E5%90%8C%E5%86%85%E7%BD%AE%E6%B5%8F%E8%A7%88%E5%99%A8%E6%94%AF%E6%8C%81%E7%9A%84%E8%A7%86%E9%A2%91%E6%A0%BC%E5%BC%8F%E5%8F%AF%E8%83%BD%E4%B8%8D%E5%90%8C%E3%80%82%20%E5%85%B6%E4%B8%AD%E7%9A%84%20type%20%E5%80%BC%E8%A1%A8%E7%A4%BA%E8%A7%86%E9%A2%91%E6%96%87%E4%BB%B6%E7%9A%84%E7%B1%BB%E5%9E%8B%EF%BC%8C%E9%9C%80%E8%A6%81%E6%A0%B9%E6%8D%AE%E5%AE%9E%E9%99%85%E6%83%85%E5%86%B5%E8%BF%9B%E8%A1%8C%E8%AE%BE%E7%BD%AE%E3%80%82)
@@ -41,7 +44,7 @@
 [uni-app官网](https://uniapp.dcloud.net.cn/api/media/video.html#choosevideo)
 
 
-### H5嵌入Uniapp
+#### H5嵌入Uniapp
 
 [前端 - UniApp 加载 Web 页面完整解决方案 - KotlinInMotion - SegmentFault 思否](https://segmentfault.com/a/1190000046864753)
 
@@ -58,7 +61,7 @@ mainfest.json中。本地html页面要放在static中
 
                 "tencent" : {
 
-                    "key" : "REMOVED-CREDENTIAL"
+                    "key" : "<你的腾讯地图 key>"
 
                 }
 
@@ -86,36 +89,36 @@ mainfest.json中。本地html页面要放在static中
 
     }
 ```
-## 插件使用
+### 插件使用
 [uni_modules | uni-app官网](https://uniapp.dcloud.net.cn/plugin/uni_modules.html)
 
 [Uniapp接入插件的三种方式_uniapp安装插件-CSDN博客](https://blog.csdn.net/qq_23257451/article/details/129460416)
 
 
 [manifest.json 应用配置 | uni-app官网](https://uniapp.dcloud.net.cn/collocation/manifest.html#mp-weixin)
-## 部署打包
+### 部署打包
 
-### Web
+#### Web
 
 [【UniApp】-uni-app-打包成网页-腾讯云开发者社区-腾讯云](https://cloud.tencent.com/developer/article/2373755)
 
 如果使用nginx想要支持相对路径就只能使用hash路由(狗屎)
-### 安卓
+#### 安卓
 
 [超详细！uni-app Android本地打包傻瓜式教程 - 个人文章 - SegmentFault 思否](https://segmentfault.com/a/1190000045693747)
 
-### 微信小程序
+#### 微信小程序
 
 [uniapp打包微信小程序详细步骤【前端开发】-CSDN博客](https://blog.csdn.net/qq_52736131/article/details/122400103)
 
 不能使用测试号。游戏类项目建议使用小游戏ID，但是需要game.json等
 
 www.hanphone.top
-## Vue项目转Uni
+### Vue项目转Uni
 
 2个前提：1、web站是适合手机屏幕的；2、H5代码是全后端分离的，uni-app只处理前端代码。
 一切从新建一个uni-app项目开始。然后依次进行
-#### 文件处理
+##### 文件处理
 
 1. 把之前的vue web项目的**前端**代码copy到新项目下
 2. 如果之前的文件后缀名是.html，需要改为.vue，并注意遵循[vue单文件组件SFC规范](https://vue-loader.vuejs.org/zh/spec.html)，比如必须一级根节点为template、script、style，template节点下必须且只能有一个根view节点，所有内容写在这个根view节点下。
@@ -123,7 +126,7 @@ www.hanphone.top
     uni-app默认是小程序的路由方式，在pages.json里管理页面。如果你使用vue router的话，一种是改造为pages.json方式，另一种是使用三方插件，比如[vue router for uni-app](https://ext.dcloud.net.cn/search?q=vue-router)
 4. 静态文件（如图片）挪到static目录  
     uni-app工程目录下有个static目录，用于存放静态文件，这个目录不编译，直接整体copy到发行代码里的。  如果你希望自定义静态资源目录，可以在vue.config.js中自定义。
-#### 标签代码处理
+##### 标签代码处理
 
 1. 相同功能的组件自动转换  
     uni-app的标签组件与小程序相同，比如`<div>`变成了`<view>`，`<span>`变成了`<text>`。  
@@ -140,7 +143,7 @@ www.hanphone.top
 4. input的search，原来的type没用了，改成confirmtype，[详见](https://uniapp.dcloud.io/component/input)
 5. audio组件不再推荐使用，改成api方式，[背景音频api文档](https://uniapp.dcloud.io/api/media/background-audio-manager?id=getbackgroundaudiomanager)
 6. 之前的v-html，可以在H5端和App端（需v3编译器）使用，不能在小程序中使用。如需要在小程序使用，请使用rich-text组件或uparse扩展插件，[详见](https://ask.dcloud.net.cn/article/35772)
-#### js代码处理
+##### js代码处理
 
 uni-app的非H5端，不管是App还是各种小程序，都不支持window、navigator、document等web专用对象。  
 uni-app的API与小程序保持一致，需要处理这些不同的API写法
@@ -165,7 +168,7 @@ uni-app的API与小程序保持一致，需要处理这些不同的API写法
 
 注意：如果你使用了一些三方ui框架、js库，其中引用了包括一些使用了dom、window、navigator的三方库，除非只做H5端，否则需要更换。去uni-app的[插件市场](https://ext.dcloud.net.cn/)寻找替代品。如果找不到对应库，必须使用for web的库，在App端可以使用[renderjs](https://uniapp.dcloud.io/frame?id=renderjs)来引入这些for web的库。
 
-#### css代码处理
+##### css代码处理
 uni-app发布到App(非nvue)、小程序时，显示页面仍然由webview渲染，css大部分是支持的。但需要注意
 - 不支持 *选择器
 - 没有body元素选择器，改用page元素选择器。（编译到非H5时，编译器会自动处理。所以不改也行）
@@ -174,9 +177,9 @@ uni-app发布到App(非nvue)、小程序时，显示页面仍然由webview渲染
 
 
 
-# 微信小程序
+## 微信小程序
 
-### 项目基本结构
+#### 项目基本结构
 
 ```
 miniprogram/                   # 项目根目录
@@ -228,7 +231,7 @@ miniprogram/                   # 项目根目录
 ```
 
 
-## 页面
+### 页面
 
 每个页面有4个基本组件
 
@@ -236,44 +239,44 @@ miniprogram/                   # 项目根目录
 .json .wxml .wxss  .js
 ```
 
-### WXML
+#### WXML
 
 WXML 的模板语法和指令系统直接借鉴了 Vue，但功能更简化，专门为微信小程序设计的简化版模板语言，WXML **≈ Vue 的子集**。
-#### 与 HTML 的差异
+##### 与 HTML 的差异
 
 - **标签体系**：WXML 运用的是自定义组件标签，像`<view>``<text>`这类，并非 HTML 标准标签。
 - **数据绑定**：采用`{{}}`进行单向数据绑定，和 HTML 的原生方式不同。
 - **指令系统**：提供了如`wx:if`、`wx:for`这类特有的指令，不过功能和 HTML 结合 JavaScript 实现的效果类似。
 - **事件绑定**：使用`bindtap`、`catchtap`等自定义事件，和 HTML 的`onclick`在写法上有区别。
-#### 和VUE更相似  
+##### 和VUE更相似  
 
 - **模板语法**：二者都借助`{{}}`实现插值表达式，数据绑定语法相近。
 - **条件渲染**：WXML 的`wx:if`和 Vue 的`v-if`作用一样。
 - **列表渲染**：WXML 的`wx:for`和 Vue 的`v-for`功能相同。
 - **组件化**：WXML 和 Vue 都支持组件化开发，并且有自己的组件通信机制。
 
-### WXSS
+#### WXSS
 
-#### 与 CSS 的不同点：
+##### 与 CSS 的不同点：
 
 1. **尺寸单位**：WXSS 推荐使用 `rpx`（响应式像素），CSS 使用 `px`、`rem`、`em` 等。
 2. **选择器**：WXSS 支持的选择器比 CSS 少（如不支持 `*` 通配符）。
 3. **样式导入**：WXSS 使用 `@import` 导入样式文件，路径需使用相对路径。
 4. **动画实现**：WXSS 动画需通过 JS 调用 `wx.createAnimation` API，CSS 使用 `@keyframes` 和 `animation`。
 
-## 宿主环境
+### 宿主环境
 
-#### 通信模型
+##### 通信模型
 
 通信的主题是渲染层和逻辑层，渲染层和逻辑层之间通信由微信客户端进行转发，逻辑层和第三方服务器的通信也由微信进行转发。
 
-## 运行机制
+### 运行机制
 
-##### 小程序启动
+###### 小程序启动
 
 把小程序的代码包下载到本地，解析app.json全局配置文件，执行app.js小程序入口文件，**调用App()创建小程序实例**，渲染小程序首页，小程序启动完成
 
-##### 页面渲染过程
+###### 页面渲染过程
 
 加载解析页面的.json配置文件，加载页面的.wxml模板和.wxss样式，执行页面的js文件，调用Page()创建页面实例，页面渲染完成
 
@@ -281,36 +284,91 @@ WXML 的模板语法和指令系统直接借鉴了 Vue，但功能更简化，�
 
 组件
 
-## API
+### API
 
-##### 事件监听API
+###### 事件监听API
 
 特点：以on开头，用来监听某些事件的触发
 举例:Wx.onWindowResize(functioncallback)监听窗口尺寸变化的事件
 
-##### 同步API
+###### 同步API
 
 特点1：以Sync结尾的API 都是同步 API
 特点2：同步API的执行结果，可以通过函数返回值直接获取，如果执行出错会抛出异常
 ●举例：Wx.setStorageSync('key','value') 向本地存储中写入内容
 
-##### 异步API
+###### 异步API
 
 特点：类似于jQuery中的$.ajax(options)函数,需要通过success、fail、complete接收调用的结果
 ●举例：wx.request()发起网络数据请求，通过success回调函数接收数据
 
 
-## 协同工作
+### 协同工作
 
 
-## 发布
+### 发布
 
 先用邮箱申请小程序号，每一个邮箱仅能申请一个，未被微信公众平台注册，未被微信开放平台注册，未被个人微信号绑定的邮箱。一个手机号码只能注册5个小程序。然后填写基本信息
 
-### 发布小游戏
+#### 发布小游戏
 
 需要软件著作权登记证书等等，备案流程比一般小程序麻烦
 
 如果某个 js 文件被静态分析显示是无依赖文件，在实际运行时又被其他 js 文件 require 引用了，则会在工具模拟器中报错这个错误
 
 [开发者专区 | 微信开放社区](https://developers.weixin.qq.com/community/business/CategorySearch?cid=1204)
+
+## 微信生态接入
+
+> 这一节原来单独成篇（《微信公众号接入》），讲的是公众号接入自己的服务器，以及小程序拿手机号和做支付时要过的关。文中的 AppID / AppSecret / EncodingAESKey / 地图 key 都已换成占位符，照着做时换成自己的，别提交进仓库。
+
+### 公众号接入自己的服务器
+
+公众号接入自己的服务器，需要下载官方文件来调用接口：
+
+[开始开发 / 接入指南](https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Access_Overview.html)
+
+```
+AppID <AppID>
+AppSecret   <AppSecret>
+Token <Token>
+EncodingAESKEY <EncodingAESKey>
+```
+
+官方示例给的是 PHP。不使用服务器时，只能使用微信提供的现成功能。
+
+### 小程序登录与手机号
+
+在开发一款微信小程序时，需要用户进行微信登录，获取用户的手机号码来作为用户的唯一标识（userId），于是探索获取用户手机号码的方式；
+
+（当然，通过 wx.login 来获取 code，进而换取用户的 openid 也是可以的）
+
+目前版本的微信小程序获取用户手机号码的方式如下：
+
+前端开发参考：[developers.weixin.qq.com/miniprogram…](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/getPhoneNumber.html)
+后端开发参考：[developers.weixin.qq.com/miniprogram…](https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-info/phone-number/getPhoneNumber.html)
+
+步骤如下：
+
+① 利用手机号快速填写的功能，将 button 组件 `open-type` 的值设置为 `getPhoneNumber`
+
+② 用户点击按钮，弹出申请获取用户手机号的弹窗
+
+③ 如果用户点击允许，则可以通过 `bindgetphonenumber` 事件回调获取到动态令牌 code（注意这里的 code 和 wx.login 的 code 不一样，而且获取用户手机号码不需要提前调用 wx.login 获取 code 了）
+
+④ 把 code 传到开发者后台，并在开发者后台调用微信后台提供的 `phonenumber.getPhoneNumber` 接口，消费 code 来换取用户手机号
+
+**注意**：获取手机号的功能好像只对经过认证的小程序开放，未认证只能用测试号。
+
+### 小程序支付与域名配置
+
+#### 配置服务器域名与业务域名
+
+必须先通过认证才能配置业务域名。（本质上就是跳转不了第三方 H5，只允许跳转第三方小程序）
+
+手机可以打开体验版小程序的调试模式，避免校验。
+
+#### 获取公众号页面路径
+
+https://kf.qq.com/faq/180725biaAn2180725VnQjYF.html
+
