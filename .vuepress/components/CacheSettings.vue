@@ -778,7 +778,14 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
           // 外链图用**默认的 CORS 模式**取：该图床带 `ACAO: *`，回来的是正常
           // 响应（opaque 会被浏览器加随机填充，一张 39KB 的图能占 6MB）。
           const remote = isRemoteUrl(url)
-          const body = await fetch(url, { cache: 'reload', signal: controller.signal })
+          const load = () => fetch(url, { cache: 'reload', signal: controller.signal })
+          let body = await load()
+          // 图床在并发下偶尔 502（实测一批 500 多张里会抖几次）：外链再试一遍，
+          // 别让读者看到一串「失败」还以为是自己网络断了。
+          if (remote && !body.ok) {
+            await new Promise((resolve) => setTimeout(resolve, 1200))
+            body = await load()
+          }
           if (!body.ok) throw new Error(`HTTP ${body.status}${remote ? '（外链）' : ''}`)
           // 502/404 被图床当图片返回时，content-type 是 text/html
           if (remote && /text\/html/i.test(body.headers.get('content-type') || '')) {
@@ -862,7 +869,7 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
     progress.message = `已取消：本次更新 ${downloaded} 项，${skipped} 项原本就是最新。`
   } else if (failures.length > 0) {
     progress.message =
-      `${failures.length} 项失败（多为网络中断）。已成功 ${downloaded} 项、` +
+      `${failures.length} 项失败（外链多为图床 502 或对方不支持跨域）。已成功 ${downloaded} 项、` +
       `${skipped} 项无需更新，可再点一次「继续」。第一条：${failures[0]}`
   } else if (skipped === done) {
     progress.message = `${label}：${done} 项都已是最新，没有下载（省了 ${formatBytes(
