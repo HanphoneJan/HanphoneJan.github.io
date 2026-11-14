@@ -1,11 +1,43 @@
 ---
 title: 开源 Prompt 与 Skill 收集
-description: 好用的一手资源清单：Claude Code 工作流与插件、前端设计类 Skill、让 AI 连续工作的提示词骨架。
+description: 一手资源清单 + 本目录索引：角色卡与世界书的原卡全文、可复制的模板、Claude Code 配置体系。
 ---
 
 只收一手来源，不做二手转述。看到新的就往这里加，过期或失效的直接删。
 
-claude code项目开发工作流  [superpowers](https://github.com/obra/superpowers) 
+## 本目录
+
+### 原文存档
+
+Chub 上按收藏量取的头部样本，**全文照录，不删改、不加评注**。每页顶部有一行来源和抓取日期。
+
+| 页面 | 收藏 | 规模 |
+|---|--:|---|
+| [角色卡：Miiya](/docs/Prompt收集/角色卡-Miiya.html) | 7 375 | 1 533 tokens · 1 条开场 + 8 条备用开场 |
+| [角色卡：Character Card Builder](/docs/Prompt收集/角色卡-Character%20Card%20Builder.html) | 6 012 | 772 tokens · 三步写卡流程 |
+| [世界书：Hypnosis+](/docs/Prompt收集/世界书-Hypnosis.html) | 2 073 | 884 tokens · 10 条术语 |
+| [角色卡：无职转生 RPG](/docs/Prompt收集/角色卡-无职转生RPG.html) | 104 | 1 589 tokens · 内嵌世界书 209 条 |
+| [世界书：Undertale 中文世界构架](/docs/Prompt收集/世界书-Undertale中文世界构架.html) | 16 | 10 799 tokens · 25 条 |
+
+中文卡在 Chub 是冷区，104 已是中文原创第一，别拿数字判断写法。Miiya 与无职转生两页标了 `nsfw: true`，`description`、`personality`、`first_message`、备用开场与条目正文均按原卡照录。
+
+### 模板与提示词
+
+| 页面 | 内容 |
+|---|---|
+| [角色卡：模板骨架](/docs/Prompt收集/角色卡-模板骨架.html) | 中文角色卡骨架：基本信息、性格、说话风格、互动规则、示例对话，外加一段助教系统提示词 |
+| [吃透一个项目](/docs/Prompt收集/吃透一个项目.html) | 让 AI 把一个项目拆成六份文档：导航、架构、核心设计、关键算法、小白概念、面试话术 |
+| [Cursor 升级版牛马 v3.0](/docs/Prompt收集/cursor%20升级版牛马完整版v3.0.html) | 一份 Cursor 专用的长系统提示词：身份宣言、七大模式、五大专业人格 |
+
+### 配置与工程
+
+| 页面 | 内容 |
+|---|---|
+| [Claude Code 的 Hooks / Skills / Commands / Agents](/docs/Prompt收集/Claude%20Code%20配置体系.html) | 用 `.claude` 目录把技能激活率从 25% 提到 90%：四类扩展各自的职责与最小可用配置 |
+
+## 外部资源
+
+claude code项目开发工作流 [superpowers](https://github.com/obra/superpowers)
 
 [GitHub - ComposioHQ/awesome-claude-skills: A curated list of awesome Claude Skills, resources, and tools for customizing Claude AI workflows · GitHub](https://github.com/ComposioHQ/awesome-claude-skills)
 

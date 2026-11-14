@@ -1,4 +1,5 @@
 ---
+sidebar_label: Cursor 牛马 v3.0
 ---
 # Cursor终极AI编程牛马助手完整版提示词 V3.0
 
