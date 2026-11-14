@@ -206,6 +206,29 @@ frontmatter。**必须在这个钩子做**：blog 插件的 `extendsPage` 读
 构建后出现在 `/star/`，归档页的「星标」标签和侧栏星标列表会自动出现。
 没有星标时这两处由 CSS 隐藏，不再显示「星标 为空」。
 
+### 5. 每页页脚的「最近更新」
+
+hope 自带 `@vuepress/plugin-git`，页脚的时间只按**页面 md** 的
+`git log --follow` 算。可站上有相当一批页面的正文不在 md 里：`settings.md`
+整页是 `<CacheSettings />`，题解的动画来自 `static/traces/*.json`，自测题
+来自 `static/quiz/bank.json` 的条目，模式页的播放器来自 `tracers/*.ts`。
+
+`.vuepress/updated-time.ts` 算依赖集合，`.vuepress/plugins/page-updated.ts`
+把它接进两条现成的链路：
+
+- **文件依赖** → `extendsPageOptions` 里写 frontmatter 的 `gitInclude`
+  （plugin-git 官方开关，会在 `extendsPage` 时合并这些文件的提交历史）。
+- **题库条目** → `onInitialized` 里抬 `page.data.git.updatedTime`。条目不是
+  独立文件，`gitInclude` 表达不了「这几行」；这个钩子在页面数据序列化之前，
+  改了就算数。
+
+依赖口径、为什么不算共享渲染管线、为什么题库要按行 blame，都写在
+`.vuepress/updated-time.ts` 的文件头。改完跑 `pnpm test:updated`。
+
+两个环境上的前提：`fetch-depth: 0`（blame 要完整历史），以及**开发服务器里
+页脚不显示这个时间** —— hope 只在构建时挂 git 插件，`pnpm start` 下
+`page.data.git` 为空，不是坏了。
+
 ## 踩过的坑（都不要再踩）
 
 ### Vue 模板会解析正文里的尖括号

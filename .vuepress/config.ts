@@ -8,6 +8,7 @@ import { markdownEnhancePlugin } from './plugins/markdown-enhance.js'
 import { trainingPlugin } from './plugins/training.js'
 import { catalogsPlugin } from './plugins/catalogs.js'
 import { taxonomyPlugin } from './plugins/taxonomy.js'
+import { pageUpdatedPlugin } from './plugins/page-updated.js'
 import { offlinePackagePlugin } from './plugins/offline-package.js'
 
 /**
@@ -182,6 +183,7 @@ export default defineUserConfig({
     trainingPlugin,
     catalogsPlugin,
     taxonomyPlugin,
+    pageUpdatedPlugin,
     offlinePackagePlugin,
   ],
 

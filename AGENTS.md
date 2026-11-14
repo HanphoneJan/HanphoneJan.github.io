@@ -252,6 +252,44 @@ React root 里：
 「星标」标签和侧栏星标列表也会自动出现。没有任何页面写 `star` 时，这两处
 会被 CSS 隐藏，不会显示「星标 为空」。
 
+### 每页页脚的「最近更新」
+
+页脚那行 `最近更新` 来自 hope 自带的 `@vuepress/plugin-git`，默认只对
+**页面 md** 跑 `git log --follow`。但站上一批页面的正文并不在 md 里：
+`settings.md` 只有 12 行、整页是 `<CacheSettings />`；题解的逐帧动画来自
+`static/traces/<文件名>.json`；自测题来自 `static/quiz/bank.json` 里的那几条；
+模式页的播放器来自 `tracers/*.ts`。只认 md 的后果是设置页在离线包改了十几轮
+之后仍显示 10/26 —— 这个时间会从「内容什么时候变过」退化成「壳文件什么时候
+被碰过」。
+
+`.vuepress/updated-time.ts` + `.vuepress/plugins/page-updated.ts` 把它补成
+「**这一页正文涉及的所有文件里最新的那次提交**」：
+
+| 依赖 | 怎么进来 |
+|---|---|
+| md 里手写的组件（`<CacheSettings />`） | `extendsPageOptions` 写 frontmatter 的 `gitInclude`；组件按相对 import 递归展开 |
+| 这一页的录制轨迹 | `static/traces/<md 文件名>.json`（存在才加） |
+| 内嵌 tracer | 放置表 `INLINE_TRACER_PLACEMENT` 的 id -> `tracers/*.ts` |
+| 自测题库条目 | `git blame --line-porcelain` 一次，按条目占的行区间取 max |
+
+几个别改的地方：
+
+- **`gitInclude` 必须在 `extendsPageOptions` 里写**：页面对象创建时
+  `@vuepress/plugin-git` 的 `extendsPage` 就会读它，晚一步就来不及。
+- **题库不能按整份 `bank.json` 算一个时间**：529 条题共用一个文件，按文件算
+  会让新加一道题把另外一百多篇题解的日期一起跳到今天。所以按行 blame；
+  一次 blame 覆盖全文（6 千行 <100ms），**不要**每条题各起一次进程。
+- **自动注入的渲染管线不算依赖**（运行条、自测渲染、adapter、主题样式），
+  模式页「相关题目」里那些别的题解也不算：改一次就让几百页同时「今天更新」，
+  真正的变更反而被淹掉。口径与例外写在 `.vuepress/updated-time.ts` 文件头。
+- **`pnpm start` 里页脚没有这个时间**：hope 只在构建时挂
+  `@vuepress/plugin-git`，开发服务器下 `page.data.git` 是空的。不是坏了，
+  用 `pnpm build` 看。
+- **浅克隆会毁掉题库那一路**：blame 拿不到历史时所有条目都算同一次提交，
+  `fetch-depth: 0` 又多一个必须。
+- 改口径后跑 `pnpm test:updated`（9 项：组件 / 轨迹 / tracer / 题库行区间 /
+  设置页依赖确实比 `settings.md` 新……）。
+
 ### 外观（首页 / 字体 / 沉浸阅读）
 
 - 首页沿用迁移前的设计，但实现换成了 **Vue SFC 服务端渲染**
