@@ -4,7 +4,7 @@ import path from 'node:path'
 import type { App, Page } from 'vuepress/core'
 import { PYODIDE_RUNTIME_FILES } from '../../src/components/training/pyrunner/runtime-files'
 import { BUILD_ID } from '../build-id'
-import { allUsedImages } from '../static-images'
+import { allRemoteImages, allUsedImages } from '../static-images'
 import {
   chunkStem,
   extractRouteChunks,
@@ -383,6 +383,26 @@ export function buildManifest(app: App): OfflineManifest {
     }
   }
 
+  // 外链图（`hanphone.top` 上那 500 多张）：仓库里没有文件，只能列 URL。
+  //
+  // - `bytes` 写 0：构建期不联网，拿不到体积；真实大小要等下载时看
+  //   `content-length`，所以这一行只按「张」计进度（行上显示「大小未知」）。
+  // - 指纹用 `sha1(url)`：满足「每条都有 10 位指纹」的断言，且因为 URL 不变
+  //   就永远判「没变」—— 外链本来也无法判断内容有没有换。
+  const remote = allRemoteImages()
+  if (remote.length > 0) {
+    const section = bucket('remote')
+    for (const url of remote) {
+      section.entries.push([
+        url,
+        null,
+        0,
+        0,
+        createHash('sha1').update(url).digest('hex').slice(0, 10),
+      ])
+    }
+  }
+
   // 页面少的板块排在前面，读者一眼能看到「首页那点东西就几十 KB」
   const order: SectionId[] = [
     'start',
@@ -392,6 +412,7 @@ export function buildManifest(app: App): OfflineManifest {
     'pyodide',
     'quiz',
     'images',
+    'remote',
     'traces',
     'docs',
     'training',

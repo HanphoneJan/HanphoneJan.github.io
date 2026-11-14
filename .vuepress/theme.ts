@@ -271,22 +271,31 @@ export default hopeTheme({
             },
           },
           {
-            // **只缓存同源图片。**
+            // **只碰同源图和 hanphone.top 的图，且一律用 CORS 去取。**
             //
-            // 跨域图（`hanphone.top` 上那 500 多张）在 SW 里拿到的都是 opaque
-            // 响应，而浏览器会给 opaque 响应**加随机填充**：实测一张 39KB 的
-            // 图占 6.02MB 配额，417 张吃掉 2.87GB。读者只要把编译原理 / 嵌入式
-            // 那几页翻一遍，存储就会被撑爆（配额 13GB 也经不起第二次）。
+            // 背景：SW 直接 `fetch(no-cors request)` 拿回来的是 opaque 响应，
+            // 浏览器会给 opaque 响应加随机填充 —— 实测一张 39KB 的跨域图占
+            // 6.02MB 配额，417 张吃掉 2.87GB。读者翻几页就能把存储撑爆。
+            // 而 `hanphone.top` 的代理**带 `Access-Control-Allow-Origin: *`**
+            // （请求带 Origin 时才发，用 curl 不带 Origin 是看不到的），
+            // 所以这里带 `fetchOptions.mode = 'cors'` 去取：响应类型是
+            // `cors` 而不是 `opaque`，按真实大小入缓存（同图实测 41KB），
+            // 出厂状态、状态码、`content-length` 也都读得到。
             //
-            // 所以跨域图交给浏览器自己的 HTTP 缓存（host 发 `max-age=14400`），
-            // 不进 CacheStorage。代价是这些图离线看不到 —— 但「离线看得到」
-            // 只能靠把图搬进仓库（同源、无填充），不是在 SW 里硬塞。
+            // 其它跨域图（头像之类）不进 SW：既不缓存，也就没有填充问题；
+            // 它们本来也不在离线包的清单里。
             urlPattern: ({request, url}: {request: Request; url: URL}) =>
-              request.destination === 'image' && url.origin === self.location.origin,
+              request.destination === 'image' &&
+              (url.origin === self.location.origin || url.hostname === 'hanphone.top'),
             handler: 'CacheFirst' as const,
             options: {
               cacheName: 'images',
-              expiration: {maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 90},
+              // 530 张外链图 + 51 张站内图，300 条会被 LRU 挤掉一半
+              expiration: {maxEntries: 1000, maxAgeSeconds: 60 * 60 * 24 * 90},
+              // `credentials: 'omit'` 不能省：跨域 <img> 的请求默认带
+              // credentials，而 ACAO: * 与 credentials 不能共存 —— 少了这一项
+              // 每次都被 CORS 挡掉（net::ERR_FAILED）。图不需要 cookie。
+              fetchOptions: {mode: 'cors', credentials: 'omit'},
             },
           },
           {

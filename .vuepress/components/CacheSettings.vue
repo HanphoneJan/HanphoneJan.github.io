@@ -54,7 +54,8 @@
               <div class="row-main">
                 <span class="row-label">{{ row.label }}</span>
                 <span class="row-meta">
-                  {{ row.count }} 项 · {{ formatBytes(row.estimated) }}
+                  {{ row.count }} 项 ·
+                  {{ row.unknown ? '大小未知' : formatBytes(row.estimated) }}
                 </span>
               </div>
               <div class="row-state">
@@ -123,7 +124,10 @@
             </div>
             <div class="bar"><i :style="{width: `${percent}%`}" /></div>
             <div class="progress-foot">
-              <span>{{ formatBytes(progress.bytes) }} / {{ formatBytes(progress.totalBytes) }}</span>
+              <span v-if="progress.totalBytes">
+                {{ formatBytes(progress.bytes) }} / {{ formatBytes(progress.totalBytes) }}
+              </span>
+              <span v-else class="muted">已下 {{ formatBytes(progress.bytes) }}，总量未知</span>
               <span v-if="progress.failed" class="warn">失败 {{ progress.failed }}</span>
               <button type="button" class="btn btn-ghost" @click="cancel">
                 取消
@@ -134,7 +138,8 @@
 
           <p class="hint">
             按板块下载，只下没下过和内容变过的。<b>共享脚本</b>是运行条、编辑器、
-            图表等懒加载代码；<b>Python 运行时</b>是题解里「▶ 运行」的解释器。
+            图表等懒加载代码；<b>Python 运行时</b>是题解里「▶ 运行」的解释器；
+            <b>外链图片</b>是挂在 hanphone.top 上的配图（约 40MB，按张计进度）。
           </p>
         </template>
       </section>
@@ -384,6 +389,9 @@ const keysOf = (name: string): Set<string> => cacheKeys.get(name) ?? new Set<str
  * 我们写进去的那份 —— 该请求会去网络拿，然后失败。
  */
 function targetCache(url: string): string {
+  // 外链图（`https://hanphone.top/...`）同样由 SW 的 image 路由伺候，
+  // 读的就是 `images` 桶。
+  if (/^https?:\/\//i.test(url)) return IMAGE_CACHE
   if (url.startsWith('/traces/')) return TRACE_CACHE
   if (url.startsWith('/quiz/')) return QUIZ_CACHE
   // 12.9MB 的 Python 解释器有自己的桶，不归 SW 管（见 pyrunner/runtime.ts）
@@ -452,6 +460,11 @@ function formatBytes(bytes: number | undefined): string {
 /** 相对 URL -> CacheStorage 里实际使用的绝对 URL */
 function absolute(url: string): string {
   return new URL(url, window.location.origin).href
+}
+
+/** 是不是别的站点的图（`hanphone.top` 那批） */
+function isRemoteUrl(url: string): boolean {
+  return /^https?:\/\//i.test(url)
 }
 
 /**
@@ -557,6 +570,9 @@ function computeRows(): void {
       label: section.label,
       count: section.entries.length,
       estimated,
+      // 外链板块：构建期不联网，体积未知（真实大小要下载时才知道）。
+      // 直接写 `0 KB` 看起来像 bug，标成「大小未知」。
+      unknown: estimated === 0 && section.entries.length > 0,
       cached,
       chunkMissing,
       stale,
@@ -759,12 +775,21 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
       try {
         let htmlText = ''
         if (needHtml) {
+          // 外链图用**默认的 CORS 模式**取：该图床带 `ACAO: *`，回来的是正常
+          // 响应（opaque 会被浏览器加随机填充，一张 39KB 的图能占 6MB）。
+          const remote = isRemoteUrl(url)
           const body = await fetch(url, { cache: 'reload', signal: controller.signal })
-          if (!body.ok) throw new Error(`HTTP ${body.status}`)
+          if (!body.ok) throw new Error(`HTTP ${body.status}${remote ? '（外链）' : ''}`)
+          // 502/404 被图床当图片返回时，content-type 是 text/html
+          if (remote && /text\/html/i.test(body.headers.get('content-type') || '')) {
+            throw new Error('返回的不是图片')
+          }
+          const realBytes = Number(body.headers.get('content-length') ?? 0) || 0
           const cache = await cacheOf(target)
           await cache.put(new Request(absolute(url)), body.clone())
           targetKeys.add(absolute(url))
-          bytes += htmlBytes
+          // 外链在清单里是 0，用响应头里的真实值，进度才有意义
+          bytes += htmlBytes || realBytes
           htmlText = chunkRel ? await body.text() : ''
 
           // **两个 .mjs 要额外进 `assets`。** 它们是 `import()` 加载的，
@@ -968,8 +993,10 @@ function download(id: string): void {
 
 function downloadAll(): void {
   if (!manifest.value) return
-  const tasks = Object.values(manifest.value.sections).flatMap((section) => section.entries)
-  void runQueue(tasks, '全部内容', Object.keys(manifest.value.sections))
+  // 外链图片不进「全部」：约 40MB，而且对方随时可能失效。它有自己的按钮。
+  const picked = Object.entries(manifest.value.sections).filter(([id]) => id !== 'remote')
+  const tasks = picked.flatMap(([, section]) => section.entries)
+  void runQueue(tasks, '全部内容', picked.map(([id]) => id))
 }
 
 function cancel(): void {
@@ -1051,9 +1078,9 @@ async function clearSection(id: string): Promise<void> {
   // 里那一版，旧版本（改过图、重新部署之前下的）会一直躺在 `images` 里 ——
   // 清一次板块仍然占着几 MB。这里按**路径**一并收掉清单里那些图的所有版本，
   // 再加上已经从清单里消失的结构图（`/diagrams/` 整个目录归这个板块管）。
-  if (id === 'images') {
+  if (id === 'images' || id === 'remote') {
     const owned = new Set(
-      section.entries.map(([url]) => new URL(url, location.origin).pathname),
+      section.entries.map(([url]) => new URL(url).pathname),
     )
     const cache = await caches.open(IMAGE_CACHE)
     for (const request of await cache.keys()) {
