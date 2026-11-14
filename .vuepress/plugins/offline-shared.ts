@@ -19,6 +19,7 @@ export type SectionId =
   | 'traces'
   | 'quiz'
   | 'images'
+  | 'remote'
   | 'pyodide'
   | 'shared'
 
@@ -35,6 +36,10 @@ export const SECTION_LABELS: Record<SectionId, string> = {
   // 不进预缓存（会变成每个访客首次安装多下几 MB），但读者可以在这里
   // 一次下完 —— 否则没访问过的页面里的图离线时是裂的。
   images: '页面插图',
+  // 正文里的外链图（`hanphone.top` 上那 500 多张）。仓库里没有文件，清单只列
+  // URL；下载时用 CORS（该图床带 ACAO: *），拿回来的是正常响应，按真实大小
+  // 进缓存，离线可用。
+  remote: '外链图片',
   // 不是页面，是 12.9MB 的 Python 解释器（题解里「▶ 运行」用）
   pyodide: 'Python 运行时',
   // 页面之外被懒加载的脚本：跑代码的 SnippetBar/runner、改代码的

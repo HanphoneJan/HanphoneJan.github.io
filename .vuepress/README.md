@@ -290,6 +290,24 @@ oxc: { jsx: { runtime: 'automatic' } }
   首屏抢带宽，弱网下每个都挂到超时。改成 CacheFirst 后命中就返回，一条
   网络请求都不发。默认的 cacheability 插件只缓存 200，404 不会被记住。
 
+- **图片路由必须限定来源、并且用 CORS 去取。** Workbox 直接 `fetch(request)`
+  拿跨域图会得到 **opaque** 响应，而浏览器会给 opaque 响应**加随机填充**：
+  实测一张 39KB 的外链图占 **6.02MB** 配额，417 张吃掉 **2.87GB** —— 读者把
+  编译原理 / 嵌入式那几页翻一遍就能把存储撑爆，而限流、配额和「缓存失效」
+  都会跟着来。所以这条路由只匹配同源图与 `hanphone.top` 的图，并配
+
+  ```ts
+  fetchOptions: {mode: 'cors', credentials: 'omit'}
+  ```
+
+  `hanphone.top` 的代理带 `Access-Control-Allow-Origin: *`（**只在请求带
+  `Origin` 时才发**，`curl -I` 不带 Origin 是看不到的，别据此判断「没有 CORS」）。
+  带 cors 取回来的是正常响应：真实大小（同图 41KB）、真实状态码、
+  `content-length` 都读得到。`credentials: 'omit'` 不能省 —— 跨域 `<img>`
+  的请求默认带 credentials，而 `ACAO: *` 与 credentials 不能共存，少了它每条
+  都被 CORS 挡掉（`net::ERR_FAILED`）。其它跨域图（头像之类）不进这条路由，
+  也就不进缓存。
+
 - **HTML 的 `NetworkFirst` 不能设 `networkTimeoutSeconds`。** 设了之后
   Workbox 在超时（原来的 3 秒）就回退到缓存 HTML，而 HTML 引用的
   `assets/app-<hash>.js` 每次部署都会换名 —— 旧 HTML 指向的 chunk 已不存在，

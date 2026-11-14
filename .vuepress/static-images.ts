@@ -105,6 +105,24 @@ function getIndex(): Map<string, ImageInfo> {
 /** 正文里真的出现过的图（渲染时由 `image-tags.ts` 登记） */
 const used = new Map<string, ImageInfo>()
 
+/**
+ * 正文里出现过的**外链**图（`https://hanphone.top/...`）。
+ *
+ * 仓库里没有文件，算不出哈希也读不到尺寸，但设置页可以「先下一遍」：
+ * 该图床带 `Access-Control-Allow-Origin: *`，用 CORS 取回来是正常响应
+ * （不是 opaque），按真实大小进 `images` 桶，离线可看。
+ */
+const remote = new Set<string>()
+
+export function noteRemoteImage(src: string): void {
+  remote.add(src)
+}
+
+/** 离线包清单用：去重排序后的外链图 URL */
+export function allRemoteImages(): string[] {
+  return [...remote].sort()
+}
+
 export function noteUsedImage(src: string, info: ImageInfo): void {
   used.set(src, info)
 }

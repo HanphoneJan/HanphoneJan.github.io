@@ -1,5 +1,10 @@
 import type { Markdown } from 'vuepress/markdown'
-import { imageInfo, noteUsedImage, versionedImageSrc } from '../static-images.js'
+import {
+  imageInfo,
+  noteRemoteImage,
+  noteUsedImage,
+  versionedImageSrc,
+} from '../static-images.js'
 
 const LOCAL_PREFIX = /^\/(?:img|diagrams)\//
 const REMOTE = /^(?:https?:)?\/\//i
@@ -46,6 +51,7 @@ export function imageTagsPlugin(md: Markdown): void {
           } else if (REMOTE.test(src)) {
             child.attrSet('loading', 'lazy')
             child.attrSet('decoding', 'async')
+            noteRemoteImage(src)
           }
         } else if (child.type === 'html_inline' && /<img\b/i.test(child.content)) {
           child.content = rewriteHtmlImg(child.content)
@@ -76,6 +82,7 @@ function rewriteHtmlImg(html: string): string {
         }
       }
     }
+    if (REMOTE.test(src)) noteRemoteImage(src)
     if (!/\bloading\s*=/i.test(out)) out = out.replace(/<img\b/i, '<img loading="lazy"')
     if (!/\bdecoding\s*=/i.test(out)) out = out.replace(/<img\b/i, '<img decoding="async"')
     return out
