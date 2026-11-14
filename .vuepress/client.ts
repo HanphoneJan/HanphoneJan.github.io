@@ -33,6 +33,12 @@ import TracerVisualizerMount from './components/TracerVisualizerMount.vue'
  * `error loading dynamically imported module`（webpack 时代的旧站是
  * `Loading chunk N failed` / `ChunkLoadError`）。
  */
+/**
+ * 一次性清理旧版图片缓存的标记（见 `setup()` 里的说明）。
+ * 名字带版本号：以后再有同类迁移就换一个，不要复用。
+ */
+const IMG_CACHE_RESET = 'hanphone:images-cache-v2'
+
 const isChunkLoadError = (error: unknown): boolean =>
   /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed|Loading chunk \d+ failed|ChunkLoadError/i.test(
     error instanceof Error ? `${error.name}: ${error.message}` : String(error),
@@ -214,6 +220,35 @@ export default defineClientConfig({
    */
   setup() {
     if (typeof document === 'undefined') return
+
+    /**
+     * 一次性清掉旧版图片缓存。
+     *
+     * 之前的 `images` 路由按 `destination === 'image'` 匹配，跨域图落进
+     * CacheStorage 时是 **opaque** 响应，而浏览器会给 opaque 加随机填充：
+     * 实测一张 39KB 的图占 **6.02MB** 配额，翻几页就是几个 GB。新路由改成
+     * CORS 取图（见 `theme.ts`），但**旧条目还在缓存里**，不清要等 90 天
+     * 过期或读者自己去设置页清。这里只跑一次（标记落 localStorage），
+     * 代价是图片下次访问重新下载一遍。
+     */
+    try {
+      if ('caches' in window && !localStorage.getItem(IMG_CACHE_RESET)) {
+        void caches
+          .delete('images')
+          .catch(() => {
+            /* 删不掉也不影响功能 */
+          })
+          .finally(() => {
+            try {
+              localStorage.setItem(IMG_CACHE_RESET, '1')
+            } catch {
+              /* 隐私模式：下次再试，删除本身没有副作用 */
+            }
+          })
+      }
+    } catch {
+      /* localStorage 不可用（隐私模式）：跳过这次迁移 */
+    }
 
     const COLORS = {light: '#ffffff', dark: '#1b1b1f'}
     let dynamic = [...document.querySelectorAll('meta[name="theme-color"]')].find(
