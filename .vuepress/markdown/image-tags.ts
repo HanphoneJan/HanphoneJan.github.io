@@ -10,6 +10,18 @@ const LOCAL_PREFIX = /^\/(?:img|diagrams)\//
 const REMOTE = /^(?:https?:)?\/\//i
 
 /**
+ * **能预缓存**的外链图：对方必须发 CORS 头，否则 `fetch` 只会抛
+ * `TypeError: Failed to fetch`（`<img>` 不受影响，但离线包存不下来）。
+ *
+ * 目前只有两个：自己的图床 `hanphone.top`（代理带 `ACAO: *`）和 GitHub raw。
+ * 其余外链（`latex.csdn.net` 的公式图、`runoob.com` 的速查表）实测都不发
+ * CORS 头，进清单只会在设置页里变成几条永远失败的条目 —— 所以只登记这两个
+ * 域名，`REMOTE` 仍然负责给所有外链补 `loading="lazy"`。
+ */
+const CACHEABLE_REMOTE =
+  /^https?:\/\/(?:www\.)?(?:hanphone\.top|raw\.githubusercontent\.com)\//i
+
+/**
  * 正文里 `<img>` 的两处加工：
  *
  * 1. **版本 + 尺寸（本地图）**。`static/` 下的图文件名固定，而 Workbox 的
@@ -51,7 +63,7 @@ export function imageTagsPlugin(md: Markdown): void {
           } else if (REMOTE.test(src)) {
             child.attrSet('loading', 'lazy')
             child.attrSet('decoding', 'async')
-            noteRemoteImage(src)
+            if (CACHEABLE_REMOTE.test(src)) noteRemoteImage(src)
           }
         } else if (child.type === 'html_inline' && /<img\b/i.test(child.content)) {
           child.content = rewriteHtmlImg(child.content)
@@ -82,7 +94,7 @@ function rewriteHtmlImg(html: string): string {
         }
       }
     }
-    if (REMOTE.test(src)) noteRemoteImage(src)
+    if (CACHEABLE_REMOTE.test(src)) noteRemoteImage(src)
     if (!/\bloading\s*=/i.test(out)) out = out.replace(/<img\b/i, '<img loading="lazy"')
     if (!/\bdecoding\s*=/i.test(out)) out = out.replace(/<img\b/i, '<img decoding="async"')
     return out
