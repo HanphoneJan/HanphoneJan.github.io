@@ -471,7 +471,7 @@ Vim 是一款强大的文本编辑器，以下是一些最常用的快捷键：
 - **搜索**：在命令模式下输入 `/pattern` 向前搜索指定的模式（`pattern` 是你要搜索的内容）；输入 `?pattern` 向后搜索。使用 `n` 跳转到下一个匹配项，`N` 跳转到上一个匹配项
 - **替换**：输入 `:%s/old/new/g` 可在整个文件中把所有的 `old` 替换为 `new`；若只想替换当前行的匹配项，使用 `:s/old/new/g`
 
-![img](https://www.runoob.com/wp-content/uploads/2015/10/vi-vim-cheat-sheet-sch.gif)
+![vi / vim 快捷键速查表](https://hanphone.top/gh/HanphoneJan/public-pictures/linux/vi-vim快捷键速查.gif)
 
 ### VSCode
 在 windows 中使用 vscode remote，连接虚拟机即可

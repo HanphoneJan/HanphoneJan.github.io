@@ -31,7 +31,7 @@ Embedding（查表变向量）
 
 **案例演示：** 假设我们的迷你语料库是 `{"hug": 1, "pug": 1, "pun": 1, "bun": 1}`，并且我们想构建一个大小为 10 的词表。BPE 的训练过程可以用下表3.1来表示：
 
-![BPE 算法合并过程示例](https://raw.githubusercontent.com/datawhalechina/Hello-Agents/main/docs/images/3-figures/1757249275674-5.png)
+![BPE 算法合并过程示例](https://hanphone.top/gh/HanphoneJan/public-pictures/ml/BPE算法合并过程示例.png)
 
 训练结束后，词表大小达到 10，我们就得到了新的分词规则。现在，对于一个未见过的词 "bug"，分词器会先查找 "bug" 是否在词表中，发现不在；然后查找 "bu"，发现不在；最后查找 "b" 和 "ug"，发现都在，于是将其切分为 `['b', 'ug']`。
 
