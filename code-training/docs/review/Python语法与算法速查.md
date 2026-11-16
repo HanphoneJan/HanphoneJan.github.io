@@ -1,13 +1,13 @@
 ---
-title: Python速查
+title: Python语法与算法速查
 category: 参考手册
-last_updated: 2026-11-05
+last_updated: 2026-11-16
 ---
-# Python速查
+# Python语法与算法速查
 
-> 本文档汇总Python面试/竞赛中常用知识，便于快速查阅。从数据结构起步，持续补充适合速查的 Python 语法与内建函数细节。
-
----
+> 面试与笔试都在用的那一份 Python：**容器与内置函数**的 API、复杂度、易错点；**标准库**里能替你省掉手写循环的模块；**算法套路**的模板；以及**输入输出**那套只在 OJ 上才会出错的写法。
+>
+> 查 API 按右侧目录找过去，要写模板直接跳到[二分查找](#二分查找)那种小节。
 
 ## 复杂度速查总览
 
@@ -25,11 +25,13 @@ last_updated: 2026-11-05
 
 > **核心结论**：判断"某元素是否存在"，用 `set` / `dict`（O(1)）而非 `list`（O(n)）。
 
----
+## 一、容器与内置函数
 
-## 字符串 str
+> Python 的 list / dict / set 都是高度优化的实现，先搞清楚它们各自的复杂度与"哪个操作会悄悄变成 O(n)"，比背 API 重要得多。
 
-### 底层实现
+### 字符串 str
+
+#### 底层实现
 
 CPython 中字符串是**不可变的 Unicode 字符序列**，根据字符范围自动选择存储方式：
 - Latin-1 范围（≤ U+00FF）→ 每字符 1 字节
@@ -54,7 +56,7 @@ CPython 中字符串是**不可变的 Unicode 字符序列**，根据字符范�
 | `s.split/join` | O(n) | 线性扫描 |
 | `s.replace` | O(n) | 线性扫描 + 新建 |
 
-### 常用方法
+#### 常用方法
 
 **参数约定**：下面用 `[, ...]` 表示可选参数（更靠内的方括号为更内层的可选参数），用 `默认值` 标注缺省时的行为。
 
@@ -175,7 +177,7 @@ chr(i)                       # ASCII码转字符，如 chr(97) => 'a'
 
 > **区分 `find` 与 `index`**：`find` 找不到返回 `-1`（适合判断），`index` 抛 `ValueError`（适合确定存在时取值）。`split` 与 `splitlines`：`splitlines` 只按换行符切，`split('\n')` 在末尾空行时会多出空串。
 
-### 算法应用
+#### 算法应用
 
 ```python
 # 进制转换（LeetCode 191. Number of 1 Bits）
@@ -212,60 +214,9 @@ eval("'hello'.upper()")      # => 'HELLO'
 > 4. 外层 `list(...)` / 解包 / 遍历才真正求值，得到 `[1, 2, 3]`
 > 所以 `list(map(int, input().split()))` 一行就完成"读一行 → 切词 → 全转 int → 成列表"。
 
----
+### 列表 list
 
-## 字符串格式化（f-string）
-
-> 写题/调试时最常用的格式化方式。前缀 `f` + 大括号 `{}` 内放表达式，Python 3.6+。
-
-### 基本用法
-
-```python
-name, score = "hanphone", 96.5
-f"{name}"              # 'hanphone'
-f"{score}"             # '96.5'
-f"{score:.2f}"         # '96.50'  保留 2 位小数（四舍五入）
-f"{1/3:.3f}"           # '0.333'
-```
-
-### 格式说明符（冒号 `:` 后面）
-
-| 写法 | 含义 | 示例 |
-|---|---|---|
-| `{x:.2f}` | 保留 2 位小数 | `f"{3.14159:.2f}"` → `'3.14'` |
-| `{x:>5}` | 右对齐，宽度 5（左侧补空格） | `f"{'ab':>5}"` → `'   ab'` |
-| `{x:<5}` | 左对齐，宽度 5 | `f"{'ab':<5}"` → `'ab   '` |
-| `{x:^5}` | 居中对齐，宽度 5 | `f"{'ab':^5}"` → `' ab  '` |
-| `{x:0>5}` | 左补 0 到宽度 5 | `f"{42:0>5}"` → `'00042'` |
-| `{x:08b}` | 二进制，补 0 到 8 位 | `f"{5:08b}"` → `'00000101'` |
-| `{x:,}` | 千分位分隔 | `f"{1234567:,}"` → `'1,234,567'` |
-| `{{}}` | 转义大括号本身 | `f"{{x}}"` → `'{x}'` |
-
-### 三种写法对比
-
-| 写法 | 特点 | 适用 |
-|---|---|---|
-| `"%.2f" % x` | 旧式 `%`，可读性差 | 老代码、日志 |
-| `"{:.2f}".format(x)` | 模板可复用，支持位置/关键字参数 | 需要复用格式模板时 |
-| `f"{x:.2f}"` | 最简洁，表达式直接内联 | **写题/调试首选** |
-
-### repr 调试
-
-`str(x)` 面向用户阅读，`repr(x)` 面向开发者（更接近字面量，可直接拷回代码验证）：
-
-```python
-str("a'b")      # "a'b"
-repr("a'b")     # '"a\'b"'
-print([1, 2])   # 打印 list/dict 时元素内部自动用 repr → [1, 2]
-```
-
-调试打印嵌套列表/字典等复杂对象时用 `repr()`，输出更精确、便于定位。
-
----
-
-## 列表 list
-
-### 底层实现
+#### 底层实现
 
 CPython 中 list 是**动态数组（array of pointers）**，存储的是指向 PyObject 的指针数组，而非元素本身。
 
@@ -308,7 +259,7 @@ val in s            # ~50ns
 
 > **Timsort**：Python 的排序算法，结合归并排序与插入排序，对部分有序数据特别高效（接近 O(n)），最坏 O(n log n)，**稳定**（相等元素不改变相对顺序）。
 
-### 常用方法
+#### 常用方法
 
 **增删**（区分 `append` / `extend` / `insert`，三者各司其职）：
 
@@ -362,7 +313,7 @@ max(lst)              # 最大值
 
 > **`sort` 的 `key`**：传入一个"取排序依据"的函数，如 `lst.sort(key=lambda x: x[1])` 按第二元素排；`reverse=True` 等价于倒序，也可用 `key=lambda x: -x`。
 
-### 列表推导式
+#### 列表推导式
 
 ```python
 # 基本用法
@@ -387,7 +338,7 @@ for a, b in zip(lst1, lst2):
     print(a, b)
 ```
 
-### 切片操作
+#### 切片操作
 
 ```python
 # --- 读取（返回新列表，原列表不变）---
@@ -418,7 +369,7 @@ def rotate(nums, k):
     # 不能写 nums = nums[-k:] + nums[:-k]，那样只是改了局部变量
 ```
 
-### 拷贝：浅拷贝 vs 深拷贝
+#### 拷贝：浅拷贝 vs 深拷贝
 
 ```python
 # --- 三种等价的浅拷贝 ---
@@ -448,7 +399,7 @@ def dfs():
 
 > **何时用深拷贝？** 只有嵌套结构（列表的列表、列表的字典等）且需要完全独立时才用 `deepcopy`，代价较高（O(n) 且常数大）。大多数算法题用 `path[:]` 即可。
 
-### 算法常用技巧
+#### 算法常用技巧
 
 ```python
 # --- 初始化 ---
@@ -506,29 +457,37 @@ left, right = 0, len(lst) - 1         # 对撞指针初始化
 while left < right:
     # ... 双指针逻辑 ...
     left += 1; right -= 1
-
-# --- 前缀和（一维）---
-n = len(lst)
-prefix = [0] * (n + 1)
-for i, x in enumerate(lst):
-    prefix[i+1] = prefix[i] + x
-# 区间和 [l, r]（闭区间）
-range_sum = prefix[r+1] - prefix[l]
-
-# --- 差分数组 ---
-diff = [0] * (n + 1)
-# 区间 [l, r] 加 val：
-diff[l] += val; diff[r+1] -= val
-# 还原：
-from itertools import accumulate
-result = list(accumulate(diff))[:n]
 ```
 
----
+> **前缀和、差分、位运算的完整模板在后面「三、算法套路」里：[前缀和与差分](#前缀和与差分)、[位运算](#位运算)。** 这里只列到"怎么初始化一个数组"，不重复贴算法骨架。
 
-## 字典 dict
+#### 与 array.array、链表的区别
 
-### 底层实现
+| 特性     | Python列表           | array.array | 链表               |
+| -------- | -------------------- | ----------- | ------------------ |
+| 存储方式 | 动态数组（连续内存） | 连续内存    | 非连续内存         |
+| 随机访问 | O(1)                 | O(1)        | O(n)               |
+| 头部插入 | O(n)                 | O(n)        | O(1)               |
+| 尾部插入 | O(1)均摊             | O(1)均摊    | O(1)（已知尾节点） |
+| 内存开销 | 较小                 | 最小        | 较大（需存储指针） |
+| 元素类型 | 任意                 | 固定        | 任意               |
+
+```python
+import array
+
+# array模块用于大规模数值计算，元素类型固定，内存比list省
+arr = array.array('i', [1, 2, 3])  # 'i'表示有符号整数
+arr = array.array('d', [1.0, 2.5]) # 'd'表示双精度浮点数
+
+# 常用类型码
+# 'b': 有符号字节    'B': 无符号字节
+# 'i': 有符号整数    'I': 无符号整数
+# 'f': 单精度浮点    'd': 双精度浮点
+```
+
+### 字典 dict
+
+#### 底层实现
 
 CPython 3.6+ 的 dict 是**紧凑哈希表（compact hash table）**，由两部分组成：
 - **索引数组**（稀疏）：存储哈希槽，记录"键值对在 entries 数组中的位置"
@@ -569,7 +528,7 @@ d = {i: i for i in range(10_000_000)}
 
 > **为什么自定义类的对象默认可哈希？** Python 对象默认用 `id()`（内存地址）作为哈希值，所以任意对象都可以作为 dict 的 key。但如果定义了 `__eq__`，必须同时定义 `__hash__`（否则变为不可哈希）。
 
-### 常用方法
+#### 常用方法
 
 **读取**（区分 `d[key]` 与 `d.get`，前者可能抛错）：
 
@@ -622,7 +581,7 @@ dict.fromkeys(iterable, value=None)  # 用可迭代对象批量建键，统一�
 
 > **`pop` vs `del`**：`pop` 带默认值、安全；`del` 快但键不存在会抛 `KeyError`。**`get` vs `setdefault`**：`get` 只读不改，`setdefault` 会在缺键时**写回**默认值。
 
-### 提取键 / 值 / 键值对
+#### 提取键 / 值 / 键值对
 
 `.keys()` / `.values()` / `.items()` 返回的是**视图**：能 `len()`、`in`、迭代，会随字典变化，但**不能下标**。要一份独立的列表就套 `list()`（O(n) 复制）。
 
@@ -664,7 +623,7 @@ d1.update(d2)           # 原地合并进 d1，返回 None
 
 > **`|` 与 `|=` 不是一回事**：`d1 | d2` 产出新字典；`d1 |= d2` 等价于 `d1.update(d2)`，会改掉 `d1`。`{**d1, **d2}` 与 `|` 结果相同，但对 3.9 以前的版本也可用。
 
-### 迭代技巧
+#### 迭代技巧
 
 ```python
 # 遍历键值对
@@ -688,7 +647,7 @@ key in d                       # O(1)
 key not in d                   # O(1)
 ```
 
-### 排序
+#### 排序
 
 `sorted()` **不改原字典**，返回一个列表；想要「排好序的新字典」再套一层 `dict()`。
 `d.items()` 里的每一项是 `(键, 值)` 元组，`key=lambda kv: ...` 里的 `kv` 就是它。
@@ -723,11 +682,9 @@ dict(sorted(d.items(), key=lambda kv: (kv[1], kv[0])))        # {'b': 2, 'c': 2,
 >
 > **字典没有 `.sort()`**：`d` 和 `d.items()` 都不能原地排序，必须先 `sorted()` 转成列表，需要字典再 `dict()` 转回去。
 
----
+### 集合 set
 
-## 集合 set
-
-### 底层实现
+#### 底层实现
 
 set 和 dict 共用同一套哈希表机制，区别是 set **只存 key，不存 value**。
 
@@ -762,7 +719,7 @@ t0 = time.time(); _ = target in s;    print(time.time()-t0)
 
 > **为什么 set 的交集是 O(min(n,m)) 而非 O(n+m)？** CPython 会自动选择遍历较小的集合，对每个元素在较大集合中做 O(1) 哈希查找。
 
-### 常用方法
+#### 常用方法
 
 **创建**：
 
@@ -801,7 +758,7 @@ s1.issuperset(s2)          # s1 ⊇ s2（s1 >= s2）
 s1.isdisjoint(s2)          # 两集合无交集
 ```
 
-### 去重与快速查找
+#### 去重与快速查找
 
 ```python
 # 列表去重（不保序，最简洁）
@@ -825,9 +782,168 @@ def twoSum(nums, target):
         seen[x] = i
 ```
 
----
+### 内置函数速查
 
-## collections 模块
+> 先记签名，下面两个（`zip` / `enumerate`）再展开。排序 key 的多键、降序、`cmp_to_key` 写法在「列表 → 算法常用技巧」里，这里不重复。
+
+```python
+# 排序相关
+sorted(iterable, key=None, reverse=False)   # 返回新列表，不改原序列
+lst.sort(key=None, reverse=False)           # 原地排序，只能用于 list
+
+# 常用内置函数
+enumerate(iterable, start=0)   # 返回(索引, 元素)对
+zip(*iterables)                # 并行迭代多个序列
+map(func, iterable)            # 对每个元素应用函数，返回惰性迭代器
+filter(func, iterable)         # 过滤满足条件的元素
+any(iterable)                  # 任一为真则返回True
+all(iterable)                  # 全部为真则返回True
+sum(iterable, start=0)         # 求和（start为初始值）
+min(iterable, key=None)        # 最小值
+max(iterable, key=None)        # 最大值
+
+# 示例
+nums = [3, 1, 4, 1, 5]
+print(list(map(str, nums)))      # ['3','1','4','1','5']
+print(list(filter(lambda x: x>2, nums)))  # [3, 4, 5]
+print(any(x > 4 for x in nums))  # True
+print(all(x > 0 for x in nums))  # True
+```
+
+#### zip：把多个序列按位置对齐打包
+
+**作用**：把多个可迭代对象中**下标相同**的元素配成元组，返回迭代器。
+`zip(a, b)` ≈ `[(a[0],b[0]), (a[1],b[1]), ...]`，长度以最短的为准。
+
+**算法用途**：
+1. 同时遍历多个数组，避免下标循环
+2. 矩阵转置 `list(zip(*matrix))`
+3. 两个并行列表拼成字典 `dict(zip(keys, values))`
+
+```python
+names  = ['a', 'b', 'c']
+scores = [90, 85, 88]
+for name, score in zip(names, scores):   # 同时遍历两个列表
+    print(name, score)                    # a 90 / b 85 / c 88
+
+list(zip([1, 2, 3], ['x', 'y', 'z']))    # [(1,'x'), (2,'y'), (3,'z')]
+
+# 矩阵转置（*matrix 表示把 matrix 拆成多行，等价于 zip(row1, row2, ...)）
+matrix = [[1, 2, 3], [4, 5, 6]]
+list(zip(*matrix))                        # [(1, 4), (2, 5), (3, 6)]
+```
+
+#### enumerate：遍历时同时拿到下标与值
+
+**作用**：把可迭代对象变成"（下标, 元素）"对，省去手动维护计数器。
+`enumerate(arr)` ≈ `[(0,arr[0]), (1,arr[1]), ...]`，第二个参数指定起始下标（默认 0）。
+
+**算法用途**：任何需要下标的地方（记录位置、比较相邻元素、滑动窗口右指针）几乎必用。
+
+```python
+arr = ['a', 'b', 'c']
+for i, val in enumerate(arr):      # 同时拿到下标和值
+    print(i, val)                   # 0 a / 1 b / 2 c
+
+for i, val in enumerate(arr, 1):   # 下标从 1 开始（如打印"第几行"）
+    print(i, val)
+
+# 经典用法：一边遍历一边记录元素位置（如两数之和）
+for i, x in enumerate(nums):
+    if x == target:
+        print(i)
+```
+
+### 值比较、真值与解包
+
+> 收录"看似简单常见、实则藏着细节"的内建知识——正是写题时最容易踩坑的地方。
+
+#### 值比较：`==`、`is` 与 `__eq__`
+
+| 写法 | 问的问题 | 底层 |
+|---|---|---|
+| `a == b` | 值是否相等 | `a.__eq__(b)` |
+| `a is b` | 是不是同一个对象 | `id(a) == id(b)` |
+| `hash(a) == hash(b)` | 哈希是否相同（不保证相等） | `a.__hash__()` |
+
+- `==` 比较**值**（内容），`is` 比较**身份**（是不是同一个对象）。判断 `None` 一律写 `x is None`：`None` 是单例，而 `==` 可能被自定义类重载。
+- 小整数（-5~256）和短字符串会被**缓存/驻留**，所以 `a = 100; b = 100; a is b` 可能为 `True`——这是 CPython 的实现细节，**不要依赖**。3.8+ 对 `x is 1` 这类字面量比较会给出 `SyntaxWarning`（提示 `Did you mean "=="?`）。
+- `id()` 只在对象存活期间唯一：对象回收后，新对象可能拿到同一个 `id`，不要把 `id` 当长期标识存起来。
+
+```python
+[1, 2] == [1, 2]      # True（内容相同）
+[1, 2] is [1, 2]      # False（两个不同对象）
+```
+
+**自定义类默认按身份比。** `object.__eq__` 就是身份比较；重写 `__eq__` 后 Python 会把 `__hash__` 置为 `None`，对象立刻不可哈希，要进 `set`/`dict` 必须一起实现 `__hash__`。`@dataclass` 默认 `eq=True`、`frozen=False`，同样不可哈希；用 `@dataclass(frozen=True)` 或自己补 `__hash__`。
+
+```python
+class User:
+    def __init__(self, name):
+        self.name = name
+
+    def __eq__(self, other):
+        return isinstance(other, User) and self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
+```
+
+**数值相等比想象中宽。** `1 == 1.0 == True` 为 `True`，三者的 `hash` 也相同，所以 `{1, True, 1.0}` 只剩一个元素。`Decimal("1.0") == Decimal("1.00")` 也为 `True`（按数值比，和 Java 的 `BigDecimal.equals` 相反）。
+
+**浮点不能直接 `==`。** `0.1 + 0.2 == 0.3` 为 `False`，用 `math.isclose(a, b)`。`NaN != NaN`，但 `nan is nan` 为 `True`；`nan in [nan]` 能命中是因为 `in` 先做身份判断，换一个 `NaN` 对象就找不到了。
+
+**容器比较是逐元素的。** `[1, 2] == [1, 2.0]` 为 `True`，`[1, 2] == (1, 2)` 为 `False`（类型不同）。`in`、`list.index`、`list.remove` 用 `==`；`set`/`dict` 先用 `hash` 定位再用 `==` 确认。NumPy 数组例外：`==` 返回布尔数组，`if arr == 0:` 会抛 `ValueError`，用 `np.array_equal` 或 `(arr == 0).all()`。
+
+**排序用的是 `<` 不是 `==`。** `sorted`、`min`、`max` 都靠 `__lt__`，只实现 `__eq__` 的类直接排序会抛 `TypeError`；补齐比较运算可以用 `functools.total_ordering`。
+
+和 Java 的逐项对照见 [Python 与 Java 的值比较](/docs/后端/Python与Java值比较.html)。
+
+#### 真值判断与短路
+
+- 空列表 `[]`、空串 `''`、`0`、`None`、空 dict/set 都是 **falsy**，直接 `if x:` 判断即可，不要写 `if len(x) != 0:`。
+- `and`/`or` **返回操作数本身**（不是布尔值），这是常见惯用法的来源：
+
+```python
+x = name or "unknown"      # name 为空时用默认值（"或默认"惯用法）
+y = a and b                # a 为假返回 a，否则返回 b
+if lst and lst[0]:         # 短路：先判空再访问，避免 IndexError
+    ...
+```
+
+#### `*` 解包（星号运算符）
+
+| 写法 | 作用 |
+|---|---|
+| `print(*arr)` | 把列表展开成多个位置参数，等价 `print(arr[0], arr[1], ...)` |
+| `zip(*matrix)` | 解包多行做矩阵转置 |
+| `a, *mid, b = lst` | 海象解包：首尾固定、中间归为列表 |
+| `merged = [*a, *b]` | 拼接列表（等价 `a + b`） |
+| `def f(*args)` | 收集任意多个位置参数为元组 |
+
+```python
+print(*[1, 2, 3])        # 1 2 3（print 默认空格分隔）
+head, *rest = [1, 2, 3]  # head=1, rest=[2, 3]
+```
+
+#### 其他易错内置
+
+```python
+max(1, 5, 3)             # 5：位置参数形式（至少传2个）
+max([1, 5, 3])           # 5：可迭代形式（只传1个）
+max(lst, key=len)        # 取长度最大的元素（返回元素本身，不是长度）
+
+int("  12  ")            # 12：int() 自动忽略两侧空白（读入无需先 strip）
+ord('a')                 # 97：字符转码；算法里 ord(c)-ord('a') 把字母映射到 0~25 下标
+chr(97)                  # 'a'：码转字符
+# 大小写切换技巧：字母 ^ 32 翻转大小写（'a'=97 → 'A'=65）
+chr(ord('a') ^ 32)       # 'A'
+```
+## 二、标准库
+
+> 这一层的模块专门消灭手写循环：计数与分组、有序插入、堆、排列组合、记忆化。知道它们存在，笔试就能少写三十行。
+
+### collections 模块
 
 > Python内置的数据结构扩展库，提供高效的专用数据结构。
 
@@ -840,7 +956,7 @@ def twoSum(nums, target):
 | `namedtuple`  | 命名元组：给元组元素命名，兼具不可变性和可读性     | 轻量数据对象（坐标、用户信息）        |
 | `ChainMap`    | 链式映射：合并多个字典，查询时按顺序遍历（无需拷贝）| 多配置合并、环境变量优先级覆盖        |
 
-### Counter 计数器
+#### Counter 计数器
 
 > Counter 继承自 dict，底层就是哈希表。构建 `Counter(iterable)` 是 O(n)，`most_common(k)` 是 O(n log k)（内部用堆）。
 
@@ -885,7 +1001,7 @@ def isAnagram(s, t):
     return Counter(s) == Counter(t)
 ```
 
-### defaultdict 默认字典
+#### defaultdict 默认字典
 
 > defaultdict 继承自 dict，复杂度与 dict 完全相同（O(1) 增删查）。唯一区别是重写了 `__missing__`：访问不存在的 key 时自动调用工厂函数创建默认值。
 
@@ -919,7 +1035,7 @@ for c in "abracadabra":
     freq[c] += 1
 ```
 
-### OrderedDict 有序字典
+#### OrderedDict 有序字典
 
 ```python
 from collections import OrderedDict
@@ -956,9 +1072,9 @@ class LRUCache:
             self.cache.popitem(last=False)  # 淘汰最久未使用的（头部）
 ```
 
-### deque 双端队列
+#### deque 双端队列
 
-#### 底层实现
+##### 底层实现
 
 deque 不是单个数组，而是**双向链表连接的固定大小块（block）数组**：
 - 每个 block 存储 64 个元素（CPython 实现）
@@ -1026,22 +1142,11 @@ while q:
     if node.left:  q.append(node.left)
     if node.right: q.append(node.right)
 
-# 示例：滑动窗口最大值（单调递减队列）
-def maxSlidingWindow(nums, k):
-    dq = deque()   # 存索引，保持单调递减
-    res = []
-    for i, x in enumerate(nums):
-        while dq and nums[dq[-1]] <= x:
-            dq.pop()
-        dq.append(i)
-        if dq[0] <= i - k:    # 队头超出窗口范围
-            dq.popleft()
-        if i >= k - 1:
-            res.append(nums[dq[0]])
-    return res
+# 示例：滑动窗口最大值——窗口里维护最值，用的是 deque 当单调队列
+# 完整写法与「三个动作的顺序为什么不能换」在[窗口最值的单调队列](#窗口最值的单调队列)
 ```
 
-### namedtuple 命名元组
+#### namedtuple 命名元组
 
 ```python
 from collections import namedtuple
@@ -1070,7 +1175,7 @@ for d in directions:
     new_x, new_y = cur.x + d.x, cur.y + d.y
 ```
 
-### ChainMap 链式映射
+#### ChainMap 链式映射
 
 ```python
 from collections import ChainMap
@@ -1102,15 +1207,16 @@ print(config['host'])        # 'localhost'（env优先）
 print(config['port'])        # 8080（从defaults取）
 ```
 
----
+### 二分查找
 
-## bisect 二分查找模块
+> 有序数组上找位置，先问一句「`bisect` 能不能直接给」：`bisect_left` / `bisect_right` 是 C 实现，边界口径固定，比自己写的循环更不容易错。只有当判定条件不是「值和目标比大小」——旋转数组、在答案空间上二分、找峰值——才需要手写。
+>
+> 两种写法的区间口径是同一套：**左闭右开 `[left, right)`**，循环结束时 `left` 就是答案位置。混用闭区间与左闭右开，是这个话题最常见的错。
 
-> 只能用于**已排序的数组**，所有操作时间复杂度 O(log n)。
+#### bisect 的复杂度
 
-### 底层实现
+> 只能用在**已排序**的数组上。查找是纯二分，O(log n) 时间、O(1) 额外空间；`insort_*` 的瓶颈不在查找而在插入移位。
 
-纯二分搜索，无额外数据结构：
 - `bisect_left/right`：O(log n) 查找，O(1) 额外空间
 - `insort_left/right`：O(log n) 查找 + **O(n) 插入**（list 中间插入需移动元素）
 
@@ -1147,18 +1253,12 @@ bisect.insort(a, 3)          # 等价于 insort_right
 bisect.bisect_left(a, x, lo=0, hi=len(a))  # 只在 a[lo:hi] 范围内搜索
 ```
 
-### 核心用法：左右边界查找
+#### 用 bisect 定边界
+
+`bisect_left` 就是 C++ 的 `lower_bound`（第一个 `>= x` 的位置），`bisect_right` 就是 `upper_bound`（第一个 `> x` 的位置），不用再包一层函数。真正值得包的是下面这几个「用两个 bisect 拼出来」的查询：
 
 ```python
 a = [1, 2, 4, 4, 4, 5, 8]
-
-# 查找第一个 >= x 的位置（左边界）
-def lower_bound(a, x):
-    return bisect.bisect_left(a, x)   # 等价于 C++ lower_bound
-
-# 查找第一个 > x 的位置（右边界）
-def upper_bound(a, x):
-    return bisect.bisect_right(a, x)  # 等价于 C++ upper_bound
 
 # 查找最后一个 <= x 的位置
 def find_last_le(a, x):
@@ -1178,7 +1278,7 @@ a = [1, 2, 4, 4, 4, 5, 8]
 print(count_occurrences(a, 4))   # 3
 ```
 
-### 算法应用（LeetCode 2070 最大美丽值）
+#### 示例：排序后用 bisect 代替手写
 
 ```python
 # 排序后用bisect代替手写二分，代码更简洁
@@ -1200,13 +1300,75 @@ def maximumBeauty(items, queries):
     return result
 ```
 
----
+#### 手写模板：二分查找
 
-## heapq 堆模块
+```python
+def binary_search(arr: List[int], target: int) -> int:
+    """在有序数组中查找target，返回索引，不存在返回-1"""
+    left, right = 0, len(arr)  # 左闭右开区间
+    while left < right:  # 不使用 <=：左闭右开写法更统一，循环结束时 left 即为答案位置
+        mid = left + (right - left) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid  # 收缩右边界到 mid
+    return -1 if left >= len(arr) or arr[left] != target else left
+```
+
+#### 手写模板：两种边界
+
+```python
+# 下界 lower_bound：查找第一个 >= target 的位置
+# 左闭右开 [left, right)，循环结束后 left 即为答案
+def lower_bound(arr: List[int], target: int) -> int:
+    left, right = 0, len(arr)
+    while left < right:
+        mid = left + (right - left) // 2   # 防溢出写法，等价于 (left+right)//2
+        if arr[mid] < target:      # 用 <：严格小于才排除，等于 target 的值不会被跳过
+            left = mid + 1         # 目标在右半区，排除 mid 及其左边
+        else:                      # arr[mid] >= target：把右边界收到 mid
+            right = mid            # 因为 mid 本身可能就是第一个 >= 的位置，保留 mid
+    return left                    # 返回第一个 >= target 的下标（找不到时为 len(arr)）
+
+# 上界 upper_bound：查找第一个 > target 的位置
+# 与 lower_bound 的唯一区别：判断用 <=，即把等于 target 的值也跳过
+def upper_bound(arr: List[int], target: int) -> int:
+    left, right = 0, len(arr)
+    while left < right:
+        mid = left + (right - left) // 2
+        if arr[mid] <= target:     # 用 <=：等于 target 也排除，故最终落在最后一个 target 之后
+            left = mid + 1
+        else:                      # arr[mid] > target：右边界收到 mid
+            right = mid
+    return left
+
+# 记忆口诀：带等号（<=）= 跳过相等的 = 上界；不带等号（<）= 保留相等的 = 下界
+# 用 [1,2,4,4,4,5,8], target=4：lower_bound→2（第一个4），upper_bound→5（最后一个4的后一位）
+```
+
+#### 什么时候必须手写
+
+判定条件不是「数组里的值 vs target」时，`bisect` 用不上，只能自己写循环，把三件事固定下来：
+
+1. **区间口径**：写左闭右开就全程左闭右开（`while left < right`、`right = mid`），写闭区间就全程闭区间（`while left <= right`、`right = mid - 1`）。
+2. **收缩方向**：`arr[mid] < target` 时往右收（`left = mid + 1`），否则往左收 —— 判断符号与返回值 `left` 的含义是配套的。
+3. **答案在哪**：循环结束时，左闭右开写法的 `left` 就是第一个满足条件的位置。
+
+三个典型场景：
+
+| 场景 | 为什么 bisect 不够 | 判定怎么写 |
+|---|---|---|
+| 搜索旋转排序数组（33 / 153） | 数组只「部分有序」，不能直接按大小定半边 | 先比 `nums[mid]` 与 `nums[right]`，判断哪半边有序，再决定收哪侧 |
+| 二分答案（「最少需要多少天」「最小化最大值」） | 二分的对象是答案区间，不读数组 | `check(x)` 单调为 `False → True`，找第一个 `True` |
+| 找峰值（162） | 没有 target，比的是相邻元素 | `nums[mid] < nums[mid + 1]` 则峰在右侧 |
+
+### 堆（heapq）
 
 > 堆是完全二叉树，用数组存储。Python的heapq实现的是**小顶堆**（最小值在堆顶）。
 
-### 底层实现
+#### 底层实现
 
 堆用**数组（list）存储完全二叉树**，节点 i 的父子关系：
 ```
@@ -1244,7 +1406,7 @@ def maximumBeauty(items, queries):
 | 小顶堆   | 父节点值 ≤ 所有子节点值   | 最小值 |
 | 大顶堆   | 父节点值 ≥ 所有子节点值   | 最大值 |
 
-### 基础操作
+#### 基础操作
 
 ```python
 import heapq
@@ -1274,7 +1436,7 @@ heapq.merge(*iterables, key=None, reverse=False)   # 合并多个已排序序列
 list(heapq.merge([1,3,5], [2,4,6]))  # [1, 2, 3, 4, 5, 6]
 ```
 
-### 大顶堆（插入负值）
+#### 大顶堆（插入负值）
 
 ```python
 # Python没有原生大顶堆，通过插入负值模拟
@@ -1292,7 +1454,7 @@ top_k = [-heapq.heappop(heap) for _ in range(k)]
 print(top_k)   # [9, 6, 5]
 ```
 
-### 元组堆（多键排序）
+#### 元组堆（多键排序）
 
 ```python
 # heapq支持元组，按元组元素依次比较
@@ -1311,7 +1473,7 @@ while h:
             heapq.heappush(h, (dis[neighbor], neighbor))
 ```
 
-### 堆排序
+#### 堆排序
 
 ```python
 def heap_sort(arr):
@@ -1321,11 +1483,21 @@ def heap_sort(arr):
 print(heap_sort([7, 2, 5, 1, 8, 3]))  # [1, 2, 3, 5, 7, 8]
 ```
 
----
+### itertools 模块
 
-## itertools 模块
+> 笔试里真正用得上的只有 5 个：`accumulate` 前缀和、`chain` 拉平、`permutations` / `combinations` 枚举、`groupby` 分组。
 
-### accumulate 前缀和/前缀积
+| 函数 | 作用 | 返回内容 |
+|---|---|---|
+| `accumulate(a)` | **前缀和**（第二个参数可换成 `operator.mul`、`max` 等） | `[1, 3, 6, 10]` |
+| `chain(a, b)` | **串联**多个可迭代对象，惰性求值 | 逐项迭代 |
+| `permutations(a, r)` | **排列**：考虑顺序，从 a 中取 r 个 | `(1,2),(1,3),(2,1),…` |
+| `combinations(a, r)` | **组合**：不考虑顺序，从 a 中取 r 个 | `(1,2),(1,3),(2,3),…` |
+| `groupby(a)` | **分组**：只把**相邻**的相同值归成一组 | `(键, 组迭代器)` |
+
+> `groupby` 只认相邻元素，同一个值散在多处会被切成好几组 —— 要按值分组就先 `sorted()`，或者干脆用 `Counter` / `defaultdict(list)`。
+
+#### accumulate 前缀和/前缀积
 
 ```python
 from itertools import accumulate
@@ -1358,7 +1530,7 @@ for start, end in intervals:
 covered_count = sum(s > 0 for s in accumulate(diff))
 ```
 
-### chain 链式迭代
+#### chain 链式迭代
 
 ```python
 from itertools import chain
@@ -1380,10 +1552,10 @@ stacks = [[1, 2], [3], [4, 5, 6]]
 all_indices = sorted(chain.from_iterable(stacks))
 ```
 
-### 其他常用 itertools
+#### 排列组合与分组
 
 ```python
-from itertools import product, permutations, combinations, combinations_with_replacement
+from itertools import product, permutations, combinations, combinations_with_replacement, groupby
 
 # 笛卡尔积（多层嵌套循环的替代）
 list(product([1,2], [3,4]))          # [(1,3),(1,4),(2,3),(2,4)]
@@ -1397,15 +1569,16 @@ list(combinations([1,2,3,4], 2))     # [(1,2),(1,3),(1,4),(2,3),(2,4),(3,4)]
 
 # 可重复组合
 list(combinations_with_replacement([1,2,3], 2))  # [(1,1),(1,2),(1,3),(2,2),(2,3),(3,3)]
+
+# 分组：只认【连续相邻】的相同值，所以先 sorted；每项是 (键, 该组的迭代器)
+[(k, list(g)) for k, g in groupby(sorted([1, 1, 2, 2, 3]))]  # [(1,[1,1]),(2,[2,2]),(3,[3])]
 ```
 
----
+### 记忆化缓存
 
-## functools 模块 —— lru_cache 记忆化
+> `functools` 里的记忆化装饰器：`@lru_cache(maxsize=...)` 带容量上限、按 LRU 淘汰，3.9+ 的 `@cache` 是无参版（等价于 `maxsize=None`）。同一个递归函数不加装饰器是指数级，加上就是「每个状态只算一次」。
 
-> `lru_cache`（Least Recently Used Cache）是 Python 提供的**记忆化**（Memoization）装饰器，用于缓存函数的返回值。
-
-### 核心作用
+#### 核心作用
 
 | 作用 | 说明 |
 |------|------|
@@ -1414,7 +1587,7 @@ list(combinations_with_replacement([1,2,3], 2))  # [(1,1),(1,2),(1,3),(2,2),(2,3
 | **提升性能** | 频繁调用的纯函数可大幅减少执行时间 |
 | **控制内存** | 通过 `maxsize` 限制缓存大小，防止内存无限增长 |
 
-### 基本用法
+#### 基本用法
 
 ```python
 from functools import lru_cache
@@ -1434,14 +1607,16 @@ print(fibonacci.cache_info())   # CacheInfo(hits=998, misses=1000, maxsize=128, 
 fibonacci.cache_clear()         # 清空缓存
 ```
 
-### 参数说明
+> **无参版 `@cache`（3.9+）**：`from functools import cache` 之后写 `@cache`，等价于 `@lru_cache(maxsize=None)` —— 不设容量上限，整张记忆化表一直留着。写题时递归记忆化多数直接写 `@cache`；只有状态空间大、想回收的才用 `@lru_cache(maxsize=...)`。
+
+#### 参数说明
 
 | 参数 | 说明 |
 |------|------|
 | `maxsize` | 最大缓存条目数，设为 `None` 表示无限制。默认128。 |
 | `typed` | 设为 `True` 时，`3` 和 `3.0` 被视为不同参数。默认 `False`。 |
 
-### 算法应用
+#### 算法应用
 
 典型应用场景：递归 DFS、动态规划、字符串拆分等问题。
 
@@ -1456,7 +1631,7 @@ def dfs(state):
 
 > 相关题目：[LeetCode 139. 单词拆分](https://leetcode.cn/problems/word-break/)
 
-### 注意事项
+#### 注意事项
 
 ```python
 # ❌ 错误：参数必须可哈希
@@ -1472,11 +1647,9 @@ def foo(tup: tuple): ...      # tuple 可哈希
 - **参数必须可哈希**：`list`、`dict` 等不可哈希类型需转为 `tuple`、`frozenset`
 - **内存权衡**：`maxsize=None` 可能占用大量内存，谨慎使用
 
----
+### 常用数学函数
 
-## 常用数学函数
-
-### math 模块
+#### math 模块
 
 ```python
 import math
@@ -1510,7 +1683,7 @@ divmod(a, b)                    # 返回 (a//b, a%b) 元组
 round(x, n)                     # 四舍五入，n为小数位数
 ```
 
-### 无穷大的算法应用
+#### 无穷大的算法应用
 
 ```python
 # 初始化最大值/最小值的技巧
@@ -1530,154 +1703,482 @@ def isValidBST(root, left=-math.inf, right=math.inf):
 dis = [float('inf')] * n
 dis[start] = 0
 ```
+## 三、算法套路
 
----
+> 每一节给一个能直接抄的骨架，再解释骨架里哪个常数、哪个方向不能改。
 
-## 列表 vs 数组 vs 链表
+### 递归、递推与枚举
 
-| 特性     | Python列表           | array.array | 链表               |
-| -------- | -------------------- | ----------- | ------------------ |
-| 存储方式 | 动态数组（连续内存） | 连续内存    | 非连续内存         |
-| 随机访问 | O(1)                 | O(1)        | O(n)               |
-| 头部插入 | O(n)                 | O(n)        | O(1)               |
-| 尾部插入 | O(1)均摊             | O(1)均摊    | O(1)（已知尾节点） |
-| 内存开销 | 较小                 | 最小        | 较大（需存储指针） |
-| 元素类型 | 任意                 | 固定        | 任意               |
+> 三种基本思路先分清：**递归**是「问题与它的子问题同构」，**递推**是由小往大填表（DP 的递推形式），**枚举**是没找到规律时的兜底。后面所有模板都长在这三种上：二分是不断缩小范围的递推，回溯是递归加撤销，DP 要么从递归记忆化来、要么直接递推。
 
-```python
-import array
+| 方法           | 特点                     | 适用场景               |
+| -------------- | ------------------------ | ---------------------- |
+| **递归** | 函数调用自身，有归的过程 | 树的遍历、分治、回溯   |
+| **递推** | 从已知推未知，循环实现   | 动态规划、斐波那契数列 |
+| **枚举** | 遍历所有可能             | 小规模问题、验证答案   |
 
-# array模块用于大规模数值计算，元素类型固定，内存比list省
-arr = array.array('i', [1, 2, 3])  # 'i'表示有符号整数
-arr = array.array('d', [1.0, 2.5]) # 'd'表示双精度浮点数
+### 前缀和与差分
 
-# 常用类型码
-# 'b': 有符号字节    'B': 无符号字节
-# 'i': 有符号整数    'I': 无符号整数
-# 'f': 单精度浮点    'd': 双精度浮点
-```
+> 两者是逆运算：前缀和把「区间查询」压成一次减法，差分把「区间修改」压成两次加法。所谓「前缀和 + 差分」套题，就是先差分改、再前缀和还原。
 
----
-
-## 内置函数速查
+#### 一维前缀和
 
 ```python
-# 排序相关
-sorted(iterable, key=None, reverse=False)   # 返回新列表
-lst.sort(key=None, reverse=False)            # 原地排序
+# 一维前缀和
+# prefix[i] 表示 arr[0] 到 arr[i-1] 的和，多开一位避免边界判断
+prefix = [0] * (n + 1)
+for i in range(n):
+    prefix[i + 1] = prefix[i] + arr[i]
 
-# 排序key技巧
-lst.sort(key=lambda x: x[1])               # 按第二个元素排序
-lst.sort(key=lambda x: (x[1], x[0]))       # 多键排序
-lst.sort(key=lambda x: -x)                  # 降序（不用reverse=True）
-import functools
-lst.sort(key=functools.cmp_to_key(compare)) # 自定义比较函数
-
-# 常用内置函数
-enumerate(iterable, start=0)   # 返回(索引, 元素)对
-zip(*iterables)                # 并行迭代多个序列
-map(func, iterable)            # 对每个元素应用函数
-filter(func, iterable)         # 过滤满足条件的元素
-any(iterable)                  # 任一为真则返回True
-all(iterable)                  # 全部为真则返回True
-sum(iterable, start=0)         # 求和（start为初始值）
-min(iterable, key=None)        # 最小值
-max(iterable, key=None)        # 最大值
-
-# 示例
-nums = [3, 1, 4, 1, 5]
-print(list(enumerate(nums, 1)))  # [(1,3),(2,1),(3,4),(4,1),(5,5)]
-print(list(zip([1,2,3], 'abc'))) # [(1,'a'),(2,'b'),(3,'c')]
-print(list(map(str, nums)))      # ['3','1','4','1','5']
-print(list(filter(lambda x: x>2, nums)))  # [3, 4, 5]
-print(any(x > 4 for x in nums))  # True
-print(all(x > 0 for x in nums))  # True
+# 查询区间和 [l, r]
+# 区间和 = prefix[r+1] - prefix[l]
+# 例：arr = [3,1,4]，prefix = [0,3,4,8]；arr[1:3] 和 = prefix[3]-prefix[1] = 8-3 = 5
+def range_sum(l: int, r: int) -> int:
+    return prefix[r + 1] - prefix[l]
 ```
 
----
-
-## 内建函数细节与易错
-
-> 收录"看似简单常见、实则藏着细节"的内建知识——正是写题时最容易踩坑的地方。
-
-### 值比较：`==`、`is` 与 `__eq__`
-
-| 写法 | 问的问题 | 底层 |
-|---|---|---|
-| `a == b` | 值是否相等 | `a.__eq__(b)` |
-| `a is b` | 是不是同一个对象 | `id(a) == id(b)` |
-| `hash(a) == hash(b)` | 哈希是否相同（不保证相等） | `a.__hash__()` |
-
-- `==` 比较**值**（内容），`is` 比较**身份**（是不是同一个对象）。判断 `None` 一律写 `x is None`：`None` 是单例，而 `==` 可能被自定义类重载。
-- 小整数（-5~256）和短字符串会被**缓存/驻留**，所以 `a = 100; b = 100; a is b` 可能为 `True`——这是 CPython 的实现细节，**不要依赖**。3.8+ 对 `x is 1` 这类字面量比较会给出 `SyntaxWarning`（提示 `Did you mean "=="?`）。
-- `id()` 只在对象存活期间唯一：对象回收后，新对象可能拿到同一个 `id`，不要把 `id` 当长期标识存起来。
+#### 二维前缀和
 
 ```python
-[1, 2] == [1, 2]      # True（内容相同）
-[1, 2] is [1, 2]      # False（两个不同对象）
+# 二维前缀和
+# prefix[i][j] 表示矩阵左上角 (0,0) 到 (i-1,j-1) 的子矩阵和
+prefix = [[0] * (n + 1) for _ in range(m + 1)]
+for i in range(m):
+    for j in range(n):
+        # 当前格 = 上方 + 左侧 - 左上角（多加了一次） + 当前元素
+        prefix[i + 1][j + 1] = prefix[i][j + 1] + prefix[i + 1][j] - prefix[i][j] + matrix[i][j]
+
+# 查询子矩阵和 [r1, c1] 到 [r2, c2]
+# 大矩阵 - 左侧 - 上方 + 左上角（被减了两次）
+def submatrix_sum(r1: int, c1: int, r2: int, c2: int) -> int:
+    return prefix[r2 + 1][c2 + 1] - prefix[r1][c2 + 1] - prefix[r2 + 1][c1] + prefix[r1][c1]
 ```
 
-**自定义类默认按身份比。** `object.__eq__` 就是身份比较；重写 `__eq__` 后 Python 会把 `__hash__` 置为 `None`，对象立刻不可哈希，要进 `set`/`dict` 必须一起实现 `__hash__`。`@dataclass` 默认 `eq=True`、`frozen=False`，同样不可哈希；用 `@dataclass(frozen=True)` 或自己补 `__hash__`。
+#### 差分
+
+![](https://hanphone.top/gh/HanphoneJan/public_pictures/learn/Leetcode%E5%B7%AE%E5%88%86%E6%95%B0%E7%BB%84%E7%A4%BA%E4%BE%8B.webp)
 
 ```python
-class User:
-    def __init__(self, name):
-        self.name = name
+# 一维差分
+# diff 是 arr 的差分数组：diff[i] = arr[i] - arr[i-1]
+# 对区间 [l, r] 整体加 val，只需改 diff 的两端，O(1) 完成（而逐元素加是 O(n)）
+diff = [0] * (n + 1)
 
-    def __eq__(self, other):
-        return isinstance(other, User) and self.name == other.name
+# 区间 [l, r] 加 val
+diff[l] += val        # 从 l 开始，之后的前缀和都会 +val
+diff[r + 1] -= val    # 从 r+1 开始抵消，保证只影响 [l, r]
 
-    def __hash__(self):
-        return hash(self.name)
+# 还原：对 diff 求前缀和即得原数组
+arr = [0] * n
+cur = 0
+for i in range(n):
+    cur += diff[i]
+    arr[i] = cur
 ```
 
-**数值相等比想象中宽。** `1 == 1.0 == True` 为 `True`，三者的 `hash` 也相同，所以 `{1, True, 1.0}` 只剩一个元素。`Decimal("1.0") == Decimal("1.00")` 也为 `True`（按数值比，和 Java 的 `BigDecimal.equals` 相反）。
+### 双指针
 
-**浮点不能直接 `==`。** `0.1 + 0.2 == 0.3` 为 `False`，用 `math.isclose(a, b)`。`NaN != NaN`，但 `nan is nan` 为 `True`；`nan in [nan]` 能命中是因为 `in` 先做身份判断，换一个 `NaN` 对象就找不到了。
+> 双指针的价值是把 O(n²) 的两两枚举压到 O(n)：两个指针各自**单向**移动，走完全程总共不超过 2n 步。所以判断一个题能不能用双指针，看的是「某一步能不能排除掉一整片不需要再看的区间」，而不是「有没有两个下标」。
 
-**容器比较是逐元素的。** `[1, 2] == [1, 2.0]` 为 `True`，`[1, 2] == (1, 2)` 为 `False`（类型不同）。`in`、`list.index`、`list.remove` 用 `==`；`set`/`dict` 先用 `hash` 定位再用 `==` 确认。NumPy 数组例外：`==` 返回布尔数组，`if arr == 0:` 会抛 `ValueError`，用 `np.array_equal` 或 `(arr == 0).all()`。
-
-**排序用的是 `<` 不是 `==`。** `sorted`、`min`、`max` 都靠 `__lt__`，只实现 `__eq__` 的类直接排序会抛 `TypeError`；补齐比较运算可以用 `functools.total_ordering`。
-
-和 Java 的逐项对照见 [Python 与 Java 的值比较](/docs/后端/Python与Java值比较.html)。
-
-### 真值判断与短路
-
-- 空列表 `[]`、空串 `''`、`0`、`None`、空 dict/set 都是 **falsy**，直接 `if x:` 判断即可，不要写 `if len(x) != 0:`。
-- `and`/`or` **返回操作数本身**（不是布尔值），这是常见惯用法的来源：
+#### 对撞指针
 
 ```python
-x = name or "unknown"      # name 为空时用默认值（"或默认"惯用法）
-y = a and b                # a 为假返回 a，否则返回 b
-if lst and lst[0]:         # 短路：先判空再访问，避免 IndexError
-    ...
+def two_sum(arr: List[int], target: int) -> Tuple[int, int]:
+    """在有序数组中找两数之和等于target"""
+    left, right = 0, len(arr) - 1   # 一头一尾
+    while left < right:
+        s = arr[left] + arr[right]
+        if s == target:
+            return left, right
+        elif s < target:            # 和太小 → 需要更大的数 → 左指针右移
+            left += 1
+        else:                       # 和太大 → 需要更小的数 → 右指针左移
+            right -= 1
+    return -1, -1
 ```
 
-### `*` 解包（星号运算符）
+#### 快慢指针
 
-| 写法 | 作用 |
+```python
+def find_duplicate(nums: List[int]) -> int:
+    """Floyd判圈算法找环（数组值当作 next 指针，重复值即环入口）"""
+    # 阶段一：快慢指针在环内相遇
+    slow = fast = nums[0]
+    while True:
+        slow = nums[slow]           # 慢指针走一步
+        fast = nums[nums[fast]]     # 快指针走两步
+        if slow == fast:
+            break                   # 相遇点必在环内
+
+    # 阶段二：一指针回到起点，两指针同速前进，再次相遇处即环入口（重复值）
+    slow = nums[0]
+    while slow != fast:
+        slow = nums[slow]
+        fast = nums[fast]
+    return slow
+```
+
+### 滑动窗口
+
+#### 定长窗口
+
+窗口大小固定为 `k`：右端进一个、左端出一个，`window` 始终是那 `k` 个元素的和。
+
+```python
+def max_sum_window(nums: List[int], k: int) -> int:
+    """长度正好为 k 的窗口里，和最大的那个"""
+    window = 0
+    best = float('-inf')
+    for right, x in enumerate(nums):
+        window += x                  # 进：右端加入
+        if right >= k:               # 出：窗口超长，挤掉左端
+            window -= nums[right - k]
+        if right >= k - 1:           # 此时窗口长度正好是 k
+            best = max(best, window)
+    return best
+```
+
+窗口里要维护的不是和而是**最值**时，普通累加用不了 —— 见下面的单调队列。
+
+#### 可变窗口
+
+```python
+def min_subarray_len(target: int, nums: List[int]) -> int:
+    """找和 >= target 的最短子数组"""
+    left = 0
+    cur_sum = 0
+    ans = float('inf')
+    for right, x in enumerate(nums):
+        cur_sum += x
+        while cur_sum >= target:
+            ans = min(ans, right - left + 1)
+            cur_sum -= nums[left]
+            left += 1
+    return ans if ans != float('inf') else 0
+```
+
+#### 窗口最值的单调队列
+
+「窗口里的最大值」不能靠维护一个变量：最大值被挤出去之后，第二大的那个得立刻顶上。所以队列里存**下标**，并保持值单调递减 —— 队头永远是当前窗口的最大值。
+
+```python
+from collections import deque
+
+def max_sliding_window(nums: List[int], k: int) -> List[int]:
+    q = deque()                      # 存下标，值单调递减
+    res = []
+    for i, x in enumerate(nums):
+        while q and nums[q[-1]] <= x:   # 比 x 小的都不可能再当最大值了
+            q.pop()
+        q.append(i)
+        if q[0] <= i - k:               # 队头已经滑出窗口
+            q.popleft()
+        if i >= k - 1:
+            res.append(nums[q[0]])
+    return res
+```
+
+三个动作的顺序不能换：**先弹尾**（保持单调）→ **再入队** → **最后弹头**（清掉过期下标）。先弹头的话，`q` 里可能只剩一个已经过期的下标，`q[0] <= i - k` 就把它当成窗口最大值记下来了。
+
+### 位运算
+
+> 位运算题只有两种：**一条式子搞定**（判奇偶、取最低位的 1、判 2 的幂），和**逐位统计**（每个二进制位单独数一次）。前者抄下面的式子，后者记住 `x >> i & 1` 把第 i 位单独取出来。
+
+```python
+# 常用技巧
+x & 1          # 判断奇偶：结果为 1 是奇数（只保留最低位）
+x & (x - 1)    # 消除最低位的1：x=12(1100) → 8(1000)，常用来统计1的个数
+x & (-x)       # 获取最低位的1：x=12(1100) → 4(0100)，即 lowbit
+x | (1 << n)   # 将第n位置1（n从0开始计，第n位即值 2^n）
+x & ~(1 << n)  # 将第n位置0
+x ^ (1 << n)   # 翻转第n位（0↔1）
+
+# 统计二进制中1的个数
+bin(x).count('1')        # 简单直观；或用 while x: cnt += x&1; x >>= 1
+
+# 判断是否是2的幂：2的幂二进制只有一个1，减1后变成全1
+x > 0 and (x & (x - 1)) == 0   # 例：8(1000) & 7(0111) = 0 → True
+```
+
+## 四、输入与输出
+
+> 这部分在本地跑不出问题，只在 OJ 上出事：行读不完、格式差一个空格、最后一个数没换行，都是整题零分。
+
+### 读入模板
+
+> 先把「读几行」这件事定下来：行数已知、读到 EOF、有结束标志，三种写法的骨架完全不同。
+
+#### 定行、不定行与 EOF
+
+在线判题的多行输入只有两类：**行数已知**和**行数未知**。行数未知又分「有结束标志」和「读到文件尾」，写法不同：
+
+| 场景 | 写法 |
 |---|---|
-| `print(*arr)` | 把列表展开成多个位置参数，等价 `print(arr[0], arr[1], ...)` |
-| `zip(*matrix)` | 解包多行做矩阵转置 |
-| `a, *mid, b = lst` | 海象解包：首尾固定、中间归为列表 |
-| `merged = [*a, *b]` | 拼接列表（等价 `a + b`） |
-| `def f(*args)` | 收集任意多个位置参数为元组 |
+| 行数已知 | `for _ in range(n): ...` + `input()` |
+| 读到文件尾 | `for line in sys.stdin:`（推荐） |
+| 有结束标志 | `while True:` + `if ...: break` |
+| 一次性读完 | `sys.stdin.read().split()` |
 
 ```python
-print(*[1, 2, 3])        # 1 2 3（print 默认空格分隔）
-head, *rest = [1, 2, 3]  # head=1, rest=[2, 3]
+import sys
+
+# 定行：第一行 n，后面 n 行
+n = int(input())
+rows = [input().split() for _ in range(n)]
+
+# 不定行、无结束标志：读到文件尾自动结束
+for line in sys.stdin:
+    if not line.strip():        # 跳过空行，别让 split 解包报错
+        continue
+    a, b = map(int, line.split())
+    print(a + b)
+
+# 有结束标志：读到 0 0 为止
+while True:
+    a, b = map(int, input().split())
+    if a == 0 and b == 0:
+        break
+    print(a + b)
 ```
 
-### 其他易错内置
+> **不要在 OJ 里用 `if line == '': break` 判断输入结束。** 输入耗尽时 `input()` 抛的是 `EOFError`，不会返回空串，这个判断在 OJ 上永远不成立；要兜底就捕获 `EOFError`，不要用裸 `except` 把其它异常一起吞掉。
+
+#### 常见输入形态
+
+| 输入形态 | 读法 |
+|---|---|
+| 第一行 `t`，随后 `t` 组 | `t = int(input()); for _ in range(t): ...` |
+| 每组第一个数 `n`，后面 `n` 个数 | `n, *arr = map(int, input().split())` |
+| 每行不定个整数，读到 EOF | `for line in sys.stdin: nums = list(map(int, line.split()))` |
+| 一行逗号分隔的字符串 | `input().split(',')` |
+| 把一行拆成字符列表 | `list(input().strip())` |
+| 读一个 `n × m` 的网格 | `grid = [list(map(int, input().split())) for _ in range(n)]` |
 
 ```python
-max(1, 5, 3)             # 5：位置参数形式（至少传2个）
-max([1, 5, 3])           # 5：可迭代形式（只传1个）
-max(lst, key=len)        # 取长度最大的元素（返回元素本身，不是长度）
+import sys
 
-int("  12  ")            # 12：int() 自动忽略两侧空白（读入无需先 strip）
-ord('a')                 # 97：字符转码；算法里 ord(c)-ord('a') 把字母映射到 0~25 下标
-chr(97)                  # 'a'：码转字符
-# 大小写切换技巧：字母 ^ 32 翻转大小写（'a'=97 → 'A'=65）
-chr(ord('a') ^ 32)       # 'A'
+# 先把所有 token 读进来，适合「数量太多、不想逐行解析」的题
+data = sys.stdin.read().split()
+it = iter(data)
+t = int(next(it))
+for _ in range(t):
+    n = int(next(it))
+    arr = [int(next(it)) for _ in range(n)]
 ```
+
+#### 快速读入（大量数据时）
+
+**为什么用 `sys.stdin.readline`？** 内置 `input()` 每行都做一次缓冲处理，数据量大时慢；`readline` 直接读行，速度快数倍。**ACM/笔试必用。**
+
+```python
+import sys
+input = sys.stdin.readline    # 覆盖 input，之后照常使用
+
+# 读取一行整数：input().split() 按空白切分，map(int, ...) 逐个转 int
+n = int(input())                       # 第一行读个数
+arr = list(map(int, input().split()))  # 第二行读整行整数列表
+
+# 读取多行
+n = int(input())
+for _ in range(n):
+    a, b = map(int, input().split())
+```
+
+> 变体：不确定行数读到文件尾，用 `for line in sys.stdin:`；需要一次性读完用 `sys.stdin.read().split()`。
+
+### 输出与格式化
+
+> 输出只有两个要求：**内容对**、**格式对**。第一件事靠算法，第二件事靠 `print` 的参数与 f-string。
+
+#### print 的参数（sep / end / file / flush）
+
+`print` 比表面看起来复杂——默认 `sep=' '`（多个值之间用空格）、`end='\n'`（行尾换行）。这两个参数在 ACM 输出格式里天天用到，**笔试/面试手写输出必考**。
+
+| 参数 | 默认值 | 作用 |
+|------|--------|------|
+| `sep` | `' '` | 多个值之间的分隔符，如 `print(1, 2, sep='-')` → `1-2` |
+| `end` | `'\n'` | 行尾追加的字符串，如 `print(1, end='')` → 不换行 |
+| `file` | `sys.stdout` | 输出到哪个流，可写文件或标准错误 `sys.stderr` |
+| `flush` | `False` | 是否立即刷新缓冲区（交互式进度提示时用 `flush=True`） |
+
+#### 快速输出（大量数据时）
+
+**为什么用 `sys.stdout.write`？** 循环里逐元素 `print()` 每次调用都有函数开销；把结果拼成一个大字符串一次性写出，速度快数倍。**输出量大时必用。**
+
+```python
+import sys
+
+# 一行空格分隔：join 拼成一个字符串，一次写出
+sys.stdout.write(' '.join(map(str, arr)) + '\n')
+
+# 多行输出：全部结果先存起来，最后一次性 write
+out = []
+for ans in results:
+    out.append(str(ans))
+sys.stdout.write('\n'.join(out))
+```
+
+#### ACM 输出套路
+
+**场景 1：一行输出，空格分隔，末尾无多余空格**
+
+```python
+print(' '.join(map(str, arr)))   # 推荐：join 拼接，元素需是 str
+# 或
+print(*arr)                       # 展开列表，print 自动用空格分隔
+```
+
+**场景 2：题目要求每个数后带一个空格（含最后一个，如 HJ48）**
+
+```python
+for x in arr:
+    print(x, end=' ')   # 不换行，只追加空格
+print()                 # 循环结束后必须补一个换行！
+```
+
+**场景 3：多行输出**
+
+```python
+print('\n'.join(map(str, ans)))
+```
+
+#### 常见坑
+
+- **`end=' '` 不会换行**：所有输出会挤在同一行，循环结束必须手动 `print()` 补换行。
+- **`join` 要求元素全是 `str`**：数值要先 `map(str, ...)`，直接 `','.join([1,2])` 会报 TypeError。
+- **`print(*arr)` 展开大数组**：元素极多时展开成大量位置参数，用 `join` 更稳。
+- **输出性能对比**：
+
+| 写法 | 大数据量表现 |
+|------|-------------|
+| 循环 `print(x, end=' ')` | 慢，每次调用有开销 |
+| `' '.join(map(str, arr))` 一次 print | 快 |
+| `sys.stdout.write(' '.join(...))` | 最快，一次 I/O |
+
+#### f-string：最常用的格式化方式
+
+> 写题/调试时最常用的格式化方式。前缀 `f` + 大括号 `{}` 内放表达式，Python 3.6+。
+
+##### 基本用法
+
+```python
+name, score = "hanphone", 96.5
+f"{name}"              # 'hanphone'
+f"{score}"             # '96.5'
+f"{score:.2f}"         # '96.50'  保留 2 位小数（四舍五入）
+f"{1/3:.3f}"           # '0.333'
+```
+
+##### 格式说明符（冒号 `:` 后面）
+
+| 写法 | 含义 | 示例 |
+|---|---|---|
+| `{x:.2f}` | 保留 2 位小数 | `f"{3.14159:.2f}"` → `'3.14'` |
+| `{x:>5}` | 右对齐，宽度 5（左侧补空格） | `f"{'ab':>5}"` → `'   ab'` |
+| `{x:<5}` | 左对齐，宽度 5 | `f"{'ab':<5}"` → `'ab   '` |
+| `{x:^5}` | 居中对齐，宽度 5 | `f"{'ab':^5}"` → `' ab  '` |
+| `{x:0>5}` | 左补 0 到宽度 5 | `f"{42:0>5}"` → `'00042'` |
+| `{x:08b}` | 二进制，补 0 到 8 位 | `f"{5:08b}"` → `'00000101'` |
+| `{x:,}` | 千分位分隔 | `f"{1234567:,}"` → `'1,234,567'` |
+| `{{}}` | 转义大括号本身 | `f"{{x}}"` → `'{x}'` |
+
+##### 三种写法对比
+
+| 写法 | 特点 | 适用 |
+|---|---|---|
+| `"%.2f" % x` | 旧式 `%`，可读性差 | 老代码、日志 |
+| `"{:.2f}".format(x)` | 模板可复用，支持位置/关键字参数 | 需要复用格式模板时 |
+| `f"{x:.2f}"` | 最简洁，表达式直接内联 | **写题/调试首选** |
+
+##### repr 调试
+
+`str(x)` 面向用户阅读，`repr(x)` 面向开发者（更接近字面量，可直接拷回代码验证）：
+
+```python
+str("a'b")      # "a'b"
+repr("a'b")     # '"a\'b"'
+print([1, 2])   # 打印 list/dict 时元素内部自动用 repr → [1, 2]
+```
+
+调试打印嵌套列表/字典等复杂对象时用 `repr()`，输出更精确、便于定位。
+
+### JSON 与 Python 字面量
+
+题面写「输入一个 JSON」时，**不要用 `split()` 拆**：JSON 里的逗号、引号、花括号都是语法的一部分，按空白切开结构就碎了。整段读成字符串交给 `json.loads`：
+
+```python
+import json
+import sys
+
+data = json.loads(sys.stdin.read())          # 整段是一个 JSON
+
+# 或者：第一行组数，后面每行一个 JSON
+input = sys.stdin.readline
+rows = [json.loads(input()) for _ in range(int(input()))]
+
+# 或者：一行一个 JSON，读到 EOF（空行要跳过）
+for line in sys.stdin:
+    line = line.strip()
+    if line:
+        obj = json.loads(line)
+```
+
+- `json.loads` 收字符串，`json.load` 收文件对象；读文件直接用 `json.load(f)`。
+- 单引号、`True`、`None`、元组是 **Python 字面量**，不是 JSON：用 `ast.literal_eval`。
+- 文件带 BOM（Windows 记事本存的）时用 `encoding='utf-8-sig'`。
+- 输出 JSON 用 `json.dumps(obj, ensure_ascii=False, separators=(',', ':'))`：中文不转义，且去掉 `,`/`:` 后的空格（有些 OJ 逐字符比对）。
+
+| 报错 | 原因 |
+|---|---|
+| `Expecting value: line 1 column 1` | 空串、纯空白或 BOM |
+| `Expecting property name enclosed in double quotes` | 用了单引号，应改用 `ast.literal_eval` |
+| `Extra data` | 一段字符串里塞了多个 JSON，按行拆开分别 `loads` |
+
+> 输入模式的整理参考 [sitJac 的 ACM 输入总结](https://sitjac.github.io/blog/acm-codeing-tips/)。
+
+### 本地调试（自测工具）
+
+> 本地跑题时常用的三个工具：传参、加大递归上限、捕获 stdout 断言输出。
+
+**`sys.argv` —— 命令行传参跑多组样例**
+
+```python
+import sys
+
+# 运行：python a.py 1 2 3
+# sys.argv = ['a.py', '1', '2', '3']，argv[0] 是脚本名
+if len(sys.argv) > 1:
+    n = int(sys.argv[1])
+```
+
+**`sys.setrecursionlimit` —— 深递归防爆栈**
+
+```python
+import sys
+sys.setrecursionlimit(10**6)   # 默认 ~1000，深递归（树/回溯）经常需要调大
+```
+
+**`io.StringIO` —— 捕获 stdout 做断言自测**
+
+```python
+import io
+import sys
+
+def solve():
+    print("hello")     # 正常输出到 stdout
+
+# 把 sys.stdout 临时替换成内存缓冲，跑完再还原
+old = sys.stdout
+sys.stdout = io.StringIO()
+solve()
+out = sys.stdout.getvalue()
+sys.stdout = old
+assert out == "hello\n", f"输出不对: {out!r}"
+```
+
+`StringIO` 也常用于把多行字符串当文件读，避免为测试真的创建文件。
+
+## 参考
+
+- [LeetCode 算法面试题汇总](https://leetcode.cn/studyplan/top-100-liked/)
+- [OI Wiki](https://oi-wiki.org/)

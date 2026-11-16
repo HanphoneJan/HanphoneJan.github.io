@@ -259,7 +259,7 @@ export default hopeTheme({
             // **CacheFirst，不是 StaleWhileRevalidate。**
             //
             // `assets/` 下的文件名全部带内容哈希（`app-CPr9befZ.js`、
-            // `Python速查-DVU0rnNB.js`），内容变了名字就变，不存在「缓存
+            // `Python语法与算法速查-DVU0rnNB.js`），内容变了名字就变，不存在「缓存
             // 到旧内容」的问题。SWR 的代价是每次命中都再发一次网络请求：
             // 切一页要过好几个 chunk，冷启动时这些后台请求正和首屏抢
             // 带宽，弱网下每个都要挂到超时。CacheFirst 直接返回缓存，
