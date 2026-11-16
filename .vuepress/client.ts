@@ -50,7 +50,7 @@ const isChunkLoadError = (error: unknown): boolean =>
  * 浏览器在**外壳执行之前**就按当时的布局滚了一次，而这时字体、表格宽度都
  * 还没稳定；代码块又用 `content-visibility: auto` 把屏幕外的高度按估算
  * 参与排版（见 `styles/index.scss`）。两者叠加，实测直接打开
- * `Python速查.html#字典-dict` 会偏到一屏之外。
+ * `Python语法与算法速查.html#字典-dict` 会偏到一屏之外。
  *
  * 做法：等初始路由就绪后再定位一次，然后补掉「目标顶边离视口顶部」的残差。
  * 用 `behavior: 'instant'`，不与主题的平滑滚动抢动画；只校正一次，之后

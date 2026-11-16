@@ -258,5 +258,5 @@ print([v.n for v in sorted([Version(2), Version(1)])])   # [1, 2]
 
 - [Java 基础](./Java基础.md)：`==`、`equals`、`hashCode` 的速查写法。
 - [Java 与数据结构](../Java与计算机基础/数据结构.md)：`HashMap` 的桶、扩容以及 `equals`/`hashCode` 契约。
-- [Python 速查](/code-training/review/Python速查.html)：`is` 与 `==`、容器比较和排序。
+- [Python 语法与算法速查](/code-training/review/Python语法与算法速查.html)：`is` 与 `==`、容器比较和排序。
 - [Python 与内存管理](../Python与计算机基础/内存管理.md)：小整数缓存、字符串驻留和对象身份。
