@@ -1,5 +1,6 @@
 ---
 title: 哈希映射模式
+sidebar_position: 4
 category: 算法模式
 difficulty: 简单-中等
 applicable_to:

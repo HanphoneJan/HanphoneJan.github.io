@@ -1,5 +1,6 @@
 ---
 title: 贪心
+sidebar_position: 10
 category: 算法模式
 difficulty_range: [中等, 困难]
 last_updated: 2026-10-19

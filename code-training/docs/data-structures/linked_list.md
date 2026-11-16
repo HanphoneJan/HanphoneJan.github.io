@@ -1,5 +1,6 @@
 ---
 title: 链表
+sidebar_position: 3
 category: 数据结构
 difficulty_range: [简单, 较难]
 last_updated: 2026-11-13

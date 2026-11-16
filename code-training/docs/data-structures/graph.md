@@ -1,5 +1,6 @@
 ---
 title: 图
+sidebar_position: 10
 category: 数据结构
 difficulty_range: [中等, 困难]
 last_updated: 2026-11-13

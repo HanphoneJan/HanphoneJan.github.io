@@ -1,5 +1,6 @@
 ---
 title: 回溯
+sidebar_position: 9
 category: 算法模式
 difficulty: 中等-困难
 applicable_to:
