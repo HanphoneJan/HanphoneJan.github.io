@@ -1,5 +1,6 @@
 ---
 title: 栈
+sidebar_position: 4
 category: 数据结构
 difficulty_range: [简单, 较难]
 last_updated: 2026-11-13

@@ -1,5 +1,6 @@
 ---
 title: DFS 模式
+sidebar_position: 7
 category: 算法模式
 difficulty: 简单-困难
 applicable_to:

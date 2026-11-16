@@ -132,6 +132,14 @@ function tagPage(tag: string, problems: Problem[]): string {
   return lines.join('\n')
 }
 
+/**
+ * 板块目录页（`/code-training/category/数据结构` 等）。
+ *
+ * 顺序跟着**侧边栏**走：数据结构与算法模式两篇目录里每篇都写了
+ * `sidebar_position`（线性 → 树 → 图的学习路径，见 `scripts/test-sidebar.ts`），
+ * 这里再按标题排一遍就会出现「侧边栏是 数组→字符串→链表，目录页是 二叉树→图→堆」
+ * 的分裂。没写 position 的板块（机器学习 / 复习系统）落回标题序，与从前一致。
+ */
 function sectionPage(
   sourceDir: string,
   title: string,
@@ -147,10 +155,19 @@ function sectionPage(
         title: String(fm.title ?? path.basename(full, '.md')),
         link: legacyPathFor(sourceDir, full, fm) ?? '',
         tags: Array.isArray(fm.tags) ? (fm.tags as unknown[]).map(String) : [],
+        order:
+          typeof fm.sidebar_position === 'number'
+            ? fm.sidebar_position
+            : typeof fm.order === 'number'
+              ? fm.order
+              : 9999,
       }
     })
     .filter((f) => f.link)
-    .sort((a, b) => a.title.localeCompare(b.title, 'zh', { numeric: true }))
+    .sort(
+      (a, b) =>
+        a.order - b.order || a.title.localeCompare(b.title, 'zh', { numeric: true }),
+    )
 
   const lines = [`# ${title}`, '', intro, '', `共 ${files.length} 篇。`, '']
   for (const f of files) lines.push(`- [${f.title}](${f.link})`)

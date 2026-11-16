@@ -1,5 +1,6 @@
 ---
 title: 并查集
+sidebar_position: 11
 category: 数据结构
 difficulty_range: [中等, 较难]
 last_updated: 2026-11-13

@@ -155,18 +155,18 @@ for (const [landing, base, build] of SECTION_LANDING) {
  * 再按标题排序 —— 两套尺子混用，15 会整体跳到 1 前面。现在缺 position
  * 时用文件名里的题号兜底（`0015_3sum.md` -> 15），这里把结果钉住。
  */
-check('LeetCode 题解按题号升序', () => {
-  const findGroup = (items: SidebarItem[], text: string): SidebarItem | undefined => {
-    for (const item of items) {
-      if (item.children) {
-        if (item.text === text) return item
-        const found = findGroup(item.children, text)
-        if (found) return found
-      }
+function findGroup(items: SidebarItem[], text: string): SidebarItem | undefined {
+  for (const item of items) {
+    if (item.children) {
+      if (item.text === text) return item
+      const found = findGroup(item.children, text)
+      if (found) return found
     }
-    return undefined
   }
+  return undefined
+}
 
+check('LeetCode 题解按题号升序', () => {
   const leetcode = findGroup(trainingSidebar(process.cwd()), 'LeetCode')
   assert.ok(leetcode?.children, '找不到 LeetCode 分组')
 
@@ -190,5 +190,54 @@ check('LeetCode 题解按题号升序', () => {
   assert.ok(twoSum >= 0 && threeSum >= 0, '找不到 1/15 两篇题解')
   assert.ok(twoSum < threeSum, '「1. 两数之和」应排在「15. 三数之和」前面')
 })
+
+/**
+ * 数据结构 / 算法模式的目录顺序。
+ *
+ * 这两个目录是一份**学习路径**，不是一本词典：
+ *
+ * - 数据结构：线性表（数组 / 字符串 / 链表 / 栈 / 队列）→ 查找结构（哈希表）
+ *   → 树族（树 → 二叉树 → 堆，堆要求先认识完全二叉树）→ 图 → 并查集；
+ * - 算法模式：递归打底 → 线性扫描（双指针 / 滑动窗口 / 哈希）→ 有序数组上的
+ *   查找与排序 → 搜索（DFS / BFS）→ 决策（回溯枚举 → 贪心 / DP）。
+ *
+ * 拼音、文件名、标题都排不出这个次序（默认排序下「并查集」「动态规划」一个在
+ * 最前一个在最前），所以顺序写在每篇的 `sidebar_position` 里。这里钉住结果：
+ * 少写一个字段它就会静默落回 9999 掉到队尾，而**没有任何别的东西会报错**。
+ */
+const SECTION_ORDER: Array<[string, string[]]> = [
+  [
+    '数据结构',
+    ['数组', '字符串', '链表', '栈', '队列', '哈希表', '树', '二叉树', '堆与优先队列', '图', '并查集'],
+  ],
+  [
+    '算法模式',
+    [
+      '递归',
+      '双指针模式',
+      '滑动窗口模式',
+      '哈希映射模式',
+      '查找算法',
+      '排序',
+      'DFS 模式',
+      'BFS 模式',
+      '回溯',
+      '贪心',
+      '动态规划',
+    ],
+  ],
+]
+
+for (const [group, expected] of SECTION_ORDER) {
+  check(`${group}：目录顺序与学习路径一致`, () => {
+    const node = findGroup(trainingSidebar(process.cwd()), group)
+    assert.ok(node?.children, `找不到「${group}」分组`)
+    assert.deepEqual(
+      node.children.filter((item) => item.link).map((item) => item.text),
+      expected,
+      `「${group}」的 sidebar_position 与约定顺序不一致`,
+    )
+  })
+}
 
 console.log(`✔ test:sidebar 通过（${passed} 项）`)

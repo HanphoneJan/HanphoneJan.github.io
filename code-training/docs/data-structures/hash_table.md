@@ -1,5 +1,6 @@
 ---
 title: 哈希表
+sidebar_position: 6
 category: 数据结构
 difficulty_range: [简单, 中等]
 last_updated: 2026-11-13

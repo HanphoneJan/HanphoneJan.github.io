@@ -1,5 +1,6 @@
 ---
 title: 堆与优先队列
+sidebar_position: 9
 category: 数据结构
 difficulty_range: [中等, 困难]
 last_updated: 2026-11-13

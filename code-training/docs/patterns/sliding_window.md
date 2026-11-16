@@ -1,5 +1,6 @@
 ---
 title: 滑动窗口模式
+sidebar_position: 3
 category: 算法模式
 difficulty: 中等
 applicable_to:

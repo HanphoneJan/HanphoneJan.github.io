@@ -1,5 +1,6 @@
 ---
 title: 查找算法
+sidebar_position: 5
 category: 算法模式
 difficulty_range: [简单, 中等]
 last_updated: 2026-10-19

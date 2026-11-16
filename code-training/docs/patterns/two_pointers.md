@@ -1,5 +1,6 @@
 ---
 title: 双指针模式
+sidebar_position: 2
 category: 算法模式
 difficulty: 简单-中等
 applicable_to:

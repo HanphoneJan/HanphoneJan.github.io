@@ -1,5 +1,6 @@
 ---
 title: 递归
+sidebar_position: 1
 category: 算法模式
 difficulty: 简单-中等
 applicable_to:

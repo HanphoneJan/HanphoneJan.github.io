@@ -1,5 +1,6 @@
 ---
 title: 动态规划
+sidebar_position: 11
 category: 算法模式
 difficulty_range: [中等, 困难]
 last_updated: 2026-10-19
