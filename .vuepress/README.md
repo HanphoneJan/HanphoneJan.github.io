@@ -75,7 +75,9 @@ problems/nowcoder/华为机试/HJ48.从…节点.md (id: HJ48)  -> /code-trainin
   首页只显示导航栏，读者会以为「首页内容没加载」；Vue SSR 的内容直接在
   HTML 里，和 JS 无关。
 - **字体**：`.vuepress/styles/palette.scss` 的 `$vp-font` / `$vp-font-heading`
-  与 JavaGuide 用同一套栈（Georgia + 苹方/思源宋体/雅黑，不加载 Web Font）；
+  是一组自带等高数字的系统衬线（Cambria / Noto Serif / Times New Roman +
+  苹方/思源宋体/雅黑，不加载 Web Font）；**字母与数字必须在同一族字体里**，
+  别再按 `unicode-range` 给数字单挂一层，那会把「2D」这类词拆成两种字体。
   `index.scss` 里把 >=960px 的根字号提到 17px（JavaGuide 是 16px），
   正文行高 1.75。
 - **导航栏阴影**：hope 默认 `0 2px 8px`，这里压成 `0 1px 2px rgb(0 0 0/4%)`

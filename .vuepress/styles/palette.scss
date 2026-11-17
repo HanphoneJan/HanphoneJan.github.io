@@ -7,15 +7,21 @@ $sidebar-width: 280px;
 // 只用系统字体，不加载任何 Web Font —— 国内访问 Google Fonts 会被墙，
 // 之前踩过 FOUT 的坑。
 //
-// **衬线优先**：西文先 Georgia / Nimbus Roman，中文先 macOS/iOS 的
-// Songti SC、Linux/Android 的 Noto Serif CJK、Windows 的 SimSun（宋体），
+// **衬线优先**：西文先 Cambria / Noto Serif / Times New Roman，中文先 macOS/iOS
+// 的 Songti SC、Linux/Android 的 Noto Serif CJK、Windows 的 SimSun（宋体），
 // 这些系统字体都缺席时才回落到苹方 / 雅黑 / Noto Sans。
 // 手机没装任何衬线中文字体时仍会显示无衬线，这是系统字体方案的上限。
 //
-// **`SiteDigits` 打头，只为了让 0-9 换一套字形。** Georgia 用的是旧式数字
-// （3/4/5/7/9 沉到基线下、0/1/2 只有 x-height 高），而它没有 lnum 特性，
-// `font-variant-numeric` 改不动；所以在这里挂一个只覆盖 U+0030-0039 的字族
-// （@font-face 定义在 index.scss，挑的是中文衬线那一族），字母与中文不受影响。
-// 这个家族名不能从栈里删掉，删了数字就退回 Georgia 的旧式数字。
-$vp-font: '"SiteDigits", Georgia, "Nimbus Roman No9 L", "Songti SC", "Noto Serif CJK SC", "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif';
+// **西文这一档必须自带等高数字（lining figures），而且字母与数字必须来自
+// 同一族字体。** 2026-11 之前这里排头的是 Georgia，为了绕开它的旧式数字
+// （3/4/5/7/9 沉到基线下、0/1/2 只有 x-height 高）另挂了一族只吃 0-9 的
+// `@font-face`（`SiteDigits`）—— 代价是「2D」「HJ18」「K8s」这类词被拆成
+// 两种字体：数字来自 CJK 衬线（笔画细、比大写字母还高），字母来自 Georgia
+// （粗、x-height 大），而且那族只登记了 400，粗体标题里 Georgia 换成真 Bold、
+// 数字却仍是常规体，一个词里一边细一边粗。**一个词不能有两种字体**，所以
+// 换成自带等高数字、粗细随字重的一套衬线，数字专用字体整个删掉。
+// 候选顺序按「谁最像原来的 Georgia」排：Windows 的 Cambria（同为微软的
+// 屏幕衬线，x-height 大）→ Noto Serif（Linux/Android）→ Times New Roman
+// （macOS 的兜底，行内数字同样是等高）。这三个的默认数字都是等高数字。
+$vp-font: 'Cambria, "Noto Serif", "Source Serif 4", "Source Serif Pro", "Liberation Serif", "Times New Roman", "Nimbus Roman No9 L", "DejaVu Serif", "Songti SC", "Noto Serif CJK SC", "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif';
 $vp-font-heading: $vp-font;
