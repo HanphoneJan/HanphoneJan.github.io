@@ -87,6 +87,7 @@ def check_file(path: Path, args: argparse.Namespace) -> list[tuple[str, str]]:
         return [(ERROR, "找不到 mxGraphModel；可能是 drawio 压缩格式，请用 drawio 另存为未压缩 XML")]
 
     max_width = 0.0
+    content_width = 0.0
     for model in models:
         raw_width = model.get("pageWidth")
         if raw_width is None:
@@ -104,6 +105,20 @@ def check_file(path: Path, args: argparse.Namespace) -> list[tuple[str, str]]:
             )
 
         for cell in model.iter("mxCell"):
+            # draw.io 导出按内容外框裁边，图不必铺满整页。要跟 PNG 比的是**内容宽度**，
+            # 不是 pageWidth —— 内容 661 宽、画布 700 宽时，2x 导出就是 1322，
+            # 拿 pageWidth 当尺子会把合格的图判成「没导 2x」。
+            if cell.get("vertex") == "1":
+                geo = cell.find("mxGeometry")
+                if geo is not None:
+                    try:
+                        content_width = max(
+                            content_width,
+                            float(geo.get("x") or 0) + float(geo.get("width") or 0),
+                        )
+                    except ValueError:
+                        pass
+
             value = _text(cell.get("value"))
             if not value:
                 continue
@@ -137,14 +152,15 @@ def check_file(path: Path, args: argparse.Namespace) -> list[tuple[str, str]]:
         dims = _png_size(target)
         if dims is None:
             issues.append((ERROR, f"{target.name} 不是合法 PNG"))
-        elif max_width:
-            expected = max_width * args.scale
+        elif content_width or max_width:
+            base = content_width or max_width
+            expected = base * args.scale
             tolerance = max(8.0, expected * 0.05)
             if abs(dims[0] - expected) > tolerance:
                 issues.append(
                     (
                         ERROR,
-                        f"{target.name} 宽 {dims[0]}px，画布 {max_width:g}px 的 {args.scale:g}x 应为约 {expected:.0f}px",
+                        f"{target.name} 宽 {dims[0]}px，内容 {base:g}px 的 {args.scale:g}x 应为约 {expected:.0f}px",
                     )
                 )
     else:
