@@ -11,13 +11,14 @@ description: 为一个代码库写或重写项目文档时使用：先由一个 
 - 文档可以是一篇，也可以是一组；**写多少篇、写哪几篇由 writer 根据项目决定**，不预设数量，但必须先给用户方案并得到同意。
 - 需要术语、架构、声音跨文档一致时，这套方法比逐篇派 agent 更稳。
 
-## 三条原则
+## 四条原则
 
 1. **一个项目一个 writer。** 同一个 agent 通读代码、建立项目模型，再决定写哪几篇。术语和判断由同一个上下文保证，不靠事后统一。
 2. **事实以代码为准。** 旧文档只是线索。代码与旧文档冲突时按代码写，并在文末自查注释里标 `file:line`。测量值、部署规格这类代码里没有的，保留原说法并标 `measured`。
    **旧文档只做事实清单，不做行文模板。** 开始写之前，先从旧文档抄出数字、路径、结论，然后关掉它；初稿写完再拿它查漏。不要沿用它的章节顺序、标题层级、段落节奏和句子。连续 12 个汉字与旧文相同，就当作复用，重写。
 3. **风格靠范文，不靠规则。** 提示词只留两类约束：只用事实、不写元话语。其余交给 `exemplars/` 里的范文。规则写多了，模型会逐条应试，文字反而变平。
    **范文按文体分组，先选文体再动笔**（`reference/` 参考手册、`reasoning/` 机制与取舍、`tutorial/` 教程）。写项目文档时只读 `reference/` 与 `reasoning/`；`tutorial/` 的问答体一旦被当成通用范文，写出来的设计文档会通篇是判断句和短句断言。换文体就换范文组，提示词不动。
+4. **默认读者不知道这个项目。** 项目内的类名、表名、变量名、实例 id、配置键，第一次出现必须有一句解释或指向术语表；不能先用了再解释。A2A、JSON-RPC、SSE 这类通用协议名第一次出现要展开一次；HTTP、JSON 这种可以假设读者知道。每一节的第一句要接上一节的问题，不写孤立的条目。
 
 ## 流程
 
@@ -77,14 +78,17 @@ description: 为一个代码库写或重写项目文档时使用：先由一个 
 
 写完后统一处理图，不要边写边画：
 
+- **先选图型，再画。** 部署/组件用 C4 Container，请求时序用 UML sequence，生命周期用 UML state machine，跨角色流程用 activity + swimlane，存储用 ER，权限用 decision tree。选型表与反例见 `references/diagrams.md`。
 - **每个主链路、状态机、数据模型、部署形态、权限判定至少一张图。** 一篇讲流程的文章只有一张“方框+箭头”通常不够；把“入口与进程边界”“状态迁移”“删除/失败路径”拆成不同的图。
-- 用 draw.io 的完整能力，不要只摆矩形：泳道分进程/角色，container 分组，实线画主路径、虚线画可选/降级/异步，编号标步骤，图例说明颜色与线型，note 写边界条件。
-- 一张图只表达一件事。表达两件事就拆两张；宁可多一张小图，不要一张信息过载的大图。
-- 源文件放 `static/diagrams/src/<slug>.drawio`，导出到 `static/diagrams/<slug>.svg` 或 `.png`，正文用 `![图注](/diagrams/<slug>.svg)`。没有 `static/` 的项目放 `docs/diagrams/`，在方案里写明。
-- **中文标签默认 PNG 2x。** draw.io 导中文常把字栅格化成 `<image>`，一个“SVG”可能 200–400 KB。拿 3 个节点的小图导一次探针，`grep -o '<image' | wc -l` 非 0 就整批用 PNG 2x（`--scale 2`）；含 `<image>` 或超过 150 KB 就拆图。目标是每张图 ≤150 KB。
-- 导出：`bash .agents/skills/doc-writing/scripts/export_drawio.sh --format svg`（或 `png`）。
+- **表格能说清的不要画。** 服务缺失影响、测试分层、耦合面清单这类内容用表格；盒子图会把空白读成调用关系。
+- **画布宽 ≤700px，正文 ≥14px，节点内 ≤2 行，边标签 ≤6 字。** 导出 2x PNG，单张 ≤150KB。图内只放结构，底部不要通栏说明。
+- **一张图只表达一件事，一个抽象层。** 组件、数据表、部署节点、外部 peer 不混在一张图；要放在一起时用 container 明确分组。
+- **语义要对**：箭头写“动词+对象”；状态迁移写 `事件 [守卫] / 动作`；时序消息编号、返回用虚线、备选分支放 `alt`/`opt`；不画不可达状态，不把门禁这类前置条件画成状态。
+- **颜色只在编码信息时用**，最多三类语义，每张图自己的图例；不把同一条图例复制到所有图，没有语义就不上色。
+- 源文件放 `static/diagrams/src/<slug>.drawio` 或项目自己的 `static/img/<project>/src/`，正文用对应导出路径。没有 `static/` 的项目放 `docs/diagrams/`，在方案里写明。
+- 导出后跑机械检查：`python3 .agents/skills/doc-writing/scripts/check_diagrams.py <src 目录>`，再用 673px 正文宽度和暗色模式人工看一遍。
 - 每个「下图」必须有图；没有就删句子。不用 Mermaid。
-- 完整约定（命名、暗色模式、diagram brief、最小模板、体积检查）见 `references/diagrams.md`。
+- 完整约定（图型、diagram brief、反例库、暗色模式、验收）见 `references/diagrams.md`。
 
 ### 3.6 去 AI 味（独立一遍，只做减法）
 
@@ -146,6 +150,21 @@ python3 .agents/skills/doc-writing/scripts/check_rewrite.py --dir <原文目录>
 - 用 Mermaid 代替原有的 ASCII 图。
 - **复用旧文档的句子或段落结构。** 连续 12 个汉字相同即视为复用；旧文档只能提供事实，不能提供行文。
 
+**图**
+
+- 不把表格画成盒子图；不在图底写结论段落；不把同一条图例复制到所有图。
+- 不画不可达状态、不把前置条件画成状态、不让时序图的返回路径经过不相关的组件。
+- 不在同一张图里混用箭头语义（调用、数据流、状态迁移只能取一种）。
+- 画布超过 700px、正文字号小于 14px、导出不是 2x、单张超过 150KB：视为不合格，重画或拆图。
+
+**术语**
+
+- 项目内的类名、表名、变量名、实例 id、配置键，第一次出现必须解释，或链接到导读的术语表；不能先用了再解释。
+- 通用协议名（A2A、JSON-RPC、SSE、AgentCard）第一次出现展开一次；HTTP、JSON 这类可以假设读者知道。
+- 导读先给术语表，再讲“一次任务经过哪些部件”；不要在后面才定义前面已经用过的词。
+- 每页开头写“读这页之前要知道什么”，结尾写“接下来读哪篇”；每节第一句接上一节的问题，不写孤立的条目。
+- 同一概念只留一个叫法。换叫法要在术语表里写“也叫……”，正文不要混用。
+
 ## 不要做
 
 - 不要按篇拆给多个 agent 再统一。那样每篇都要重新建立上下文，术语和判断必然漂。
@@ -163,7 +182,7 @@ python3 .agents/skills/doc-writing/scripts/check_rewrite.py --dir <原文目录>
 | `references/project-model.md` | 项目模型的模板与必答问题 |
 | `references/verification.md` | 机械核对 + 代码核对 + 冲突处理 |
 | `references/why-exemplars.md` | 为什么范文优先于规则（含反例） |
-| `references/diagrams.md` | draw.io 图：文件约定、导出、暗色模式、硬规则 |
+| `references/diagrams.md` | draw.io 图：图型选型、语义、字号/画布、反例库、导出与验收 |
 | `prompts/new-section.md` | 写新一节/一篇 |
 | `prompts/rewrite-section.md` | 改写已有文档 |
 | `prompts/plan.md` | 写作方案：写几篇、写哪几篇、框架、图、顺序 |
@@ -174,4 +193,6 @@ python3 .agents/skills/doc-writing/scripts/check_rewrite.py --dir <原文目录>
 | `exemplars/tutorial/` | 教程体：JavaGuide 五篇（内存、哈希、MySQL 索引、索引失效、消息队列，Apache-2.0） |
 | `scripts/check_rewrite.py` | 机械核对脚本 |
 | `scripts/check_voice.py` | 行文指标对照 + 判决句 / 历史沿革候选（只报告，不判定） |
-| `scripts/export_drawio.sh` | 批量导出 `.drawio` → `.svg` |
+| `scripts/check_diagrams.py` | 图的机械检查：画布宽、字号、PNG 尺寸与体积 |
+| `scripts/list_terms.py` | 列出每篇反引号术语的第一次出现，供读者模型检查 |
+| `scripts/export_drawio.sh` | 批量导出 `.drawio` → `.png`（默认 2x）或 `.svg` |

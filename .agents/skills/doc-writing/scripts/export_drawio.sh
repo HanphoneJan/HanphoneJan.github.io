@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# 把 static/diagrams/src/*.drawio 导出为 SVG 或 PNG。
+# 把 static/diagrams/src/*.drawio 导出为 PNG 2x（默认）或 SVG。
 #
 # 用法：
 #   export_drawio.sh [--format svg|png] [src_dir] [out_dir]
-#   export_drawio.sh --format png static/diagrams/src static/diagrams
+#   export_drawio.sh static/img/dsh-a2a/src static/img/dsh-a2a
 #
-# 格式由 writer 决定：矢量图/要搜索文字优先 svg；复杂效果或平台兼容问题用 png。
+# 中文标签默认 PNG 2x：draw.io 导 SVG 常把中文栅格化成 <image>，体积大且不可搜索。
+# 只有纯英文/数字标签才考虑 --format svg。
 set -euo pipefail
 
-fmt="svg"
+fmt="png"
 args=()
 while [ $# -gt 0 ]; do
   case "$1" in

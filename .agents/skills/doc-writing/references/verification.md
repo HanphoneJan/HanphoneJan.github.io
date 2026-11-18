@@ -24,11 +24,27 @@ python3 .agents/skills/doc-writing/scripts/check_rewrite.py --max-overlap 0.10 <
 ## 1.1 图的核对
 
 ```bash
-grep -o '<image' static/diagrams/<slug>.svg | wc -l   # 中文标签被栅格化的信号（按次数，grep -c 会少报）
-ls -lh static/diagrams/<slug>.svg
+python3 .agents/skills/doc-writing/scripts/check_diagrams.py static/img/<project>/src
+# 或整站
+python3 .agents/skills/doc-writing/scripts/check_diagrams.py static/img
 ```
 
-单张图超过 150 KB、或 SVG 里含大量 `<image>`，就改导 PNG 2x 或拆图。页面加载慢通常不是“图多”，而是每张“SVG”里塞了十几张位图。
+检查项：
+
+- `.drawio` 的 `pageWidth > 700`：画布超宽，正文栏里会缩到一半以下。
+- 有文字的节点/边标签 `fontSize < 14`，或没有显式字号（draw.io 默认 12）：字太小。
+- 对应 PNG 缺失、体积 >150KB、宽度不是约 2 倍画布：没导出、太大或不是 2x。
+- PNG 比 `.drawio` 旧：导出后忘了重新生成（只警告，git checkout 的 mtime 不可靠）。
+
+机械检查只量尺寸，不量语义。再人工看：
+
+1. 在正文宽度（约 673px）下不点开也能读；100% 与 150% 都不裁切。
+2. 箭头方向对，连线没有穿过文字；跨泳道的边从边界进出。
+3. 图例只解释这张图用到的颜色；没有与图无关的图例。
+4. 暗色主题下能读。
+5. 表结构、状态机、时序图的语义对：不把表格画成盒子，不画不可达状态，不让返回路径经过不相关的组件。
+6. 正文里的“下图”和图对得上，每张图有 alt 文本。
+7. 单张 ≤150KB；整篇的图加起来不超过约 500KB。
 
 ## 2. 代码核对
 
@@ -50,6 +66,24 @@ ls -lh static/diagrams/<slug>.svg
 | 代码能确认 | 按代码写 |
 | 代码与草稿冲突 | 改草稿，并在文末自查注释里标 `file:line` |
 | 代码无法确认（实测性能、部署规格、历史事故） | 保留原说法，标 `measured` |
+
+## 2.5 读者模型检查
+
+把稿子当成第一次接触这个项目的人来读。逐项过：
+
+1. **项目内名词有没有裸用。** 列出所有反引号里的类名、表名、变量名、实例 id、配置键，确认第一次出现有解释或链接。没有就补。读者不知道 `kb_dense`、`ScopedTaskStore`、`preset` 是什么，除非前文刚解释过。
+2. **通用词只解释一次。** A2A、JSON-RPC、SSE、AgentCard 第一次出现展开一次；HTTP、JSON 这类不解释。
+3. **术语表在链路之前。** 导读先给术语表，再讲“一次任务经过哪些部件”；后面的页面第一次用到术语时链接回导读，不要在后面才定义前面已经用过的词。
+4. **每节接得上。** 每一节的第一句能接上一节的问题，不是孤立的条目。页面开头写“读这页之前要知道什么”，结尾写“接下来读哪篇”。
+5. **同一概念一个叫法。** 换叫法要在术语表里写“也叫……”，正文不要混用。
+
+先跑一遍列出首次出现：
+
+```bash
+python3 .agents/skills/doc-writing/scripts/list_terms.py docs/项目/<name>
+```
+
+它只列每个反引号术语在每篇里的第一次出现与上下文，**不判断对错**。拿它当清单逐条看。
 
 ## 3. 统计口径的坑
 
