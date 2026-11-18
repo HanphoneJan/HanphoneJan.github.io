@@ -99,10 +99,12 @@ brief 里写不出“一句话”，说明这张图想讲两件事，拆开。
 
 ## 暗色模式
 
-- 导出透明背景，节点填中性色（`#f5f5f5` / `#333333`），描边用 `#666666`。
-- 不要用纯白底、高饱和品牌色；暗色主题下会刺眼。
-- 文字放在浅色节点或浅色标签背景上；透明背景上的深色文字在暗色主题下读不出来。
-- 需要精细控制时导出两版：`<slug>.png` 和 `<slug>.dark.png`，用 `<picture>` 或 CSS 切换。默认先做透明背景一版。
+- **默认白底**，节点填中性色（`#f5f5f5`），描边用 `#666666`。
+- 为什么是白底：图不止出现在正文里 —— 读者会点开放大、会把它拷进别的文档、会打印。白底在这三种场景都不露底；透明底在深色页面上好看，一放大就把背后的网页透出来，拷进深色 PPT 也露底。
+- 代价是深色主题下图是一块浅色面板。用 CSS 给正文里的 `figure img` 加圆角（本站 `index.scss` 已加），让它读起来像一张插图纸而不是一块补丁。
+- **唯一的例外是「主题中性」的图**：只用饱和色块 + 白字画（Vue 官方文档的生命周期图就是透明 PNG），没有浅色卡片，透明底在两种主题下都成立。这时用 `--transparent` 导出。普通「浅色卡片 + 深色字」的图不要用透明底。
+- 不要用高饱和品牌色当底色；也不要指望 `filter: invert()` —— 彩色图会串色。
+- 需要两版精细控制时才导出 `<slug>.png` 与 `<slug>.dark.png`，用 `html.dark` 切类（Docusaurus 的 `ThemedImage`、VitePress 维护者给的就是这条路）。注意 `<picture media="prefers-color-scheme">` 只认系统偏好，站点是手动切换时它会与开关脱节。
 
 ## 检查
 
@@ -130,11 +132,14 @@ python3 .agents/skills/doc-writing/scripts/check_diagrams.py static/img/dsh-a2a/
 ## 导出脚本
 
 ```bash
-# 默认 PNG 2x（中文标签的首选），导出后自动转 256 色调色板
+# 默认 PNG 2x 白底（中文标签的首选），导出后自动转 256 色调色板
 bash .agents/skills/doc-writing/scripts/export_drawio.sh static/img/dsh-a2a/src static/img/dsh-a2a
 
 # 只重导一张：第一个参数给 .drawio 文件
 bash .agents/skills/doc-writing/scripts/export_drawio.sh static/img/dsh-a2a/src/outbox.drawio static/img/dsh-a2a
+
+# 只有「饱和色块 + 白字」那种主题中性的图才用透明底
+bash .agents/skills/doc-writing/scripts/export_drawio.sh --transparent static/img/xxx/src static/img/xxx
 
 # 纯英文/数字标签才考虑 SVG
 bash .agents/skills/doc-writing/scripts/export_drawio.sh --format svg static/diagrams/src static/diagrams
@@ -142,10 +147,10 @@ bash .agents/skills/doc-writing/scripts/export_drawio.sh --format svg static/dia
 
 脚本遍历 `src/` 下的 `.drawio`（或只导点名的那一张），按 `--format` 导出同名文件；导出后跑一遍 `check_diagrams.py`。
 
-三个不容易发现的点：
+几个不容易发现的点：
 
-- **RGBA 的 2x 图会到 200KB 以上**，而 150KB 的上限是按索引色标的。脚本在 drawio 导出后用 `ffmpeg palettegen`（256 色 + 1bit alpha）重编码一次，体积降到 40–110KB。**不要手工再压一遍**（降色、加边距、pngjs），否则重跑脚本得到的是另一份产物，下一个人改图时会同时改坏体积。
-- **透明底要求每个文字都落在浅色填充上。** `-t` 之后裸标签是深灰字落在透明底，暗色主题下看不见。画的时候给标签一个浅色底，或者干脆不要裸标签。
+- **drawio 直出的 2x 图会到 200KB 以上**，而 150KB 的上限是按索引色标的。脚本在 drawio 导出后用 `ffmpeg palettegen`（256 色）重编码一次，白底图降到 30–110KB。**不要手工再压一遍**（降色、加边距、pngjs），否则重跑脚本得到的是另一份产物，下一个人改图时会同时改坏体积。
+- **白底是画布默认色，不要在图里再画一块底矩形。** 早先每张图底部都垫一个 `bg` 白矩形来「保证背景」，那是现在这块面板的来源，也让它无法被 CSS 圆角裁切。删掉它，交给导出参数。
 - **单元格 id 撞上 JS 全局名会让导出静默失败**：drawio 29.3.6 里 id 叫 `keys` 的那一页报 `Error: Export failed`、退出码仍是 0、不留产物，而脚本对已存在的旧 PNG 会判过 —— 现象是「改了源文件但图没变」。id 用 `apikeys` 这类带前缀的名字。
 
 ## 硬规则
