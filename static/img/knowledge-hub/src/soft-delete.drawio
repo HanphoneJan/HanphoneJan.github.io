@@ -1,0 +1,23 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="soft-delete" name="Page-1">
+    <mxGraphModel dx="1400" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="700" pageHeight="560" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="n1" value="DELETE /documents/{id}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=8;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="20" y="30" width="280" height="60" as="geometry" /></mxCell>
+        <mxCell id="n2" value="软删&lt;br&gt;is_current=false · deleted_at=now" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=8;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="20" y="130" width="280" height="70" as="geometry" /></mxCell>
+        <mxCell id="n3" value="检索二次过滤&lt;br&gt;立刻搜不到" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=8;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="20" y="250" width="280" height="70" as="geometry" /></mxCell>
+        <mxCell id="b1" value="宽限 5 分钟&lt;br&gt;点还在索引里" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=8;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="390" y="130" width="300" height="70" as="geometry" /></mxCell>
+        <mxCell id="b2" value="worker 每 5 分钟扫一批&lt;br&gt;非当前点清理，一批最多 1000 份" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=8;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="390" y="250" width="300" height="70" as="geometry" /></mxCell>
+        <mxCell id="b3" value="删 Qdrant 三腿点" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=8;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="390" y="370" width="300" height="60" as="geometry" /></mxCell>
+        <mxCell id="b4" value="不动 df / blob / PG 行" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=8;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="390" y="470" width="300" height="60" as="geometry" /></mxCell>
+        <mxCell id="e1" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="n1" target="n2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="n2" target="n3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="n2" target="b1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="b1" target="b2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="b2" target="b3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="b3" target="b4"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

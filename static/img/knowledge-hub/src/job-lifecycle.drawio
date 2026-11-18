@@ -1,0 +1,23 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="job-lifecycle" name="Page-1">
+    <mxGraphModel dx="1400" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="700" pageHeight="460" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="init" value="" style="ellipse;html=1;fillColor=#666666;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="22" y="242" width="16" height="16" as="geometry" /></mxCell>
+        <mxCell id="pend" value="pending" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=14;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="80" y="220" width="150" height="60" as="geometry" /></mxCell>
+        <mxCell id="run" value="running" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=14;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="320" y="220" width="150" height="60" as="geometry" /></mxCell>
+        <mxCell id="done" value="done" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=14;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="540" y="40" width="160" height="60" as="geometry" /></mxCell>
+        <mxCell id="fail" value="failed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=14;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="540" y="215" width="160" height="60" as="geometry" /></mxCell>
+        <mxCell id="cancel" value="cancelled" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=14;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="540" y="360" width="160" height="60" as="geometry" /></mxCell>
+        <mxCell id="e0" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="init" target="pend"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e1" value="claim" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;verticalAlign=middle;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="pend" target="run"><mxGeometry y="-13" relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" value="成功" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;verticalAlign=middle;exitX=1;exitY=0.25;entryX=0;entryY=0.5;" edge="1" parent="1" source="run" target="done"><mxGeometry x="0.1" y="-14" relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" value="失败" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;verticalAlign=middle;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="run" target="fail"><mxGeometry x="0.1" y="-13" relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" value="取消" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;verticalAlign=middle;exitX=1;exitY=0.75;entryX=0;entryY=0.5;" edge="1" parent="1" source="run" target="cancel"><mxGeometry x="0.1" y="-14" relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" value="租约超时" style="edgeStyle=none;rounded=1;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;verticalAlign=middle;exitX=0.5;exitY=0;entryX=0.75;entryY=0;" edge="1" parent="1" source="run" target="run"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="395" y="180" /><mxPoint x="432" y="180" /></Array></mxGeometry></mxCell>
+        <mxCell id="e6" value="可重试失败" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;labelBackgroundColor=#ffffff;verticalAlign=middle;exitX=0.5;exitY=1;entryX=0.5;entryY=1;" edge="1" parent="1" source="run" target="pend"><mxGeometry x="-0.3" y="-13" relative="1" as="geometry"><Array as="points"><mxPoint x="395" y="340" /><mxPoint x="155" y="340" /></Array></mxGeometry></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
