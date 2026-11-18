@@ -1,0 +1,19 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="context-filters" name="Page-1">
+    <mxGraphModel dx="1400" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="700" pageHeight="420" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ctx" value="UserContext&lt;br&gt;readable_kb_ids · workspace_ids" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=8;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="10" y="40" width="240" height="328" as="geometry" /></mxCell>
+        <mxCell id="f1" value="build_qdrant_filter&lt;br&gt;kb_id match · any" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=8;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="380" y="40" width="310" height="64" as="geometry" /></mxCell>
+        <mxCell id="f2" value="build_kb_scope_sql&lt;br&gt;col IN (…)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=8;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="380" y="128" width="310" height="64" as="geometry" /></mxCell>
+        <mxCell id="f3" value="visible_kb_clause&lt;br&gt;GET /kb" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=8;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="380" y="216" width="310" height="64" as="geometry" /></mxCell>
+        <mxCell id="f4" value="writable_kb_clause&lt;br&gt;回收站 · 恢复" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=8;fontSize=14;fontColor=#333333;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="380" y="304" width="310" height="64" as="geometry" /></mxCell>
+        <mxCell id="e1" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;exitX=1;exitY=0.0976;entryX=0;entryY=0.5;" edge="1" parent="1" source="ctx" target="f1"><mxGeometry y="-13" relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;exitX=1;exitY=0.3659;entryX=0;entryY=0.5;" edge="1" parent="1" source="ctx" target="f2"><mxGeometry y="-13" relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;exitX=1;exitY=0.6341;entryX=0;entryY=0.5;" edge="1" parent="1" source="ctx" target="f3"><mxGeometry y="-13" relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1;endArrow=block;endFill=1;fontSize=14;fontColor=#333333;exitX=1;exitY=0.9024;entryX=0;entryY=0.5;" edge="1" parent="1" source="ctx" target="f4"><mxGeometry y="-13" relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

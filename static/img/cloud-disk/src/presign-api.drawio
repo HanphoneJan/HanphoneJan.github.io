@@ -1,0 +1,68 @@
+<mxfile host="drawio" agent="doc-writing" version="24.7.17">
+  <diagram id="presign-api" name="presign-api">
+    <mxGraphModel dx="1400" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="700" pageHeight="420" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="n1" value="POST …?presigned-url" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="240" y="4" width="200" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="d1" value="method = GET/PUT&lt;br&gt;expiry 1–604800？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="170" y="72" width="340" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="perr" value="400 InvalidArgument" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="560" y="104" width="130" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="p2" value="backend.presign*" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="230" y="212" width="220" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="tok" value="200&lt;br&gt;{url, method, expiry}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="20" y="320" width="230" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="t501" value="501&lt;br&gt;不支持预签名" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="460" y="320" width="230" height="64" as="geometry" />
+        </mxCell>
+
+        <mxCell id="f1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=14;fontFamily=Helvetica;" edge="1" parent="1" source="n1" target="d1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=14;fontFamily=Helvetica;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="d1" target="perr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=14;fontFamily=Helvetica;" edge="1" parent="1" source="d1" target="p2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=14;fontFamily=Helvetica;exitX=0.318;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="p2" target="tok">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="290" />
+              <mxPoint x="135" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=14;fontFamily=Helvetica;dashed=1;dashPattern=7 5;exitX=0.682;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="p2" target="t501">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="380" y="290" />
+              <mxPoint x="575" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="la" value="否" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=none;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="522" y="98" width="28" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lb" value="是" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=none;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="348" y="188" width="26" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lc" value="MinIO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=none;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="180" y="266" width="60" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="ld" value="本地 · OSS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=none;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="470" y="266" width="94" height="22" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
