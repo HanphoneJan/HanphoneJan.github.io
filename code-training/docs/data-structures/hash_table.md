@@ -3,7 +3,7 @@ title: 哈希表
 sidebar_position: 6
 category: 数据结构
 difficulty_range: [简单, 中等]
-last_updated: 2026-11-13
+last_updated: 2026-11-19
 ---
 
 # 哈希表
@@ -34,7 +34,13 @@ CPython 的 `dict`（3.6+）连链都没有，是**两层数组**：
 - `indices` 是一张 2^k 格的稀疏表，每格只存「entries 的行号」或 EMPTY / DUMMY，冲突探测（开放寻址）只发生在这一层；
 - `entries` 是一张紧凑数组，每条是 `(hash, key, value)`，按插入顺序**只追加、从不搬动**。
 
-两层一分，三件事同时成立：查得快（探测都在 indices 上，命中后一次跳转就到）、省内存（entries 连续，没有「每条一个节点」的指针开销）、**遍历顺序 = 插入顺序**（entries 从来没被移动过）。`set` 没有 entries 这一层，所以它不保证顺序——「dict 有序、set 无序」不是两条互不相干的设定，而是同一个设计的两面。删除也只把 indices 那格标成 DUMMY：真挖空会让探测链断在那里，后面的键就再也找不到了。
+两层一分，三件事同时成立：
+
+- **查得快**：探测只发生在 `indices` 这一层，命中后一次跳转就落到 entries 的具体行；
+- **省内存**：entries 连续存放，没有「每条一个节点」的指针开销；
+- **遍历有序**：entries 按插入顺序只追加、从没被搬动，扫一遍就是插入序。
+
+`set` 没有 entries 这一层，所以它不保证顺序——「dict 有序、set 无序」不是两条互不相干的设定，而是同一个设计的两面。删除也只把 indices 那格标成 DUMMY：真挖空会让探测链断在那里，后面的键就再也找不到了。
 
 ## 底层的三个环节
 
@@ -55,6 +61,8 @@ CPython 的 `dict`（3.6+）连链都没有，是**两层数组**：
 | 缺点 | 指针多、缓存不友好 | 删除需墓碑标记；表近满时性能骤降 |
 | 代表实现 | Java HashMap、手写版 | **CPython 的 dict / set** |
 
+开放寻址最常用的探测序列叫**线性探测**：撞上了就往后挪一格，还撞就再挪一格，直到碰上空格。删除时不能把这格直接清空，只能留一个**墓碑**（DUMMY）——清空会让探测链在此断开，排在其后的键再也找不到。表越满探测的路越长，所以这条路必须靠扩容把负载因子压住。
+
 **负载因子（load factor）= 元素数 / 桶数**。拉链法工程常见阈值约 0.75 开始扩容；开放寻址必须压在 1 以下且离 1 较远——线性探测在 0.8 以上会串成长簇段。
 
 ### 扩容 rehash：重新哈希，不是拷贝
@@ -69,15 +77,21 @@ CPython 的 `dict`（3.6+）连链都没有，是**两层数组**：
 - `defaultdict` / `Counter` 是写题最常用的两个变体，前者省「缺键先建空」样板、后者自带 `most_common`
 
 ```python
+"""defaultdict / Counter 写法；建表 O(n)，查询均摊 O(1)"""
 from collections import defaultdict, Counter
 
-cnt = defaultdict(int)       # 缺键给 0
+words = ['ab', 'ba', 'c']           # 演示数据，任意可迭代对象都行
+
+cnt = defaultdict(int)              # ① 缺键先给 0，省掉 if 判断
 for w in words:
     cnt[w] += 1
 
-groups = defaultdict(list)   # 缺键给空列表
+groups = defaultdict(list)          # ② 缺键给空列表，可以直接 append
+for w in words:
+    groups[w[0]].append(w)
 
-Counter('aabbcc').most_common(2)   # [('a', 2), ('b', 2)]
+# ③ most_common 按次数降序取前 k 个：[('a', 2), ('b', 2)]
+print(Counter('aabbcc').most_common(2))
 ```
 
 ## 题型一：规范化键的分组
@@ -89,13 +103,14 @@ Counter('aabbcc').most_common(2)   # [('a', 2), ('b', 2)]
 - 快乐数判环：记下出现过的平方和（哈希表当记忆化/判重）
 
 ```python
+"""字母异位词分组；排序当键 O(n·k log k)，k 为最长串长"""
 from collections import defaultdict
 
 def groupAnagrams(strs):
-    groups = defaultdict(list)
+    groups = defaultdict(list)      # ① 键是规范形，值放同组原串
     for s in strs:
-        key = ''.join(sorted(s))     # 同组元素共享同一个规范形
-        groups[key].append(s)
+        key = ''.join(sorted(s))    # ② 同组串排序后必然同形
+        groups[key].append(s)       # ③ 新键自动建空列表再追加
     return list(groups.values())
 ```
 
@@ -107,11 +122,12 @@ def groupAnagrams(strs):
 
 ```python
 def twoSum(nums, target):
-    seen = {}                        # 值 -> 下标
+    """返回和为 target 的两个下标；无解返回 []。O(n)"""
+    seen = {}                        # ① 值 -> 下标
     for i, x in enumerate(nums):
-        if target - x in seen:       # 尚未遍历的前提：之前值已在表里
+        if target - x in seen:       # ② 先查后存，避免自己配自己
             return [seen[target - x], i]
-        seen[x] = i                  # 先查后存，避免自己配上自己
+        seen[x] = i                  # ③ 查完再登记当前元素
     return []
 ```
 
@@ -125,21 +141,23 @@ def twoSum(nums, target):
 - [705. 设计哈希集合](https://leetcode.cn/problems/design-hashset/)：手写一个最小拉链法，实现「冲突如何挂、键什么是同属一组」的收尾环节
 
 ```python
-class MyHashSet:      # 705 题：最小拉链法
+"""705 设计哈希集合：最小拉链法；均摊 O(1)，桶数取素数"""
+class MyHashSet:
     def __init__(self):
-        self.buckets = [[] for _ in range(1009)]   # 素数桶数，散列更均匀
+        # ① 桶数取素数，等差分布的键也能散开
+        self.buckets = [[] for _ in range(1009)]
 
     def _idx(self, key: int) -> int:
-        return key % len(self.buckets)
+        return key % len(self.buckets)     # ② 取模落到桶号
 
     def add(self, key: int) -> None:
         b = self.buckets[self._idx(key)]
-        if key not in b:
+        if key not in b:                   # ③ 同桶先查重再追加
             b.append(key)
 
     def remove(self, key: int) -> None:
         b = self.buckets[self._idx(key)]
-        if key in b:
+        if key in b:                       # 不在桶里就什么也不做
             b.remove(key)
 
     def contains(self, key: int) -> bool:

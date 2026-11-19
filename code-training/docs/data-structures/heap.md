@@ -3,7 +3,7 @@ title: 堆与优先队列
 sidebar_position: 9
 category: 数据结构
 difficulty_range: [中等, 困难]
-last_updated: 2026-11-13
+last_updated: 2026-11-19
 ---
 
 # 堆（Heap）与优先队列
@@ -12,7 +12,7 @@ last_updated: 2026-11-13
 
 堆（heap）是一棵**完全二叉树**，且满足一条**顺序性质**：每个节点的值 ≥（或 ≤）自己孩子的值。前者叫**大顶堆**（max-heap，堆顶是全局最大值），后者叫**小顶堆**（min-heap，堆顶是全局最小值）。从使用者视角它就是一种**优先队列**：出队顺序按优先级，不按到达时间。
 
-定义要读准的地方：顺序性质只约束**父子两层**。兄弟之间、不同分支之间不存在大小关系——左子树的最大值完全可以大于右子树的任何值。因此**堆内除 `heap[0]` 外没有可用的序**，「取第 k 大」这类问题必须逐个弹出（k 次操作），不能随手容存顺拿。
+定义要读准的地方：顺序性质只约束**父子两层**。兄弟之间、不同分支之间不存在大小关系——左子树的最大值完全可以大于右子树的任何值。因此**堆内除 `heap[0]` 外没有可用的序**，「取第 k 大」这类问题必须逐个弹出（k 次操作），不能随手取第 k 个。
 
 ## 结构剖面
 
@@ -20,88 +20,100 @@ last_updated: 2026-11-13
 
 ![数组下标与树节点的对应](/diagrams/heap-array-tree.png)
 
-父子关系变成三条下标算术：左孩子 `2i+1`、右孩子 `2i+2`、父亲 `(i-1)//2`。能成立的前提是「完全二叉树」——中间不许有空洞，否则下标算出来的位置对不上节点。省下的不只是指针，还有访存：数组连续，从根到叶的一条路径几乎都落在缓存里。
-
-顺序性质只约束父子两层，兄弟之间、左右子树之间没有大小关系，所以堆里除 `heap[0]` 之外没有可用的序。
-
-## 为什么是数组存
-
-完全二叉树的节点可按层铺进数组，**完全不含指针域**——这正是选完全二叉树（而非任意形状的树）做容器的原因：空间省、免维护指针、寻址靠下标公式一步算出。父子关系由三条下标算术式给出（从 0 起编号）：
+父子关系变成三条下标算术（从 0 起编号）：
 
 | 关系 | 公式 |
 |------|------|
-| 父节点 | `(i - 1) // 2` |
-| 左孩子 | `2 * i + 1` |
-| 右孩子 | `2 * i + 2` |
+| 父节点 | `(i-1)//2` |
+| 左孩子 | `2i+1` |
+| 右孩子 | `2i+2` |
+
+能成立的前提是「完全二叉树」——中间不许有空洞，否则下标算出来的位置对不上节点。选它而不是任意形状的树，换来的是：空间省、不用维护指针、寻址靠一次算术。数组还连续，从根到叶的一条路径几乎都落在缓存里。
 
 ## 复杂度
 
 | 操作 | 时间复杂度 | 实现要点 |
 |------|-----------|---------|
 | 堆顶 peek | O(1) | 即 `heap[0]` |
-| 插入 push（上浮 sift_up） | O(log n) | 从叶子浮到根，最多树高 |
-| 出堆 pop（下沉 sift_down） | O(log n) | 从根沉到叶子 |
+| 插入 push（上浮 sift-up） | O(log n) | 从叶子浮到根，最多树高 |
+| 出堆 pop（下沉 sift-down） | O(log n) | 从根沉到叶子 |
 | 建堆 heapify | **O(n)** | 不是 O(n log n)，推导见下 |
 | 修改 / 删除任意元素 | O(log n) | 需要自己先知道下标（heapq 不支持查询） |
 | 查找任意元素 | O(n) | 堆不为「查找」而生 |
 
 空间 O(n)。堆的价值在于「**以每次 log n 的代价维持随时可取的最值**」；不需要动态取最值时，排序或哈希就够。
 
-## 上浮与下沉的实现（白板题）
+## 上浮与下沉
 
 两条路径都只走树高：新元素从叶子往上浮到该在的位置，或者从根往下沉。
 
 ![交换次数不超过树高](/diagrams/heap-sift.png)
 
+先写两个独立函数，分别处理小顶堆和大顶堆。它们只差一个比较方向，分开写比塞一个布尔参数更好读：
+
+```python
+def sift_down_min(a, i, n):
+    """小顶堆：把 a[i] 往下沉到堆序成立；n 是当前堆的有效长度。O(log n)"""
+    while True:
+        smallest = i
+        left, right = 2 * i + 1, 2 * i + 2
+        if left < n and a[left] < a[smallest]:
+            smallest = left                 # ① 左孩子更小
+        if right < n and a[right] < a[smallest]:
+            smallest = right                # ② 右孩子更小
+        if smallest == i:
+            break                           # ③ 两个孩子都不比我小，堆序成立
+        a[i], a[smallest] = a[smallest], a[i]
+        i = smallest                        # ④ 继续从换下来的位置往下看
+
+def sift_down_max(a, i, n):
+    """大顶堆：同上，比较方向反过来"""
+    while True:
+        largest = i
+        left, right = 2 * i + 1, 2 * i + 2
+        if left < n and a[left] > a[largest]:
+            largest = left
+        if right < n and a[right] > a[largest]:
+            largest = right
+        if largest == i:
+            break
+        a[i], a[largest] = a[largest], a[i]
+        i = largest
+```
+
 ```python
 class MinHeap:
-    """小顶堆手动实现"""
+    """小顶堆手动实现：只用于说明堆序，实战用 heapq"""
 
     def __init__(self):
         self.heap = []
 
-    def push(self, x: int):
-        self.heap.append(x)                    # 新元素先放数组末尾
-        self._sift_up(len(self.heap) - 1)      # 再上浮到位
+    def push(self, x):
+        self.heap.append(x)                 # ① 新元素先放数组末尾（保持完全树形状）
+        self._sift_up(len(self.heap) - 1)   # ② 再上浮到该在的位置
 
-    def pop(self) -> int:
+    def pop(self):
         smallest = self.heap[0]
-        last = self.heap.pop()                 # 拿走最后一个叶子
-        if self.heap:                          # 根还在，用它从顶往下沉
-            self.heap[0] = last
-            self._sift_down(0)
+        last = self.heap.pop()              # ① 先拿走最后一个叶子
+        if self.heap:
+            self.heap[0] = last             # ② 用尾叶子补根，保持完全树形状
+            sift_down_min(self.heap, 0, len(self.heap))   # ③ 再往下沉
         return smallest
 
-    def peek(self) -> int:
+    def peek(self):
         return self.heap[0]
 
-    def _sift_up(self, i: int):
-        """与父比较，小则对调，向上止于堆序成立处"""
+    def _sift_up(self, i):
         while i > 0:
             parent = (i - 1) // 2
             if self.heap[i] < self.heap[parent]:
                 self.heap[i], self.heap[parent] = self.heap[parent], self.heap[i]
-                i = parent
+                i = parent                  # ① 继续和新的父节点比
             else:
-                break
-
-    def _sift_down(self, i: int):
-        """与较小的孩子对调，向下止于堆序成立处"""
-        n = len(self.heap)
-        while True:
-            smallest = i
-            left, right = 2 * i + 1, 2 * i + 2
-            if left < n and self.heap[left] < self.heap[smallest]:
-                smallest = left
-            if right < n and self.heap[right] < self.heap[smallest]:
-                smallest = right
-            if smallest == i:
-                break
-            self.heap[i], self.heap[smallest] = self.heap[smallest], self.heap[i]
-            i = smallest
+                break                       # ② 不比父亲小，停
 ```
 
-pop 的设计经常被追问一轮：为何不是「直接移除堆顶、两孩子谁小谁上位」，而要拿尾叶子补顶？前者会把树形状从完全二叉树打散——两棵子树的高度不等，堆序无法一跳填补；而取尾叶子保持形状，随之看到的差异是「尾叶子从顶往下滚」。堆的形状不变量才得以一直成立：
+**pop 为什么用尾叶子补顶**，而不是「直接移除堆顶、让较小的孩子上位」？后者会把完全二叉树的形状打散：两棵子树高度不等，堆序无法一跳填补。取尾叶子补顶保持形状，代价只是让这个叶子从顶往下沉一次：
 
 ```text
          [2]                      弹 2 后（取尾叶子 7 到顶）
@@ -113,18 +125,20 @@ pop 的设计经常被追问一轮：为何不是「直接移除堆顶、两孩�
 （下沉：7 ↔ 4 → 7 ↔ 6 → 堆序成立）
 ```
 
-heapify（把现成数组变成堆）：**从最后一个非叶节点起，向前逐个下沉**，不是逐个 push：
+## 建堆为什么是 O(n)
+
+把现成数组变成堆，**从最后一个非叶节点起，向前逐个下沉**，不是逐个 push：
 
 ```python
 def build_heap(arr):
-    n = len(arr)
+    """原地风格：返回一份新数组，O(n)"""
     heap = arr[:]
-    for i in range(n // 2 - 1, -1, -1):
-        _sift_down(heap, i, n)
+    for i in range(len(heap) // 2 - 1, -1, -1):   # ① 最后一个非叶节点是 n//2-1
+        sift_down_min(heap, i, len(heap))
     return heap
 ```
 
-它之所以是 O(n) 而非 n 次 O(log n)：绝大多数节点在树的底层，根本沉降不了几层——
+它之所以是 O(n) 而非 n 次 O(log n)：绝大多数节点在树的底层，根本沉不了几层——
 
 ```text
 n/2 个叶子：0 次下沉
@@ -133,7 +147,7 @@ n/8 个节点：最多 2 层
 …                          总操作次数 ≈ n
 ```
 
-对比一下「先建空堆再逐个 push」：每个新元素都从叶子层向上浮，可一路浮到根，才是 O(n log n)。「先铺形状、再统一沉降」是唯一的 O(n)。
+对比「先建空堆再逐个 push」：每个新元素都从叶子层向上浮，可一路浮到根，才是 O(n log n)。「先铺形状、再统一沉降」是唯一的 O(n)。
 
 ## heapq（Python 标准实现）
 
@@ -141,26 +155,26 @@ n/8 个节点：最多 2 层
 import heapq
 
 heap = []
-heapq.heappush(heap, 3)      # 插入 O(log n)
+heapq.heappush(heap, 3)      # ① 插入 O(log n)
 heapq.heappush(heap, 1)
 heapq.heappush(heap, 2)
-heapq.heappop(heap)          # 弹出最小值 1
+heapq.heappop(heap)          # ② 弹出最小值 1
 
 nums = [5, 1, 3, 2]
-heapq.heapify(nums)          # 原地建堆 O(n)，注意是原地修改输入
+heapq.heapify(nums)          # ③ 原地建堆 O(n)，注意会改输入
 
-heapq.heappushpop(heap, 4)   # 先 push 再 pop（比分开两次调用快）
-heapq.heapreplace(heap, 9)   # 先 pop 再 push；返回的一定是弹出前的堆顶
+heapq.heappushpop(heap, 4)   # ④ 先 push 再 pop，比分开两次调用快
+heapq.heapreplace(heap, 9)   # ⑤ 先 pop 再 push；返回的一定是弹出前的堆顶
 
-heapq.nsmallest(3, nums)     # 最小 3 个
-heapq.nlargest(3, nums)      # 最大 3 个
+heapq.nsmallest(3, nums)     # ⑥ 最小 3 个
+heapq.nlargest(3, nums)      # ⑦ 最大 3 个
 ```
 
 三条边界：
 
-1. **heapq 只有小顶堆**。大顶堆的等价写法是**值取负**：`heappush(h, -x)`、`-heappop(h)`。自定义类不可取负时用 `(priority, item)` 元组或实现 `__lt__`
-2. **手写版只用于说明堆序**：`import heapq` 之后就不该再 `_sift_up` 手搓——heapq 是 C 实现，快若干个量级
-3. **heapq 不支持修改某个键的优先级**。需要这一能力（Dijkstra 是典型）时用**惰性删除**：push 一个带新优先级的记入堆，pop 时若值比当前记录旧/失效（对比自己的状态字段或版本号）就跳过
+1. **heapq 只有小顶堆**。大顶堆的等价写法是**值取负**：`heappush(h, -x)`、`-heappop(h)`。自定义类不可取负时用 `(priority, item)` 元组或实现 `__lt__`；
+2. **手写版只用于说明堆序**：`import heapq` 之后就不该再 `_sift_up` / `sift_down_min` 手搓——heapq 是 C 实现，快若干个量级；
+3. **heapq 不支持修改某个键的优先级**。需要这一能力（Dijkstra 是典型）时用**惰性删除**：push 一个带新优先级的记录，pop 时若值比当前记录旧/失效就跳过。
 
 ## 题型一：Top-K（215 最接近题）
 
@@ -174,26 +188,24 @@ heapq.nlargest(3, nums)      # 最大 3 个
 
 ```python
 import heapq
-from typing import List
 
-class Solution:
-    def findKthLargest(self, nums: List[int], k: int) -> int:
-        # 小顶堆只装 k 个，堆顶即「当前第 k 大」
-        heap = []
-        for x in nums:
-            if len(heap) < k:
-                heapq.heappush(heap, x)
-            elif x > heap[0]:
-                heapq.heapreplace(heap, x)    # 弹掉当前最小、进入 x
-        return heap[0]
+def findKthLargest(nums, k):
+    """第 k 大：小顶堆只装 k 个，堆顶就是当前第 k 大。O(n log k)"""
+    heap = []
+    for x in nums:
+        if len(heap) < k:
+            heapq.heappush(heap, x)          # ① 先凑满 k 个
+        elif x > heap[0]:
+            heapq.heapreplace(heap, x)       # ② 比堆顶大才换掉当前最小值
+    return heap[0]                           # ③ 堆顶即第 k 大
 ```
 
 两个反直觉点：
 
-1. 求第 k 大却用**小顶堆**：要维护「最大的 k 个」，则这 k 个中最差的那个（挂堆顶）应当随时可弹出；换大顶堆每次操作都要处理全量最大值，反而无法一步维持 k 个候选。
+1. 求第 k 大却用**小顶堆**：要维护「最大的 k 个」，则这 k 个中最差的那个（挂堆顶）应当随时可弹出；换大顶堆每次操作都要处理全量最大值，反而无法一步维持 k 个候选；
 2. **堆大小恒为 k**：n 无关内存，堆顶挂着的方式即问题答案。
 
-用 `nums = [3, 2, 3, 1, 2, 4, 5, 5, 6]`、`k = 4` 演算（heapq 内部次序不承诺，仅 `heap[0]` 可靠）：
+用 `nums = [3, 2, 3, 1, 2, 4, 5, 5, 6]`、`k = 4` 走一遍（heapq 内部次序不承诺，只保证 `heap[0]` 是最小值）：
 
 ```text
 x=3  不足 k，push            heap = [3]
@@ -218,24 +230,24 @@ import heapq
 
 class MedianFinder:
     def __init__(self):
-        self.small = []   # 大顶堆（负值模拟）：较小的一半
-        self.large = []   # 小顶堆：较大的一半
+        self.small = []   # ① 大顶堆（存负值）：较小的一半
+        self.large = []   # ② 小顶堆：较大的一半
 
-    def addNum(self, num: int) -> None:
-        # 先丢入 small，再把 small 堆顶（large 侧的最小候选）转给 large
+    def addNum(self, num):
+        # ③ 先丢进 small，再把 small 的最大值转给 large
         heapq.heappush(self.small, -num)
         heapq.heappush(self.large, -heapq.heappop(self.small))
-        # 平衡：允许 large 比 small 多 1
+        # ④ 平衡：允许 large 比 small 多 1，多了就挪回来
         if len(self.large) > len(self.small):
             heapq.heappush(self.small, -heapq.heappop(self.large))
 
-    def findMedian(self) -> float:
-        if len(self.small) > len(self.large):
+    def findMedian(self):
+        if len(self.small) > len(self.large):      # ⑤ 奇数个
             return float(-self.small[0])
-        return (-self.small[0] + self.large[0]) / 2
+        return (-self.small[0] + self.large[0]) / 2  # ⑥ 偶数个，取两个堆顶平均
 ```
 
-不变量两条：`large` 的所有元素 ≥ `small` 的所有元素；`len(small)` 与 `len(large)` 至多差 1。「先过 small 再进 large」这一个动作同时完成了「小的一半必大」。查询复杂度 O(1)、插入 O(log n)。
+不变量两条：`large` 的所有元素 ≥ `small` 的所有元素；`len(small)` 与 `len(large)` 至多差 1。「先过 small 再进 large」这一个动作同时完成了「小的一半必大」。查询 O(1)、插入 O(log n)。
 
 ## 题型三：堆排序
 
@@ -243,24 +255,26 @@ class MedianFinder:
 
 ```python
 def heap_sort(arr):
+    """升序：先建大顶堆，再把最大值逐个换到末尾。O(n log n)"""
     n = len(arr)
-    for i in range(n // 2 - 1, -1, -1):   # 原地建大顶堆
-        _sift_down(arr, i, n)
+    for i in range(n // 2 - 1, -1, -1):    # ① 原地建大顶堆
+        sift_down_max(arr, i, n)
     for end in range(n - 1, 0, -1):
-        arr[0], arr[end] = arr[end], arr[0]  # 最大值移到末尾
-        _sift_down(arr, 0, end)              # 缩短的堆内重新堆序
+        arr[0], arr[end] = arr[end], arr[0]  # ② 最大值移到末尾
+        sift_down_max(arr, 0, end)           # ③ 在缩短的堆内重新堆序
     return arr
 ```
 
-注意：**排升序要用大顶堆**——最大值逐个沉向尾部。用小顶堆写升序排序是这题最常见的方向性错误。
+注意：**排升序要用大顶堆**——最大值逐个沉向尾部。用小顶堆写升序排序是这题最常见的方向性错误：小顶堆的堆顶是最小值，换到末尾得到的是降序。
 
 ## 易错点总结
 
 - 误以为堆内整体有序，以为堆顶弹出后取下一个可直接从剩余里找——每次「下一个最值」都是一次 O(log n) 操作
-- 第 k 大写了大顶堆
-- `heapq` 默认小顶堆，做最大堆时忘负值或忘 `__lt__`
+- 第 k 大写了大顶堆：大顶堆维护的是全局最大值，装不下「最大的 k 个」
+- `heapq` 默认小顶堆，做最大堆时忘取负或忘 `__lt__`
 - 「建堆 O(n)」这句没扣上：heapify 建堆是 O(n)，逐个 push 建堆是 O(n log n)
-- pop 的尾叶子补顶顺序写错，堆空时断言翻车
+- pop 的尾叶子补顶顺序写错：先 `pop()` 再判空，堆空时 `heap[0]` 直接越界
+- 堆排序用小顶堆写升序，得到降序
 - Dijkstra 需要的「改优先级」没有做惰性删除，直接 push 旧记录会让队尾错序
 
 ## 相关题目

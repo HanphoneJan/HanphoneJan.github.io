@@ -3,7 +3,7 @@ title: 字符串
 sidebar_position: 2
 category: 数据结构
 difficulty_range: [简单, 中等]
-last_updated: 2026-11-13
+last_updated: 2026-11-19
 ---
 
 # 字符串
@@ -26,10 +26,13 @@ last_updated: 2026-11-13
 **循环拼接的正确写法**：攒在一个列表里，最后一次 join（O(n)）。`s += c` 每次都产生长度递增的新串，叠加成 O(n²)。CPython 对引用计数为 1 的串做了原地扩容优化，实践中很多场景感觉不到开销——但这是实现细节不是语言承诺，不能写进依赖它的代码。
 
 ```python
+"""循环拼接的正确姿势：先攒进列表，最后一次 join。O(n)"""
+pieces = ['ab', 'cd', 'ef']
 parts = []
 for piece in pieces:
-    parts.append(piece)
-s = ''.join(parts)
+    parts.append(piece)       # ① 每段只入表，不产生新串
+s = ''.join(parts)            # ② 一次分配、一次拷贝，回到 O(n)
+print(s)                      # -> abcdef
 ```
 
 ## 结构剖面
@@ -60,24 +63,26 @@ CPython 按串里最大的码点决定每字符占 1 / 2 / 4 字节（PEP 393）
 | 单字符 ↔ 码点 | `ord('A')==65`、`chr(97)=='a'`；`ord(c) - ord('a')` 得字母 0~25 |
 | 批量映射 | `str.maketrans` + `s.translate(table)` |
 
-`ord(c) - ord('a')` 定位26 个字母的下标一步算出——计数数组、差分、「下标对应字典序」的题全靠它。
+`ord(c) - ord('a')` 一步算出 0~25 的下标，也就是 26 个字母的序号——计数数组、差分、「下标对应字典序」的题全靠它。
 
 ## 题型一：反转与回文（双指针）
 
-反向是原地双指针一类（344），注意 LeetCode Python 接口传入的一般是 `List[str]`（列表），**原地才可行**：真正的 `str` 无原地改法，面试口头说明这层差异即可。
+反转属于原地双指针一类（344），注意 LeetCode Python 接口传入的一般是 `List[str]`（列表），**原地才可行**：真正的 `str` 无原地改法，面试口头说明这层差异即可。
 
 ```python
 def reverseString(s):
-    left, right = 0, len(s) - 1
-    while left < right:
-        s[left], s[right] = s[right], s[left]
+    """原地反转字符列表；O(n) 时间、O(1) 额外空间"""
+    left, right = 0, len(s) - 1        # ① 两端各一根指针
+    while left < right:                # ② 相遇即停，奇数位不动
+        s[left], s[right] = s[right], s[left]  # ③ 交换后内收
         left += 1
         right -= 1
+    return s
 ```
 
-回文验证（125）：跳过非字母数字 + 统一小写之后同款双指针逐位比较。
+回文验证（125）：跳过非字母数字、统一小写之后，用同款双指针逐位比较。
 
-回文子串计数（647）的稳解是**中心扩展**：以每个字符为候选中心「向两侧扩展到字符不再相等，途经的每个半径都是一个回文」，长度为奇/偶的中心分别取在字符处与两个字符之间，共 2n−1 个。扩展各遍历最多 O(n) 层，总 O(n²)——比 DP 少一维、比 Manacher 简单，不写 KMP 时就是这么答。
+回文子串计数（647）的稳解是**中心扩展**：以每个字符为候选中心，向两侧扩展直到字符不再相等，途经的每个半径都是一个回文；长度为奇/偶的中心分别取在字符处与两个字符之间，共 2n−1 个。每次扩展最多走 O(n) 层，总 O(n²)——比 DP 少一维、比 Manacher 简单，不写 KMP 时就是这么答。
 
 ## 题型二：滑动窗口找子串
 
@@ -86,35 +91,79 @@ def reverseString(s):
 ```python
 from collections import Counter
 
+
 def minWindow(s: str, t: str) -> str:
-    need = Counter(t)          # 需要的字符与个数
-    missing = len(t)           # 还缺的必需字符总数
-    left = 0
-    best = (float('inf'), 0)   # (长度, 起点)
-    for right, ch in enumerate(s, 1):
-        if need[ch] > 0:
+    """s 中覆盖 t 全部字符的最短子串；没有返回空串。O(n + m)"""
+    need = Counter(t)                # ① 缺口表：正数缺、负数盈余
+    missing = len(t)                 # ① 缺口总数，归零即凑齐
+    left = 0                         # 窗口 [left, right)，左端收缩
+    inf = float('inf')
+    best = (inf, 0)                  # (长度, 起点)，用 inf 省特判
+    for right, ch in enumerate(s, 1):     # ② 右针吃进一个字符
+        if need[ch] > 0:                  # 确实是缺的，缺口减一
             missing -= 1
-        need[ch] -= 1
-        if missing == 0:                       # 窗口已凑齐
-            while need[s[left]] < 0:           # 左端是盈余（负数）就压掉
+        need[ch] -= 1                     # 记成负数 = 窗口里多出来的
+        if missing == 0:                  # 已凑齐，可以收缩
+            while need[s[left]] < 0:      # ③ 左端盈余就压掉
                 need[s[left]] += 1
                 left += 1
             if right - left < best[0]:
                 best = (right - left, left)
     left, length = best[1], best[0]
-    return '' if length == float('inf') else s[left:left + length]
+    return '' if length == inf else s[left:left+length]
 ```
 
 这题的变量语义可以背下来：`need` 记缺口（负 = 盈余）、`missing` 记总缺口、回到 0 触发收缩。窗口不变量是「入右针、若已齐则能收多紧收多紧」，答案在每次「齐」的极小窗口处取。
 
-## 题型三：KMP（讲思想，不要求手写）
+## 题型三：KMP（面试要能讲清，能手写 next）
 
-子串查找最优解 O(n + m)。KMP 洞见：**失配时，已匹配的那一段自己就包含可复用的自匹配信息**——模式串对每个位置 i 预先算出 `next[i]`，含义是「模式串前 i 个字符中，最长相等的真前缀与真后缀的长度」；失配后模式串依 `next` 跳转，**主串指针永不回退**。
+子串查找的最优解是 O(n + m)。暴力的代价在失配之后：主串回退到「起点 + 1」、模式串归零，已经比过的字符又要再比一遍。KMP 的洞见是**失配时，已匹配的那一段自己就包含可复用的自匹配信息**——这段前缀同时是模式串的前缀和后缀，按 `next` 直接挪过去即可，主串指针不必回退。
 
-- 匹配阶段 O(n)：主串指针只前进
-- 预处理 O(m)：用同样的跳转法对模式串自身算 `next`
+- 预处理 O(m)：`next` 用同样的跳转法对模式串自身求一遍
+- 匹配 O(n)：主串指针只前进，只有模式串在按 `next` 回退
 
-日常规模的查找 `sub in s`（暴力 O(n·m) 期望 O(n)）就能吃下；「在一篇文章里同时找很多模式」的冷门场景是 Aho-Corasick / 后缀结构，答到名字与定位即可。
+**`next` 的定义（i 从 1 起算）**：`next[i]` 是「模式串前 i 个字符 `pat[:i]` 中，最长相等的真前缀与真后缀的长度」。真前后缀不含整段本身，所以 `next[0] = next[1] = 0`——空串和单字符都没有真前后缀。以 `pat = "ABABCABAB"` 为例：`pat[:4] = "ABAB"` 的最长相等真前后缀是 `AB`，长度 2，故 `next[4] = 2`；整串的 `next` 是 `[0,0,0,1,2,0,1,2,3,4]`，最后一位 4 对应整串的 `ABAB`。
+
+下面代码里的 `nxt` 就是这个定义的原样落地：下标 `i` 即前缀长度，`nxt[i] = next[i]`。两个函数合起来才是完整的 KMP——`build_next` 预处理模式串，`kmp_search` 顺着主串走一遍。
+
+![失配后按 next 跳过已匹配的前缀](/diagrams/kmp-next.png)
+
+```python
+def build_next(pat):
+    """next[i] = pat[:i] 的最长相等真前后缀长度（i 从 1 起算）。O(m)"""
+    m = len(pat)
+    nxt = [0] * (m + 1)              # ① 长度 0/1 无真前后缀，先填 0
+    j = 0                            # ② j = 已匹配上的前缀长度
+    for i in range(2, m + 1):        # 这一轮求 next[i]
+        while j > 0 and pat[i - 1] != pat[j]:
+            j = nxt[j]               # ③ 接不上：退回这段前缀的边界
+        if pat[i - 1] == pat[j]:
+            j += 1                   # ③' 接上了，边界长一位
+        nxt[i] = j
+    return nxt
+
+
+def kmp_search(s, pat):
+    """pat 在 s 中首次出现的下标，找不到返回 -1。O(n + m)"""
+    if not pat:
+        return 0
+    nxt = build_next(pat)
+    j = 0                            # ① j：模式串已匹配的字符数
+    for i, ch in enumerate(s):       # ② i 只增不减，主串指针不回退
+        while j > 0 and ch != pat[j]:
+            j = nxt[j]               # ③ 失配只挪模式串，跳到候选前缀
+        if ch == pat[j]:
+            j += 1
+        if j == len(pat):
+            return i - j + 1         # 末位也对上：整段出现的起点
+    return -1
+```
+
+`build_next` 干的是「模式串对自身做一次匹配」。`j` 为每一轮提供候选长度：`pat[i-1] == pat[j]` 说明长度为 `j` 的前缀后面正好接上这一位，长度变 `j+1`；接不上就退到 `nxt[j]`，那是「这段前缀自己的最长相等真前后缀」，只有那里还可能接得上。退到 `j == 0` 仍接不上，就说明这一位没有可复用的边界，`nxt[i]` 记 0。
+
+匹配阶段只有一件事在变：`j` 沿 `next` 往回退。`j` 每退一次都对应丢掉一段不可能的对齐，整个匹配过程 `j` 的净增量不超过 n，所以总时间是 O(n)；`j` 退到 0 还配不上，就从主串下一个字符重新数起。
+
+**什么时候真写它**：日常规模的查找用 `sub in s` 就够（CPython 是 Boyer-Moore-Horspool 变体，期望 O(n)，最坏 O(n·m)），不必手写。KMP 的场合是面试要求「讲清为什么主串不回退 + 当场写出 `next`」。再往上一档「在一篇文章里同时找很多模式」是 Aho-Corasick / 后缀结构，答出名字与定位即可。
 
 ## 题型四：编码与字节
 
