@@ -3,7 +3,7 @@ title: 栈
 sidebar_position: 4
 category: 数据结构
 difficulty_range: [简单, 较难]
-last_updated: 2026-11-13
+last_updated: 2026-11-19
 ---
 
 # 栈
@@ -12,7 +12,7 @@ last_updated: 2026-11-13
 
 栈（stack）是只允许在**一端**（栈顶，top）插入与删除的线性结构，插入 push、删除 pop、查看不删除 peek。这一约束给出的顺序关系叫**后进先出（LIFO, Last In First Out）**：最后进入的元素最先离开。
 
-堆栈的价值不在「多了一个容器」，而在它提供了一种与函数调用、撤销、扫描过程同构的显式状态：函数一层层返回、编辑器一步步回退、检索每日 temperatures 时「上一个更暖等着对比」的元素——全都是「最后发生的事情最先需要处理」。
+栈的价值不在「多了一个容器」，而在它把「最后发生的事情最先需要处理」这条顺序显式化了：函数一层层返回、编辑器一步步回退，刷「每日温度」时，那个「上一个还没等到更暖天气」的元素，正压在栈里等着和今天对比。
 
 | 操作 | 时间复杂度 | 说明 |
 |------|-----------|------|
@@ -27,23 +27,25 @@ last_updated: 2026-11-13
 
 ![top 右边那格就是下一次 push](/diagrams/stack-layout.png)
 
-`push` 是「写到 top+1，top 加一」，`pop` 是「读 top，top 减一」。所谓 LIFO 不是容器自带的魔法，而是「只在同一端进出」这条约定推出来的顺序。也正因为如此，从头部模拟栈（`insert(0, x)` / `pop(0)`）会把 O(1) 变成 O(n)：那一端没有游标，只有「整体后移」。
+`push` 是「写到 top+1，top 加一」，`pop` 是「读 top，top 减一」。所谓 LIFO 不是容器自带的魔法，而是「只在同一端进出」这条约定推出来的顺序——也正因为只在末端动手，才保住了 O(1)。
 
 ## 实现：list 的尾巴就是栈顶
 
 ```python
+"""list 的尾部即栈顶：push 均摊 O(1)，pop / peek 都是 O(1)。"""
+
 stack = []
-stack.append(1)        # push
+stack.append(1)        # ① push：写到 top+1，top 加一
 stack.append(2)
-top = stack[-1]        # peek
-stack.pop()            # pop，返回 2
+top = stack[-1]        # ② peek：只读，不动 top
+stack.pop()            # ③ pop：读 top 再减一，返回 2
 ```
 
 **小细节：栈顶固定在 list 尾部**。从头部模拟栈（`insert(0, x)` / `pop(0)`）都是 O(n)——每次操作全体元素都要搬动，连续 n 次操作就是 O(n²)。这是代码审查里一眼要盯住的错误写法。
 
 ## 应用场景
 
-栈把「嵌套、回溯、最近未匹配」这三类结构语言的显式化，常见落点：
+栈擅长处理「嵌套、回溯、最近未匹配」这三类结构，常见落点：
 
 - **函数调用栈**：递归就是隐式使用栈；Python 默认栈深约 1000 层，树上递归过深时要显式化（见下）
 - **括号匹配**：左括号压栈、右括号与栈顶配对（[20. 有效的括号](../problems/leetcode/0020_valid_parentheses.md)）
@@ -56,40 +58,43 @@ stack.pop()            # pop，返回 2
 
 ```python
 def isValid(s: str) -> bool:
+    """判断括号串是否按类别全部配对；O(n) 时间、O(n) 空间。"""
     pairs = {')': '(', ']': '[', '}': '{'}
-    stack = []
+    stack = []                   # ① 只存左括号，也就是还没配上对的
     for ch in s:
-        if ch in pairs:
-            # 右括号：栈顶必须是对应左括号；not stack 兜住「开局就是右括号」
+        if ch in pairs:          # ② 右括号：栈顶必须是同类左括号
             if not stack or stack.pop() != pairs[ch]:
-                return False
+                return False     # ③ not stack 兜住「开局就是右括号」
         else:
             stack.append(ch)
-    return not stack     # 全部配对 = 栈恰好被弹空
+    return not stack             # ④ 弹空才算全配对
 ```
 
-三个边界必须都写：右括号先到（栈空）、类别不配（`[` 后面跟 `}`）、左括号有富余（最后栈非空）。缺一个用例组不完整。
+三个边界必须都写：右括号先到（栈空）、类别不配（`[` 后面跟 `}`）、左括号有富余（最后栈非空）。缺任何一个用例都不完整。
 
 ## 题型二：双栈互模拟与最小值
 
-**双栈实现队列（[232. 用栈实现队列](https://leetcode.cn/problems/implement-queue-using-stacks/)）**：`in` 栈接收、`out` 栈输出；`out` 空时把 `in` 整个倒灌过去——两次后进先出叠加，出队顺序与到达顺序一致。每个元素全生命至多被倒灌一次，均摊 O(1)。
+**双栈实现队列（[232. 用栈实现队列](https://leetcode.cn/problems/implement-queue-using-stacks/)）**：`in` 栈接收、`out` 栈输出；`out` 空时把 `in` 整个倒灌过去——两次后进先出叠加，出队顺序与到达顺序一致。每个元素一生至多被倒灌一次，均摊 O(1)。
 
-**最小栈（[155. 最小栈](https://leetcode.cn/problems/min-stack/)）**：辅助栈同步 push/pop，顶格记录「当前高度下全栈的最小值」，查询永远 O(1)。「pop 后再扫一遍求 min」是 O(n)，把这一题的设计目标（每个操作 O(1)）拆了：
+**最小栈（[155. 最小栈](https://leetcode.cn/problems/min-stack/)）**：辅助栈同步 push/pop，顶格记录「当前高度下全栈的最小值」，查询永远 O(1)。「pop 后再扫一遍求 min」是 O(n)，就拆掉了这一题的设计目标（每个操作 O(1)）：
 
 ```python
 class MinStack:
+    """每个操作 O(1) 的最小栈：辅助栈顶格记当前高度的最小值。"""
+
     def __init__(self):
         self.stack = []
-        self.min_stack = []   # 与主栈同长（或记录基准点也行）
+        self.min_stack = []      # ① 与主栈同长，第 k 格记前 k 个的最小
 
     def push(self, x):
         self.stack.append(x)
+        # ② 新元素只可能压低最小值，抄上一个答案就够，不必重扫
         mn = min(x, self.min_stack[-1]) if self.min_stack else x
         self.min_stack.append(mn)
 
     def pop(self):
         self.stack.pop()
-        self.min_stack.pop()
+        self.min_stack.pop()     # ③ 两栈同进同出，最小值随高度回退
 
     def top(self) -> int:
         return self.stack[-1]
@@ -103,25 +108,30 @@ class MinStack:
 单调栈维护栈内元素（对应值）单调递增（或递减）的序列，新元素违反单调性时把栈顶弹出。它解决的问题有一条明确特征：**「对每个元素，找下一个/上一个更大/最小的位置」**。模板是：
 
 ```python
-# 单调栈模板：对每个位置 i，找右侧第一个严格更大的值
 def nextGreaterElement(nums):
+    """每个位置右侧第一个严格更大的值；没有记 -1。O(n)"""
     n = len(nums)
-    res = [-1] * n          # 默认答案：右侧没有更大
-    stack = []              # 存下标；对应值从栈底到栈顶单调递减
+    res = [-1] * n          # ① 默认答案：右侧没有更大
+    stack = []              # ② 存下标，值由底到顶递减
     for i, x in enumerate(nums):
-        # x 比栈顶大 → 栈顶等到了它的答案，弹栈结算
-        while stack and nums[stack[-1]] < x:
+        while stack and nums[stack[-1]] < x:  # ③ 栈顶等到了答案
             res[stack.pop()] = x
         stack.append(i)
-    return res              # 一直没被弹出的保持 -1
+    return res              # ④ 没被弹过的保持 -1
 ```
+
+![新元素进栈前，先把等不到更大值的栈顶结算掉](/diagrams/monotonic-stack.png)
+
+`nums = [2, 1, 2]` 走到 `i = 2` 时，栈顶那个 1 等到了 2 被划掉结算，0 号位置的 2 不严格小于 2 所以留在栈里——图里被划掉的是 1 那一格，不是 0 号的 2。
+
+**为什么弹掉就能永久出栈。** 设被弹出的是栈顶 j，新来的是 i。能弹它，说明 `nums[j] < nums[i]`；而 j 一直活到这一刻，说明 j 到 i 之间每个位置的值都 ≤ `nums[j]`，否则 j 在更早的一步就被弹走了。于是 i 正是 j 右侧第一个严格更大的位置，j 的答案当场确定，之后再来什么数都不会改写它。
 
 正确性的两个验证：
 
 - **等号的选择跟题设走**：「第一个严格更大」用 `<`；「第一个 ≥」放宽为 `<=`。这两处最常出错
 - **存下标而不是值**：结算要写回 `res` 的位置（或算两位置的边数差），只存值会丢掉位置信息
 
-复杂度 O(n)：外层 + 内层 while 可以放心地一起看——while 每次弹出的元素**永不回栈**，所以弹栈总数 ≤ 入栈总数 = n，两个循环合起来才是 O(n)，内层 while 不构成第二个 n。
+复杂度 O(n)：外层循环与内层 while 合起来算——每个下标最多入栈一次、出栈一次，弹栈总数 ≤ n，内层不构成第二个 n。
 
 `nums = [2, 1, 2]` 的演化（单一模板按 `<` 弹）：
 
@@ -131,10 +141,10 @@ i=0, x=2：栈空，2 进栈                    stack=[0]
 i=1, x=1：nums[0]=2 ≥ 1 不弹；1 进栈      stack=[0,1]
 i=2, x=2：弹 1（nums[1]=1 < 2），res[1]=2；
           0 号处 nums[0]=2 不严格大于 2，停；2 进栈  stack=[0,2]
-结尾 res = [2, 2, -1]——0 号从未被弹出，答案保持默认 -1
+结尾 res = [-1, 2, -1]——0 号从未被弹出，答案保持默认 -1
 ```
 
-- 题型分布：[496 下一个更大元素](https://leetcode.cn/problems/next-greater-element-i/)、[739 每日温度](../problems/leetcode/0739_daily_temperatures.md)（递减栈）、[84 柱状图中最大矩形](https://leetcode.cn/problems/largest-rectangle-in-histogram/)、[42 接雨水](https://leetcode.cn/problems/trapping-rain-water/)（递增栈）——「下一个更暖/更大/更矮」这一语义上风格的题都已覆盖
+- 题型分布：[496 下一个更大元素](https://leetcode.cn/problems/next-greater-element-i/)、[739 每日温度](../problems/leetcode/0739_daily_temperatures.md)（递减栈）、[84 柱状图中最大矩形](https://leetcode.cn/problems/largest-rectangle-in-histogram/)、[42 接雨水](https://leetcode.cn/problems/trapping-rain-water/)（递增栈）——这类「下一个更暖 / 更大 / 更矮」的题都在这一族里
 - 与「单调队列」是兄弟结构：单调栈负责「每个数的下一个更大」，单调队列负责「滑动窗口的最值」（见[队列](queue.md)单调队列一节）
 
 ## 易错点总结

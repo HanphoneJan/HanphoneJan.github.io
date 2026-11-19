@@ -90,7 +90,7 @@ export const INLINE_TRACER_PLACEMENT: Record<string, readonly Placement[]> = {
     {tracerId: 'lcs-table', title: '二维 DP 表：最长公共子序列'},
   ],
   'data-structures/array.md': [
-    {tracerId: 'lcs-table', title: '二维 DP 表：最长公共子序列'},
+    {tracerId: 'binary-search', title: '二分查找：区间如何收缩'},
   ],
   'data-structures/graph.md': [{tracerId: 'grid-bfs', title: '网格 BFS 最短路'}],
 };

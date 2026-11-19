@@ -3,7 +3,7 @@ title: 链表
 sidebar_position: 3
 category: 数据结构
 difficulty_range: [简单, 较难]
-last_updated: 2026-11-13
+last_updated: 2026-11-19
 ---
 
 # 链表
@@ -49,29 +49,39 @@ last_updated: 2026-11-13
 
 ```python
 class ListNode:
+    """单链表节点：只存值与后继引用，不记录下标或长度。构造 O(1)"""
+
     def __init__(self, val=0, next=None):
-        self.val = val
-        self.next = next
+        self.val = val    # ① 载荷，题面里的「节点值」
+        self.next = next  # ② 默认 None 即链尾；无 prev、无哨兵
 ```
 
-Python 里 `None` 就是空指针，所有判空都写 `if not p`。指向节点的变量持有的是引用，set 用不上、dict 做去重时通常也不可用——这是后续「哈希判重」要用 `id` 或集合存「见过的节点」的原因。
+Python 里 `None` 就是空指针，所有判空都写 `if not p`。指向节点的变量持有的是引用，赋值只搬引用、不复制节点。`ListNode` 没有定义 `__eq__`，默认按**对象身份**哈希和比较，所以节点可以直接塞进 `set` 当「见过的节点」（用 `id` 取出节点身份也行）——判环的哈希解法就是这么写的；反过来不能按 `val` 去重，两个不同节点完全可能持有相同的值。
 
 ## 技法一：dummy 哨兵节点
 
-**问题**：删除头节点要改的是「指向 `head` 的那个外部变量」，删除其余节点要改的是「前一个节点的 `next`」。两种情况在没有出门面时是两套分支，边界一多必漏。
+**问题**：删除头节点要改的是「指向 `head` 的那个外部变量」，删除其余节点要改的是「前一个节点的 `next`」。前者借不到任何前驱，两种情况于是成了两套分支，边界一多必漏。
 
 **做法**：先建一个假节点挂在真链头前面，操作完返回 `dummy.next`。于是所有节点（包括原来的头）都有了显式前驱，一套代码全覆盖。
 
 ```python
+class ListNode:
+    """单链表节点：与上文同一份定义，复制过来让本块能独立运行"""
+
+    def __init__(self, val=0, next=None):
+        self.val, self.next = val, next
+
+
 def removeElements(head, val):
-    dummy = ListNode(0, head)
-    cur = dummy
-    while cur.next:
+    """删除所有值为 val 的节点，返回新链头。O(n) 时间、O(1) 空间"""
+    dummy = ListNode(0, head)         # ① 假节点挂在真链头前，删头不再走特判分支
+    cur = dummy                       # ② cur 是「已确认保留段」的最后一个节点
+    while cur.next:                   # ③ 待判定的是 cur.next，不是 cur 本身
         if cur.next.val == val:
-            cur.next = cur.next.next   # 跳过 = 删除
+            cur.next = cur.next.next  # ④ 跳过它；cur 不动，接着判新的 cur.next
         else:
-            cur = cur.next
-    return dummy.next
+            cur = cur.next            # ⑤ 确认要留，才把 cur 挪过去
+    return dummy.next                 # ⑥ 真链头可能已被删掉，返回假头的后继
 ```
 
 凡涉及「可能修改头节点」的操作——删除、区间反转、K 个一组反转——一律先挂 dummy；代价只有 O(1) 空间。相关题：[203. 移除链表元素](https://leetcode.cn/problems/remove-linked-list-elements/)、[19. 删除倒数第 N 个](https://leetcode.cn/problems/remove-nth-node-from-end-of-list/)、[146. LRU 缓存](../problems/leetcode/0146_lru_cache.md)。
@@ -81,21 +91,29 @@ def removeElements(head, val):
 反转是链表操作的基本功，要点是**先存后改**：改掉 `cur.next` 之前必须把后半段记下来。
 
 ```python
+class ListNode:
+    """单链表节点：与上文同一份定义，复制过来让本块能独立运行"""
+
+    def __init__(self, val=0, next=None):
+        self.val, self.next = val, next
+
+
 def reverseList(head):
-    prev, cur = None, head
-    while cur:
-        nxt = cur.next        # 1. 先存后继，不然这一改就断链
-        cur.next = prev       # 2. 掉头指向已反转的前缀
-        prev = cur            # 3. prev 前进
-        cur = nxt             # 4. cur 前进到刚才存下的后继
-    return prev               # 循环结束时 prev 停在原尾节点 = 新链头
+    """反转单链表，返回新链头。O(n) 时间、O(1) 空间"""
+    prev, cur = None, head  # 起手：已反转段为空，未处理段是整条链
+    while cur:              # 未处理段走空才收工
+        nxt = cur.next      # ① 先存后继：② 一改 next 就找不回它
+        cur.next = prev     # ② 掉头，把 cur 接到已反转段前面
+        prev = cur          # ③ prev 前移，已反转段多一格
+        cur = nxt           # ④ cur 前移，未处理段少一格
+    return prev             # 收工时 prev 停在原尾节点 = 新链头
 ```
 
 不变量是循环开始时：`prev` 是 `cur` 之前的所有节点组成的已反转链头，`cur` 及其后仍保持原顺序。每次迭代把 `cur` 从未处理段搬进已反转段，未处理段逐个清空后 `cur = None`，返回 `prev`。`1 → 2 → 3` 的演化：
 
 ![三个指针的分工](/diagrams/linked-list-reverse.png)
 
-四步里最容易漏的是第 1 步。变形只改边界：反转一部分（92，dummy 定位 `left` 前驱、反转区间后接回）；K 个一组反转（25，每组套区间反转、不足 K 的尾巴保持原样）。相关题：[206](../problems/leetcode/0206_reverse_linked_list.md)、[92](https://leetcode.cn/problems/reverse-linked-list-ii/)、[25](../problems/leetcode/0025_reverse_nodes_in_k_group.md)。
+四步里最容易漏的是 ①：先存 `nxt` 再动 `next`，顺序反了后半段当场丢。变形只改边界：反转一部分（92，dummy 定位 `left` 前驱、反转区间后接回）；K 个一组反转（25，每组套区间反转、不足 K 的尾巴保持原样）。相关题：[206](../problems/leetcode/0206_reverse_linked_list.md)、[92](https://leetcode.cn/problems/reverse-linked-list-ii/)、[25](../problems/leetcode/0025_reverse_nodes_in_k_group.md)。
 
 ## 技法三：快慢指针
 
@@ -109,7 +127,7 @@ def reverseList(head):
 | 删倒数第 N 个 | fast 先走 n 步，再两根同步走 | fast 到尾时 slow 在倒数第 N+1 个（要删节点的前驱） |
 | 两链交点（160） | A 到头改走 B，B 到头改走 A | 两指针步数对齐，在交点会师 |
 
-142 的推导是这一族的样板，`a = k*c - b` 是全部关键：
+142 的推导是这一族的样板，`a = k*c - b` 是全部关键。符号先钉死：a、b、c 数的都是**边数**——a 是链头到入口要跨过几条 `next`，b 是入口到相遇点跨过几条，c 是一整圈的边数，都不是节点个数。只要进了环就再没有 `None`，fast 追 slow 只可能发生在环内，这正是推导能写成一个等式的前提：
 
 ```text
 设链头到环入口的边数 = a，入口到相遇点的边数 = b，环周长 = c。
@@ -121,24 +139,36 @@ fast 速度是 slow 的两倍 → a + b + k*c = 2(a + b)
 
 `a = k*c - b` 说明：从链头走 a 步，与从相遇点出发走 b 的补数（再绕整数圈）抵达**同一个终点**——环入口。于是两根 ×1 指针分别从链头与相遇点同步前进，重合处就是入口。
 
-判环也可以用哈希集合存「见过的节点」（O(n) 空间）：思路普适（无环假设不成立广义上都能用），快慢指针胜在 O(1) 空间。
+![快慢指针在环上相遇](/diagrams/linked-list-cycle.png)
+
+slow 走 a+b、fast 走 a+b+kc，相遇后从链头与相遇点各放一根 ×1 指针，重合处就是入口。
+
+判环也可以用哈希集合存「见过的节点」（O(n) 空间）：上面那条「按身份哈希」的性质正好派上用场，节点直接进 `set` 即可，不必再操心速度关系；代价是空间从 O(1) 涨到 O(n)。
 
 ## 技法四：合并（mergesort 的原子操作）
 
 合并两条有序链表（21）：沿两条链的链头取更小者接尾。**21 的对应题力扣口径是按值比较**，结尾把没比完的那条整段接上：
 
 ```python
+class ListNode:
+    """单链表节点：与上文同一份定义，复制过来让本块能独立运行"""
+
+    def __init__(self, val=0, next=None):
+        self.val, self.next = val, next
+
+
 def mergeTwoLists(l1, l2):
-    dummy = ListNode()
-    tail = dummy
-    while l1 and l2:
-        if l1.val <= l2.val:
+    """合并两条升序链表，返回新链头。O(m+n) 时间、O(1) 额外空间"""
+    dummy = ListNode()        # ① 假头：省掉「结果链第一个节点」的特判
+    tail = dummy              # ② tail 恒指向结果链尾，只往后长
+    while l1 and l2:          # ③ 一条走完就退出，剩下的整段照挂
+        if l1.val <= l2.val:  # ④ 取小者（相等取 l1 保稳定）；⑤ 下面先接后移
             tail.next, l1 = l1, l1.next
         else:
             tail.next, l2 = l2, l2.next
-        tail = tail.next
-    tail.next = l1 or l2      # 剩下的整段直接挂上
-    return dummy.next
+        tail = tail.next      # ⑥ 接完才前进，此时 tail 已是新结尾
+    tail.next = l1 or l2      # ⑦ 没比完的那条本身有序，一次挂完
+    return dummy.next         # ⑧ 假头的后继才是真链头
 ```
 
 `tail.next, l1 = l1, l1.next` 这种「先接后移」的元组赋值是约定俗成写法。K 条升序链表合并（23）两条两两归并是 O(kN)（k 条、总长 N）；K 个链头放进小顶堆（见[堆](heap.md)）每次弹全局最小是 O(N log k)，堆里放 `(节点值, 节点)` 元组即可比较。

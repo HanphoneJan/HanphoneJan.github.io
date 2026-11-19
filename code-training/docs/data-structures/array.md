@@ -3,7 +3,7 @@ title: 数组
 sidebar_position: 1
 category: 数据结构
 difficulty_range: [简单, 困难]
-last_updated: 2026-11-13
+last_updated: 2026-11-19
 ---
 
 # 数组
@@ -25,13 +25,6 @@ last_updated: 2026-11-13
 
 与链表的取舍见[链表](linked_list.md)的对比表，一句话概括：读多写少、按下标取 → 数组；频繁头插、长度不定 → 链表。
 
-Python 侧的两个实现细节经常被直接问：
-
-```python
-prefix = [0] * (n + 1)   # 提前知道规模时预分配，省掉扩容搬移
-# 前缀多用一位存「空的前缀」，省掉 l == 0 的特判
-```
-
 ## 结构剖面
 
 数组的全部特性都来自这张图：元素**紧挨着**放，下标只是「离起点几个格子」。
@@ -44,18 +37,46 @@ prefix = [0] * (n + 1)   # 提前知道规模时预分配，省掉扩容搬移
 
 Python 的 `list` 与 Java 的 `ArrayList` 都用「按比例放大」把这次搬移摊薄：单次扩容 O(n)，但两次扩容之间至少要追加近 n 次，均摊回 O(1)。两家的比例不同（CPython 约 1.125 倍另加常数，Java 1.5 倍），差别只落在内存占用上，不影响复杂度结论。
 
+## 二维数组：仍然是一维
+
+二维数组在内存里不是「一张表」，而是**按行首尾相接铺成的一条长数组**（行优先，row-major）：
+
+```text
+grid = [[1, 2, 3],
+        [4, 5, 6]]          内存里：1 2 3 4 5 6
+                            地址 = base + (r * cols + c) * 8
+```
+
+所以 `grid[r][c]` 是「先跳过 r 整行，再走 c 格」。两个直接后果：
+
+- **按行遍历比按列遍历快**：按行走是顺着内存，按列走每一步都跨一整行，缓存命中率差；
+- **Python 没有真正的二维数组**：`grid` 是「列表的列表」，外层存的是每行的引用。于是 `[[0] * cols] * rows` 复制的是**同一行的引用**，改 `grid[0][0]` 会连带改掉所有行。
+
+```python
+rows, cols = 3, 4
+
+# ① 正确：列表推导式逐行建新列表
+grid = [[0] * cols for _ in range(rows)]
+
+# ② 错误：外层复制同一行的引用
+bad = [[0] * cols] * rows
+bad[0][0] = 1          # 三行的第一列全变成 1
+```
+
+做题时二维网格（岛屿、迷宫、DP 表）的输入已经是「列表的列表」，不用自己建；需要自己开表时（visited、DP），一律用 ①。
+
 ## 技法一：快慢指针的原地压缩
 
 「不新开数组，把有效元素压到前缀」一类题（[27. 移除元素](https://leetcode.cn/problems/remove-element/)、[26. 删除有序数组重复项](https://leetcode.cn/problems/remove-duplicates-from-sorted-array/)、[283. 移动零](../problems/leetcode/0283_move_zeroes.md)）的公共写法：
 
 ```python
 def removeElement(nums, val):
-    slow = 0                          # [0, slow) 是已确认保留的前缀
+    slow = 0                          # ① [0, slow) 是已确认保留的前缀
     for fast in range(len(nums)):
         if nums[fast] != val:
-            nums[slow] = nums[fast]   # 有效元素写入前缀
+            nums[slow] = nums[fast]   # ② 有效元素写入前缀
             slow += 1
-    return slow                       # slow 即新长度
+    return slow                       # ③ slow 即新长度
 ```
 
 `fast` 是读指针、`slow` 是写指针，各自只朝一个方向走且互不回头。**有序去重（26）只多一个条件**：`fast` 位置的值与 `nums[slow - 1]` 不同才写入——有序性保证重复全连在一起，「和刚写进来的最后一个比」就是完备的判重。
@@ -70,11 +91,11 @@ def twoSumSorted(numbers, target):
     while left < right:
         s = numbers[left] + numbers[right]
         if s == target:
-            return [left + 1, right + 1]
+            return [left + 1, right + 1]   # ① 题目要 1-based 下标
         if s < target:
-            left += 1      # 和太小：left 右移才可能变大
+            left += 1                      # ② 和太小：left 右移才可能变大
         else:
-            right -= 1     # 和太大：right 左移才可能变小
+            right -= 1                     # ③ 和太大：right 左移才可能变小
 ```
 
 成立的前提不在「有两个指针」而在**可证明被排除的候选里没有答案**：有序前提下固定一端端点，另一端点越内越小（或越大），移动一次排除一列候选，总步数 O(n)。模板细节与证明见[双指针模式](../patterns/two_pointers.md)，需要重复值跳过时（15 三数之和）注意两处都要处理。
@@ -89,17 +110,19 @@ def twoSumSorted(numbers, target):
 | 查下界 lower_bound（35） | 左闭右开 `[l, r)` | `l == r` | 第一个 ≥ target 的位置 |
 | 查峰（[162](https://leetcode.cn/problems/find-peak-element/)） | 闭区间 | 相邻缩小 | 任一峰 |
 
+![左闭右开：left 左边全部小于 target，right 右边全部 ≥ target](/diagrams/binary-search-invariant.png)
+
 ```python
-# 左闭右开 lower_bound：第一个 >= target 的下标（全小于则返回 n）
 def lower_bound(nums, target):
-    left, right = 0, len(nums)   # right 是开区间那一侧
-    while left < right:
+    """第一个 >= target 的下标；全小于则返回 n。O(log n)"""
+    left, right = 0, len(nums)        # ① 区间 [left, right)，right 是开区间
+    while left < right:               # ② 区间非空才继续
         mid = (left + right) // 2
         if nums[mid] < target:
-            left = mid + 1       # mid 一定不是答案，划掉 mid 本身
+            left = mid + 1            # ③ mid 太小，答案在右半边，且 mid 可以扔掉
         else:
-            right = mid          # mid 可能是答案，只能划掉 mid 右侧
-    return left
+            right = mid               # ④ mid 可能是答案，只能扔掉 mid 右边
+    return left                       # ⑤ l == r，区间收拢到一点，就是答案
 ```
 
 不变式：终态前任意时刻 `[0, left)` 全部 `< target`，`[right, n)` 全部 `≥ target`；每轮未判定段严格缩短；`l == r` 时两块已判定段合拢，`left` 即答案。**写任何二分之前先把这两句承诺写在注释里**，符号选择、`mid ± 1`、返回值全部由它推出，不混用模板则不需要背。
@@ -111,11 +134,11 @@ def lower_bound(nums, target):
 **前缀和**把「静态数组的区间和查询」从 O(n) 压到 O(1)：
 
 ```python
-prefix = [0] * (n + 1)
+prefix = [0] * (n + 1)                 # ① 多开一位存「空的前缀」
 for i, x in enumerate(nums):
-    prefix[i + 1] = prefix[i] + x
+    prefix[i + 1] = prefix[i] + x      # ② prefix[i] = 前 i 个元素之和
 
-# 区间 [l, r]（含两端）的和 = 到 r 的前缀 − 到 l−1 的前缀
+# ③ 区间 [l, r]（含两端）的和 = 到 r 的前缀 − 到 l−1 的前缀
 range_sum = prefix[r + 1] - prefix[l]
 ```
 
@@ -125,11 +148,13 @@ range_sum = prefix[r + 1] - prefix[l]
 
 ```python
 diff = [0] * (n + 1)
-def add(l, r, x):          # 区间 [l, r] 整体 +x，记账 O(1)
-    diff[l] += x
-    diff[r + 1] -= x       # 越过 r 就停止生效
 
-# q 次记账之后，前缀和一次还原出每个位置的真实增量
+def add(l, r, x):
+    """区间 [l, r] 整体 +x，记账 O(1)"""
+    diff[l] += x
+    diff[r + 1] -= x       # ① 越过 r 就停止生效
+
+# ② q 次记账之后，前缀和一次还原出每个位置的真实增量
 for i in range(n):
     diff[i + 1] += diff[i]
 ```
@@ -143,27 +168,29 @@ for i in range(n):
 ```python
 def rotate(nums, k):
     n = len(nums)
-    k %= n               # k 可以大于 n
+    k %= n                 # ① k 可以大于 n
     def rev(lo, hi):
         while lo < hi:
             nums[lo], nums[hi] = nums[hi], nums[lo]
             lo += 1; hi -= 1
-    rev(0, n - 1)
-    rev(0, k - 1)
-    rev(k, n - 1)
+    rev(0, n - 1)          # ② 整体反转
+    rev(0, k - 1)          # ③ 前 k 位反转回来
+    rev(k, n - 1)          # ④ 其余反转回来
 ```
 
-`[1,2,3,4,5,6,7]`、`k = 3`：整体反转得 `[7,6,5,4,3,2,1]`，反转前 3 位得 `[5,6,7,4,3,2,1]`，反转后 4 位得 `[5,6,7,1,2,3,4]`。O(n) 时间 O(1) 空间。螺旋遍历（54）用上/下/左/右四个边界轮流收紧；矩阵顺时针旋转 90° 先转置再逐行反转。
+`[1,2,3,4,5,6,7]`、`k = 3`：整体反转得 `[7,6,5,4,3,2,1]`，反转前 3 位得 `[5,6,7,4,3,2,1]`，反转后 4 位得 `[5,6,7,1,2,3,4]`。O(n) 时间 O(1) 空间。
+
+螺旋遍历（54）用上/下/左/右四个边界轮流收紧：每走完一条边就把那条边界的游标内移，内移后若上边界超过下边界就结束。矩阵顺时针旋转 90° 先转置再逐行反转；转置要 `grid[i][j]` 与 `grid[j][i]` 对换，只扫上三角，否则换两次等于没换。
 
 ## 易错点总结
 
 - 对未排序数组直接二分——单调性是前提，写代码前确认或先排序（并说明代价）
-- 二分的 `<` / `<=` 拿不准：先写「区间承诺」注释，再从它推出比较符；不同完全对齐形态的模板不要混抄
+- 二分的 `<` / `<=` 拿不准：先写「区间承诺」注释，再从它推出比较符；不同区间口径的模板不要混抄
 - C++/Java 里 `mid = left + (right - left) / 2` 防溢出（Python 无此顾虑，但面试要求会答）
 - 前缀和忘「多开一位」，要么越界、要么 `l == 0` 特判漏写
-- 差分记完账忘了做一次前缀和还原——替「增量」当「值」输出
+- 差分记完账忘了做一次前缀和还原——把「增量」当「值」输出
 - 旋转忘 `k %= n`，k 大于数组长度时错序
-- 二维数组用 `[[0]*n]*n` 初始化：外层是同一行的引用，见[图](graph.md)的建图一节
+- 二维数组用 `[[0]*n]*n` 初始化：外层是同一行的引用，改一格等于改一列（[图](graph.md)的建图一节也是同一个坑）
 
 ## 相关题目
 
@@ -177,10 +204,11 @@ def rotate(nums, k):
 
 - [链表](linked_list.md)——同一接口的另一实现，快慢指针在数组上是「读写头分离」
 - [二分查找模式](../patterns/search.md)、[双指针模式](../patterns/two_pointers.md)、[滑动窗口模式](../patterns/sliding_window.md)
+- [树](tree.md)——前缀和会变时升级到树状数组 / 线段树
 
 ---
 
 ## 算法可视化
 
-下面的播放器可以**改输入后重跑**：把两串换成你自己的，逐帧观察
-二维 DP 表每格如何填写——一维数组的题在「前缀长度」两个轴上铺开。
+下面的播放器可以**改输入后重跑**：把数组换成你自己的，逐帧观察
+`left / right` 如何收缩、`mid` 每轮落在哪一格，以及「答案在哪一侧」是怎么被区间承诺定下来的。
