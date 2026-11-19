@@ -25,6 +25,8 @@ pnpm start            # Dev server on port 3001（vuepress dev .）
 pnpm build            # Production build -> .vuepress/dist（带 flock，单实例串行）
 pnpm serve            # Preview the build on port 3000
 pnpm typecheck        # tsc --noEmit（只检查 src/，strict 关，与迁移前一致）
+pnpm check:c          # 《Coding练习--C》的全部 C 代码块编译 + 带 main 的块运行
+pnpm check:java       # 《Coding练习--Java》的全部 Java 代码块 javac + 运行
 pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 pnpm sync:pyodide     # Download the 12.9MB Pyodide runtime into static/pyodide/
 pnpm test:offline     # 离线包口径（板块归类 + 路由表解析 + dist 覆盖率）
