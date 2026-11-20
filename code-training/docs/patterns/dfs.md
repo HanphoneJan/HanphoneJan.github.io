@@ -468,7 +468,7 @@ def dfs(i, j):
 - [回溯模式](backtracking.md)：DFS + 撤销选择。
 - [递归](recursion.md)：递归三要素与调用栈。
 - [动态规划](dynamic_programming.md)：记忆化搜索是 DFS 与 DP 的交汇点。
-- [树](../data-structures/tree.md)、[二叉树](../data-structures/binary_tree.md)、[图](../data-structures/graph.md)。
+- [树](../data-structures/tree.md)、[图](../data-structures/graph.md)。
 
 ## 算法可视化
 

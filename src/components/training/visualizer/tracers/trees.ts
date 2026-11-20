@@ -2,7 +2,7 @@
  * 树与回溯的 tracer。
  *
  * 覆盖 `patterns/dfs.md`、`patterns/backtracking.md`、
- * `data-structures/binary_tree.md`、`data-structures/tree.md`。
+ * `data-structures/tree.md`。
  *
  * 录制式管线已经有树视图（15 篇题解），但那些题的**树是给定的**；
  * 这里演示的是树上的**算法**：访问顺序、以及回溯时怎么退回上一层。

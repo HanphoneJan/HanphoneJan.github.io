@@ -50,7 +50,7 @@ const LIMIT = (() => {
 })();
 
 /**
- * 内嵌手写 tracer 的文档：算法模式 9 篇 + 数据结构 8 篇（与 `inlinePlacement.ts` 同步）。
+ * 内嵌手写 tracer 的文档：算法模式 9 篇 + 数据结构 7 篇（与 `inlinePlacement.ts` 同步）。
  *
  * 这批要验的东西与录制式不同：那边验的是「轨迹 fetch 回来、adapter 在浏览器里
  * 跑通」，这边验的是「懒加载的 `tracers/index.ts` 真的到了、播放器挂上了、
@@ -109,14 +109,9 @@ const TRACER_PAGES = [
   {path: '/code-training/data-structures/hash_table', name: '哈希表', count: 1},
   {path: '/code-training/data-structures/linked_list', name: '链表', count: 1},
   {
-    path: '/code-training/data-structures/stack_queue_heap_unionfind',
+    path: '/code-training/data-structures/unionfind',
     name: '并查集',
     count: 1,
-  },
-  {
-    path: '/code-training/data-structures/binary_tree',
-    name: '二叉树',
-    count: 1
   },
   {path: '/code-training/data-structures/tree', name: '树', count: 1},
   {

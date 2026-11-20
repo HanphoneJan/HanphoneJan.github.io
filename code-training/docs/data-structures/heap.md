@@ -287,5 +287,5 @@ def heap_sort(arr):
 ## 相关知识点
 
 - [栈](stack.md)、[队列](queue.md)——同接口的线性序；优先队列是堆的使用者视角
-- [完全二叉树](binary_tree.md)——堆的形状基础
+- [树](tree.md)——完全二叉树是堆的形状基础
 - [归并 / 快排](../patterns/sorting.md)——堆排序与其它 O(n log n) 的对照
