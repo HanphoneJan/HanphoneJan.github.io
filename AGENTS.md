@@ -31,6 +31,7 @@ pnpm sync:ml          # Sync ML notebooks (ipynb -> md via Quarto)
 pnpm sync:pyodide     # Download the 12.9MB Pyodide runtime into static/pyodide/
 pnpm test:offline     # 离线包口径（板块归类 + 路由表解析 + dist 覆盖率）
 pnpm test:difficulty  # 难度口径（8 种写法归一 + 全库覆盖率 + 徽标接线契约）
+pnpm test:markdown    # 尖括号只转义一次（页面不出现 `&lt;` 字面量）
 pnpm solutions:fetch  # 抓力扣某题的前几篇高赞题解（写题解前读，不照抄）
 ```
 
@@ -575,6 +576,10 @@ Microsoft YaHei / Noto Sans CJK SC），定义在 `src/css/custom.css` 顶部。
 Minimal Python project (`pyproject.toml`, `uv.lock`) with numpy dependency. The `main.py` is a placeholder. Managed with `uv`.
 
 ## Development experience & known pitfalls
+
+### 尖括号只转义一次（`.vuepress/markdown/escape-stray-html.ts`）
+
+正文里的 `<id>`、`<class 'int'>`、`左 < 根 < 右` 必须转成 `&lt;`，否则 VuePress 会把它们当 Vue 标签编译。**只在 `html_inline` token 上原地转义，并保持 `html_inline`**；`text` token 一个字都别动 —— markdown-it 的 text 渲染器自己会转义，提前塞 `&lt;` 会被再转一次（`&amp;lt;`），页面上显示成字面量 `&lt;`。迁移后 102 篇文档踩过这个坑（`左 < 根 < 右`、表格里的 `< 2s`），构建与日志全程正常，只能靠产物发现。`pnpm test:markdown` 钉住这件事。
 
 ### Typecheck (`pnpm typecheck`)
 

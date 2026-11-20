@@ -18,6 +18,13 @@ import type { Markdown } from 'vuepress/markdown'
  * 判据是「标签名在白名单里」。白名单之外的（`<username>`、`<P1>`、
  * `<class>`、`<id>`）全部转义。后续要注入的 Vue 组件也在白名单里，
  * 免得被自己的规则误伤。
+ *
+ * **转义只能做一次，而且只对 `html_inline` 做。** `html_inline` 的
+ * content 原样进 HTML，写 `&lt;` 就输出 `&lt;`；而 `text` token 会被
+ * markdown-it 的 text 渲染器再转义一遍（`&` -> `&amp;`），提前塞 `&lt;`
+ * 的结果是页面上显示字面量 `&lt;`（迁移后 102 篇文档踩过：
+ * `左 < 根 < 右`、表格里的 `< 2s`、`/scenarios/<id>/`）。text 里的裸 `<`
+ * 交给渲染器自己转义即可，不需要这一层。改完跑 `pnpm test:markdown`。
  */
 const ALLOWED_TAGS = new Set([
   // 结构
@@ -67,16 +74,9 @@ export function escapeStrayHtmlPlugin(md: Markdown): void {
     for (const token of state.tokens) {
       if (token.type !== 'inline' || !token.children) continue
       for (const child of token.children) {
-        if (child.type === 'text') {
-          // markdown-it 已经把「像标签」的部分切成 html_inline，
-          // 这里兜住剩下的裸 `<`
-          if (child.content.includes('<')) {
-            child.content = child.content.replace(/</g, '&lt;')
-          }
-        } else if (child.type === 'html_inline' && !isAllowed(child.content)) {
-          child.content = escapeHtml(child.content)
-          child.type = 'text'
-        }
+        // 保持 html_inline 类型：改回 text 会被 text 渲染器二次转义
+        if (child.type !== 'html_inline' || isAllowed(child.content)) continue
+        child.content = escapeHtml(child.content)
       }
     }
   })
