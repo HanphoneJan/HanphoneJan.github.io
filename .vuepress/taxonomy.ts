@@ -66,7 +66,6 @@ const DATA_STRUCTURE_TAGS: Record<string, string[]> = {
   linked_list: ['链表'],
   string: ['字符串'],
   tree: ['树'],
-  binary_tree: ['二叉树'],
   graph: ['图'],
   hash_table: ['哈希表'],
   stack: ['栈'],

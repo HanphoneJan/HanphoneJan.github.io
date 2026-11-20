@@ -80,9 +80,6 @@ export const INLINE_TRACER_PLACEMENT: Record<string, readonly Placement[]> = {
   'data-structures/unionfind.md': [
     {tracerId: 'union-find', title: '并查集：路径压缩 + 按大小合并'},
   ],
-  'data-structures/binary_tree.md': [
-    {tracerId: 'tree-dfs', title: '树的 DFS 遍历（前序 / 中序 / 后序）'},
-  ],
   'data-structures/tree.md': [
     {tracerId: 'tree-dfs', title: '树的 DFS 遍历（前序 / 中序 / 后序）'},
   ],

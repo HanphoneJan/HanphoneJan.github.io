@@ -536,7 +536,7 @@ def zero_one_bfs(graph, start):
 
 - [DFS 模式](dfs.md)：同样遍历整张图，但用栈/递归，适合枚举路径与子树信息。
 - [图](../data-structures/graph.md)：邻接表、连通分量、拓扑排序的完整背景。
-- [树](../data-structures/tree.md)、[二叉树](../data-structures/binary_tree.md)：层序遍历的对象。
+- [树](../data-structures/tree.md)：层序遍历的对象。
 - [动态规划](dynamic_programming.md)：当 BFS 的状态可以「按层递推」时，往往能写成 DP。
 
 ## 算法可视化

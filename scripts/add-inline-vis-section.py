@@ -69,16 +69,13 @@ PLACEMENT = {
         '反转只需要 prev / cur / next 三个指针，关键是**先记住 next 再掉头**。'
         '画面上已反转的那一段一格一格长出来。'
     ),
-    'data-structures/stack_queue_heap_unionfind.md': (
+    'data-structures/unionfind.md': (
         '路径压缩与按大小合并一起做，均摊复杂度才是 O(α(n))。'
         '画面上能看到查找时经过的每个节点都直接指向祖父，树越用越扁。'
     ),
-    'data-structures/binary_tree.md': (
-        '三种遍历只差「访问根」的位置。空槽位用虚线小点画出来 —— '
-        '它们是「这里没有孩子」，不是「这里看不见」。'
-    ),
     'data-structures/tree.md': (
-        'n 叉树与二叉树是同一套 DFS，差别只在「有几个孩子」这一项。'
+        '三种遍历只差「访问根」的位置；空槽位用虚线小点画出来 —— '
+        '它们是「这里没有孩子」，不是「这里看不见」。'
     ),
     'data-structures/string.md': (
         '最长公共子序列的表格：行是 a 的前缀、列是 b 的前缀，'

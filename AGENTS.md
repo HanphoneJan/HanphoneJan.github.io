@@ -117,11 +117,11 @@ GitHub Pages 兜住（`X.html` 优先于同名目录）。规则写在 `paths.ts
 **数据结构与算法模式两个目录的顺序是写死的学习路径，不是标题序。**
 `code-training/docs/data-structures/*.md` 与 `code-training/docs/patterns/*.md`
 没有 `_category_.json` 可排，缺省的 `9999` + 标题排序会按拼音排成「并查集、堆、
-队列、二叉树…」—— 那是词典序，不是给人读的顺序。所以每篇都写了
+队列、树…」—— 那是词典序，不是给人读的顺序。所以每篇都写了
 `sidebar_position`：
 
-- 数据结构：数组 → 字符串 → 链表 → 栈 → 队列 → 哈希表 → 树 → 二叉树 →
-  堆 → 图 → 并查集（线性表 → 查找结构 → 树族 → 图 → 并查集）；
+- 数据结构：数组 → 字符串 → 链表 → 栈 → 队列 → 哈希表 → 树 → 堆 → 图 →
+  并查集（线性表 → 查找结构 → 树族 → 图 → 并查集；二叉树并进「树」那一篇）；
 - 算法模式：递归 → 双指针 → 滑动窗口 → 哈希映射 → 查找 → 排序 → DFS →
   BFS → 回溯 → 贪心 → 动态规划（递归打底 → 线性扫描 → 有序 → 搜索 → 决策）。
 
@@ -129,7 +129,7 @@ GitHub Pages 兜住（`X.html` 优先于同名目录）。规则写在 `paths.ts
 它会安静地掉到分组末尾**，没有别的东西会报错，所以这条断言是必要的。
 `.vuepress/plugins/catalogs.ts` 的 `sectionPage`（`/code-training/category/数据结构`
 这些板块目录页）也按同一个字段排，不要在那里退回标题序 —— 否则侧边栏是
-「数组 → 字符串 → 链表」、目录页是「二叉树 → 图 → 堆」，两边对不上。
+「数组 → 字符串 → 链表」、目录页是「图 → 堆 → 树」，两边对不上。
 
 ### 难度（题解页那一行 `.page-info` 里的一项）
 
@@ -465,7 +465,7 @@ React root 里：
 - **自测题库** (`static/quiz/bank.json`): 主动回忆题，加在题解正文末尾。`plugins/self-test/index.ts` 只把「哪些题解有题」的清单放进 globalData，`src/theme/DocItem/Layout/index.tsx`（已 swizzle）在正文末尾渲染 `<SelfTest>`，题目数据由组件在用户点开时 fetch。**题解 md 一行都不用改** —— 题库是唯一事实来源。详见「自测题库」小节。
 - **知识图谱（题解 → 算法模式）** (`plugins/pattern-graph/index.ts`): 题解 frontmatter 的 `patterns` 是「题解 → 算法模式文档」的边，由 `scripts/gen-patterns.js`（`pnpm patterns:gen`）从 `tags` 机械推导（映射表在脚本里，`.agents/skills/leetcode-processor/SKILL.md` 有一份同步的）。插件在 `allContentLoaded` 里用 docs 插件给出的 `source`/`permalink`/`frontMatter` 建**反向索引**（pattern 文档 → 题目列表），只把标题/链接/难度发进 globalData；`src/components/training/pattern-graph/` 由已 swizzle 的 `DocItem/Layout` 在算法模式页末尾渲染「相关题目」，**md 一行都不用改**。改了题解 `tags` 后跑一次 `pnpm patterns:gen`。详见「知识图谱」小节。
 - **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量 + 递归深度落成 `static/traces/*.json`（进 git）；`plugins/vis-traces` 在构建期把轨迹过一遍八个 adapter（`visualizer/adapters/`：list/tree/stack/grid/array-scan/aux-table/string/dp-counter）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `MDXComponents`（`src/theme/MDXComponents.tsx`）把 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`）接到 **`## 完整代码实现` 那一节的标题下面**，展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 182 篇题解里 171 篇录制成功、167 篇有可视化（录制产物的 98%），剩下 4 篇在页面上显式写「本题无可视化步骤」。详见「算法可视化」小节。
-- **算法可视化（手写 tracer，内嵌模式/数据结构文档）**: `src/components/training/visualizer/tracers/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。放置表在 `visualizer/inlinePlacement.ts`，**独立页已删除**（16 个 tracer 覆盖 17 篇文档）。
+- **算法可视化（手写 tracer，内嵌模式/数据结构文档）**: `src/components/training/visualizer/tracers/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。放置表在 `visualizer/inlinePlacement.ts`，**独立页已删除**（16 个 tracer 覆盖 16 篇文档）。
 - **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测与手写 tracer 两处都用它跳转（录制式可视化不跳转，它就长在那篇题解里）。
 - **静态重定向** (`plugins/static-redirects/index.ts`): 页面搬家后 `postBuild` 写一个 `<meta refresh>` HTML，保住已上线的旧地址。详见「板块根路径与旧地址」。
 
@@ -709,10 +709,10 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 |---|---|---|
 | 入口 | `code-training/docs/problems/**/*.md` | `patterns/*.md`（放置表 `visualizer/inlinePlacement.ts`） |
 | 代码 | `visualizer/recorder/` + `visualizer/adapters/` | `visualizer/tracers/` |
-| 覆盖 | 每道能录制的题（**171/182 录制成功，167 篇适配 = 92%**） | 16 个算法模式，17 篇模式/数据结构文档 |
+| 覆盖 | 每道能录制的题（**171/182 录制成功，167 篇适配 = 92%**） | 16 个算法模式，16 篇模式/数据结构文档 |
 | 产出 | 逐题，零手写 | 每个算法手写 30~60 行 |
 | 视图 | 数组/链表/树/网格/栈/DP/字符/字典八种 | 数组 / 树 / 网格 / DP 表格 |
-| 单测 | `pnpm test:adapters`（2310 项） | `pnpm test:tracers`（263 项） |
+| 单测 | `pnpm test:adapters`（2310 项） | `pnpm test:tracers`（251 项） |
 
 **为什么要有录制这条路**：手写 tracer 覆盖不了 126 篇题解，而且手写的帧
 **会骗人** —— 算法写错了动画照样流畅跑完，读者反而更确信自己错了。
@@ -1265,7 +1265,7 @@ JS 里「字符串结尾」要写 `$(?![\s\S])`。凡是照着 Python 正则搬�
     所以 `#visualizer` / `#vis-*` / `#selftest` 这几个 React 生成的锚点
     没法单独放过。实测它们在产物里都真实存在，警告保持默认的 `warn`。）
 
-**`--tracers` 模式**验的是内嵌手写 tracer 的那 19 篇文档（94 项）：折叠壳数量对不对、
+**`--tracers` 模式**验的是内嵌手写 tracer 的那 16 篇文档（82 项）：折叠壳数量对不对、
 懒加载的 chunk 到没到（放置表 id 拼错时页面上一片空白）、画面画出了东西、
 单步有效。CSS module 的类名是哈希过的，所以格子一律按 `data-testid` 查：
 `cell` / `grid > *` / `tree-node` / `aux-array > *` / `dp-table td` ——
@@ -1286,7 +1286,7 @@ JS 里「字符串结尾」要写 `$(?![\s\S])`。凡是照着 Python 正则搬�
 **独立页 `/code-training/visualizer` 已删除**，tracer 全部搬进讲它们的那篇文档
 （放置表 `visualizer/inlinePlacement.ts`）：
 
-**16 个 tracer 覆盖 17 篇文档**（模式 9 + 数据结构 8 = 全部）：
+**16 个 tracer 覆盖 16 篇文档**（模式 9 + 数据结构 7 = 全部）：
 
 | 文档 | 内嵌 |
 |---|---|
@@ -1302,7 +1302,7 @@ JS 里「字符串结尾」要写 `$(?![\s\S])`。凡是照着 Python 正则搬�
 | `data-structures/hash_table.md` | 哈希表：就地统计出现次数 |
 | `data-structures/linked_list.md` | 链表反转：三个指针 |
 | `data-structures/unionfind.md` | 并查集：路径压缩 + 按大小合并 |
-| `data-structures/binary_tree.md`、`tree.md` | 树的 DFS 遍历 |
+| `data-structures/tree.md` | 树的 DFS 遍历 |
 | `data-structures/string.md`、`array.md` | LCS（二维 DP 表） |
 | `data-structures/graph.md` | 网格 BFS |
 
@@ -1338,8 +1338,8 @@ JSX，但那是 220 多篇文档的解析方式，里面还有大段含 `{` 与 
 trace 函数，白送一整套播放/暂停/单步/回退/调速/换输入/源码高亮。
 
 ```bash
-pnpm test:tracers          # 263 项：算法结果与参考实现对拍 + 放置表完整性
-node scripts/check-vis.js --tracers   # 94 项：19 篇文档的播放器在浏览器里真能跑
+pnpm test:tracers          # 251 项：算法结果与参考实现对拍 + 放置表完整性
+node scripts/check-vis.js --tracers   # 82 项：16 篇文档的播放器在浏览器里真能跑
 ```
 
 **这个单测不是可选项。** tracer 的 `run()` 有两类高危 bug：

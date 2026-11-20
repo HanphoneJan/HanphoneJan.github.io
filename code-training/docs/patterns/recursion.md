@@ -419,4 +419,4 @@ sys.setrecursionlimit(100000)
 - [回溯](backtracking.md)：递归 + 撤销选择。
 - [动态规划](dynamic_programming.md)：记忆化搜索与递推。
 - [排序](sorting.md)：归并排序与快速排序都是分治递归。
-- [树](../data-structures/tree.md)、[二叉树](../data-structures/binary_tree.md)。
+- [树](../data-structures/tree.md)。
