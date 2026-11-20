@@ -3,14 +3,14 @@ title: 并查集
 sidebar_position: 11
 category: 数据结构
 difficulty_range: [中等, 较难]
-last_updated: 2026-11-19
+last_updated: 2026-11-20
 ---
 
-# 并查集（Union-Find）
+# 并查集
 
 ## 定义
 
-并查集维护一个**不相交集合的划分**：n 个元素初始各自成集，支持合并两个集合，并回答「两个元素是否同集」。它还有一个别名：不相交集合数据结构（disjoint-set data structure）。
+并查集（union-find）维护一个**不相交集合的划分**：n 个元素初始各自成集，支持合并两个集合，并回答「两个元素是否同集」。它还有一个别名：不相交集合数据结构（disjoint-set data structure）。
 
 实现用「森林」表示集合：每个元素持有父指针，每个集合里选一个元素作**代表元（representative）**——它的父指针指向自己，自成一个环，其余元素沿父指针逐级向上都能到达它。结构只有一条不变量：
 
@@ -205,11 +205,11 @@ def findRedundantConnection(edges: list[list[int]]) -> list[int]:
     return ans                          # ⑤ 题目保证唯一，最后一条即答案
 ```
 
-无向图判环最省事的写法就是这一手：merge 的 `False` 直接当环信号。有向图判环走另一路（DFS 三色标记或拓扑排序），见 [patterns/dfs.md](../patterns/dfs.md)、[patterns/bfs.md](../patterns/bfs.md)。
+无向图判环最省事的写法就是这一手：merge 的 `False` 直接当环信号。有向图判环走另一路（DFS 三色标记或拓扑排序），见[深度优先搜索](../patterns/dfs.md)、[广度优先搜索](../patterns/bfs.md)。
 
 ## 题型三：Kruskal 最小生成树
 
-按边权从小到大扫一遍，**能 merge 的才收**（收得下 = 两端恰好分属两个连通块）；收满 n−1 条即得 MST。贪心成立的依据：考虑剩下可用边里最便宜的 `e`，其两端要么已连通（再收只是添一圈），要么分属两块（不收也不亏，连通它们迟早要花更高代价）——单条边的两种结局都与最优解一致。
+按边权从小到大扫一遍，**能 merge 的才收**（收得下 = 两端恰好分属两个连通块）；收满 n−1 条即得最小生成树（minimum spanning tree，MST）。贪心成立的依据：考虑剩下可用边里最便宜的 `e`，其两端要么已连通（再收只是添一圈），要么分属两块（不收也不亏，连通它们迟早要花更高代价）——单条边的两种结局都与最优解一致。
 
 ```python
 import math
@@ -334,7 +334,7 @@ query(c, a)：c 已是根，weight[c] = 1 → 1 / 6
 
 - [图](graph.md)——连通块、最小生成树的全图视角
 - [树](tree.md)——父指针表示法的出处
-- [patterns/bfs.md](../patterns/bfs.md)、[patterns/dfs.md](../patterns/dfs.md)——无向连通、有向判环
+- [广度优先搜索](../patterns/bfs.md)、[深度优先搜索](../patterns/dfs.md)——无向连通、有向判环
 
 ---
 

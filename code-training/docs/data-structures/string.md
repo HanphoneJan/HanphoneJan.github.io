@@ -3,7 +3,7 @@ title: 字符串
 sidebar_position: 2
 category: 数据结构
 difficulty_range: [简单, 中等]
-last_updated: 2026-11-19
+last_updated: 2026-11-20
 ---
 
 # 字符串
@@ -82,11 +82,11 @@ def reverseString(s):
 
 回文验证（125）：跳过非字母数字、统一小写之后，用同款双指针逐位比较。
 
-回文子串计数（647）的稳解是**中心扩展**：以每个字符为候选中心，向两侧扩展直到字符不再相等，途经的每个半径都是一个回文；长度为奇/偶的中心分别取在字符处与两个字符之间，共 2n−1 个。每次扩展最多走 O(n) 层，总 O(n²)——比 DP 少一维、比 Manacher 简单，不写 KMP 时就是这么答。
+回文子串计数（647）的稳解是**中心扩展**：以每个字符为候选中心，向两侧扩展直到字符不再相等，途经的每个半径都是一个回文；长度为奇/偶的中心分别取在字符处与两个字符之间，共 2n−1 个。每次扩展最多走 O(n) 层，总 O(n²)——比 DP 少一维，也比 Manacher 算法（线性时间求回文半径）好写；不要求线性时间时，中心扩展就是标准答案。
 
 ## 题型二：滑动窗口找子串
 
-「找包含/不含某些字符的最短或最长连续子串」是一套模板换约束（[76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/)、[3 无重复最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)、438 异位词），见 [patterns/sliding_window.md](../patterns/sliding_window.md)。最小覆盖子串的完整实现即「右针扩张、欠账计数、左针收缩」三件事：
+「找包含/不含某些字符的最短或最长连续子串」是一套模板换约束（[76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/)、[3 无重复最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)、438 异位词），见[滑动窗口模式](../patterns/sliding_window.md)。最小覆盖子串的完整实现即「右针扩张、欠账计数、左针收缩」三件事：
 
 ```python
 from collections import Counter
@@ -115,7 +115,7 @@ def minWindow(s: str, t: str) -> str:
 
 这题的变量语义可以背下来：`need` 记缺口（负 = 盈余）、`missing` 记总缺口、回到 0 触发收缩。窗口不变量是「入右针、若已齐则能收多紧收多紧」，答案在每次「齐」的极小窗口处取。
 
-## 题型三：KMP（面试要能讲清，能手写 next）
+## 题型三：KMP（Knuth-Morris-Pratt，面试要能讲清、能手写 next）
 
 子串查找的最优解是 O(n + m)。暴力的代价在失配之后：主串回退到「起点 + 1」、模式串归零，已经比过的字符又要再比一遍。KMP 的洞见是**失配时，已匹配的那一段自己就包含可复用的自匹配信息**——这段前缀同时是模式串的前缀和后缀，按 `next` 直接挪过去即可，主串指针不必回退。
 
