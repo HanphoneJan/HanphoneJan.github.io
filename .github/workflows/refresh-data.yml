@@ -118,6 +118,11 @@ jobs:
           fi
           pnpm test:offline
 
+      - name: Verify stray-html escaping
+        # 尖括号被转义两次时构建照样成功、日志一切正常，页面上只是把
+        # `左 < 根 < 右` 显示成 `&lt;`。`pnpm test:markdown` 钉住「只转义一次」。
+        run: pnpm test:markdown
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
