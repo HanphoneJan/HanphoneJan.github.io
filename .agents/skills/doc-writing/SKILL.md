@@ -20,6 +20,12 @@ description: 为一个代码库写或重写项目文档时使用：先由一个 
    **范文按文体分组，先选文体再动笔**（`reference/` 参考手册、`reasoning/` 机制与取舍、`tutorial/` 教程）。写项目文档时只读 `reference/` 与 `reasoning/`；`tutorial/` 的问答体一旦被当成通用范文，写出来的设计文档会通篇是判断句和短句断言。换文体就换范文组，提示词不动。
 4. **默认读者不知道这个项目。** 项目内的类名、表名、变量名、实例 id、配置键，第一次出现必须有一句解释或指向术语表；不能先用了再解释。A2A、JSON-RPC、SSE 这类通用协议名第一次出现要展开一次；HTTP、JSON 这种可以假设读者知道。每一节的第一句要接上一节的问题，不写孤立的条目。
 
+## 压缩不等于解释
+
+表格单元格能装下名字，装不下机制。把「整篇前向，按 span 池化」放进一格，读者会自己补默认值——补出来的多半是平均池化，而实现取的是 span 首个 token。压缩不只是省略，是让人用一个错的默认值继续往下读。
+
+机制名第一次出现时，写清三件事：作用对象、计算方式、失效时看到什么。三件事写不进一句话，说明它该占一段，不该占一格。
+
 ## 流程
 
 ### 1. 建项目模型（最重要的一步）
@@ -110,12 +116,13 @@ python3 .agents/skills/doc-writing/scripts/check_voice.py <稿子或目录>
 ### 4. 核对
 
 ```bash
+python3 .agents/skills/doc-writing/scripts/check_prose.py docs/项目/<项目名>
 python3 .agents/skills/doc-writing/scripts/check_rewrite.py <原文> <改写稿>
 # 或整批
 python3 .agents/skills/doc-writing/scripts/check_rewrite.py --dir <原文目录> <改写目录>
 ```
 
-机械检查只看数字、行内代码、链接是否丢；标题/表格/代码块数量只报告。机械通过后再做代码核对，见 `references/verification.md`。
+`check_prose.py` 有通过线：正文里点不动的编号引用是硬错误，元话语只报告；标题带不带编号不检查。`check_rewrite.py` 只看数字、行内代码、链接是否丢；标题/表格/代码块数量只报告。把节号引用改成小节标题后，`check_rewrite.py` 会把那些数字报成「少了数字」，按 `check_prose.py` 的规则忽略。机械通过后再做代码核对，见 `references/verification.md`。
 
 ### 5. 应用
 
@@ -134,7 +141,7 @@ python3 .agents/skills/doc-writing/scripts/check_rewrite.py --dir <原文目录>
 
 **可以改**
 
-- 标题文字，去编号。
+- 标题文字。二级、三级标题用名词短语；编号可留可去，`## 7. 降级清单` 不用改。
 - 拆段、并段、改句式、用「你/我」、关键结论和数字加粗。
 - 删「本文」「本节」「这里不重复」「详见」。
 - **删判决句**：替读者下的结论（「这条约束比……重要」「这不是 bug」「这是明说的取舍」）。删完读者仍能得出同样的结论，就说明它本来就多余。
@@ -144,6 +151,9 @@ python3 .agents/skills/doc-writing/scripts/check_rewrite.py --dir <原文目录>
 **不可以**
 
 - 删节、删事实、新增事实、改数字、改代码路径、改结论强度。
+- 正文用读者点不动的编号指路（`§7`、`3.1`、`第 7 节`）。写小节标题（`《检索与问答》的「降级清单」`），或给一个可点击的跳转链接；链接文字里写编号可以，因为它能点。
+- 用表格单元格承载机制或因果。表格放可对照的数据与取值；一个机制为什么这样做、代价是什么，写成句子。单元格里的名词必须是上文定义过的，否则读者只能把它贴给 AI 去展开。
+- 同一概念的两个不同集合共用一个简称。例如「三腿」同时指 dense/sparse/trgm 与 dense/sparse/visual 时，必须写成「文本三腿」「向量三腿」，不能裸写。
 - **升级结论强度**（改写时最常见的走形）：把「可能/通常/大约」改成「必然/迟早/唯一/永远/极难」，或把一个失败案例写成普遍规律。降级同样要有依据，不能为了让句子显得克制就抽掉原文的断言。
 - 加原文没有的例子、类比、场景细节。
 - 用「等于 / 相当于 / 就是」把实现换算成比喻。写不出具体函数、字段或分支，说明那个比喻在替一个没查清的事实打掩护。
@@ -175,6 +185,7 @@ python3 .agents/skills/doc-writing/scripts/check_rewrite.py --dir <原文目录>
 - 不要把去 AI 味做成风格规则清单。规则清单会让模型逐条应试，写出第二种僵硬；减法 pass 只做删、换、缩。
 - 不要拿教程体范文写设计文档。`tutorial/` 学来的是判断句和短句断言，正好是演讲腔的来源。
 - 不要把 git 历史当素材。`git log` 只能用来确认「这条约束是怎么来的」，不能把「怎么从 A 改成 B」写进正文；读者要的是当前约束。
+- 不要把代码 docstring 里的表格直接搬进正文。docstring 面向改代码的人，允许电报体；正文面向第一次读的人，单元格里的名词要能自己站住。
 - 不要把项目模型提交进仓库；它是工作底稿。
 
 ## 文件
@@ -194,6 +205,7 @@ python3 .agents/skills/doc-writing/scripts/check_rewrite.py --dir <原文目录>
 | `exemplars/reasoning/` | 机制与取舍：DDIA 中文版「人为错误」、阮一峰《ES6 入门》（均 >20k star，CC BY / CC BY-NC） |
 | `exemplars/tutorial/` | 教程体：JavaGuide 五篇（内存、哈希、MySQL 索引、索引失效、消息队列，Apache-2.0） |
 | `scripts/check_rewrite.py` | 机械核对脚本 |
+| `scripts/check_prose.py` | 正文裸编号引用（硬错误）与元话语（只报告）；不检查标题编号 |
 | `scripts/check_voice.py` | 行文指标对照 + 判决句 / 历史沿革候选（只报告，不判定） |
 | `scripts/check_diagrams.py` | 图的机械检查：画布宽、字号、PNG 尺寸与体积 |
 | `scripts/list_terms.py` | 列出每篇反引号术语的第一次出现，供读者模型检查 |

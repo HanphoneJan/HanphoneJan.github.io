@@ -45,6 +45,7 @@ doc-writing/
 │   └── tutorial/                # 教程体（只在写教程/面试向内容时读）
 └── scripts/
     ├── check_rewrite.py         # 数字/代码/链接的机械核对
+    ├── check_prose.py           # 裸编号引用与元话语检查（标题编号不检查）
     ├── check_voice.py           # 行文指标对照（只报告，不判定）
     ├── check_diagrams.py        # 图的画布/字号/导出倍率/体积检查
     ├── list_terms.py            # 反引号术语的首次出现清单（读者模型检查）
