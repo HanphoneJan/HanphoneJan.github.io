@@ -534,7 +534,7 @@ oxc: { jsx: { runtime: 'automatic' } }
 | `vuepress` / `@vuepress/bundler-vite` / `@vuepress/core` | `2.0.0-rc.31` |
 | `vuepress-theme-hope` | `2.0.0-rc.110` |
 | `@vuepress/plugin-pwa` / `-slimsearch` | `2.0.0-rc.137` |
-| `@vuepress/plugin-markdown-math` / `-photo-swipe` | `2.0.0-rc.128`（实际生效的是 hope 内嵌的 rc.137，顶层这两份是重复的） |
+| `@vuepress/plugin-markdown-math` / `-photo-swipe` | 不单独锁，用 hope 内嵌的 rc.137（顶层再装一份是重复的） |
 | `vue` | `^3.5.44` |
 | `react` / `react-dom` | `^19.0.0` |
 
