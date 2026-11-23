@@ -398,11 +398,44 @@ html.layout-hidden {
     line-height: 2rem;
   }
 
-  // slimsearch 的触发器是一个按钮（点开才出现弹窗），不像原来的
-  // plugin-search 是导航栏里的输入框。按钮不继承字体，必须显式写。
-  .vp-search-button {
-    font-family: inherit;
-    font-size: 0.9375rem;
+  // slimsearch 的触发器默认是 40px 灰底胶囊，占位文字 1rem（17px），
+  // 比导航项（0.9375rem / 15.94px）大一号。这里恢复换搜索插件之前的观感：
+  // 2rem 描边胶囊、透明底、占位文字与导航同档且用弱化色。
+  // 只改桌面端：<960px 时插件会把按钮收成圆形并隐藏占位文字与快捷键，
+  // 那些规则不要被这里的尺寸覆盖。
+  @media (min-width: 960px) {
+    .vp-search-button {
+      box-sizing: border-box;
+      height: 2rem;
+      padding: 0 0.6rem;
+      border: 1px solid var(--vp-c-divider);
+      border-radius: 2rem;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.9375rem;
+
+      .search-icon {
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .vp-search-placeholder {
+        // 插件默认 1rem，这是「看着比导航文字大」的根源
+        font-size: inherit;
+        color: var(--vp-c-text-subtle);
+      }
+
+      .vp-search-key {
+        // 插件默认 monospace + 阴影，与站点的系统衬线不搭
+        font-family: inherit;
+        box-shadow: none;
+      }
+
+      &:hover {
+        background: var(--vp-c-bg-alt);
+        border-color: var(--vp-c-accent-bg);
+      }
+    }
   }
 }
 
