@@ -32,6 +32,7 @@ pnpm sync:pyodide     # Download the 12.9MB Pyodide runtime into static/pyodide/
 pnpm test:offline     # 离线包口径（板块归类 + 路由表解析 + dist 覆盖率）
 pnpm test:difficulty  # 难度口径（8 种写法归一 + 全库覆盖率 + 徽标接线契约）
 pnpm test:markdown    # 尖括号只转义一次（页面不出现 `&lt;` 字面量）
+pnpm test:search      # 全文搜索口径（worker 是经典脚本 + 正文词能命中）
 pnpm solutions:fetch  # 抓力扣某题的前几篇高赞题解（写题解前读，不照抄）
 ```
 
@@ -386,11 +387,46 @@ React root 里：
 的 `fixHashScroll()` 会在初始路由就绪后重新定位并补掉残差；不补时实测能偏出
 一屏（-1006px）。
 
+### 全文搜索（`@vuepress/plugin-slimsearch`）
+
+**`search: true` 是错的**：那是 `@vuepress/plugin-search`，索引项只有
+`{title, headers, path, pathLocale, extraFields}`，正文一个字都不进索引
+（站点里 `extraFields` 还是空数组）。现在 `theme.ts` 用的是
+`plugins.slimsearch`，`indexContent: true` + `filter: isArchivePage`，只索引
+`docs/` 与 `code-training/docs/` 两个内容目录。
+
+**版本地板是 rc.130。** slimsearch rc.128 的 worker 是 ESM（`import … from
+"vuepress/shared"`），rc.129 末尾留了 `export{}`，而生产客户端是
+`new Worker(url)`（经典脚本），两者都会 SyntaxError；rc.130 起 worker 才是
+IIFE。所以 core 是 rc.31、插件 rc.137 —— **不要单独降 `vuepress` 或
+`plugin-slimsearch`**：降了以后构建、SSR、全部单测照常，只有线上搜索框打不开。
+
+几个接缝：
+
+- 索引约 **7.2MB**（gzip 后 5.4MB），只在点开搜索时加载；worker 名带
+  `BUILD_ID`、放在 `assets/` 下：文件名不可变才能 `CacheFirst`，放
+  `assets/` 是为了让离线包「共享脚本」板块自动带上它（离线可搜）。
+- **worker 的 `request.destination` 是 `worker`，不是 `script`**：
+  `theme.ts` 里有一条单独的 SW 路由（桶 `search`，`maxEntries: 2`）。
+  不单独建桶的话每次部署留下的 7MB 旧索引会一直堆在 `assets` 里；
+  `CacheSettings.vue` 的 `targetCache` / `readCacheKeys` / `pruneStaleAssets`
+  要跟这条路由对齐。
+- 客户端在 `.vuepress/client.ts` 用 `defineSearchConfig` 收了查询语义：
+  `combineWith: 'and'`（默认 `or`，中文被切成单字后「页缓存」命中 400 页、
+  2788 条；AND 后 23 页、84 条，排序不变），以及结果截到 20 页 / 每页 5 条。
+- `suggestion: false`：`createSearchWorker()` 每调一次就新建一个 Worker、
+  各自解压一份索引；开联想时弹窗里会有两个 Worker，7MB 下两遍。
+- UI 从导航栏输入框变成按钮 + 弹窗（类名是 `vp-search-*`，不是
+  `slimsearch-*`），字体在 `styles/index.scss` 里单独设。
+- 回归：`pnpm test:search` 在 Node 里用 `self` shim 跑产物里的 worker，
+  断言「页缓存」命中「数据库理论」的 `text`（正文）而不是标题；
+  worker 变回 ESM 时这里会先报。CI 在 build 之后跑它。
+
 ### 已知的取舍
 
-- **PWA**：用 `@vuepress/plugin-pwa`，只 precache 外壳（3.9MB），页面/图片/
+- **PWA**：用 `@vuepress/plugin-pwa`，只 precache 外壳（rc.31 下 2.8MB），页面/图片/
   轨迹走运行时缓存。**`maxSize` 必须是 4096**：它是 Workbox 的
-  `maximumFileSizeToCacheInBytes`，而应用外壳 `app-*.js` 已经 2.04MB，改回
+  `maximumFileSizeToCacheInBytes`，而应用外壳 `app-*.js` 曾经 2.04MB（rc.31 之后 1.16MB），改回
   2048 之后它会被**静默剔除**（日志照常、构建不报错），全新安装后第一次断网
   就是浏览器离线错误页。`register-service-worker` 必须静态 import 一次（见
   `.vuepress/README.md` 的 PWA 一节），否则动态 import 落在 load 之后会
@@ -432,8 +468,9 @@ React root 里：
   这些依赖同时还在「共享脚本」里，`clearSection` 要跳过被别的板块引用的文件。
   页面指纹把孤岛 chunk 的字节也混进去，`pages[url].islands` 让 prune 留住旧 HTML
   配的那份。
-  下载时按目标桶写进**已有的** `html-v2` / `assets` / `traces` / `quiz`，
-  所以不需要新增 SW 路由。清单带构建版本，部署后旧包会被标成「需要更新」并
+  下载时按目标桶写进**已有的** `html-v2` / `assets` / `traces` / `quiz` /
+  `search`（搜索索引，见上文「全文搜索」），所以不需要新增 SW 路由。
+  清单带构建版本，部署后旧包会被标成「需要更新」并
   删掉上一版遗留的页面 chunk。只下 HTML 也能读（SSR 产物在 HTML 里），但站内
   跳转会退化成整页重载 —— 勾「同时缓存页面脚本」才是完整体验。细节见
   `.vuepress/README.md` 的「离线包与缓存管理」。
@@ -441,9 +478,8 @@ React root 里：
   React 孤岛，`id="visualizer"` 要等客户端挂载才有。
 - **`.vuepress/styles/index.scss` 不会自动加载**（hope rc.110 的 `userStyle`
   没接上），必须在 `.vuepress/client.ts` 里显式 `import`。
-- **本地搜索用 `@vuepress/plugin-search`**，不是 slimsearch：slimsearch
-  rc.128 产出的 worker 是 ESM 却按经典 worker 加载，线上直接报
-  `Cannot use import statement outside a module`。
+- **本地搜索是 slimsearch 全文索引**（不是 `plugin-search`）：口径、版本地板
+  与那几个接缝见上面「全文搜索（`@vuepress/plugin-slimsearch`）」一节。
 
 ---
 

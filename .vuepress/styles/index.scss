@@ -398,11 +398,23 @@ html.layout-hidden {
     line-height: 2rem;
   }
 
-  .search-box input {
-    // 表单控件默认不继承字体，必须显式写 inherit，否则会退回 Arial
+  // slimsearch 的触发器是一个按钮（点开才出现弹窗），不像原来的
+  // plugin-search 是导航栏里的输入框。按钮不继承字体，必须显式写。
+  .vp-search-button {
     font-family: inherit;
     font-size: 0.9375rem;
   }
+}
+
+// 搜索弹窗挂在 body 下，不在 `.vp-navbar` 里，字体要单独设一次；
+// 输入框与结果列表同理（表单控件默认不继承字体）。
+.vp-search-modal,
+.vp-search-input,
+.vp-search-record,
+.vp-search-record-content,
+.vp-search-suggestion,
+.vp-search-hints {
+  font-family: var(--vp-font);
 }
 
 // ---------------------------------------------------------------------------

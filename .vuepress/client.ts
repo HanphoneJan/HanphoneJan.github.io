@@ -9,6 +9,7 @@ import './styles/index.scss'
 // 这里静态引一次，保证它先于 load 求值。
 import 'register-service-worker'
 import { defineClientConfig } from 'vuepress/client'
+import { defineSearchConfig } from '@vuepress/plugin-slimsearch/client'
 
 import HomePage from './components/HomePage.vue'
 import CacheSettings from './components/CacheSettings.vue'
@@ -24,6 +25,29 @@ import ProjectsMount from './components/ProjectsMount.vue'
 import SnippetBarMount from './components/SnippetBarMount.vue'
 import StarsMount from './components/StarsMount.vue'
 import TracerVisualizerMount from './components/TracerVisualizerMount.vue'
+
+/**
+ * 搜索（slimsearch）的默认查询语义对中文太宽，这里收两道。
+ *
+ * 1. **`combineWith: 'and'`**。默认是 `or`，而客户端用 `Intl.Segmenter` 切词：
+ *    「页缓存」被切成「页 / 缓 / 存」三个单字，OR 之下几乎全站都含其中之一
+ *    —— 实测 400 页、2788 条命中；AND 之后是 23 页、84 条，排序不变
+ *    （「数据库理论」仍排第 3）。只输入一两个字时这个差别尤其明显。
+ * 2. **结果上限**。单字查询 AND 也挡不住，全量渲染几千条链接会把弹窗卡住，
+ *    所以只留前 20 页、每页前 5 条命中。
+ *
+ * `defineSearchConfig` 是 slimsearch 的客户端接缝：这里设置的 options 会被
+ * `useResults` 原样发给 worker（`combineWith` 生效），`resultsFilter` 在客户端
+ * 过滤返回结果。`@vuepress/plugin-slimsearch/client` 直接再导出了它。
+ */
+defineSearchConfig({
+  combineWith: 'and',
+  resultsFilter: (results: Array<{contents: unknown[]}>) =>
+    results.slice(0, 20).map((item) => ({
+      ...item,
+      contents: item.contents.slice(0, 5),
+    })),
+})
 
 /**
  * 站内跳转时页面 chunk 拉不下来的特征。
@@ -287,8 +311,8 @@ export default defineClientConfig({
      * 两项节流都是必要的：
      * - **时间戳落 localStorage**：原先 `lastCheck` 是模块内变量，每次整页
      *   加载都从 0 开始，等于**每次打开 PWA 都会查一次**；
-     * - **前 30 秒不查**：冷启动这一段主线程还在解析 2.3MB 外壳，`update()`
-     *   一旦发现新版本就去下载约 3.9MB 预缓存，正好和首屏抢带宽 —— 这也
+     * - **前 30 秒不查**：冷启动这一段主线程还在解析 1.2MB 外壳，`update()`
+     *   一旦发现新版本就去下载约 2.8MB 预缓存，正好和首屏抢带宽 —— 这也
      *   是「刚打开时慢、过一会儿正常」的一部分。浏览器自己在整页导航时
      *   已经查过一次，这里补的是「几天不整页导航」的 SPA 会话。
      *

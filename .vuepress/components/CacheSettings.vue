@@ -334,6 +334,9 @@ const HTML_CACHE = 'html-v2'
 const ASSET_CACHE = 'assets'
 const TRACE_CACHE = 'traces'
 const QUIZ_CACHE = 'quiz'
+// 搜索索引 worker（`assets/slimsearch.<BUILD_ID>.js`）。它是 worker 请求，
+// SW 的 script/style 路由接不住，见 `theme.ts` 里那条单独的路由。
+const SEARCH_CACHE = 'search'
 // 结构图：与 `theme.ts` 的 image 路由同名，离线打开页面时 SW 从这一桶取
 const IMAGE_CACHE = 'images'
 // 缓存名与文件清单在 runtime-files.ts 里（客户端 fetch 拦截也用那一份）
@@ -400,6 +403,9 @@ function targetCache(url: string): string {
   // image 路由是 CacheFirst，读的就是 `images` 桶。写进 html-v2 的话离线
   // 打开页面仍然是裂图。
   if (url.startsWith('/diagrams/') || url.startsWith('/img/')) return IMAGE_CACHE
+  // 搜索索引 worker 有自己的桶（见 `theme.ts` 的 worker 路由）。
+  // 必须放在 `/assets/` 分支**前面**：它的 URL 也在 `/assets/` 下。
+  if (/^\/assets\/slimsearch\.[^/]+\.js$/.test(url)) return SEARCH_CACHE
   // 「共享脚本」也要进 `assets`：那是 SW 的 script 路由读的桶（SWR，
   // 文件名带内容哈希所以不可变）。塞进 html-v2 的话永远不会被用到。
   if (url.startsWith('/assets/')) return ASSET_CACHE
@@ -520,7 +526,15 @@ async function readCacheKeys(): Promise<void> {
   cacheKeys.clear()
   if (typeof caches === 'undefined') return
   await Promise.all(
-    [HTML_CACHE, ASSET_CACHE, TRACE_CACHE, QUIZ_CACHE, IMAGE_CACHE, PYODIDE_CACHE].map(async (name) => {
+    [
+      HTML_CACHE,
+      ASSET_CACHE,
+      TRACE_CACHE,
+      QUIZ_CACHE,
+      IMAGE_CACHE,
+      PYODIDE_CACHE,
+      SEARCH_CACHE,
+    ].map(async (name) => {
       const keys = await caches.open(name).then((cache) => cache.keys())
       cacheKeys.set(name, new Set(keys.map((request) => request.url)))
     }),
@@ -989,6 +1003,13 @@ async function pruneStaleAssets(): Promise<void> {
   const cache = await caches.open(ASSET_CACHE)
   for (const request of await cache.keys()) {
     if (!keep.has(request.url)) await cache.delete(request)
+  }
+
+  // 搜索索引在独立的 `search` 桶：每次部署换一个 `slimsearch.<BUILD_ID>.js`，
+  // 旧的那份留着白占 12MB。`keep` 里已经收了当前清单里那份（`/assets/` 分支）。
+  const searchCache = await caches.open(SEARCH_CACHE)
+  for (const request of await searchCache.keys()) {
+    if (!keep.has(request.url)) await searchCache.delete(request)
   }
 }
 

@@ -10,17 +10,17 @@
 
 | | 迁移前 | 迁移后 |
 |---|---|---|
-| 框架 | Docusaurus 3.9（React / MDX） | VuePress 2 rc.28（Vue 3） |
+| 框架 | Docusaurus 3.9（React / MDX） | VuePress 2 rc.31（Vue 3） |
 | 主题 | `@docusaurus/preset-classic` + 自写 CSS | `vuepress-theme-hope` rc.110 |
 | 构建 | `docusaurus build` → `build/` | `vuepress build .` → `.vuepress/dist/` |
 | 内容 | `docs/` + `code-training/docs/` | 原样不动 |
 | 交互件 | React（swizzle 注入） | React（Vue 壳子里挂 React root） |
-| 搜索 | `@easyops-cn/docusaurus-search-local` | `@vuepress/plugin-search` |
+| 搜索 | `@easyops-cn/docusaurus-search-local` | `@vuepress/plugin-slimsearch`（全文） |
 | 评论 | 自写 `GiscusComments` | hope 的 `comment` 插件（同一套 Giscus 配置） |
 | 数学 | `remark-math` + `rehype-katex` | `@vuepress/plugin-markdown-math`（KaTeX） |
 | 图片放大 | 无 | PhotoSwipe（`plugins.photoSwipe`） |
 | 沉浸模式 | 无 | hope `focus`（滚动进正文后自动隐藏导航/侧栏） |
-| PWA | `@docusaurus/plugin-pwa`（全量 precache） | `@vuepress/plugin-pwa`（precache 外壳 3.9MB + 运行时缓存 + `/settings.html` 离线包） |
+| PWA | `@docusaurus/plugin-pwa`（全量 precache） | `@vuepress/plugin-pwa`（precache 外壳 2.8MB + 运行时缓存 + `/settings.html` 离线包） |
 | 归档 | 仅 code-training 的分类/标签页 | `/article/`、`/category/`、`/tag/`、`/timeline/`（hope blog 插件） |
 | 部署 | 上传 `build/` | 上传 `.vuepress/dist/` |
 
@@ -252,13 +252,47 @@ rc.110 里 `userStyle` 没有被接进 sass-palette，主题色与自定义样�
 - 自定义规则放进 `.vuepress/styles/index.scss`，并在 `.vuepress/client.ts`
   **显式 `import './styles/index.scss'`**
 
-### 不要用 slimsearch
+### 搜索：只能用 slimsearch，且版本不能退
 
-`@vuepress/plugin-slimsearch` rc.128 产出的 worker 是 ESM（`import … from
-"vuepress/shared"`），客户端却按经典 worker 加载，线上直接报
-`Cannot use import statement outside a module`，搜索框打不开。
-现在用 `@vuepress/plugin-search`，中文按 `Intl.Segmenter` 分词，
-「动态规划」这类查询是能命中的。
+**`@vuepress/plugin-search` 只索引标题。** 它的索引项是
+`{title, headers, path, pathLocale, extraFields}`，正文一个字都不进索引 ——
+搜一个只出现在段落里的词永远是空结果。2026-11 之前站点用的就是它，
+`search: true` 在 `theme.ts` 里已经换成 `plugins.slimsearch`。
+
+**为什么曾经退回 plugin-search**：slimsearch rc.128 的 `dist/worker/build.js`
+是 ESM（文件头 `import … from "vuepress/shared"`），而生产客户端用
+`new Worker(url)`（经典脚本）加载，线上直接报
+`Cannot use import statement outside a module`。rc.129 打成自包含脚本，
+但末尾留了 `export{}`，经典脚本照样 SyntaxError；**rc.130 起 worker 变成
+IIFE**（`(function(){…})()`）才真正能加载。所以现在整套是 core rc.31 +
+插件 rc.137，**不要再把 `vuepress` 单独降到 rc.28/插件 rc.128** ——
+搜索会在构建、SSR、所有单测都正常的情况下于线上静默失效。
+
+索引口径与归档一致（`filter: isArchivePage`），只索引 `docs/` 与
+`code-training/docs/`；`/tag/`、`/article/`、`/timeline/` 是标题罗列页，
+索引进去只是噪音。索引约 **7.2MB**（正文 250 万字符，`pre` 不进索引），
+GitHub Pages gzip 后约 5.4MB，**只在点开搜索时加载**，不进预缓存。
+
+几个不显眼但一改就坏的地方：
+
+- **worker 名字带 `BUILD_ID`、放在 `assets/` 下**：文件名变了才允许
+  `CacheFirst`；放 `assets/` 是为了让离线包的「共享脚本」板块自动带上它，
+  离线也能搜。它和 HTML 里的路径没有引用关系，prune 靠清单里的
+  `/assets/` 条目保留。
+- **worker 请求的 `request.destination` 是 `worker`，不是 `script`**：
+  `theme.ts` 里必须有一条单独的 SW 路由（缓存桶 `search`，`maxEntries: 2`）。
+  并进 `assets` 的话旧索引（每次部署一份 7MB）会越堆越多。
+- **客户端用 `defineSearchConfig` 改了查询语义**（`.vuepress/client.ts`）：
+  默认 `combineWith: 'or'`，而中文会被 `Intl.Segmenter` 切成单字，
+  「页缓存」在 OR 下命中 400 页、2788 条；改成 `and` 后是 23 页、84 条，
+  排序不变。另外把结果截到前 20 页、每页 5 条，否则全量渲染会卡住弹窗。
+- **`suggestion: false`**：slimsearch 的 `createSearchWorker()` 每调一次就
+  新建一个 Worker、各自解压一份索引；开着输入联想时弹窗里会同时存在
+  「联想」「结果」两个 Worker，7MB 下两遍、解两遍。关掉后只剩结果那一个，
+  输入照样即时出结果。
+- **回归测试 `pnpm test:search`**：在 Node 里用 `self` shim 真跑产物里的
+  worker，断言「页缓存」命中「数据库理论」的 `text`（正文）而不是标题。
+  worker 变回 ESM 时这里会先报错，不用等线上。
 
 ### VuePress 2 没有 `vuepress serve`
 
@@ -290,7 +324,7 @@ oxc: { jsx: { runtime: 'automatic' } }
 几条刻意的取舍（每条都对应一个线上症状，改之前先看注释里的因果）：
 
 - **只 precache 应用外壳**（`index.html` / `404.html` / `app-*.js` / `style-*.css`
-  与两张 logo，约 3.9MB）。默认行为会把 600 多个页面 chunk（39MB）全部塞进
+  与两张 logo，rc.31 下约 2.8MB）。默认行为会把 600 多个页面 chunk（39MB）全部塞进
   precache，首次安装要下 42MB —— 文档站不需要「一次装完所有页面」。其余资源走
   Workbox 运行时缓存：页面 `NetworkFirst`、JS/CSS `CacheFirst`（文件名带
   内容哈希，不可变，见下）、图片 `CacheFirst`、轨迹 JSON 与题库单独分桶。
@@ -348,7 +382,7 @@ oxc: { jsx: { runtime: 'automatic' } }
   `localStorage`）。安装版 PWA 很少整页导航，浏览器就不会去检查
   `service-worker.js`；主动查一次，新版本才会通过插件自带的「新内容已就绪」
   按钮生效。时间戳持久化 + **冷启动后前 30 秒不查**：`registration.update()`
-  一旦发现新版本就要下约 3.9MB 预缓存，不能在首屏还在解析外壳时跟它抢带宽。
+  一旦发现新版本就要下约 2.8MB 预缓存，不能在首屏还在解析外壳时跟它抢带宽。
 - **安装版里申请持久存储**（`navigator.storage.persist()`）。离线包有 160MB，
   而 CacheStorage 默认是 best-effort：磁盘紧张或长期不用会被整桶回收，之后
   「缓存过的页面」又要逐页重新走网络，表现和暖机一模一样。只在
@@ -373,12 +407,12 @@ oxc: { jsx: { runtime: 'automatic' } }
   在 PWA 里表现为「点了没反应 / 白等」—— 现在全部带 `.html`。
 - **`maxSize` 是 `4096`，别改回 `2048`。** 它是 Workbox 的
   `maximumFileSizeToCacheInBytes`（单位 KB），不是「整个预缓存的上限」。
-  应用外壳 `assets/app-*.js` 已经长到 **2.04MB**，越 2MB 线之后会被
+  应用外壳 `assets/app-*.js` 曾经长到 **2.04MB**（rc.31 之后是 1.16MB），越 2MB 线之后会被
   **静默跳过**：构建日志一切正常，而 `service-worker.js` 的预缓存清单里
   只剩 index / 404 / style / 两张 logo（约 1.6MB）。后果是全新安装（或清过
   站点数据）之后第一次断网，`start_url` 拿不到外壳 → 浏览器离线错误页；
-  网页端靠 `assets` 路由在**第二次**访问时补上，所以平时看不出来。改回 4MB 后预缓存是 3.68MB（外壳 2.04 + 两张 logo
-  1.38 + 样式 0.24）。
+  网页端靠 `assets` 路由在**第二次**访问时补上，所以平时看不出来。4MB 下预缓存合计
+  3.68MB（外壳 2.04 + 两张 logo 1.38 + 样式 0.24），rc.31 之后是 2.77MB。
 
 ### 离线包与缓存管理（`/settings.html`）
 
@@ -497,9 +531,10 @@ oxc: { jsx: { runtime: 'automatic' } }
 
 | 包 | 版本 |
 |---|---|
-| `vuepress` / `@vuepress/bundler-vite` / `@vuepress/core` | `2.0.0-rc.28` |
+| `vuepress` / `@vuepress/bundler-vite` / `@vuepress/core` | `2.0.0-rc.31` |
 | `vuepress-theme-hope` | `2.0.0-rc.110` |
-| `@vuepress/plugin-pwa` / `-search` / `-markdown-math` / `-photo-swipe` | `2.0.0-rc.128` |
+| `@vuepress/plugin-pwa` / `-slimsearch` | `2.0.0-rc.137` |
+| `@vuepress/plugin-markdown-math` / `-photo-swipe` | `2.0.0-rc.128`（实际生效的是 hope 内嵌的 rc.137，顶层这两份是重复的） |
 | `vue` | `^3.5.44` |
 | `react` / `react-dom` | `^19.0.0` |
 
@@ -510,8 +545,8 @@ oxc: { jsx: { runtime: 'automatic' } }
 
 升级时注意：
 
-1. `@vuepress/*` 的 rc 版本之间 **peer 依赖咬得很死**（hope rc.110 要求
-   helper/plugin 的 rc.128 一批），不要单独升某一个包；
+1. `@vuepress/*` 的 rc 版本之间 **peer 依赖咬得很死**（hope rc.110 声明的
+   peer 是 core rc.31 + 插件 rc.137 一批），不要单独升某一个包；
 2. 一次把 `vuepress` + `bundler` + `core` + 全部 `@vuepress/plugin-*`
    升到同一批版本，再 `pnpm install`；
 3. 我们的代码依赖了几处内部行为（`inferRoutePath` 自动补 `.html`、

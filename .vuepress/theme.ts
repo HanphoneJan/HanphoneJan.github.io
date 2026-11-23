@@ -1,6 +1,7 @@
 import { hopeTheme } from 'vuepress-theme-hope'
 import type { PageInfoType } from 'vuepress-theme-hope'
 import { getDirname, path } from 'vuepress/utils'
+import { BUILD_ID } from './build-id.js'
 import navbar from './navbar.js'
 import { docsSidebar, trainingSidebar } from './sidebar.js'
 
@@ -146,10 +147,43 @@ export default hopeTheme({
     },
     // 图片点击放大（PhotoSwipe：滚轮缩放 / 拖拽 / 手势）
     photoSwipe: true,
-    // 本地搜索。用 @vuepress/plugin-search 而不是 slimsearch：
-    // slimsearch rc.128 产出的 worker 是 ESM，但客户端按经典 worker 加载，
-    // 线上会直接报 `Cannot use import statement outside a module`，搜索框打不开。
-    search: true,
+    /**
+     * 全文搜索：`@vuepress/plugin-slimsearch`。
+     *
+     * **不能用 `search: true`。** 那是 `@vuepress/plugin-search`，索引项只有
+     * `{title, headers, path, extraFields}`：正文一个字都不进索引，搜一个只
+     * 出现在段落里的词永远是空结果（`extraFields` 本站还是空数组）。
+     *
+     * 为什么以前是它：slimsearch rc.128 的 worker 是 ESM（文件头
+     * `import {...} from "vuepress/shared"`），而客户端在生产环境用
+     * `new Worker(url)`（经典脚本）加载，线上直接
+     * `Cannot use import statement outside a module`，搜索框打不开。
+     * rc.129 打包成自包含脚本，但末尾留了 `export{}`，经典脚本照样
+     * SyntaxError；**rc.130 起 worker 变成 IIFE**（`(function(){...})()`），
+     * 普通脚本可以直接跑。所以现在整套升到 core rc.31 + 插件 rc.137，
+     * 不再需要站点侧给 worker 打补丁。
+     *
+     * 索引口径与归档一致（`isArchivePage`）：只索引 `docs/` 与
+     * `code-training/docs/` 两个内容目录。`/tag/*`、`/article/`、`/timeline/`
+     * 是标题罗列页，正文就是别的页面的标题，索引进来只是噪音。
+     *
+     * 体积：worker 文件约 7.2MB（索引以 zlib + base64 内嵌，正文 250 万字符，
+     * 代码块与 `pre` 不进索引），GitHub Pages 上 gzip 后约 5.4MB。它只在
+     * **打开搜索时**才加载，不进预缓存、不进首屏。`worker` 名字带 `BUILD_ID`，与离线包同一套版本口径：
+     * 文件名变了才允许 CacheFirst，同一天 CI 用同一 SHA 重建不会让读者
+     * 重下。放在 `assets/` 下，离线包的「共享脚本」板块会自动带上它，
+     * 所以离线也能搜。
+     */
+    slimsearch: {
+      indexContent: true,
+      filter: isArchivePage,
+      // 关掉输入联想。slimsearch 的 `createSearchWorker()` **每调一次就新建一个
+      // Worker**、每个 Worker 都会把索引解压进内存；开着联想时弹窗里会同时有
+      // 「联想」和「结果」两个 Worker，7MB 的索引就要下两遍、解两遍。
+      // 关掉之后只剩结果那一个，输入照样即时出结果。
+      suggestion: false,
+      worker: `assets/slimsearch.${BUILD_ID}.js`,
+    },
     // 评论：沿用原来的 Giscus 配置
     comment: {
       provider: 'Giscus',
@@ -178,22 +212,23 @@ export default hopeTheme({
       // `maxSize` 就是 Workbox 的 `maximumFileSizeToCacheInBytes`（单位 KB），
       // 它同时管预缓存与图片，**不是**「整个预缓存的大小上限」。
       //
-      // **别改回 2048。** 应用外壳 `assets/app-<hash>.js` 现在是 2.1MB
-      // （2,115,209 B），刚好越过 2MB 线，会被 Workbox **静默跳过**：
+      // **别改回 2048。** 应用外壳 `assets/app-<hash>.js` 曾经是 2.1MB
+      // （2,115,209 B；升到 rc.31 之后是 1.16MB，但构建产物会随依赖变化），
+      // 越过 2MB 线就会被 Workbox **静默跳过**：
       // 构建日志一切正常，而 `service-worker.js` 的预缓存清单里只有
       // index.html / 404.html / style / 两张 logo（约 1.6MB，因为它们自己的
       // 体积都远小于 2MB）。
       // 后果是全新安装、或者清过站点数据之后第一次就断网，`start_url`（`/`）
       // 拿不到外壳 → 浏览器离线错误页；线上靠 `assets` 路由的
       // StaleWhileRevalidate 在**第二次**访问时才把它补进缓存，所以平时
-      // 看不出来。4MB 之后预缓存 3.68MB = 外壳 2.04 + 两张 logo 1.38 +
-      // 样式 0.24，与设计预期一致。
+      // 看不出来。4MB 时预缓存合计 3.68MB（外壳 2.04 + 两张 logo 1.38 +
+      // 样式 0.24；rc.31 之后是 2.77MB），与设计预期一致。
       maxSize: 4096,
       cacheHTML: false,
       cacheImage: false,
       // 默认的 precache 会把 **1047 个 js/css/svg（46MB）** 全塞进来，
       // 首次安装先下 46MB —— 文档站不需要「一次装完所有页面」。
-      // 这里只预缓存应用外壳（约 3.9MB，外壳 2.34 + 两张 logo 1.42 +
+      // 这里只预缓存应用外壳（rc.31 下约 2.8MB，外壳 1.16 + 两张 logo 1.42 +
       // 样式 0.25），其余按需缓存：访问过的页面离线可看，没访问过的走网络。
       generateSWConfig: {
         // **让预缓存里的 index.html 应答 `/`（manifest 的 `start_url`）。**
@@ -250,6 +285,23 @@ export default hopeTheme({
               // 不设超时 = 网络慢也等真实的 HTML，只有真正离线才用缓存。
               cacheName: 'html-v2',
               expiration: {maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30},
+            },
+          },
+          {
+            // 搜索索引 worker（`plugins.slimsearch.worker`）。
+            //
+            // **`request.destination` 是 `worker`，不是 `script`**：上面那条
+            // script/style 路由接不住它。漏了这条，每次点开搜索都要重下
+            // 12MB（GitHub Pages 对静态资源发的是 no-cache）。
+            //
+            // 单独一个 `search` 桶而不是并进 `assets`：索引文件名带
+            // `BUILD_ID`，每次部署换一份 12MB，几百条的 `assets` 上限会让
+            // 旧索引越堆越多；这里只留最近两份。
+            urlPattern: /\/assets\/slimsearch\..*\.js$/,
+            handler: 'CacheFirst' as const,
+            options: {
+              cacheName: 'search',
+              expiration: {maxEntries: 2},
             },
           },
           {

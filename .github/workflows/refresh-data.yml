@@ -123,6 +123,13 @@ jobs:
         # `左 < 根 < 右` 显示成 `&lt;`。`pnpm test:markdown` 钉住「只转义一次」。
         run: pnpm test:markdown
 
+      - name: Verify full-text search index
+        # slimsearch 的 worker 变回 ESM、或正文没进索引时，构建、SSR、
+        # `test:markdown` 全都正常，只有线上搜索框打不开 / 只搜标题。
+        # `pnpm test:search` 在 Node 里用 `self` shim 真跑产物里的 worker，
+        # 并断言只出现在段落里的词能命中。
+        run: pnpm test:search
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
