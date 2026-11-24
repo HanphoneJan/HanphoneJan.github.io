@@ -787,7 +787,7 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
   上会被上采样发虚；3x 转 32 色后单张仍在 150KB 以内（实测 73~131KB）。
 - **文件**：源文件 `static/diagrams/src/<slug>.drawio`，正文引
   `/diagrams/<slug>.png`。已有：滑动窗口、lower_bound、LCS 填表、
-  对撞指针、归并合并、区间调度、BFS 队列、子集决策树、fib 递归树。
+  对撞指针、归并合并、区间调度、BFS 队列、子集决策树、fib 递归树、DFS 遍历序。
 
 #### 新增一个算法
 
