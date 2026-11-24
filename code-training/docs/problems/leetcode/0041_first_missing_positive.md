@@ -117,6 +117,12 @@ class Solution:
 1. `nums[i]` 在有效范围内：`1 <= nums[i] <= n`
 2. 当前数还没到正确位置，且目标位置上的数不是正确的值：`nums[i] != nums[nums[i]-1]`
 
+下面用 `[3,4,-1,1]` 看 6 帧：绿色是已经回家的数，蓝色是当前数的目标位。
+
+![每个数最多回家一次，越界或重复就停](/diagrams/41-first-missing-positive.png)
+
+所以 `while` 每换一次至少让一个数就位，总交换次数不超过 n。
+
 ```python
 class Solution:
     def firstMissingPositive(self, nums: List[int]) -> int:
