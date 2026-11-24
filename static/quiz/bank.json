@@ -3811,6 +3811,28 @@
       "explain": "状态机 DP的时间复杂度是 O(n)。表里的其他解法分别是枚举分界点 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
+      "docId": "problems/misc/confusable_model_match.md",
+      "source": "复杂度分析",
+      "id": "other-confusable_model_match-complexity",
+      "type": "blank",
+      "stem": "本题最优解「滚动数组」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(K·n·m)",
+      "explain": "滚动数组的时间复杂度是 O(K·n·m)。同一张表里其他解法也是 O(K·n·m)，这题的区分点不在时间。"
+    },
+    {
+      "id": "other-confusable_model_match-space",
+      "docId": "problems/misc/confusable_model_match.md",
+      "type": "single",
+      "stem": "本题最优解「滚动数组」的空间复杂度是？",
+      "options": [
+        "O(m)",
+        "O(n·m)"
+      ],
+      "answer": 0,
+      "explain": "滚动数组的空间复杂度是 O(m)。二维 DP 表 O(n·m) —— 空间优化往往才是这题的区分点。",
+      "source": "复杂度分析"
+    },
+    {
       "docId": "problems/nowcoder/华为机试/HJ1.字符串最后一个单词的长度.md",
       "source": "复杂度分析",
       "id": "other-HJ1.字符串最后一个单词的长度-complexity",
