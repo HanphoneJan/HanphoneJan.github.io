@@ -215,8 +215,15 @@ export function buildManifest(app: App): OfflineManifest {
   }
 
   const sections: Record<string, OfflineSection> = {}
+  // `remote` 是第三方图床上的文件，不是本站构建产物：设置页把它单独成组，
+  // 不参与覆盖率与「更新站点内容」（见 offline-shared.ts 的 thirdParty）
   const bucket = (id: SectionId): OfflineSection =>
-    (sections[id] ??= { label: SECTION_LABELS[id], bytes: 0, entries: [] })
+    (sections[id] ??= {
+      label: SECTION_LABELS[id],
+      bytes: 0,
+      entries: [],
+      ...(id === 'remote' ? {thirdParty: true} : {}),
+    })
 
   let pageCount = 0
   let chunkless = 0

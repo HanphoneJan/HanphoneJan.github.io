@@ -231,6 +231,37 @@ if (!fs.existsSync(assetsDir)) {
     assert.deepEqual(bad.slice(0, 5), [], `${bad.length}/${total} 条没有合法指纹`)
   })
 
+  check('真实产物：第三方板块单独标记，不与站内板块混在一起', () => {
+    const manifestPath = path.join(dist, 'offline-manifest.json')
+    if (!fs.existsSync(manifestPath)) return
+
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
+      sections: Record<
+        string,
+        {thirdParty?: boolean; entries: Array<[url: string, ...rest: unknown[]]>}
+      >
+    }
+    const remote = manifest.sections.remote
+    // 正文没有外链图时清单里就没有这一块
+    if (remote) {
+      // 设置页靠这个标记把它从「离线包」里拆出去（覆盖率、总量、更新都不算它）
+      assert.equal(remote.thirdParty, true, '外链图片板块缺 thirdParty 标记')
+      for (const [url] of remote.entries) {
+        assert.match(url, /^https?:\/\//, `外链板块里混进了站内地址：${url}`)
+      }
+    }
+    for (const [id, section] of Object.entries(manifest.sections)) {
+      if (id === 'remote') continue
+      assert.ok(!section.thirdParty, `${id} 不该标成第三方`)
+      for (const [url] of section.entries) {
+        assert.ok(
+          !/^https?:\/\//.test(url),
+          `${id} 板块里混进了外链地址：${url}（它应该属于 remote）`,
+        )
+      }
+    }
+  })
+
   check('真实产物：页面覆盖率 >= 90%', () => {
     let pages = 0
     const walk = (dir: string): void => {

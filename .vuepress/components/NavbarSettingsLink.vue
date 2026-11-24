@@ -3,8 +3,8 @@
     <a
       class="vp-action-link navbar-settings-icon"
       href="/settings.html"
-      title="缓存与离线"
-      aria-label="缓存与离线"
+      title="设置"
+      aria-label="设置（缓存与离线）"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 /**
- * 导航栏右侧的「缓存与离线」图标链接（齿轮），指向 `/settings.html`。
+ * 导航栏右侧的「设置」图标链接（齿轮），指向 `/settings.html`。
  *
  * 渲染方式与 `NavbarHomeLink.vue` 相同（`navbarLayout.end` 里的一项，见
  * `theme.ts` / `client.ts`），不要再改回在 `onMounted` 里往 DOM 里插节点 ——

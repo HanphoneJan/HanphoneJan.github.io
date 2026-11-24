@@ -1,5 +1,6 @@
 ---
-title: 缓存与离线
+title: 设置
+containerClass: settings-page
 toc: false
 sidebar: false
 pageInfo: false

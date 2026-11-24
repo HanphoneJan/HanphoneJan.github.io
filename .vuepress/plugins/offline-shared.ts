@@ -73,6 +73,14 @@ export interface OfflineSection {
   label: string
   bytes: number
   entries: OfflineEntry[]
+  /**
+   * 第三方内容（目前只有 `remote`：hanphone.top 上的正文配图）。
+   *
+   * 设置页据此把它从「离线包」里拆出去：不计入板块覆盖率、不计入
+   * 「更新站点内容」、没有内容指纹可判。混在站内板块里会让
+   * 「完整可用」永远亮不起来 —— 站内全下完了，它仍是 0/N。
+   */
+  thirdParty?: boolean
 }
 
 export interface OfflineManifest {

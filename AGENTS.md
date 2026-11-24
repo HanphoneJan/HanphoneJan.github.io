@@ -51,7 +51,7 @@ pnpm solutions:fetch  # 抓力扣某题的前几篇高赞题解（写题解前�
 ```
 index.md                    # 首页（home: true；内容由 HomePage.vue 服务端渲染）
 stars.md / projects.md      # 两个 React 孤岛页面
-settings.md                 # 缓存与离线（/settings.html，CacheSettings.vue）
+settings.md                 # 设置（/settings.html，CacheSettings.vue）
 docs/                       # 主文档：/docs/**
 code-training/docs/         # 算法训练：/code-training/**
 .vuepress/
@@ -344,7 +344,7 @@ React root 里：
 - 状态栏 theme-color 跟随主题（浅白 / 深黑）：静态白 + 首屏脚本按系统偏好
   改黑 + MutationObserver 跟随手动切换（head 按 name 去重，不能写两条 media）。
 - 导航栏不再有「GitHub / 个人主页」文字项；右侧两个图标链接（个人主页、
-  缓存与离线/齿轮）是 `theme.ts` 的 `navbarLayout.end` 里的两项
+  设置/齿轮）是 `theme.ts` 的 `navbarLayout.end` 里的两项
   （`NavbarHomeLink` / `NavbarSettingsLink`，在 `client.ts` 全局注册）。
   **别再改回 rootComponent + `onMounted` 插 DOM**：归档页用的是 hope 的 Blog
   布局，与默认 `Layout` 是两棵组件树，站内切过去会把 Navbar 卸载重挂，
@@ -468,6 +468,17 @@ IIFE。所以 core 是 rc.31、插件 rc.137 —— **不要单独降 `vuepress`
   这些依赖同时还在「共享脚本」里，`clearSection` 要跳过被别的板块引用的文件。
   页面指纹把孤岛 chunk 的字节也混进去，`pages[url].islands` 让 prune 留住旧 HTML
   配的那份。
+  **设置页的操作模型是一行一个状态、一个动作。** 板块状态只有七种（运行中 /
+  失败 / 部分 / 有更新 / 缺脚本 / 未下载 / 已下载），按钮文案从状态推出来：
+  下载、继续、更新、重试、修复、取消，已下载的行没有按钮。页面上只有一个主按钮
+  （组头那个，没有活干时自己消失），进度画在那一行，危险操作收进 ⋯ 并在那一行
+  展开确认条。**别退回**「四个数字各配一个按钮 + 页顶全局进度 + 改按钮文字的
+  二次确认」那套：那会让每行有两个等重按钮、确认提示出现在几百像素外。
+  **外链图片（`remote`）在清单里带 `thirdParty: true`**，设置页据此把它单独成组：
+  它不是本站构建产物，不计入板块覆盖率、总量与「更新站点内容」，失败原因也只说
+  图床。混进站内板块会让「完整可用」永远亮不起来（站内全下完了它仍是 0/N），
+  而且它的指纹是 `sha1(url)`，永远判「没变」。改 `offline-shared.ts` 的板块类型
+  或 `offline-package.ts` 的 `bucket()` 时把这条带上。
   下载时按目标桶写进**已有的** `html-v2` / `assets` / `traces` / `quiz` /
   `search`（搜索索引，见上文「全文搜索」），所以不需要新增 SW 路由。
   清单带构建版本，部署后旧包会被标成「需要更新」并

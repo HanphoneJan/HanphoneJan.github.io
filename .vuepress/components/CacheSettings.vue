@@ -1,6 +1,20 @@
 <template>
   <div class="cache-settings">
-    <p v-if="!ready" class="state">正在读取浏览器缓存…</p>
+    <header class="page-head">
+      <h1>设置</h1>
+      <p>缓存与离线内容 · 断网时仍可打开已下载的页面</p>
+    </header>
+
+    <!-- SSR / 首屏：结构与真实页面同高，避免「先闪一行字、再整页跳一下」 -->
+    <div v-if="!ready" class="skeleton" aria-hidden="true">
+      <i class="sk-line" style="width: 6rem" />
+      <div class="sk-card">
+        <div v-for="n in 5" :key="n" class="sk-row">
+          <i class="sk-line" style="width: 8rem" />
+          <i class="sk-line" style="width: 4.5rem" />
+        </div>
+      </div>
+    </div>
 
     <div v-else-if="!supported" class="notice">
       <strong>这个浏览器不支持缓存管理。</strong>
@@ -9,235 +23,361 @@
     </div>
 
     <template v-else>
-      <!-- ── 离线包 ─────────────────────────────────────────────── -->
-      <section class="panel">
-        <header class="panel-head">
-          <h2>离线内容</h2>
-          <span class="badge" :class="packageStateClass">{{ packageStateText }}</span>
-        </header>
-
-        <p v-if="manifestError" class="state">{{ manifestError }}</p>
-
-        <template v-else-if="manifest">
-          <div class="facts">
-            <div>
-              <dt>站点版本</dt>
-              <dd><code>{{ manifest.build }}</code></dd>
-            </div>
-            <div>
-              <dt>已下载版本</dt>
-              <dd><code>{{ meta?.build ?? '—' }}</code></dd>
-            </div>
-            <div>
-              <dt>全部内容</dt>
-              <dd>{{ formatBytes(estimatedTotal) }}</dd>
-            </div>
-            <div>
-              <dt>浏览器占用</dt>
-              <dd>
-                {{ usage ? formatBytes(usage.usage) : '—' }}
-                <span v-if="usage" class="muted">/ {{ formatBytes(usage.quota) }}</span>
-              </dd>
-            </div>
-          </div>
-
-          <label class="toggle">
-            <input v-model="withChunks" type="checkbox">
+      <!-- ── 离线内容（站内） ───────────────────────────────────── -->
+      <section class="group">
+        <div class="group-head">
+          <span class="group-title">离线内容</span>
+          <template v-if="siteRows.length">
+            <span class="dot">·</span>
+            <span>{{ coveredSections }} / {{ siteRows.length }} 个板块</span>
+            <span class="dot">·</span>
             <span>
-              同时缓存页面脚本
-              <span class="muted">（离线时才可交互）</span>
+              {{ formatBytes(cachedSiteBytes) }} / {{ formatBytes(estimatedTotal) }}
             </span>
-          </label>
+          </template>
+          <span v-if="siteComplete" class="pill is-ok">已离线可用</span>
+          <span class="grow" />
+          <button v-if="master" type="button" class="btn-primary" @click="runMaster">
+            {{ master.label }}
+          </button>
+        </div>
 
-          <ul class="sections">
-            <li v-for="row in rows" :key="row.id">
-              <div class="row-main">
-                <span class="row-label">{{ row.label }}</span>
-                <span class="row-meta">
-                  {{ row.count }} 项 ·
-                  {{ row.unknown ? '大小未知' : formatBytes(row.estimated) }}
-                </span>
-              </div>
-              <div class="row-state">
-                <span :class="{'is-done': row.cached === row.count && row.count > 0}">
-                  {{ row.cached }} / {{ row.count }}
-                </span>
-                <span v-if="row.cached && row.chunkMissing" class="muted">
-                  · {{ row.chunkMissing }} 项缺脚本
-                </span>
-                <span v-if="row.stale" class="muted"> · {{ row.stale }} 项内容更新</span>
-              </div>
-              <div class="row-actions">
-                <button
-                  type="button"
-                  class="btn"
-                  :disabled="progress.running"
-                  @click="download(row.id)"
-                >
-                  {{
-                    row.cached === 0
-                      ? '缓存'
-                      : row.cached < row.count
-                        ? '继续'
-                        : row.stale
-                          ? '更新'
-                          : '检查'
-                  }}
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-ghost"
-                  :class="{'btn-armed': pendingKey === `section:${row.id}`}"
-                  :disabled="progress.running || row.cached === 0"
-                  @click="requestClear('section', row.id)"
-                >
-                  {{ pendingKey === `section:${row.id}` ? '确认清除' : '清除' }}
-                </button>
-              </div>
-            </li>
-          </ul>
+        <div v-if="manifestError" class="card">
+          <p class="card-note">{{ manifestError }}</p>
+        </div>
 
-          <div class="actions">
-            <button
-              type="button"
-              class="btn btn-primary"
-              :disabled="progress.running"
-              @click="downloadAll"
-            >
-              {{ meta ? '全部更新' : `缓存全部（${formatBytes(estimatedTotal)}）` }}
-            </button>
-            <button
-              type="button"
-              class="btn btn-danger"
-              :class="{'btn-armed': pendingKey === 'all:'}"
-              :disabled="progress.running || buckets.length === 0"
-              @click="requestClear('all', '')"
-            >
-              {{ pendingKey === 'all:' ? '确认清除全部？' : '清除全部缓存' }}
-            </button>
+        <div v-else-if="manifest" class="card">
+          <div
+            v-for="row in siteViews"
+            :key="row.id"
+            class="row"
+            :class="{ 'is-busy': progress.running && row.state !== 'running' }"
+          >
+            <div class="row-main">
+              <span class="row-title">{{ row.label }}</span>
+              <span class="row-meta">
+                {{ row.count }} 项 · {{ row.unknown ? '大小未知' : formatBytes(row.estimated) }}
+              </span>
+            </div>
+            <div class="row-state" :class="row.stateClass" :title="row.detail">
+              <span>{{ row.main }}</span>
+              <em v-if="row.sub">{{ row.sub }}</em>
+            </div>
+            <div class="row-act">
+              <button
+                v-if="row.action"
+                type="button"
+                class="btn"
+                :class="{ 'btn-quiet': row.action === 'cancel' }"
+                :disabled="progress.running && row.action !== 'cancel'"
+                @click="runRow(row)"
+              >
+                {{ ACTION_LABEL[row.action] }}
+              </button>
+              <button
+                v-if="row.action !== 'cancel'"
+                type="button"
+                class="icon-btn"
+                aria-label="更多操作"
+                :aria-expanded="menuFor === row.id"
+                :disabled="progress.running"
+                @click.stop="openMenu($event, row.id)"
+              >
+                ⋯
+              </button>
+            </div>
+            <div v-if="row.state === 'running'" class="track">
+              <i :style="{ width: `${percentOf(row)}%` }" />
+            </div>
+            <div v-if="confirming === `section:${row.id}`" class="confirm" @click.stop>
+              <span>清除「{{ row.label }}」的缓存？</span>
+              <span class="confirm-act">
+                <button type="button" class="btn" @click="cancelConfirm">取消</button>
+                <button type="button" class="btn btn-danger" @click="clearSection(row.id)">
+                  清除
+                </button>
+              </span>
+            </div>
           </div>
 
-          <div v-if="progress.running" class="progress">
-            <div class="progress-head">
-              <span>{{ progress.label }}</span>
-              <span>{{ progress.done }} / {{ progress.total }}</span>
+          <label class="row">
+            <div class="row-main">
+              <span class="row-title">同时缓存页面脚本</span>
+              <span class="row-sub">关掉只下 HTML：离线能读，但切页会整页重载</span>
             </div>
-            <div class="bar"><i :style="{width: `${percent}%`}" /></div>
-            <div class="progress-foot">
-              <span v-if="progress.totalBytes">
-                {{ formatBytes(progress.bytes) }} / {{ formatBytes(progress.totalBytes) }}
+            <div class="row-act">
+              <input
+                v-model="withChunks"
+                type="checkbox"
+                role="switch"
+                class="switch"
+                aria-label="同时缓存页面脚本"
+              >
+            </div>
+          </label>
+        </div>
+
+        <p v-if="notice" class="group-note" role="status">{{ notice }}</p>
+      </section>
+
+      <!-- ── 外链图片（第三方） ─────────────────────────────────── -->
+      <section v-if="thirdViews.length" class="group">
+        <div class="group-head">
+          <span class="group-title">外链图片</span>
+          <span class="pill">第三方</span>
+          <span class="dot">·</span>
+          <span>不计入上面的进度与「更新」</span>
+        </div>
+        <div class="card">
+          <div
+            v-for="row in thirdViews"
+            :key="row.id"
+            class="row"
+            :class="{ 'is-busy': progress.running && row.state !== 'running' }"
+          >
+            <div class="row-main">
+              <span class="row-title">{{ row.label }}</span>
+              <span class="row-meta">
+                {{ row.count }} 张 · {{ row.unknown ? '大小未知' : formatBytes(row.estimated) }} · hanphone.top
               </span>
-              <span v-else class="muted">已下 {{ formatBytes(progress.bytes) }}，总量未知</span>
-              <span v-if="progress.failed" class="warn">失败 {{ progress.failed }}</span>
-              <button type="button" class="btn btn-ghost" @click="cancel">
-                取消
+            </div>
+            <div class="row-state" :class="row.stateClass" :title="row.detail">
+              <span>{{ row.main }}</span>
+              <em v-if="row.sub">{{ row.sub }}</em>
+            </div>
+            <div class="row-act">
+              <button
+                v-if="row.action"
+                type="button"
+                class="btn"
+                :class="{ 'btn-quiet': row.action === 'cancel' }"
+                :disabled="progress.running && row.action !== 'cancel'"
+                @click="runRow(row)"
+              >
+                {{ ACTION_LABEL[row.action] }}
+              </button>
+              <button
+                v-if="row.action !== 'cancel'"
+                type="button"
+                class="icon-btn"
+                aria-label="更多操作"
+                :aria-expanded="menuFor === row.id"
+                :disabled="progress.running"
+                @click.stop="openMenu($event, row.id)"
+              >
+                ⋯
+              </button>
+            </div>
+            <div v-if="row.state === 'running'" class="track">
+              <i :style="{ width: `${percentOf(row)}%` }" />
+            </div>
+            <div v-if="confirming === `section:${row.id}`" class="confirm" @click.stop>
+              <span>清除「{{ row.label }}」的缓存？</span>
+              <span class="confirm-act">
+                <button type="button" class="btn" @click="cancelConfirm">取消</button>
+                <button type="button" class="btn btn-danger" @click="clearSection(row.id)">
+                  清除
+                </button>
+              </span>
+            </div>
+          </div>
+        </div>
+        <p class="group-note">
+          来自 hanphone.top，约 40 MB。阅读时看过的图会自动缓存；它没有内容指纹，
+          链接不变就算没变，图床失效也只影响这一组。
+        </p>
+      </section>
+
+      <!-- ── 版本与维护 ─────────────────────────────────────────── -->
+      <section class="group">
+        <div class="group-head">
+          <span class="group-title">版本与维护</span>
+          <span class="dot">·</span>
+          <span>{{ swText }}</span>
+        </div>
+        <div class="card">
+          <div v-if="usage" class="row">
+            <div class="row-main">
+              <span class="row-title">浏览器占用</span>
+            </div>
+            <div class="row-state">
+              {{ formatBytes(usage.usage) }}
+              <span class="muted">/ {{ formatBytes(usage.quota) }}</span>
+            </div>
+            <div class="track">
+              <i :style="{ width: `${usagePercent}%` }" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="row-main">
+              <span class="row-title">站点外壳</span>
+              <span class="row-meta mono" :title="buildFull">{{ shortBuild }}</span>
+            </div>
+            <div class="row-state" :class="{ 'is-warn': sw.waiting }">{{ swText }}</div>
+            <div class="row-act">
+              <button type="button" class="btn" :disabled="checking" @click="checkUpdate">
+                {{ checking ? '检查中…' : '检查更新' }}
               </button>
             </div>
           </div>
-          <p v-if="progress.message" class="state">{{ progress.message }}</p>
 
-          <p class="hint">
-            按板块下载，只下没下过和内容变过的。<b>共享脚本</b>是运行条、编辑器、
-            图表等懒加载代码；<b>Python 运行时</b>是题解里「▶ 运行」的解释器；
-            <b>外链图片</b>是挂在 hanphone.top 上的配图（约 40MB，按张计进度）。
-          </p>
-        </template>
-      </section>
+          <div v-if="sw.waiting" class="row is-alert">
+            <div class="row-main">
+              <span class="row-title">有新版本待应用</span>
+              <span class="row-sub">切换后会重载页面</span>
+            </div>
+            <div class="row-act">
+              <button type="button" class="btn-primary" :disabled="applying" @click="applyUpdate">
+                立即更新
+              </button>
+            </div>
+          </div>
 
-      <!-- ── 更新 ─────────────────────────────────────────────── -->
-      <section class="panel">
-        <header class="panel-head">
-          <h2>更新</h2>
-          <span class="badge" :class="swClass">{{ swText }}</span>
-        </header>
-
-        <p class="state">
-          {{ updateMessage }}
-        </p>
-
-        <div class="actions">
-          <button type="button" class="btn" :disabled="checking" @click="checkUpdate">
-            {{ checking ? '检查中…' : '检查新版本' }}
+          <button type="button" class="row row-click" @click="detailsOpen = !detailsOpen">
+            <div class="row-main">
+              <span class="row-title">缓存明细</span>
+              <span class="row-meta">{{ buckets.length }} 个缓存桶 · 约 {{ formatBytes(bucketBytes) }}</span>
+            </div>
+            <span class="chev">{{ detailsOpen ? '⌄' : '›' }}</span>
           </button>
+
+          <div v-if="detailsOpen" class="details">
+            <div v-if="bucketConfirm" class="confirm">
+              <span>删除缓存桶 <code>{{ bucketConfirm }}</code>？</span>
+              <span class="confirm-act">
+                <button type="button" class="btn" @click="cancelConfirm">取消</button>
+                <button type="button" class="btn btn-danger" @click="clearCache(bucketConfirm)">
+                  删除
+                </button>
+              </span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>缓存桶</th><th>条目</th><th>大小</th><th /></tr>
+                </thead>
+                <tbody>
+                  <tr v-for="c in buckets" :key="c.name">
+                    <td><code>{{ c.name }}</code></td>
+                    <td>{{ c.entries }}</td>
+                    <td>{{ c.bytes ? `≈ ${formatBytes(c.bytes)}` : '—' }}</td>
+                    <td class="cell-action">
+                      <button type="button" class="btn" @click="askBucket(c.name)">清除</button>
+                    </td>
+                  </tr>
+                  <tr v-if="buckets.length === 0">
+                    <td colspan="4" class="muted">还没有任何缓存。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="details-note">
+              大小为估算值（按响应头累加）。删掉应用外壳会重装 SW 并重载页面。
+            </p>
+          </div>
+
+          <div class="row" :class="{ 'row-click': !persisted }" @click="!persisted && enablePersist()">
+            <div class="row-main">
+              <span class="row-title">长期保留缓存</span>
+              <span class="row-meta">
+                {{ persisted
+                  ? '已开启：空间紧张时不会被优先清掉'
+                  : '未开启：iOS 7 天不访问或磁盘紧张时可能被清掉' }}
+              </span>
+            </div>
+            <div class="row-state" :class="{ 'is-ok': persisted }">
+              {{ persisted ? '已开启' : '未开启' }}
+            </div>
+            <div class="row-act">
+              <button
+                v-if="!persisted"
+                type="button"
+                class="btn"
+                :disabled="persisting"
+                @click.stop="enablePersist"
+              >
+                {{ persisting ? '申请中…' : '开启' }}
+              </button>
+            </div>
+          </div>
+
           <button
             type="button"
-            class="btn btn-primary"
-            :disabled="!sw.waiting || applying"
-            @click="applyUpdate"
+            class="row row-click"
+            :class="{ 'is-armed': confirming === 'all' }"
+            @click="askConfirm('all')"
           >
-            立即更新并重载
+            <div class="row-main">
+              <span class="row-title is-danger">清除全部缓存</span>
+              <span class="row-meta">含外链图片</span>
+            </div>
+            <span class="chev">›</span>
           </button>
-        </div>
 
-        <p v-if="staleTotal" class="warn">
-          有 {{ staleTotal }} 项内容变了，点「更新」只下这些。
-        </p>
-        <p v-else-if="newerBuild" class="warn">
-          站点已更新（<code>{{ manifest?.build }}</code>），离线内容没变。
-        </p>
+          <div v-if="confirming === 'all'" class="confirm">
+            <span>清除全部缓存？离线内容、外链图片与缓存桶都会删掉，页面会重载。</span>
+            <span class="confirm-act">
+              <button type="button" class="btn" @click="cancelConfirm">取消</button>
+              <button type="button" class="btn btn-danger" @click="clearAll">清除全部</button>
+            </span>
+          </div>
+        </div>
+        <p v-if="updateMessage" class="group-note" role="status">{{ updateMessage }}</p>
       </section>
 
-      <!-- ── 缓存明细 ─────────────────────────────────────────── -->
-      <section class="panel">
-        <header class="panel-head">
-          <h2>缓存明细</h2>
-          <span class="muted">{{ buckets.length }} 个缓存桶</span>
-        </header>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>缓存桶</th><th>条目</th><th>大小</th><th /></tr>
-            </thead>
-            <tbody>
-              <tr v-for="c in buckets" :key="c.name">
-                <td><code>{{ c.name }}</code></td>
-                <td>{{ c.entries }}</td>
-                <td>{{ c.bytes ? `≈ ${formatBytes(c.bytes)}` : '—' }}</td>
-                <td class="cell-action">
-                  <button
-                    type="button"
-                    class="btn btn-ghost"
-                    :class="{'btn-armed': pendingKey === `cache:${c.name}`}"
-                    :disabled="progress.running"
-                    @click="requestClear('cache', c.name)"
-                  >
-                    {{ pendingKey === `cache:${c.name}` ? '确认删除' : '清除' }}
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="buckets.length === 0">
-                <td colspan="4" class="muted">还没有任何缓存。</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <p class="hint">大小为估算值（按响应头累加）。删掉应用外壳会重装 SW 并重载页面。</p>
-
-        <div class="actions">
-          <button type="button" class="btn" :disabled="persisting" @click="enablePersist">
-            {{ persisted ? '已申请持久化存储' : '允许浏览器长期保留缓存' }}
-          </button>
-        </div>
-        <p class="hint">
-          {{ persisted
-            ? '已开启：空间紧张时不会被优先清掉。'
-            : '未开启：iOS 7 天不访问或磁盘紧张时可能被清掉。' }}
+      <details class="more">
+        <summary>这些板块分别是什么？</summary>
+        <p>
+          共享脚本是运行条、编辑器、图表等懒加载代码；Python 运行时是题解里
+          「▶ 运行」的解释器；页面插图是本站正文里的结构图与项目配图；
+          题解可视化是逐帧动画数据。外链图片不在离线包里，它来自 hanphone.top。
         </p>
-      </section>
+      </details>
+
+      <!-- 行内 ⋯ 菜单：固定定位，避免被卡片圆角的 overflow 裁掉 -->
+      <div v-if="menuFor" class="menu" :style="menuStyle" role="menu">
+        <button type="button" role="menuitem" @click="verifySection">校验完整性</button>
+        <div class="sep" />
+        <button
+          type="button"
+          role="menuitem"
+          class="is-danger"
+          @click="askClearSection(menuFor)"
+        >
+          清除这一板块
+        </button>
+      </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
 /**
- * 缓存与离线管理（`/settings.html`）。
+ * 缓存与离线内容（`/settings.html`）。
  *
- * 三件事：把站点内容一键下进 CacheStorage、手动检查/应用 Service Worker
- * 更新、手动清除缓存。对应安卓 App 设置页里的「清理缓存 / 检查更新」。
+ * ## 操作模型：一行一个状态、一个动作
  *
- * ## 为什么写进现有的两个缓存桶，而不是新建一个
+ * 一个板块只有**一个**状态（不是四个数字），按钮文案从状态推出来：
+ *
+ * ```
+ * 运行中 → 取消     失败 → 重试     部分 → 继续
+ * 有更新 → 更新     缺脚本 → 修复   未下载 → 下载
+ * 已下载 → 没有按钮（维护动作收进 ⋯）
+ * ```
+ *
+ * 页面上只有一个主按钮（组头那个），它只做一件事：把站内离线内容补到最新；
+ * 没有可做的事时它自己消失。危险操作不再常驻列表 —— 清除收进 ⋯，点了才在
+ * 那一行展开确认条。进度跟着那一行走，不再有页顶的全局进度面板。
+ *
+ * ## 站内内容与第三方内容分开
+ *
+ * `remote` 板块（hanphone.top 上的 525 张配图）在清单里带 `thirdParty: true`：
+ * 它不计入板块覆盖率、不计入总量与「更新」，失败原因也只说图床。
+ * 混在一起时「完整可用」永远亮不起来（站内全下完了它仍是 0/N），
+ * 而且它的「指纹」是 sha1(url)，永远判「没变」。
+ *
+ * ## 为什么写进现有的缓存桶，而不是新建一个
  *
  * Workbox 只管它自己 `registerRoute` 出来的缓存桶。新建 `offline-pages`
  * 之类的话，等于还要在 `.vuepress/theme.ts` 里再加一条路由，而 SW 只有在
@@ -260,7 +400,7 @@
  * 记在 localStorage；上线后拿到新清单再对比，不一致就提示重新缓存
  * （旧 HTML 引用的是已被删除的 `assets/<页面>-<旧哈希>.js`）。
  */
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { PYODIDE_CACHE_NAME } from '../../src/components/training/pyrunner/runtime-files'
 
 interface OfflineEntry extends Array<string | number | null> {
@@ -282,6 +422,8 @@ interface OfflineSection {
   label: string
   bytes: number
   entries: OfflineEntry[]
+  /** 第三方内容（`remote`）：设置页把它单独成组，见文件头 */
+  thirdParty?: boolean
 }
 
 interface OfflineManifest {
@@ -308,7 +450,7 @@ interface PackageMeta {
    * （而不是重下 HTML）才能做到「只改文档时只下改到的那几页」：
    * 旧 HTML + 旧 app + 旧 chunk 三件套一起留在缓存里，离线照样能启动。
    */
-  pages: Record<string, {app: string; chunk: string; islands?: string[]}>
+  pages: Record<string, { app: string; chunk: string; islands?: string[] }>
   /** 外壳文件 -> 它的静态依赖（目前只有 rolldown-runtime-*.js），prune 时一并保留 */
   appDeps: Record<string, string[]>
 }
@@ -324,10 +466,47 @@ interface SectionRow {
   label: string
   count: number
   estimated: number
+  /** 已缓存条目的体积估算（清单里那些文件的字节数之和） */
+  cachedBytes: number
   cached: number
   chunkMissing: number
   /** 内容真的变了的条目数（页面比 chunk 名、其它比文件指纹） */
   stale: number
+  unknown: boolean
+  thirdParty: boolean
+}
+
+type RowState = 'running' | 'failed' | 'partial' | 'stale' | 'repair' | 'idle' | 'done'
+type RowAction = 'cancel' | 'retry' | 'continue' | 'update' | 'repair' | 'download' | ''
+
+interface RowView extends SectionRow {
+  state: RowState
+  action: RowAction
+  main: string
+  sub: string
+  stateClass: string
+  detail: string
+}
+
+interface RunStat {
+  done: number
+  total: number
+  bytes: number
+}
+
+interface Failure {
+  url: string
+  message: string
+}
+
+const ACTION_LABEL: Record<RowAction, string> = {
+  cancel: '取消',
+  retry: '重试',
+  continue: '继续',
+  update: '更新',
+  repair: '修复',
+  download: '下载',
+  '': '',
 }
 
 const HTML_CACHE = 'html-v2'
@@ -337,7 +516,7 @@ const QUIZ_CACHE = 'quiz'
 // 搜索索引 worker（`assets/slimsearch.<BUILD_ID>.js`）。它是 worker 请求，
 // SW 的 script/style 路由接不住，见 `theme.ts` 里那条单独的路由。
 const SEARCH_CACHE = 'search'
-// 结构图：与 `theme.ts` 的 image 路由同名，离线打开页面时 SW 从这一桶取
+// 正文插图 + 外链图：与 `theme.ts` 的 image 路由同名，离线打开时 SW 从这一桶取
 const IMAGE_CACHE = 'images'
 // 缓存名与文件清单在 runtime-files.ts 里（客户端 fetch 拦截也用那一份）
 const PYODIDE_CACHE = PYODIDE_CACHE_NAME
@@ -359,20 +538,20 @@ const persisted = ref(false)
 const persisting = ref(false)
 const checking = ref(false)
 const applying = ref(false)
+const detailsOpen = ref(false)
 const updateMessage = ref('')
+const notice = ref('')
 const sw = reactive({ active: false, waiting: false, registration: false })
-const progress = reactive({
-  running: false,
-  label: '',
-  done: 0,
-  total: 0,
-  bytes: 0,
-  totalBytes: 0,
-  failed: 0,
-  skipped: 0,
-  message: '',
-})
+const progress = reactive({ running: false })
 const rows = ref<SectionRow[]>([])
+const menuFor = ref('')
+const menuStyle = ref<Record<string, string>>({})
+const confirming = ref('')
+
+/** 每个板块在这次运行里的进度（跨板块的「更新全部」也能各画各的条） */
+const sectionRun = reactive<Record<string, RunStat>>({})
+/** 每个板块这一轮失败的条目（重试只重跑这些） */
+const sectionErrors = reactive<Record<string, Failure[]>>({})
 
 // 勾上/取消「同时缓存页面脚本」时，每个板块的预计体积要跟着变
 watch(withChunks, () => computeRows())
@@ -380,6 +559,8 @@ watch(withChunks, () => computeRows())
 let abortController: AbortController | null = null
 /** 缓存桶 -> 已缓存的绝对 URL 集合。所有「已缓存多少」都由它算，不另存状态 */
 const cacheKeys = new Map<string, Set<string>>()
+/** 清单里每个 URL 属于哪个板块（运行进度与失败归因都靠它） */
+const sectionOfUrl = new Map<string, string>()
 
 const keysOf = (name: string): Set<string> => cacheKeys.get(name) ?? new Set<string>()
 
@@ -412,41 +593,48 @@ function targetCache(url: string): string {
   return HTML_CACHE
 }
 
-const percent = computed(() =>
-  progress.total ? Math.min(100, Math.round((progress.done / progress.total) * 100)) : 0,
-)
+/** 站内板块（离线包） */
+const siteRows = computed(() => rows.value.filter((row) => !row.thirdParty))
 
-const estimatedTotal = computed(() => {
-  if (!manifest.value) return 0
-  return Object.values(manifest.value.sections).reduce(
-    (sum, section) =>
-      sum +
-      section.entries.reduce(
-        (s, entry) => s + entry[2] + (withChunks.value ? entry[3] : 0),
-        0,
-      ),
-    0,
-  )
+const estimatedTotal = computed(() =>
+  siteRows.value.reduce((sum, row) => sum + row.estimated, 0),
+)
+const cachedSiteBytes = computed(() =>
+  siteRows.value.reduce((sum, row) => sum + row.cachedBytes, 0),
+)
+const coveredSections = computed(
+  () => siteRows.value.filter((row) => row.count > 0 && row.cached === row.count).length,
+)
+const siteComplete = computed(
+  () =>
+    siteRows.value.length > 0 &&
+    siteRows.value.every(
+      (row) => row.count > 0 && row.cached === row.count && !row.stale && !row.chunkMissing,
+    ),
+)
+const bucketBytes = computed(() => buckets.value.reduce((sum, c) => sum + c.bytes, 0))
+const usagePercent = computed(() => {
+  if (!usage.value || usage.value.quota <= 0) return 0
+  return Math.min(100, Math.max(1, (usage.value.usage / usage.value.quota) * 100))
 })
 
-const newerBuild = computed(
-  () => Boolean(manifest.value && meta.value && manifest.value.build !== meta.value.build),
-)
-
-const staleTotal = computed(() => rows.value.reduce((sum, row) => sum + row.stale, 0))
-
-const packageStateText = computed(() => {
-  if (!manifest.value) return '清单不可用'
-  if (!meta.value) return '未下载'
-  if (staleTotal.value > 0) return `需更新 ${staleTotal.value} 项`
-  const covered = rows.value.filter((r) => r.count > 0 && r.cached === r.count).length
-  return covered === rows.value.length ? '完整可用' : '部分已缓存'
+/** 页面里被汇总到一行的第三方板块（525 张图，按条列会刷屏） */
+const thirdViews = computed<RowView[]>(() => {
+  return rows.value.filter((row) => row.thirdParty).map((row) => viewOf(row))
 })
 
-const packageStateClass = computed(() => ({
-  'is-ok': packageStateText.value === '完整可用',
-  'is-warn': staleTotal.value > 0,
-}))
+const siteViews = computed<RowView[]>(() => {
+  return siteRows.value.map((row) => viewOf(row))
+})
+
+const shortBuild = computed(() => {
+  const build = buildFull.value
+  if (!build) return '—'
+  // 本地构建是 `<sha>-dirty.<时间戳>`：行上只显示提交号，完整值在 title 里
+  return build.split('-')[0]
+})
+
+const buildFull = computed(() => manifest.value?.build ?? meta.value?.build ?? '')
 
 const swText = computed(() => {
   if (!sw.registration) return '未注册'
@@ -454,7 +642,36 @@ const swText = computed(() => {
   return sw.active ? '已就绪' : '注册中'
 })
 
-const swClass = computed(() => ({ 'is-warn': sw.waiting }))
+/**
+ * 组头那个唯一的按钮。它只回答一个问题：把站内离线内容补到最新，下一步做什么。
+ * 没有可做的事（全部下完、没有更新、没有缺件）时返回 null，按钮直接消失。
+ */
+const master = computed<{ kind: 'cancel' | 'retry' | 'resume' | 'update' | 'download' | 'repair'; label: string } | null>(() => {
+  if (progress.running) return { kind: 'cancel', label: '取消' }
+  const rows = siteRows.value
+  if (rows.length === 0) return null
+
+  const failed = rows.reduce((sum, row) => sum + (sectionErrors[row.id]?.length ?? 0), 0)
+  if (failed > 0) return { kind: 'retry', label: `重试 ${failed} 项` }
+
+  const partial = rows.some((row) => row.cached > 0 && row.cached < row.count)
+  if (partial) {
+    const rest = Math.max(0, estimatedTotal.value - cachedSiteBytes.value)
+    return { kind: 'resume', label: `继续下载（剩 ${formatBytes(rest)}）` }
+  }
+
+  const stale = rows.reduce((sum, row) => sum + row.stale, 0)
+  if (stale > 0) return { kind: 'update', label: `更新 ${stale} 项` }
+
+  if (rows.some((row) => row.count > 0 && row.cached === 0)) {
+    return { kind: 'download', label: `下载离线内容（${formatBytes(estimatedTotal.value)}）` }
+  }
+
+  const repair = rows.reduce((sum, row) => sum + row.chunkMissing, 0)
+  if (repair > 0) return { kind: 'repair', label: `修复 ${repair} 项` }
+
+  return null
+})
 
 function formatBytes(bytes: number | undefined): string {
   if (!bytes || bytes < 0) return '0 KB'
@@ -471,26 +688,6 @@ function absolute(url: string): string {
 /** 是不是别的站点的图（`hanphone.top` 那批） */
 function isRemoteUrl(url: string): boolean {
   return /^https?:\/\//i.test(url)
-}
-
-/**
- * 缓存里那份响应的内容指纹（与构建期 `hashOf` 同口径：sha1 前 10 位）。
- *
- * 只在**旧版离线包没有记指纹**时用：升级到这个格式的第一次「更新」靠它
- * 把已缓存的内容就地校验一遍，一个网络请求都不发 —— 否则第一次升级就得把
- * 100MB 重下一遍。浏览器存的响应体是解码后的字节（= 原文件），所以能对上。
- */
-async function cachedHash(response: Response): Promise<string> {
-  try {
-    const buffer = await response.clone().arrayBuffer()
-    const digest = await crypto.subtle.digest('SHA-1', buffer)
-    return [...new Uint8Array(digest)]
-      .map((byte) => byte.toString(16).padStart(2, '0'))
-      .join('')
-      .slice(0, 10)
-  } catch {
-    return ''
-  }
 }
 
 function readMeta(): PackageMeta | null {
@@ -551,16 +748,22 @@ function computeRows(): void {
   const contentOf = meta.value?.content ?? {}
   const contentKnown = Object.keys(contentOf).length > 0
 
+  sectionOfUrl.clear()
+
   rows.value = Object.entries(manifest.value.sections).map(([id, section]) => {
     let cached = 0
+    let cachedBytes = 0
     let chunkMissing = 0
     let stale = 0
     let estimated = 0
     for (const entry of section.entries) {
-      estimated += entry[2] + (withChunks.value ? entry[3] : 0)
+      sectionOfUrl.set(entry[0], id)
+      const size = entry[2] + (withChunks.value ? entry[3] : 0)
+      estimated += size
       if (!keysOf(targetCache(entry[0])).has(absolute(entry[0]))) continue
 
       cached++
+      cachedBytes += size
       // 「缺脚本」要对着**缓存里那份 HTML 实际引用的 chunk** 判断：
       // 保留旧页面时，清单里那个新 chunk 名本来就不该被下载。整页孤岛的
       // 附加脚本同理 —— 旧 HTML 配的外壳 import 的是旧那份。
@@ -584,14 +787,103 @@ function computeRows(): void {
       label: section.label,
       count: section.entries.length,
       estimated,
+      cachedBytes,
       // 外链板块：构建期不联网，体积未知（真实大小要下载时才知道）。
       // 直接写 `0 KB` 看起来像 bug，标成「大小未知」。
       unknown: estimated === 0 && section.entries.length > 0,
       cached,
       chunkMissing,
       stale,
+      thirdParty: section.thirdParty === true,
     }
   })
+}
+
+/**
+ * 一个板块的状态。**顺序就是优先级**：正在跑 > 失败 > 未完成 > 有更新 >
+ * 缺脚本 > 已下载。按钮文案只从这里出，不再由模板里三四个数字拼。
+ */
+function stateOf(row: SectionRow): RowState {
+  const run = sectionRun[row.id]
+  const failed = sectionErrors[row.id]?.length ?? 0
+  if (progress.running && run && run.done < run.total) return 'running'
+  if (failed > 0) return 'failed'
+  if (row.count > 0 && row.cached === 0) return 'idle'
+  if (row.cached < row.count) return 'partial'
+  if (row.stale > 0) return 'stale'
+  if (row.chunkMissing > 0) return 'repair'
+  return 'done'
+}
+
+function actionOf(state: RowState): RowAction {
+  if (state === 'running') return 'cancel'
+  if (state === 'failed') return 'retry'
+  if (state === 'partial') return 'continue'
+  if (state === 'stale') return 'update'
+  if (state === 'repair') return 'repair'
+  if (state === 'idle') return 'download'
+  return ''
+}
+
+function viewOf(row: SectionRow): RowView {
+  const state = stateOf(row)
+  const run = sectionRun[row.id]
+  let main = ''
+  let sub = ''
+  let stateClass = ''
+
+  if (state === 'running') {
+    main = `${run?.done ?? 0} / ${run?.total ?? 0}`
+    sub = formatBytes(run?.bytes ?? 0)
+    stateClass = 'is-run'
+  } else if (state === 'failed') {
+    const failed = sectionErrors[row.id]?.length ?? 0
+    main = `${failed} 项失败`
+    sub = row.thirdParty ? '图床 502 或对方不支持跨域' : '网络中断或文件已不存在'
+    stateClass = 'is-bad'
+  } else if (state === 'partial') {
+    main = `${row.cached} / ${row.count}`
+    sub = `已下 ${formatBytes(row.cachedBytes)}`
+  } else if (state === 'stale') {
+    main = `${row.cached} / ${row.count}`
+    sub = `${row.stale} 项内容更新`
+    stateClass = 'is-ok'
+  } else if (state === 'repair') {
+    main = '已下载'
+    sub = `缺 ${row.chunkMissing} 项脚本`
+    stateClass = 'is-bad'
+  } else if (state === 'done') {
+    main = '已下载'
+    stateClass = 'is-ok'
+  } else {
+    main = `0 / ${row.count}`
+  }
+
+  return {
+    ...row,
+    state,
+    action: actionOf(state),
+    main,
+    sub,
+    stateClass,
+    detail: failureDetail(row),
+  }
+}
+
+/** 失败的原始报文放 title 里：行上只留一句人能看懂的 */
+function failureDetail(row: SectionRow): string {
+  const errors = sectionErrors[row.id] ?? []
+  if (errors.length === 0) return ''
+  return errors
+    .slice(0, 3)
+    .map((error) => `${error.url}：${error.message}`)
+    .join('\n')
+}
+
+function percentOf(row: RowView): number {
+  const run = sectionRun[row.id]
+  if (!run || run.total === 0) return 0
+  return Math.min(100, Math.round((run.done / run.total) * 100))
 }
 
 async function readSw(): Promise<void> {
@@ -650,15 +942,19 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
   const controller = new AbortController()
   abortController = controller
   progress.running = true
-  progress.label = label
-  progress.done = 0
-  progress.total = tasks.length
-  progress.bytes = 0
-  progress.failed = 0
-  progress.message = ''
-  progress.totalBytes = tasks.reduce((sum, e) => sum + e[2] + (withChunks.value ? e[3] : 0), 0)
 
-  // 三个桶按需打开：只点「自测题库」时不该为 html-v2 建一个空缓存
+  // 每个板块各自记一份进度与失败：跨板块的「更新全部」时，每行画自己的条
+  for (const id of ids) {
+    sectionRun[id] = { done: 0, total: 0, bytes: 0 }
+    sectionErrors[id] = []
+  }
+  for (const entry of tasks) {
+    const id = sectionOfUrl.get(entry[0])
+    if (id && sectionRun[id]) {
+      sectionRun[id].total++
+    }
+  }
+
   const opened = new Map<string, Cache>()
   const cacheOf = async (name: string): Promise<Cache> => {
     let cache = opened.get(name)
@@ -688,13 +984,6 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
     return set
   }
 
-  const flush = (): void => {
-    progress.done = done
-    progress.bytes = bytes
-    progress.failed = failures.length
-    progress.skipped = skipped
-  }
-
   /** 页面 HTML 里写的 `<script src="/assets/app-xxx.js">` */
   const appRefOf = (html: string): string => {
     const match = /src="\/(assets\/app-[^"]+\.js)"/.exec(html)
@@ -702,9 +991,9 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
   }
 
   // 记录每版外壳的静态依赖（目前只有 rolldown-runtime-*.js）
-  const appDeps: Record<string, string[]> = {...(meta.value?.appDeps ?? {})}
+  const appDeps: Record<string, string[]> = { ...(meta.value?.appDeps ?? {}) }
   // 页面 URL -> 缓存这份 HTML 时用的外壳（以及它懒加载的孤岛代码）
-  const pages: Record<string, {app: string; chunk: string; islands?: string[]}> = {
+  const pages: Record<string, { app: string; chunk: string; islands?: string[] }> = {
     ...(meta.value?.pages ?? {}),
   }
 
@@ -721,7 +1010,7 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
     const assetCache = await cacheOf(ASSET_CACHE)
     const cached = await caches.match(absUrl)
     const response =
-      cached ?? (await fetch(rel, {cache: 'reload', signal: controller.signal}))
+      cached ?? (await fetch(rel, { cache: 'reload', signal: controller.signal }))
     if (!response.ok) throw new Error(`HTTP ${response.status}（${rel}）`)
     await assetCache.put(new Request(absUrl), response.clone())
     knownOf(ASSET_CACHE).add(absUrl)
@@ -742,7 +1031,7 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
       if (controller.signal.aborted) return
       const entry = queue.shift()
       if (!entry) return
-      const [url, chunk, htmlBytes, chunkBytes, hash] = entry
+      const [url, chunk, htmlBytes, chunkBytes] = entry
       const scriptFiles = entry[5] ?? []
       const target = targetCache(url)
       const targetKeys = knownOf(target)
@@ -754,6 +1043,9 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
         ...(chunkUrl ? [chunkUrl] : []),
         ...scriptFiles.map(([rel]) => `/${rel}`),
       ]
+      const sectionId = sectionOfUrl.get(url) ?? ''
+      let gained = 0
+      let failed = false
 
       /**
        * 增量判断：**内容没变 + HTML 还在 + 它引用的外壳还在** 就整条跳过。
@@ -763,7 +1055,7 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
        * 就等于每次部署重下全站。旧 HTML 配旧外壳一起留着，离线照样能开。
        */
       const cachedThere = targetKeys.has(absolute(url))
-      const contentSame = Boolean(hash) && meta.value?.content?.[url] === hash
+      const contentSame = Boolean(entry[4]) && meta.value?.content?.[url] === entry[4]
       const record = pages[url]
       // 旧 HTML 能不能继续用，取决于「它引用的那份外壳 + 那个页面 chunk」
       // （以及整页孤岛的页面代码）还在
@@ -781,18 +1073,14 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
       if (!needHtml) {
         skipped++
         verified.add(url)
-        done++
-        if (done <= 20 || done % 5 === 0 || done === tasks.length) flush()
-        continue
-      }
-
-      try {
-        let htmlText = ''
-        if (needHtml) {
+      } else {
+        try {
+          let htmlText = ''
           // 外链图用**默认的 CORS 模式**取：该图床带 `ACAO: *`，回来的是正常
           // 响应（opaque 会被浏览器加随机填充，一张 39KB 的图能占 6MB）。
           const remote = isRemoteUrl(url)
-          const load = () => fetch(url, { cache: 'reload', signal: controller.signal })
+          const load = (): Promise<Response> =>
+            fetch(url, { cache: 'reload', signal: controller.signal })
           let body = await load()
           // 图床在并发下偶尔 502（实测一批 500 多张里会抖几次）：外链再试一遍，
           // 别让读者看到一串「失败」还以为是自己网络断了。
@@ -810,7 +1098,7 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
           await cache.put(new Request(absolute(url)), body.clone())
           targetKeys.add(absolute(url))
           // 外链在清单里是 0，用响应头里的真实值，进度才有意义
-          bytes += htmlBytes || realBytes
+          gained += htmlBytes || realBytes
           htmlText = chunkRel ? await body.text() : ''
 
           // **两个 .mjs 要额外进 `assets`。** 它们是 `import()` 加载的，
@@ -824,49 +1112,57 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
             await assetCache.put(new Request(absolute(url)), body.clone())
             assetKeys.add(absolute(url))
           }
-        }
 
-        if (needChunk) {
-          for (const rel of scriptUrls) {
-            if (assetKeys.has(absolute(rel))) continue
-            const script = await fetch(rel, {
-              cache: 'reload',
-              signal: controller.signal,
-            })
-            if (!script.ok) throw new Error(`HTTP ${script.status}（${rel}）`)
-            const assetCache = await cacheOf(ASSET_CACHE)
-            await assetCache.put(new Request(absolute(rel)), script.clone())
-            assetKeys.add(absolute(rel))
+          if (needChunk) {
+            for (const rel of scriptUrls) {
+              if (assetKeys.has(absolute(rel))) continue
+              const script = await fetch(rel, {
+                cache: 'reload',
+                signal: controller.signal,
+              })
+              if (!script.ok) throw new Error(`HTTP ${script.status}（${rel}）`)
+              const assetCache = await cacheOf(ASSET_CACHE)
+              await assetCache.put(new Request(absolute(rel)), script.clone())
+              assetKeys.add(absolute(rel))
+            }
+            gained += chunkBytes
           }
-          bytes += chunkBytes
-        }
 
-        // 页面：把这份 HTML 引用的外壳记下来（必要时下载并留下）
-        if (chunkRel) {
-          if (!htmlText) {
-            const cachedHtml = await (await cacheOf(target)).match(absolute(url))
-            htmlText = cachedHtml ? await cachedHtml.text() : ''
-          }
-          const app = appRefOf(htmlText)
-          if (app) {
-            await ensureAsset(app)
-            pages[url] = {
-              app,
-              chunk: chunkRel,
-              islands: scriptFiles.map(([rel]) => rel),
+          // 页面：把这份 HTML 引用的外壳记下来（必要时下载并留下）
+          if (chunkRel) {
+            if (!htmlText) {
+              const cachedHtml = await (await cacheOf(target)).match(absolute(url))
+              htmlText = cachedHtml ? await cachedHtml.text() : ''
+            }
+            const app = appRefOf(htmlText)
+            if (app) {
+              await ensureAsset(app)
+              pages[url] = {
+                app,
+                chunk: chunkRel,
+                islands: scriptFiles.map(([rel]) => rel),
+              }
             }
           }
-        }
 
-        verified.add(url)
-      } catch (error) {
-        if (controller.signal.aborted) return
-        failures.push(`${url}：${error instanceof Error ? error.message : String(error)}`)
+          verified.add(url)
+        } catch (error) {
+          if (controller.signal.aborted) return
+          failed = true
+          const message = error instanceof Error ? error.message : String(error)
+          failures.push(`${url}：${message}`)
+          const bucket = sectionErrors[sectionId]
+          if (bucket) bucket.push({ url, message })
+        }
       }
+
       done++
-      // 小分块（Python 运行时只有 5 个文件、单个 9.6MB）要一次一刷，
-      // 否则界面上会一直停在 0/5 —— 看起来像卡死，其实正在下。
-      if (done <= 20 || done % 5 === 0 || done === tasks.length) flush()
+      bytes += gained
+      const run = sectionRun[sectionId]
+      if (run) {
+        run.done++
+        if (!failed) run.bytes += gained
+      }
     }
   }
 
@@ -875,24 +1171,23 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
   } finally {
     progress.running = false
     abortController = null
-    flush()
   }
 
   const downloaded = done - failures.length - skipped
+  const thirdPartyRun = ids.some((id) => manifest.value?.sections[id]?.thirdParty)
   if (controller.signal.aborted) {
-    progress.message = `已取消：本次更新 ${downloaded} 项，${skipped} 项原本就是最新。`
+    notice.value = `已取消：本次更新 ${downloaded} 项，${skipped} 项原本就是最新。`
   } else if (failures.length > 0) {
-    progress.message =
-      `${failures.length} 项失败（外链多为图床 502 或对方不支持跨域）。已成功 ${downloaded} 项、` +
-      `${skipped} 项无需更新，可再点一次「继续」。第一条：${failures[0]}`
+    const reason = thirdPartyRun
+      ? '图床 502 或对方不支持跨域'
+      : '网络中断或文件已不存在'
+    notice.value =
+      `${label}：${failures.length} 项失败（${reason}），可点「重试」。` +
+      `已成功 ${downloaded} 项、${skipped} 项无需更新。`
   } else if (skipped === done) {
-    progress.message = `${label}：${done} 项都已是最新，没有下载（省了 ${formatBytes(
-      progress.totalBytes,
-    )}）。`
+    notice.value = `${label}：${done} 项都已是最新，没有下载。`
   } else {
-    progress.message = `${label}：更新 ${downloaded} 项（${formatBytes(bytes)}），${
-      skipped
-    } 项已是最新。`
+    notice.value = `${label}：更新 ${downloaded} 项（${formatBytes(bytes)}），${skipped} 项已是最新。`
   }
 
   // 记录这一版包覆盖了哪些板块。清单里没拿到 build（离线）时就保留旧值，
@@ -931,7 +1226,7 @@ async function runQueue(tasks: OfflineEntry[], label: string, ids: string[]): Pr
 
     // 只留下仍然缓存着的页面的外壳记录：清掉的分区、被删掉的页面不该继续
     // 拖着旧外壳不放（每份外壳 2MB）。
-    const pageRefs: Record<string, {app: string; chunk: string; islands?: string[]}> = {}
+    const pageRefs: Record<string, { app: string; chunk: string; islands?: string[] }> = {}
     for (const [key, value] of Object.entries(pages)) {
       if (!hashByUrl.has(key)) continue
       if (!knownOf(targetCache(key)).has(absolute(key))) continue
@@ -1013,64 +1308,129 @@ async function pruneStaleAssets(): Promise<void> {
   }
 }
 
-function download(id: string): void {
+/** 组头那个唯一的主按钮 */
+function runMaster(): void {
+  if (!master.value) return
+  const kind = master.value.kind
+  if (kind === 'cancel') {
+    cancel()
+    return
+  }
+  if (kind === 'retry') {
+    retryAll()
+    return
+  }
+  downloadAll()
+}
+
+function runRow(row: RowView): void {
+  if (row.action === 'cancel') {
+    cancel()
+    return
+  }
+  if (row.action === 'retry') {
+    retrySection(row.id)
+    return
+  }
+  if (!row.action) return
+  runSection(row.id)
+}
+
+function runSection(id: string): void {
   const section = manifest.value?.sections[id]
   if (!section) return
   void runQueue(section.entries, section.label, [id])
 }
 
+function retrySection(id: string): void {
+  const section = manifest.value?.sections[id]
+  const errors = sectionErrors[id] ?? []
+  if (!section || errors.length === 0) return
+  const urls = new Set(errors.map((error) => error.url))
+  const tasks = section.entries.filter((entry) => urls.has(entry[0]))
+  void runQueue(tasks, section.label, [id])
+}
+
+function retryAll(): void {
+  const tasks: OfflineEntry[] = []
+  const ids: string[] = []
+  for (const row of siteRows.value) {
+    const errors = sectionErrors[row.id] ?? []
+    if (errors.length === 0) continue
+    const section = manifest.value?.sections[row.id]
+    if (!section) continue
+    const urls = new Set(errors.map((error) => error.url))
+    tasks.push(...section.entries.filter((entry) => urls.has(entry[0])))
+    ids.push(row.id)
+  }
+  void runQueue(tasks, '重试失败项', ids)
+}
+
 function downloadAll(): void {
   if (!manifest.value) return
-  // 外链图片不进「全部」：约 40MB，而且对方随时可能失效。它有自己的按钮。
-  const picked = Object.entries(manifest.value.sections).filter(([id]) => id !== 'remote')
+  // 第三方内容不进「更新站点内容」：它约 40MB，而且对方随时可能失效。
+  // 已经完整的板块也不再塞进队列 —— 否则那些行会先闪一下「运行中」。
+  const picked = Object.entries(manifest.value.sections).filter(([id, section]) => {
+    if (section.thirdParty || !section.entries.length) return false
+    const row = rows.value.find((item) => item.id === id)
+    return !row || row.cached < row.count || row.stale > 0 || row.chunkMissing > 0
+  })
   const tasks = picked.flatMap(([, section]) => section.entries)
-  void runQueue(tasks, '全部内容', picked.map(([id]) => id))
+  void runQueue(
+    tasks,
+    '离线内容',
+    picked.map(([id]) => id),
+  )
 }
 
 function cancel(): void {
   abortController?.abort()
 }
 
+function askClearSection(id: string): void {
+  closeMenu()
+  askConfirm(`section:${id}`)
+}
+
+function askBucket(name: string): void {
+  bucketConfirm.value = name
+  armConfirmTimer()
+}
+
 /**
- * 删除类操作一律「两步确认」：第一次点变成「确认清除」，20 秒内再点才真删。
+ * 删除类操作一律「两步确认」：第一次点展开一条确认条，20 秒内再点才真删。
  *
  * 不用 `window.confirm()`：原生对话框会**阻塞整个页面**（自动化里点一下就
- * 卡死），而且和站点其它交互完全不是一个观感。安卓 App 也是弹层/二次点击
- * 这种就地确认。
+ * 卡死），而且和站点其它交互完全不是一个观感。确认条就长在要删的那一行下面。
  */
-const pendingKey = ref('')
-let pendingTimer = 0
+const bucketConfirm = ref('')
+let confirmTimer = 0
 
-function requestClear(kind: 'section' | 'cache' | 'all', id: string): void {
-  const label =
-    kind === 'section'
-      ? `「${manifest.value?.sections[id]?.label ?? id}」`
-      : kind === 'cache'
-        ? `缓存桶 ${id}`
-        : '全部缓存'
-  const key = `${kind}:${id}`
-  if (pendingKey.value !== key) {
-    pendingKey.value = key
-    progress.message = `再点一次「确认清除」才会删除${label}；20 秒后自动取消。`
-    window.clearTimeout(pendingTimer)
-    pendingTimer = window.setTimeout(() => {
-      if (pendingKey.value === key) {
-        pendingKey.value = ''
-        progress.message = ''
-      }
-    }, 20_000)
-    return
-  }
-  pendingKey.value = ''
-  window.clearTimeout(pendingTimer)
-  if (kind === 'section') void clearSection(id)
-  else if (kind === 'cache') void clearCache(id)
-  else void clearAll()
+function askConfirm(key: string): void {
+  if (confirming.value === key) return
+  confirming.value = key
+  bucketConfirm.value = ''
+  armConfirmTimer()
+}
+
+function armConfirmTimer(): void {
+  window.clearTimeout(confirmTimer)
+  confirmTimer = window.setTimeout(() => {
+    confirming.value = ''
+    bucketConfirm.value = ''
+  }, 20_000)
+}
+
+function cancelConfirm(): void {
+  window.clearTimeout(confirmTimer)
+  confirming.value = ''
+  bucketConfirm.value = ''
 }
 
 async function clearSection(id: string): Promise<void> {
   const section = manifest.value?.sections[id]
   if (!section) return
+  cancelConfirm()
 
   // 有些脚本同时属于几个板块（整页孤岛的 React 运行时与依赖也都在「共享脚本」
   // 里）。清一个板块时不能把它们删掉 —— 那会让**别的**板块离线失效。
@@ -1107,9 +1467,7 @@ async function clearSection(id: string): Promise<void> {
   // 清一次板块仍然占着几 MB。这里按**路径**一并收掉清单里那些图的所有版本，
   // 再加上已经从清单里消失的结构图（`/diagrams/` 整个目录归这个板块管）。
   if (id === 'images' || id === 'remote') {
-    const owned = new Set(
-      section.entries.map(([url]) => new URL(url).pathname),
-    )
+    const owned = new Set(section.entries.map(([url]) => new URL(url).pathname))
     const cache = await caches.open(IMAGE_CACHE)
     for (const request of await cache.keys()) {
       const pathname = new URL(request.url).pathname
@@ -1119,11 +1477,12 @@ async function clearSection(id: string): Promise<void> {
     }
   }
 
+  sectionErrors[id] = []
   if (meta.value) {
     const sections = meta.value.sections.filter((s) => s !== id)
     writeMeta(sections.length ? { ...meta.value, sections } : null)
   }
-  progress.message = `已清除「${section.label}」。`
+  notice.value = `已清除「${section.label}」。`
   await refresh()
 }
 
@@ -1131,7 +1490,7 @@ async function clearSection(id: string): Promise<void> {
 async function reinstallShell(): Promise<void> {
   const registration = await navigator.serviceWorker.getRegistration()
   await registration?.unregister()
-  progress.message = '应用外壳的预缓存已清空，正在重新安装（页面会重载）…'
+  notice.value = '应用外壳的预缓存已清空，正在重新安装（页面会重载）…'
   try {
     sessionStorage.setItem(NOTICE_KEY, '缓存已清除，应用外壳正在重新缓存。')
   } catch {
@@ -1141,16 +1500,18 @@ async function reinstallShell(): Promise<void> {
 }
 
 async function clearCache(name: string): Promise<void> {
+  cancelConfirm()
   await caches.delete(name)
   if (name.startsWith('workbox-precache')) {
     await reinstallShell()
     return
   }
-  progress.message = `已删除 ${name}。`
+  notice.value = `已删除缓存桶 ${name}。`
   await refresh()
 }
 
 async function clearAll(): Promise<void> {
+  cancelConfirm()
   const names = await caches.keys()
   await Promise.all(names.map((name) => caches.delete(name)))
   writeMeta(null)
@@ -1188,14 +1549,14 @@ async function checkUpdate(): Promise<void> {
 
     await readSw()
     if (registration.waiting) {
-      updateMessage.value = `发现新版本，点「立即更新并重载」切换过去。${
-        newerBuild.value ? '更新后请重新缓存离线内容。' : ''
-      }`
+      updateMessage.value = '发现新版本，点「立即更新」切换过去。'
     } else {
-      updateMessage.value = '已是最新版本（浏览器缓存里的这款）。'
+      updateMessage.value = '已是最新版本。'
     }
   } catch (error) {
-    updateMessage.value = `检查失败：${error instanceof Error ? error.message : String(error)}（离线时无法检查）`
+    updateMessage.value = `检查失败：${
+      error instanceof Error ? error.message : String(error)
+    }（离线时无法检查）`
   } finally {
     checking.value = false
   }
@@ -1205,7 +1566,7 @@ async function applyUpdate(): Promise<void> {
   const registration = await navigator.serviceWorker.getRegistration()
   const waiting = registration?.waiting
   if (!waiting) {
-    updateMessage.value = '没有待应用的新版本，先点「检查新版本」。'
+    updateMessage.value = '没有待应用的新版本，先点「检查更新」。'
     return
   }
   applying.value = true
@@ -1221,6 +1582,7 @@ async function applyUpdate(): Promise<void> {
 }
 
 async function enablePersist(): Promise<void> {
+  if (persisting.value) return
   persisting.value = true
   try {
     persisted.value = (await navigator.storage.persist?.()) ?? false
@@ -1229,7 +1591,54 @@ async function enablePersist(): Promise<void> {
   }
 }
 
+/** 重新读一遍缓存桶：等价于「校验完整性」（缺的项会显示成未下载） */
+function verifySection(): void {
+  closeMenu()
+  void refresh().then(() => {
+    notice.value = '已重新核对缓存，缺的项会显示为未下载。'
+  })
+}
+
+function openMenu(event: MouseEvent, id: string): void {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  // 菜单用 fixed 定位：卡片为了圆角是 overflow: hidden，挂在行里会被裁掉
+  menuStyle.value = {
+    top: `${Math.round(rect.bottom + 4)}px`,
+    left: `${Math.round(Math.max(8, Math.min(rect.right - 150, window.innerWidth - 158)))}px`,
+  }
+  menuFor.value = id
+}
+
+function closeMenu(): void {
+  menuFor.value = ''
+}
+
+function onDocumentClick(event: MouseEvent): void {
+  if (!menuFor.value) return
+  const target = event.target as HTMLElement
+  if (target.closest('.menu') || target.closest('.icon-btn')) return
+  closeMenu()
+}
+
+function onKeydown(event: KeyboardEvent): void {
+  if (event.key !== 'Escape') return
+  if (menuFor.value) {
+    closeMenu()
+    return
+  }
+  cancelConfirm()
+}
+
+function onScroll(): void {
+  // 菜单是 fixed 定位，滚动后位置就不对了
+  if (menuFor.value) closeMenu()
+}
+
 onMounted(async () => {
+  document.addEventListener('click', onDocumentClick)
+  document.addEventListener('keydown', onKeydown)
+  window.addEventListener('scroll', onScroll, { passive: true, capture: true })
+
   supported.value =
     typeof window !== 'undefined' &&
     window.isSecureContext &&
@@ -1250,7 +1659,7 @@ onMounted(async () => {
     manifest.value = (await response.json()) as OfflineManifest
   } catch (error) {
     manifestError.value =
-      `拿不到离线清单 /offline-manifest.json（${error instanceof Error ? error.message : String(error)}）。` +
+      `拿不到离线清单（${error instanceof Error ? error.message : String(error)}）。` +
       '开发模式（pnpm start）不会生成它，只有构建产物里才有。'
   }
 
@@ -1260,10 +1669,10 @@ onMounted(async () => {
   ready.value = true
 
   try {
-    const notice = sessionStorage.getItem(NOTICE_KEY)
-    if (notice) {
+    const noticeText = sessionStorage.getItem(NOTICE_KEY)
+    if (noticeText) {
       sessionStorage.removeItem(NOTICE_KEY)
-      progress.message = notice
+      notice.value = noticeText
     }
   } catch {
     /* 隐私模式忽略 */
@@ -1282,152 +1691,260 @@ onMounted(async () => {
   if (!updateMessage.value) {
     updateMessage.value = sw.waiting
       ? '浏览器已经下载好了新版本，只差切换。'
-      : '手动查一次（回到前台时会自动检查）。'
+      : ''
   }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocumentClick)
+  document.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('scroll', onScroll, { capture: true })
+  window.clearTimeout(confirmTimer)
 })
 </script>
 
 <style scoped>
 .cache-settings {
-  margin-top: 1rem;
+  --cs-ok: var(--vp-c-accent);
+  --cs-warn: #b45309;
+  --cs-danger: #c92a2a;
+
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
-.panel {
-  margin-bottom: 1.5rem;
-  padding: 1.25rem 1.35rem;
-  background: var(--vp-c-bg-soft);
-  border-radius: 10px;
+/* 主题没有全局的 border-box 重置：不写这一条，`min-height` 会与内边距相加，
+   40px 的行实际是 52px（密度全被吃掉）。 */
+.cache-settings *,
+.cache-settings *::before,
+.cache-settings *::after {
+  box-sizing: border-box;
 }
 
-.panel-head {
+html[data-theme='dark'] .cache-settings {
+  --cs-warn: #e0a458;
+  --cs-danger: #ff7b72;
+}
+
+/* ── 页头 ──────────────────────────────────────────────── */
+
+.page-head h1 {
+  margin: 0 0 0.1rem;
+  padding: 0;
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.page-head p {
+  margin: 0 0 0.9rem;
+  font-size: 0.75rem;
+  color: var(--vp-c-text-mute);
+}
+
+/* ── 分组 ──────────────────────────────────────────────── */
+
+.group {
+  margin-bottom: 0.85rem;
+}
+
+.group-head {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: 0.15rem 0.35rem;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.3rem;
+  padding: 0 0.15rem;
+  font-size: 0.72rem;
+  color: var(--vp-c-text-mute);
 }
 
-.panel-head h2 {
-  margin: 0;
-  padding: 0;
-  font-size: 1.05rem;
-  border: none;
+.group-title {
+  font-weight: 500;
 }
 
-.badge {
-  padding: 0.1rem 0.55rem;
-  font-size: 0.78rem;
+.dot {
+  opacity: 0.45;
+}
+
+.grow {
+  flex: 1;
+}
+
+.group-note {
+  margin: 0.4rem 0.15rem 0;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  color: var(--vp-c-text-mute);
+}
+
+.pill {
+  padding: 0.02rem 0.42rem;
+  font-size: 0.66rem;
   color: var(--vp-c-text-mute);
   background: var(--vp-c-bg-alt);
   border-radius: 999px;
 }
 
-.badge.is-ok {
-  color: var(--vp-c-accent);
+.pill.is-ok {
+  color: var(--cs-ok);
 }
 
-.badge.is-warn {
-  color: var(--vp-c-warning, #b45309);
+/* ── 卡片与行 ──────────────────────────────────────────── */
+
+.card {
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
 }
 
-.facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.75rem;
-  margin: 0 0 1rem;
+/* 深色下 bg-soft 与页面底色相同，卡片会「消失」；抬高一层 */
+html[data-theme='dark'] .card {
+  background: var(--vp-c-bg-elv);
 }
 
-.facts div {
-  min-width: 0;
-}
-
-.facts dt {
-  font-size: 0.75rem;
+.card-note {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.78rem;
   color: var(--vp-c-text-mute);
 }
 
-.facts dd {
-  margin: 0.15rem 0 0;
-  font-size: 0.9rem;
-  overflow-wrap: anywhere;
-}
-
-.toggle {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-  font-size: 0.88rem;
-  line-height: 1.5;
-  cursor: pointer;
-}
-
-.toggle input {
-  margin-top: 0.25rem;
-}
-
-.sections {
-  margin: 0 0 1rem;
-  padding: 0;
-  list-style: none;
-}
-
-.sections li {
+.row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 0.75rem;
+  gap: 0.15rem 0.7rem;
   align-items: center;
-  padding: 0.55rem 0;
+  min-height: 2.4rem;
+  padding: 0.3rem 0.8rem;
   border-top: 1px solid var(--vp-c-divider);
 }
 
-.sections li:first-child {
-  border-top: none;
+.row:first-child {
+  border-top: 0;
 }
 
-.row-label {
-  display: block;
-  font-size: 0.92rem;
+.row.is-busy {
+  opacity: 0.55;
+}
+
+/* 整行可点的维护项：外观与普通行一致，只是多一个 › */
+.row-click {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border-inline: 0;
+  border-bottom: 0;
+}
+
+.row-click:hover .row-title:not(.is-danger) {
+  color: var(--vp-c-accent);
+}
+
+.row-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.45rem;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.row-title {
+  font-size: 0.86rem;
 }
 
 .row-meta {
+  font-size: 0.7rem;
+  color: var(--vp-c-text-mute);
+}
+
+.row-meta.mono {
+  font-family: var(--vp-font-code, monospace);
+  font-size: 0.68rem;
+}
+
+.row-sub {
   display: block;
-  font-size: 0.76rem;
+  width: 100%;
+  margin-top: 0.08rem;
+  font-size: 0.7rem;
+  line-height: 1.4;
   color: var(--vp-c-text-mute);
 }
 
 .row-state {
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
+  font-size: 0.7rem;
   color: var(--vp-c-text-mute);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  text-align: right;
 }
 
-.row-state .is-done {
-  color: var(--vp-c-accent);
+.row-state em {
+  display: block;
+  font-style: normal;
+  font-size: 0.66rem;
 }
 
-.row-actions {
+.row-state.is-ok {
+  color: var(--cs-ok);
+}
+
+.row-state.is-bad {
+  color: var(--cs-danger);
+}
+
+.row-state.is-warn {
+  color: var(--cs-warn);
+}
+
+.row-state.is-run {
+  color: var(--vp-c-text);
+}
+
+.row-act {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.15rem;
+  align-items: center;
+  justify-content: flex-end;
 }
+
+.row.is-alert {
+  background: color-mix(in srgb, var(--vp-c-accent) 6%, transparent);
+}
+
+.is-danger {
+  color: var(--cs-danger);
+}
+
+.chev {
+  color: var(--vp-c-text-mute);
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+/* ── 按钮 ──────────────────────────────────────────────── */
 
 .btn {
-  padding: 0.3rem 0.7rem;
+  padding: 0.22rem 0.5rem;
   font-family: inherit;
-  font-size: 0.82rem;
-  color: var(--vp-c-text);
+  font-size: 0.7rem;
+  line-height: 1.1;
+  color: var(--vp-c-accent);
   white-space: nowrap;
   cursor: pointer;
-  background: var(--vp-c-bg);
+  background: transparent;
   border: 1px solid var(--vp-c-border);
-  border-radius: 6px;
-  transition: color 0.2s ease, border-color 0.2s ease;
+  border-radius: 7px;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .btn:hover:not(:disabled) {
-  color: var(--vp-c-accent);
+  background: var(--vp-c-accent-soft);
   border-color: var(--vp-c-accent);
 }
 
@@ -1436,60 +1953,207 @@ onMounted(async () => {
   opacity: 0.5;
 }
 
-.btn-primary {
+.btn-quiet {
+  color: var(--vp-c-text-mute);
+  border-color: transparent;
+}
+
+.btn-quiet:hover:not(:disabled) {
   color: var(--vp-c-accent);
-  border-color: var(--vp-c-accent);
+  border-color: transparent;
+}
+
+.btn-danger {
+  color: var(--cs-danger);
+  border-color: var(--cs-danger);
 }
 
 .btn-danger:hover:not(:disabled) {
-  color: var(--vp-c-danger, #c0392b);
-  border-color: var(--vp-c-danger, #c0392b);
-}
-
-.btn-ghost {
   background: transparent;
+  border-color: var(--cs-danger);
 }
 
-/* 两步确认的「已就绪」态：红色提示这一下真的会删 */
-.btn-armed {
-  color: var(--vp-c-danger, #c0392b);
-  border-color: var(--vp-c-danger, #c0392b);
+.btn-primary {
+  padding: 0.26rem 0.66rem;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: #fff;
+  white-space: nowrap;
+  cursor: pointer;
+  background: var(--vp-c-accent);
+  border: 1px solid var(--vp-c-accent);
+  border-radius: 7px;
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+.btn-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
-.progress {
-  margin-top: 1rem;
-}
-
-.progress-head,
-.progress-foot {
-  display: flex;
-  gap: 0.6rem;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.8rem;
+.icon-btn {
+  padding: 0.16rem 0.3rem;
+  font-size: 0.82rem;
+  line-height: 1;
   color: var(--vp-c-text-mute);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
 }
 
-.bar {
-  height: 5px;
-  margin: 0.35rem 0;
+.icon-btn:hover,
+.icon-btn[aria-expanded='true'] {
+  color: var(--vp-c-text);
+  background: var(--vp-c-bg-alt);
+}
+
+.icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:focus-visible,
+.btn-primary:focus-visible,
+.icon-btn:focus-visible,
+.row-click:focus-visible,
+.switch:focus-visible {
+  outline: 2px solid var(--vp-c-accent);
+  outline-offset: 2px;
+}
+
+/* ── 进度 ──────────────────────────────────────────────── */
+
+.track {
+  grid-column: 1 / -1;
+  height: 3px;
+  margin: 0.1rem 0 0.15rem;
   overflow: hidden;
   background: var(--vp-c-bg-alt);
-  border-radius: 999px;
+  border-radius: 99px;
 }
 
-.bar i {
+.track i {
   display: block;
   height: 100%;
   background: var(--vp-c-accent);
+  border-radius: 99px;
   transition: width 0.2s ease;
+}
+
+/* ── 开关 ──────────────────────────────────────────────── */
+
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.2rem;
+  height: 1.25rem;
+  margin: 0;
+  cursor: pointer;
+  appearance: none;
+  background: var(--vp-c-bg-alt);
+  border: 1px solid var(--vp-c-border);
+  border-radius: 999px;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 0.95rem;
+  height: 0.95rem;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
+  transition: transform 0.18s ease;
+}
+
+.switch:checked {
+  background: var(--vp-c-accent);
+  border-color: var(--vp-c-accent);
+}
+
+.switch:checked::after {
+  transform: translateX(0.95rem);
+}
+
+html[data-theme='dark'] .switch::after {
+  background: #d7d7dd;
+}
+
+/* ── 确认条（取代改按钮文字 + 页顶提示） ───────────────── */
+
+.confirm {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: 0.4rem 0.6rem;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.1rem 0;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--cs-danger);
+  background: var(--vp-c-bg-alt);
+  border-left: 2px solid var(--cs-danger);
+  border-radius: 0 7px 7px 0;
+}
+
+.confirm-act {
+  display: flex;
+  gap: 0.3rem;
+}
+
+/* ── ⋯ 菜单（fixed，避免被卡片圆角裁掉） ──────────────── */
+
+.menu {
+  position: fixed;
+  z-index: 150;
+  min-width: 9rem;
+  padding: 0.2rem;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 9px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 14%);
+}
+
+.menu button {
+  display: block;
+  width: 100%;
+  padding: 0.34rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.74rem;
+  color: var(--vp-c-text);
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+}
+
+.menu button:hover {
+  background: var(--vp-c-bg-alt);
+}
+
+.menu button.is-danger {
+  color: var(--cs-danger);
+}
+
+.menu .sep {
+  height: 1px;
+  margin: 0.18rem 0.15rem;
+  background: var(--vp-c-divider);
+}
+
+/* ── 缓存明细（高级，默认收起） ───────────────────────── */
+
+.details {
+  padding: 0.5rem 0.8rem 0.7rem;
+  border-top: 1px solid var(--vp-c-divider);
 }
 
 .table-wrap {
@@ -1498,13 +2162,13 @@ onMounted(async () => {
 
 table {
   width: 100%;
-  font-size: 0.84rem;
+  font-size: 0.76rem;
   border-collapse: collapse;
 }
 
 th,
 td {
-  padding: 0.4rem 0.5rem;
+  padding: 0.28rem 0.4rem;
   text-align: left;
   white-space: nowrap;
   border-bottom: 1px solid var(--vp-c-divider);
@@ -1519,44 +2183,108 @@ th {
   text-align: right;
 }
 
-.state {
-  margin: 0.5rem 0;
-  font-size: 0.85rem;
+.details-note {
+  margin: 0.45rem 0 0;
+  font-size: 0.7rem;
+  line-height: 1.55;
   color: var(--vp-c-text-mute);
 }
 
-.warn {
-  font-size: 0.85rem;
-  color: var(--vp-c-warning, #b45309);
+/* ── 页尾说明 ──────────────────────────────────────────── */
+
+.more {
+  margin: 0.6rem 0.15rem 0;
+  font-size: 0.72rem;
+  color: var(--vp-c-text-mute);
 }
 
-.notice {
-  padding: 1rem 1.15rem;
-  font-size: 0.9rem;
+.more summary {
+  cursor: pointer;
+}
+
+.more p {
+  margin: 0.3rem 0 0;
   line-height: 1.6;
-  background: var(--vp-c-bg-soft);
+}
+
+/* ── 骨架（SSR 首屏） ──────────────────────────────────── */
+
+.skeleton {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sk-line {
+  display: block;
+  height: 0.7rem;
+  background: var(--vp-c-bg-alt);
+  border-radius: 4px;
+}
+
+.sk-card {
+  border: 1px solid var(--vp-c-divider);
   border-radius: 10px;
 }
 
-.hint {
-  margin: 0.75rem 0 0;
-  font-size: 0.78rem;
-  line-height: 1.7;
-  color: var(--vp-c-text-mute);
+.sk-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.7rem 0.8rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.sk-row:first-child {
+  border-top: 0;
+}
+
+/* ── 不支持 / 空状态 ───────────────────────────────────── */
+
+.notice {
+  padding: 0.9rem 1rem;
+  font-size: 0.85rem;
+  line-height: 1.65;
+  background: var(--vp-c-bg-soft);
+  border-radius: 10px;
 }
 
 .muted {
   color: var(--vp-c-text-mute);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .switch,
+  .switch::after,
+  .track i {
+    transition: none;
+  }
+}
+
+/* ── 手机：动作换行，触控目标回到 40px 上下 ───────────── */
+
 @media (max-width: 640px) {
-  .sections li {
-    grid-template-columns: minmax(0, 1fr) auto;
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.2rem 0.45rem;
+    padding: 0.42rem 0.7rem;
   }
 
-  .row-actions {
-    grid-column: 1 / -1;
-    justify-content: flex-end;
+  .row-main {
+    gap: 0.05rem 0.35rem;
+  }
+
+  .btn,
+  .btn-primary {
+    padding: 0.4rem 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  .icon-btn {
+    padding: 0.36rem 0.28rem;
+  }
+
+  .group-head .grow {
+    display: none;
   }
 }
 </style>

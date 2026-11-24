@@ -126,7 +126,7 @@ export default defineClientConfig({
     app.component('DifficultyInfo', DifficultyInfo)
 
     /**
-     * 导航栏右侧的两个图标链接（个人主页 / 缓存与离线）。
+     * 导航栏右侧的两个图标链接（个人主页 / 设置）。
      *
      * 名字必须与 `theme.ts` 的 `navbarLayout.end` 里写的那两项**逐字一致** ——
      * hope 的 Navbar 对布局项做 `hasGlobalComponent(item)` 再
