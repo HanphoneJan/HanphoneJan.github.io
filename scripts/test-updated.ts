@@ -70,9 +70,11 @@ check('三个整页孤岛的 md 都挂到页面实现上', () => {
 
 check('算法模式页挂到放置表指定的 tracer 模块', () => {
   const deps = depsOf('code-training/docs/patterns/sorting.md')
-  assert.deepEqual(deps, [
-    'src/components/training/visualizer/tracers/sorting.ts',
-  ])
+  assert.ok(
+    deps.includes('src/components/training/visualizer/tracers/sorting.ts'),
+  )
+  // 正文里的关键帧图也算这一页的依赖
+  assert.ok(deps.includes('static/diagrams/merge-two-sorted.png'))
 })
 
 check('正文引用的本地图片算这一页的依赖', () => {

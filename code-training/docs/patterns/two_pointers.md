@@ -68,6 +68,13 @@ def two_pointer_opposite(nums, target):
 
 **每一步都排除了一整行（或一整列）候选**，所以总步数是 `O(n)`。
 
+把这一过程画出来（`nums = [1,3,5,7,9,12]`、`target = 14`）：
+
+![对撞指针四步：每次移动排除一整行或一整列](/diagrams/two-pointer-collide.png)
+
+蓝格是 `left`、橙格是 `right`，灰色是已经被证明不可能的区间。盯住第 2 步：
+和太大时移动 `right`，被排除的不是 `12` 这一个数，而是「`12` 与左边任何数」这一整行组合。
+
 ### 例 1：盛最多水的容器（LeetCode 11）
 
 [11. 盛最多水的容器](../problems/leetcode/0011_container_with_most_water.md)

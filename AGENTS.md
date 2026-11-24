@@ -727,7 +727,7 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 （`toc` 读到 `undefined`）。两种 import 写法（本仓库其它插件用的
 `path.join(__dirname, '...index.ts')`）都试过，一样。
 
-### 算法可视化（只有手写 tracer）
+### 算法可视化（tracer + 关键帧图解）
 
 站点只保留**手写 tracer**：16 个算法 / 数据结构，挂在 16 篇模式与数据结构文档里
 （放置表 `src/components/training/visualizer/inlinePlacement.ts`，共 22 个播放器）。
@@ -771,6 +771,23 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 - 折叠壳上的标题来自放置表的 `title`，不用 tracer 自己的 —— 壳是同步渲染的
   （SSR 里就要出现），而 `tracers/index.ts` 只能懒加载。
 - 播放器与 tracer 模块都是 `React.lazy`：不展开就不下载。
+
+#### 关键帧图解（静态图，优先于播放器）
+
+不是所有算法都值得一个播放器。流程型的概念（窗口怎么缩、指针怎么排除、
+区间怎么选、DP 表怎么填）用 **4~6 张关键帧 + 一句不变式** 就够，
+而且静态图在 SSR 产物里、能搜索、手机能读、离线能看。
+
+- **位置**：放在讲那一步的正文里，不放页尾。图前一句「看什么」，
+  图后一句「所以为什么成立」；图里不要写大段说明。
+- **画法**：draw.io，画布 700px、正文 ≥14px、节点内 ≤2 行。色块只用
+  `#d5e8d4`（选中 / 答案）、`#ffe6cc`（当前）、`#dae8fc`（另一侧指针）、
+  `#f5f5f5`（已排除），并在图上方给一行图例。
+- **导出**：`export_drawio.sh --scale 3 --colors 32`。字多的图用 2x 在 2 倍屏
+  上会被上采样发虚；3x 转 32 色后单张仍在 150KB 以内（实测 73~131KB）。
+- **文件**：源文件 `static/diagrams/src/<slug>.drawio`，正文引
+  `/diagrams/<slug>.png`。已有：滑动窗口、lower_bound、LCS 填表、
+  对撞指针、归并合并、区间调度。
 
 #### 新增一个算法
 
