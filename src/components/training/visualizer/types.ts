@@ -182,7 +182,7 @@ export type Frame =
 /**
  * Frame 是 union，另外几个分支把 `grid`/`table`/`tree` 声明成了 `?: never`，
  * TS 的 `in`/真值收窄**不生效**（optional 属性存在 undefined 的可能），
- * 所以手写守卫。两个播放器（AlgoPlayer / RecordedPlayer）共用这三个。
+ * 所以手写守卫。渲染器与播放器共用这三个。
  */
 export function isGridFrame(f: Frame): f is GridFrameWrapper {
   return f.grid !== undefined;

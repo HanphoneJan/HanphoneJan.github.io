@@ -145,8 +145,8 @@ if __name__ == "__main__":
 一般的leetcode题解文档位于项目根目录/docs/problems/leetcode/*.md，建议参考已有文档
 
 > **`## 示例` 小节必须用 `输入：` / `输出：` 前缀**，这是**硬要求**，不是风格偏好。
-> 页面上那个「▶ 跑样例」按钮与逐帧可视化都靠它抽样例（`plugins/py-samples`
-> 与 `visualizer/recorder` 都是按这两个前缀正则匹配的）。写成散文、表格或
+> 页面上那个「▶ 跑样例」按钮靠它抽样例（`plugins/py-samples` 按这两个前缀
+> 正则匹配）。写成散文、表格或
 > `Input:`/`Output:` 英文前缀，样例**一条都抽不出来** ——
 > 而页面**不会报错**，只会静默退化成「手动填参数」，功能悄悄消失。
 > 多个样例就重复这两行；牛客题同理（`输入格式`/`输出格式` 讲的是题意，
@@ -514,8 +514,7 @@ if __name__ == "__main__":
 - [ ] **手法 / 代码注释 / 推演用的是同一套编号和同一个具象锚**
 - [ ] **边界与失败方式就地讲**：二分 false 对应收哪侧、递归在哪一行停、标记在递归前还是后
 - [ ] **没有可以整段搬到别篇题解的段落**（套话）
-- [ ] **`## 示例` 每组样例都有 `输入：` / `输出：` 前缀** - 页面「跑样例」与逐帧可视化都靠它抽样例；写不成这两个前缀，功能会**静默消失**（不报错）
-- [ ] **新题跑过 `pnpm trace:record <题号>`** - 逐帧可视化是从代码录制出来的，不跑就没有
+- [ ] **`## 示例` 每组样例都有 `输入：` / `输出：` 前缀** - 页面「跑样例」靠它抽样例；写不成这两个前缀，功能会**静默消失**（不报错）
 - [ ] **新题跑过 `pnpm quiz:gen && pnpm quiz:merge`** - 自测题库只认 `bank.json` 里有的 `docId`
 - [ ] **Original code is preserved** - user's handwritten code/comments are not deleted
 - [ ] **TreeNode/ListNode 不在提交区域** - 辅助类定义在 `@lcpr-template-start` 和 `@lcpr-template-end` 之间，不在 `@lc code=start` 和 `@lc code=end` 之间
@@ -524,7 +523,7 @@ if __name__ == "__main__":
 - [ ] Test cases include edge cases (original tests preserved + new ones added)
 - [ ] Every real method's code follows its explanation — no "all prose, code at the end" layout
 - [ ] Only real ladders — a 暴力→优化→最优 ladder appears only when those methods genuinely exist
-- [ ] If editing an existing doc, the first python block under `## 完整代码实现` is unchanged; if it changed, `pnpm trace:record <题号>` has been rerun
+- [ ] If editing an existing doc, the first python block under `## 完整代码实现` is unchanged
 - [ ] `pnpm check:runbar <题号>` passes when the samples are usable
 - [ ] Markdown follows the current template (methods interleaved with code, not the old 第一步/第二步/最优 structure)
 - [ ] Complexity analysis uses a real comparison table; the best row is marked 「（最优）」 exactly once
@@ -541,22 +540,16 @@ if __name__ == "__main__":
 
 ### 新增题解的收尾命令（**新题必跑，改既有题不必**）
 
-写完一篇**新**题解，页面上有三个功能是从文档里**派生**出来的，
+写完一篇**新**题解，页面上有两个功能是从文档里**派生**出来的，
 它们不会自己出现 —— 必须各跑一条命令，否则那一节就是空的：
 
 ```bash
-pnpm trace:record 0042      # 逐帧可视化：用 Pyodide 真跑这份代码取执行轨迹
 pnpm quiz:gen && pnpm quiz:merge   # 自测题：从「## 复杂度分析」的表格抽单选题
-node scripts/check-docs.ts  # 体检：运行条样例数 / 轨迹 / 自测题 / frontmatter
+node scripts/check-docs.ts  # 体检：运行条样例数 / 自测题 / frontmatter
 ```
 
-三条都**不报错**地静默生效，所以「以为做完了」是这里最容易犯的错：
+两条都**不报错**地静默生效，所以「以为做完了」是这里最容易犯的错：
 
-- **可视化**：录制器需要一个能对上题面样例的入口，且跑出来的结果必须与期望值一致
-  （结果不符就整篇丢弃）。需要先 `pnpm sync:pyodide`（12.9MB，已 gitignore）；
-  没下运行时脚本会打印提示后以 0 退出 —— **别把那个退出码当成「可视化已生成」**。
-  跑完顺手看一眼 `pnpm test:adapters`：它会校验「轨迹里的代码 == 题解
-  `## 完整代码实现`」，所以**改动既有题解的代码后必须重录**，否则单测会红。
 - **自测题**：`quiz:gen` 从 `## 复杂度分析` 的表格机械抽题，产出候选到
   `bank.generated.json`；`quiz:merge` 合进 `bank.json`（人工题保留）。
   `plugins/self-test` 只认 `bank.json` 里有的 `docId`，所以新题不进 bank 就没自测小节。

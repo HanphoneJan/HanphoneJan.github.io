@@ -351,18 +351,6 @@ export default hopeTheme({
             },
           },
           {
-            // 逐帧可视化轨迹：一篇一个 json，点开时才 fetch
-            urlPattern: /\/traces\/.*\.json$/,
-            handler: 'CacheFirst' as const,
-            options: {
-              cacheName: 'traces',
-              // 206 篇题解都有轨迹文件（`static/traces/`），上限低于这个数
-              // 时离线包会在下完之后**立刻少几条**（Workbox 按 LRU 淘汰它
-              // 自己写进去的条目），设置页上永远显示 200/206。
-              expiration: {maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 180},
-            },
-          },
-          {
             // 自测题库：一次下载，全站复用
             urlPattern: /\/quiz\/.*\.json$/,
             handler: 'StaleWhileRevalidate' as const,

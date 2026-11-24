@@ -176,7 +176,7 @@ class Solution:
     """
 
     def maximalRectangle(self, matrix: List[List[str]]) -> int:
-        # 入口放在第一个方法：页面「跑样例」与录制器都取第一个带 self 的方法
+        # 入口放在第一个方法：页面「跑样例」取第一个带 self 的方法
         n = len(matrix[0])
         heights = [0] * (n + 1)  # 末尾多一个0
         ans = 0

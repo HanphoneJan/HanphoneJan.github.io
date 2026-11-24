@@ -92,8 +92,8 @@ interface DocPermalinkData {
   map: Record<string, string>
 }
 
-interface VisTracesData {
-  entries: unknown[]
+interface VisualizersData {
+  count: number
 }
 
 interface SelfTestData {
@@ -137,7 +137,7 @@ const ENTRIES: Entry[] = [
     to: '/code-training/category/题库.html',
     icon: '🧮',
     title: '代码训练',
-    desc: '力扣 / 牛客题解，每道题都能在浏览器里直接跑样例、看逐行动画。',
+    desc: '力扣 / 牛客题解，每道题都能在浏览器里直接跑样例；算法模式页可逐帧看状态变化。',
     cta: '开始刷题',
   },
   {
@@ -166,8 +166,8 @@ const FEATURES: Feature[] = [
   {
     to: '/code-training/category/算法模式.html',
     icon: '🎬',
-    title: '逐行算法动画',
-    desc: '录制真实执行过程并回放每一步：数组怎么收缩、指针怎么走、DP 表怎么填。',
+    title: '算法动画演示',
+    desc: '在讲这个算法的文档里改输入重跑，逐帧看状态怎么变：窗口怎么收缩、指针怎么走、DP 表怎么填。',
   },
   {
     to: '/code-training/category/题库.html',
@@ -178,18 +178,18 @@ const FEATURES: Feature[] = [
 ]
 
 const docData = usePluginData<DocPermalinkData>('doc-permalinks')
-const visData = usePluginData<VisTracesData>('vis-traces')
+const visData = usePluginData<VisualizersData>('visualizers')
 const selfTestData = usePluginData<SelfTestData>('self-test')
 
 const problemCount = Object.keys(docData?.map ?? {}).filter((key) =>
   key.startsWith('problems/'),
 ).length
-const visCount = visData?.entries?.length ?? 0
+const visCount = visData?.count ?? 0
 const selfTestCount = selfTestData?.docIds?.length ?? 0
 
 const stats = [
   { value: problemCount, label: '篇题解' },
-  { value: visCount, label: '份算法动画' },
+  { value: visCount, label: '个算法动画' },
   { value: selfTestCount, label: '篇带自测题' },
 ].filter((stat) => stat.value > 0)
 </script>

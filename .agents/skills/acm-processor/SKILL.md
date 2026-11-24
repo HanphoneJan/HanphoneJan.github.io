@@ -579,6 +579,6 @@ if __name__ == "__main__":
 - [ ] **Test cases include edge cases** (original tests preserved + new ones added)
 - [ ] **Every real method's code follows its explanation** — no "all prose, code at the end" layout
 - [ ] **Only real ladders** — a "暴力→优化→最优" ladder appears only when those methods genuinely exist
-- [ ] **If editing an existing doc, the first python block under `## 完整代码实现` is unchanged**; if it changed, `pnpm trace:record <id>` has been rerun
+- [ ] **If editing an existing doc, the first python block under `## 完整代码实现` is unchanged**
 - [ ] **`node scripts/check-docs.ts` reports no error for this doc**, and `pnpm check:runbar <id>` passes when samples are usable
 - [ ] **Complexity table** — only real alternatives; the best row is marked with 「（最优）」 and no other row contains it

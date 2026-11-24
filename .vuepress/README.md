@@ -70,7 +70,7 @@ problems/nowcoder/华为机试/HJ48.从…节点.md (id: HJ48)  -> /code-trainin
   `.vuepress/components/HomePage.vue`（样式是原 `index.module.css` 搬过去的
   CSS Module），`index.md` 只留 `home: true` + `<HomePage />`，主题自带的
   hero 用 CSS 藏掉（首页自带 hero）。统计数字取自注入的 `doc-permalinks` /
-  `vis-traces` / `self-test` 三张清单，构建期真算，内容增删会自动跟着变。
+  `visualizers` / `self-test` 三张清单，构建期真算，内容增删会自动跟着变。
   **不要改回 React 孤岛**：实测慢网络下 app bundle 没下载完时，React 版
   首页只显示导航栏，读者会以为「首页内容没加载」；Vue SSR 的内容直接在
   HTML 里，和 JS 无关。
@@ -117,8 +117,8 @@ problems/nowcoder/华为机试/HJ48.从…节点.md (id: HJ48)  -> /code-trainin
 
 ### 1. 前端交互件：React 孤岛
 
-`src/components/**` 是 React，代码量一万行以上（Pyodide 执行协议、trace
-adapter、题库）。核心逻辑与框架无关，只有渲染层是 React，所以**没有重写**，
+`src/components/**` 是 React，代码量一万行以上（Pyodide 执行协议、tracer
+帧、题库）。核心逻辑与框架无关，只有渲染层是 React，所以**没有重写**，
 而是让它们跑在自己的 React root 里。
 
 ```
@@ -148,7 +148,6 @@ Vue 页面
 | 位置 | 组件 |
 |---|---|
 | 每个「能跑」的 python 代码块之后 | `SnippetBarMount` |
-| `## 完整代码实现` 标题之后 | `RecordedVisualizerMount`（或 `NoVisStepsMount`） |
 | 正文末尾 | `TracerVisualizerMount`、`PatternGraphMount`、`SelfTestMount` |
 
 `PatternGraphMount` 只在文档**没有自己写** `## 相关题目` 时注入 ——
@@ -156,9 +155,9 @@ Vue 页面
 不会出现两个同名小节。
 
 数据由 `.vuepress/data/training-data.ts` 在构建期算好：复用旧的
-`plugins/py-samples` 抽取函数、`vis-traces` 的 adapter 选型、题库清单、
-`patterns` 反向索引。**只把「模式 -> 相关题目」这一张表**用 Vite `define`
-注入客户端；题库（`/quiz/bank.json`）与轨迹（`/traces/*.json`）仍然按需 fetch。
+`plugins/py-samples` 抽取函数、题库清单、`patterns` 反向索引。**只把
+「模式 -> 相关题目」这一张表**用 Vite `define` 注入客户端；题库
+（`/quiz/bank.json`）仍然按需 fetch。
 
 ### 3. 构建期生成页面：`createPage`
 
@@ -212,8 +211,8 @@ frontmatter。**必须在这个钩子做**：blog 插件的 `extendsPage` 读
 
 hope 自带 `@vuepress/plugin-git`，页脚的时间只按**页面 md** 的
 `git log --follow` 算。可站上有相当一批页面的正文不在 md 里：`settings.md`
-整页是 `<CacheSettings />`，题解的动画来自 `static/traces/*.json`，自测题
-来自 `static/quiz/bank.json` 的条目，模式页的播放器来自 `tracers/*.ts`。
+整页是 `<CacheSettings />`，自测题来自 `static/quiz/bank.json` 的条目，
+模式页的播放器来自 `tracers/*.ts`。
 
 `.vuepress/updated-time.ts` 算依赖集合，`.vuepress/plugins/page-updated.ts`
 把它接进两条现成的链路：
@@ -327,7 +326,7 @@ oxc: { jsx: { runtime: 'automatic' } }
   与两张 logo，rc.31 下约 2.8MB）。默认行为会把 600 多个页面 chunk（39MB）全部塞进
   precache，首次安装要下 42MB —— 文档站不需要「一次装完所有页面」。其余资源走
   Workbox 运行时缓存：页面 `NetworkFirst`、JS/CSS `CacheFirst`（文件名带
-  内容哈希，不可变，见下）、图片 `CacheFirst`、轨迹 JSON 与题库单独分桶。
+  内容哈希，不可变，见下）、图片 `CacheFirst`、题库单独分桶。
 - **`generateSWConfig.directoryIndex: 'index.html'` —— 预缓存的 `index.html`
   应答 `/`。** 这一条改过两次，两次的理由都记在这里：
   - 最初是默认值 `'index.html'`：`start_url` 是 `/`，预缓存又是 cache-first，
@@ -425,7 +424,6 @@ oxc: { jsx: { runtime: 'automatic' } }
 | 页面 HTML | `html-v2` | `NetworkFirst`（在线永远是新的，离线回退缓存） |
 | 页面 chunk | `assets` | `CacheFirst`（文件名带内容哈希，不可变） |
 | 共享脚本（懒加载 chunk） | `assets` | 同上 |
-| 题解轨迹 JSON | `traces` | `CacheFirst` |
 | 自测题库 | `quiz` | `StaleWhileRevalidate` |
 | Python 运行时（Pyodide 12.9MB） | `pyodide-runtime-v1` | 页面内 fetch 拦截（见 `pyrunner/runtime.ts`） |
 
@@ -450,10 +448,10 @@ oxc: { jsx: { runtime: 'automatic' } }
   本地没 `pnpm sync:pyodide` 时这块直接不出现。
   实测（`localhost` 断网、题解页点「▶ 跑样例」）：三组样例全过。
 - **清单是构建期生成的**：`.vuepress/plugins/offline-package.ts` 在
-  `onGenerated` 里写 `offline-manifest.json`（997 页 + 249 份轨迹 + 12.9MB
-  运行时 ≈ 162MB，
+  `onGenerated` 里写 `offline-manifest.json`（997 页 + 12.9MB
+  运行时 ≈ 149MB，
   `start` 2 / `stars` 1 / `projects` 1 / `shared` 95 / `pyodide` 5 /
-  `quiz` 1 / `traces` 249 / `docs` 174 / `training` 571 / `archive` 248）。页面 chunk 名从产物路由表读
+  `quiz` 1 / `docs` 174 / `training` 571 / `archive` 248）。页面 chunk 名从产物路由表读
   （`assets/app-*.js` 里的
   `` [`/路径`,{loader:()=>import(`./xxx.js`)``），**不能靠猜**：`/tag/*`
   这类生成页没有 md 文件，不同目录还有同名 `intro.md`。`sitemap.xml` 少
@@ -518,8 +516,6 @@ oxc: { jsx: { runtime: 'automatic' } }
   `window.confirm()`** —— 原生对话框会阻塞整个页面，自动化里点一下就卡死。
 - **清掉预缓存桶之后要注销 SW 并重载**：预缓存只在 install 时填充，SW 脚本
   没变就不会重装，清空后它不会自己回来。
-- **`traces` 的 `maxEntries` 是 300**（原来是 200）：`static/traces/` 有 206
-  份，上限低于这个数时离线包刚下完就少几条，页面永远显示 200/206。
 - 回归测试：`pnpm test:offline`（板块归类、路由表解析、真实产物的页面覆盖率
   与 chunk 存在性）。没有 dist 时只跑纯函数部分；两个部署 workflow 在
   build 之后都会跑它 —— 清单坏了**不会**让 build 失败。
@@ -552,15 +548,10 @@ oxc: { jsx: { runtime: 'automatic' } }
 3. 我们的代码依赖了几处内部行为（`inferRoutePath` 自动补 `.html`、
    `extendsPageOptions` 改写 `page.path`、hope 的 `userStyle` 缺口），
    升 rc 前必须在分支上跑一遍：
-   `pnpm build` / `pnpm typecheck` / `pnpm check:docs` /
-   `pnpm check:vis` / `pnpm check:vis --tracers`。
+   `pnpm build` / `pnpm typecheck` / `pnpm check:docs` / `pnpm test:tracers`。
 
 ## 还没做完 / 已知缺失
 
-- **`pnpm check:vis --all`**：页面发现标记改成 `data-vis="recorded"`
-  （React 孤岛，`id="visualizer"` 要等挂载后才有），服务器换成
-  `python3 -m http.server`。**抽样模式（92 项）与 `--tracers`（86 项）
-  已在迁移后全绿**；`--all` 的全站 800+ 项没有重跑。
 - **`pnpm check:runbar`**：依赖纯函数 + Pyodide，未在迁移后全量复跑。
 - **`plugins/*` 目录**是 Docusaurus 插件的壳子，现在只有 `py-samples` 的
   抽取函数、以及几个纯类型还在被引用。后续可以把抽取逻辑搬到

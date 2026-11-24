@@ -16,7 +16,6 @@ export type SectionId =
   | 'docs'
   | 'training'
   | 'archive'
-  | 'traces'
   | 'quiz'
   | 'images'
   | 'remote'
@@ -30,7 +29,6 @@ export const SECTION_LABELS: Record<SectionId, string> = {
   docs: '技术文档',
   training: '代码训练',
   archive: '归档页',
-  traces: '题解可视化',
   quiz: '自测题库',
   // 正文插图：数据结构页的结构图 + 项目文档的架构图（`static/{diagrams,img}`）。
   // 不进预缓存（会变成每个访客首次安装多下几 MB），但读者可以在这里

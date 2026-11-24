@@ -2,8 +2,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { legacyPathFor, readFrontMatter, relativeSource } from '../paths'
 import { analyzeSnippet } from '../../src/components/training/pyrunner/snippet'
-import { adapt } from '../../src/components/training/visualizer/adapters'
-import type { RawTrace } from '../../src/components/training/visualizer/recorder/types'
 import {
   crossCheckEntryName,
   extractDocSamples,
@@ -22,36 +20,22 @@ import { parseDifficulty } from '../../src/components/training/difficulty'
  *
  * 旧站点这些数据由六个 Docusaurus 插件分别注入 globalData。VuePress 没有
  * 那套 `loadContent / allContentLoaded` 接缝，但**数据本身与框架无关** ——
- * 抽取逻辑（py-samples 的样例解析、vis-traces 的 adapter 选型、题库的
- * 清单）原样复用，只是把「怎么发到客户端」换成了「构建期直接注入页面」。
+ * 抽取逻辑（py-samples 的样例解析、题库的清单）原样复用，只是把
+ * 「怎么发到客户端」换成了「构建期直接注入页面」。
  *
  * 与旧站点同一个取舍：**只发清单，不发正文**。
  * - 自测题：页面只拿到 docId，题目数据在读者点开时 fetch `/quiz/bank.json`
- * - 轨迹：页面只拿到 entry（帧数、输入、源码），帧在展开时 fetch `/traces/*.json`
  * - 运行条：样例很小，直接随页面走；代码本来就印在页面上，base64 一份
  */
 export interface TrainingData {
   /** md 相对 code-training/docs 的路径 -> 抽取结果 */
   pySamples: Record<string, PyEntry>
-  /** md 相对路径 -> 轨迹清单 */
-  traces: Record<string, VisTraceEntry>
-  /** 有轨迹但 adapter 认不出来（页面上写一行说明） */
-  noVisual: Set<string>
   /** 有自测题的 md 相对路径 */
   selfTest: Set<string>
   /** pattern 文档 docId -> 相关题目 */
   byPattern: Record<string, PatternProblem[]>
   /** md 相对路径 -> permalink */
   permalinks: Record<string, string>
-}
-
-export interface VisTraceEntry {
-  docId: string
-  url: string
-  adapterId: string
-  args: string[]
-  frameCount: number
-  code: string
 }
 
 export interface PatternProblem {
@@ -105,53 +89,6 @@ function buildPySamples(docsRoot: string): Record<string, PyEntry> {
     }
   }
   return entries
-}
-
-function findDocByFileName(docsRoot: string, name: string): string | null {
-  for (const full of walk(path.join(docsRoot, 'problems'))) {
-    if (path.basename(full) === `${name}.md`) {
-      return relativeSource(docsRoot, full)
-    }
-  }
-  return null
-}
-
-function buildTraces(
-  docsRoot: string,
-  tracesDir: string,
-): { traces: Record<string, VisTraceEntry>; noVisual: Set<string> } {
-  const traces: Record<string, VisTraceEntry> = {}
-  const noVisual = new Set<string>()
-  if (!fs.existsSync(tracesDir)) return { traces, noVisual }
-
-  for (const file of fs.readdirSync(tracesDir).sort()) {
-    if (!file.endsWith('.json')) continue
-    const name = file.replace(/\.json$/, '')
-    let trace: RawTrace
-    try {
-      trace = JSON.parse(
-        fs.readFileSync(path.join(tracesDir, file), 'utf8'),
-      ) as RawTrace
-    } catch {
-      continue
-    }
-    const adapted = adapt(trace)
-    const docId = findDocByFileName(docsRoot, name)
-    if (!docId) continue
-    if (!adapted) {
-      noVisual.add(docId)
-      continue
-    }
-    traces[docId] = {
-      docId,
-      url: `/traces/${file}`,
-      adapterId: adapted.adapterId,
-      args: trace.args,
-      frameCount: adapted.frames.length,
-      code: trace.code,
-    }
-  }
-  return { traces, noVisual }
 }
 
 function buildSelfTest(sourceDir: string): Set<string> {
@@ -225,14 +162,8 @@ export function trainingData(sourceDir: string): TrainingData {
   if (cached) return cached
   const docsRoot = path.join(sourceDir, 'code-training/docs')
   const permalinks = buildPermalinks(sourceDir)
-  const { traces, noVisual } = buildTraces(
-    docsRoot,
-    path.join(sourceDir, 'static/traces'),
-  )
   cached = {
     pySamples: buildPySamples(docsRoot),
-    traces,
-    noVisual,
     selfTest: buildSelfTest(sourceDir),
     byPattern: buildPatternGraph(sourceDir, permalinks),
     permalinks,

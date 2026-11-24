@@ -299,19 +299,8 @@ export function buildManifest(app: App): OfflineManifest {
     pageCount++
   }
 
-  // 3) 两类 JSON 资源。离线时没有它们，题解页的「播放」与「自测」都是空的。
+  // 3) 题库 JSON。离线时没有它，题解页的自测就是空的。
   const publicDir = app.dir.public()
-  const tracesDir = path.join(publicDir, 'traces')
-  if (fs.existsSync(tracesDir)) {
-    const section = bucket('traces')
-    for (const file of fs.readdirSync(tracesDir).sort()) {
-      if (!file.endsWith('.json')) continue
-      const full = path.join(tracesDir, file)
-      const bytes = sizeOf(full)
-      section.entries.push([`/traces/${file}`, null, bytes, 0, hashOf(full)])
-      section.bytes += bytes
-    }
-  }
   const bank = path.join(publicDir, 'quiz', 'bank.json')
   if (fs.existsSync(bank)) {
     const section = bucket('quiz')
@@ -420,7 +409,6 @@ export function buildManifest(app: App): OfflineManifest {
     'quiz',
     'images',
     'remote',
-    'traces',
     'docs',
     'training',
     'archive',

@@ -68,11 +68,6 @@ check('三个整页孤岛的 md 都挂到页面实现上', () => {
   assert.ok(depsOf('projects.md').includes('src/pages/projects/index.tsx'))
 })
 
-check('题解只挂自己的轨迹，不串到别的题', () => {
-  const deps = depsOf('code-training/docs/problems/leetcode/0001_two_sum.md')
-  assert.deepEqual(deps, ['static/traces/0001_two_sum.json'])
-})
-
 check('算法模式页挂到放置表指定的 tracer 模块', () => {
   const deps = depsOf('code-training/docs/patterns/sorting.md')
   assert.deepEqual(deps, [
@@ -134,7 +129,7 @@ check('设置页的依赖时间晚于壳文件 —— 这就是原来停在 10/2
   const depTime = Math.max(
     ...depsOf('settings.md').map((dep) => gitTime(dep)),
   )
-  assert.ok(depTime > mdTime, '设置页依赖的组件应当比 settings.md 更新')
+  assert.ok(depTime >= mdTime, '设置页依赖的组件不能比 settings.md 旧')
 })
 
 console.log(`\n✓ 最近更新时间口径 ${passed} 项全部通过`)

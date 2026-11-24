@@ -13,7 +13,7 @@
  *
  * `tracers/index.ts` 里每个条目都带着 `run()` 的实现。放在这里 import 就等于
  * 把它打进**每一篇**文档的主 bundle —— 与题解页「播放器必须懒加载」同一个
- * 理由（见 `InlineVisualizer.tsx` 的文件头）。所以表里只有**字符串**，
+ * 理由（见 `InlineTracerVisualizer.tsx` 的文件头）。所以表里只有**字符串**，
  * 真正的 tracer 在 `InlineTracerVisualizer` 懒加载时按 id 查。
  *
  * ## 位置：正文末尾的小节之下
@@ -28,8 +28,7 @@
  * - 自定义 remark 插件在这套配置下**压根不会被调用**（见 AGENTS.md）。
  *
  * 键是 docId（相对 `code-training/docs/` 的路径），不是 permalink：
- * permalink 会被 `numberPrefixParser` 改写，而这套键与自测题库、
- * 录制轨迹用的是同一把钥匙（`metadata.source` 去掉前缀）。
+ * permalink 会被 `numberPrefixParser` 改写；docId 与自测题库用的是同一把钥匙。
  */
 
 /** 一篇文档里的一个播放器 */

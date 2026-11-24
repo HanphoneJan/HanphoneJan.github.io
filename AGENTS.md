@@ -41,7 +41,7 @@ pnpm solutions:fetch  # 抓力扣某题的前几篇高赞题解（写题解前�
 >
 > **不要并行跑多个 `pnpm build`**：构建峰值 4–6GB，两三个并发会压满 15GB 内存，
 > 内核可能先杀 `gnome-shell`。`pnpm build` 已用 `scripts/build.sh` + `flock` 串行，
-> 但后台 agent 仍应只跑 `check:docs` / `check:runbar` / `test:adapters`；
+> 但后台 agent 仍应只跑 `check:docs` / `check:runbar` / `test:tracers`；
 > 完整构建由主会话在最后跑一次。
 
 ## Architecture (VuePress)
@@ -61,7 +61,7 @@ code-training/docs/         # 算法训练：/code-training/**
   paths.ts                  # md 文件 -> 线上 URL（核心：保留旧地址）
   client.ts                 # 全局注册 React 孤岛组件 + 加载自定义样式
   plugins/                  # 构建期插件：permalink / 组件注入 / 分类页 / 离线包清单
-  data/training-data.ts     # 构建期汇总题库、轨迹、样例、知识图谱
+  data/training-data.ts     # 构建期汇总题库、样例、知识图谱
   markdown/                 # markdown-it 规则（转义尖括号、代码块行数注入）
   components/*.vue          # 首页 HomePage + React 孤岛壳子 + 沉浸阅读 LayoutToggle + 导航图标
   styles/                   # config.scss / palette.scss / index.scss
@@ -156,8 +156,8 @@ GitHub Pages 兜住（`X.html` 优先于同名目录）。规则写在 `paths.ts
 
 ### React 孤岛（为什么页面里还有 React）
 
-交互件（Pyodide 运行条、录制式/手写算法播放器、自测题、Stars/Projects）
-是 React 写的，核心逻辑（执行协议、trace adapter、题库校验）与框架无关，
+交互件（Pyodide 运行条、手写算法播放器、自测题、Stars/Projects）
+是 React 写的，核心逻辑（执行协议、tracer 帧、题库校验）与框架无关，
 只有渲染层是 React。迁移没有把它们重写成 Vue，而是让它们跑在自己的
 React root 里：
 
@@ -176,11 +176,10 @@ React root 里：
 | 位置 | 组件 |
 |---|---|
 | 每个可运行的 python 代码块之后 | `SnippetBarMount` |
-| `## 完整代码实现` 标题之后 | `RecordedVisualizerMount` / `NoVisStepsMount` |
 | 正文末尾 | `TracerVisualizerMount`、`PatternGraphMount`、`SelfTestMount` |
 
 数据在构建期算好（`.vuepress/data/training-data.ts`），只有「模式 -> 相关题目」
-这一张表通过 Vite `define` 进客户端；题库和轨迹帧仍然按需 `fetch`。
+这一张表通过 Vite `define` 进客户端；题库按需 `fetch`。
 
 ### 构建期生成的页面
 
@@ -277,11 +276,10 @@ React root 里：
 
 页脚那行 `最近更新` 来自 hope 自带的 `@vuepress/plugin-git`，默认只对
 **页面 md** 跑 `git log --follow`。但站上一批页面的正文并不在 md 里：
-`settings.md` 只有 12 行、整页是 `<CacheSettings />`；题解的逐帧动画来自
-`static/traces/<文件名>.json`；自测题来自 `static/quiz/bank.json` 里的那几条；
-模式页的播放器来自 `tracers/*.ts`。只认 md 的后果是设置页在离线包改了十几轮
-之后仍显示 10/26 —— 这个时间会从「内容什么时候变过」退化成「壳文件什么时候
-被碰过」。
+`settings.md` 只有 12 行、整页是 `<CacheSettings />`；自测题来自
+`static/quiz/bank.json` 里的那几条；模式页的播放器来自 `tracers/*.ts`。
+只认 md 的后果是设置页在离线包改了十几轮之后仍显示 10/26 —— 这个时间会从
+「内容什么时候变过」退化成「壳文件什么时候被碰过」。
 
 `.vuepress/updated-time.ts` + `.vuepress/plugins/page-updated.ts` 把它补成
 「**这一页正文涉及的所有文件里最新的那次提交**」：
@@ -289,7 +287,6 @@ React root 里：
 | 依赖 | 怎么进来 |
 |---|---|
 | md 里手写的组件（`<CacheSettings />`） | `extendsPageOptions` 写 frontmatter 的 `gitInclude`；组件按相对 import 递归展开 |
-| 这一页的录制轨迹 | `static/traces/<md 文件名>.json`（存在才加） |
 | 内嵌 tracer | 放置表 `INLINE_TRACER_PLACEMENT` 的 id -> `tracers/*.ts` |
 | 自测题库条目 | `git blame --line-porcelain` 一次，按条目占的行区间取 max |
 
@@ -300,7 +297,7 @@ React root 里：
 - **题库不能按整份 `bank.json` 算一个时间**：529 条题共用一个文件，按文件算
   会让新加一道题把另外一百多篇题解的日期一起跳到今天。所以按行 blame；
   一次 blame 覆盖全文（6 千行 <100ms），**不要**每条题各起一次进程。
-- **自动注入的渲染管线不算依赖**（运行条、自测渲染、adapter、主题样式），
+- **自动注入的渲染管线不算依赖**（运行条、自测渲染、主题样式），
   模式页「相关题目」里那些别的题解也不算：改一次就让几百页同时「今天更新」，
   真正的变更反而被淹掉。口径与例外写在 `.vuepress/updated-time.ts` 文件头。
 - **`pnpm start` 里页脚没有这个时间**：hope 只在构建时挂
@@ -308,7 +305,7 @@ React root 里：
   用 `pnpm build` 看。
 - **浅克隆会毁掉题库那一路**：blame 拿不到历史时所有条目都算同一次提交，
   `fetch-depth: 0` 又多一个必须。
-- 改口径后跑 `pnpm test:updated`（9 项：组件 / 轨迹 / tracer / 题库行区间 /
+- 改口径后跑 `pnpm test:updated`（9 项：组件 / tracer / 题库行区间 /
   设置页依赖确实比 `settings.md` 新……）。
 
 ### 外观（首页 / 字体 / 沉浸阅读）
@@ -318,7 +315,7 @@ React root 里：
   CSS Module）。**不要改回 React 孤岛**：React 要等 app bundle 下载并执行完
   才在 `onMounted` 里挂载，首屏（尤其慢网络）只剩导航栏，看起来像首页没加载。
   现在标题、入口卡片、数字条都在 SSR 产物里；数字仍来自注入的
-  `doc-permalinks` / `vis-traces` / `self-test` 清单，构建期真算。
+  `doc-permalinks` / `visualizers` / `self-test` 清单，构建期真算。
   `index.md` 只留 `home: true` + `<HomePage />`，主题 hero 用 CSS 藏掉。
 - 字体与 JavaGuide 同一套思路（`palette.scss` 的 `$vp-font`，纯系统字体、
   衬线优先），>=960px 根字号 17px；导航栏阴影压到几乎不可见。
@@ -424,8 +421,8 @@ IIFE。所以 core 是 rc.31、插件 rc.137 —— **不要单独降 `vuepress`
 
 ### 已知的取舍
 
-- **PWA**：用 `@vuepress/plugin-pwa`，只 precache 外壳（rc.31 下 2.8MB），页面/图片/
-  轨迹走运行时缓存。**`maxSize` 必须是 4096**：它是 Workbox 的
+- **PWA**：用 `@vuepress/plugin-pwa`，只 precache 外壳（rc.31 下 2.8MB），页面/图片
+  走运行时缓存。**`maxSize` 必须是 4096**：它是 Workbox 的
   `maximumFileSizeToCacheInBytes`，而应用外壳 `app-*.js` 曾经 2.04MB（rc.31 之后 1.16MB），改回
   2048 之后它会被**静默剔除**（日志照常、构建不报错），全新安装后第一次断网
   就是浏览器离线错误页。`register-service-worker` 必须静态 import 一次（见
@@ -446,8 +443,8 @@ IIFE。所以 core 是 rc.31、插件 rc.137 —— **不要单独降 `vuepress`
   的站内点击会先扣下，等初始路由就绪再走 SPA（2.5 秒兜底整页跳转）。首页
   手写的链接必须带 `.html`，否则也不走路由。
 - **离线包在 `/settings.html`**：`offline-manifest.json` 由
-  `plugins/offline-package.ts` 在构建期生成（997 页 + 249 份轨迹 + 约 3MB
-  懒加载共享脚本 + 12.9MB 的 Python 运行时 ≈ 162MB；运行时的文件清单与缓存名在
+  `plugins/offline-package.ts` 在构建期生成（997 页 + 约 3MB
+  懒加载共享脚本 + 12.9MB 的 Python 运行时 ≈ 149MB；运行时的文件清单与缓存名在
   `src/components/training/pyrunner/runtime-files.ts`，客户端 fetch 拦截与
   设置页共用；两个 `.mjs` 要同时进 `pyodide-runtime-v1` 与 `assets`，
   否则离线跑代码卡在 import 那一步）。清单每条带 sha1 指纹，设置页按指纹做增量；
@@ -485,8 +482,6 @@ IIFE。所以 core 是 rc.31、插件 rc.137 —— **不要单独降 `vuepress`
   删掉上一版遗留的页面 chunk。只下 HTML 也能读（SSR 产物在 HTML 里），但站内
   跳转会退化成整页重载 —— 勾「同时缓存页面脚本」才是完整体验。细节见
   `.vuepress/README.md` 的「离线包与缓存管理」。
-- **`check:vis --all` 的页面发现标记改成 `data-vis="recorded"`**：播放器是
-  React 孤岛，`id="visualizer"` 要等客户端挂载才有。
 - **`.vuepress/styles/index.scss` 不会自动加载**（hope rc.110 的 `userStyle`
   没接上），必须在 `.vuepress/client.ts` 里显式 `import`。
 - **本地搜索是 slimsearch 全文索引**（不是 `plugin-search`）：口径、版本地板
@@ -497,7 +492,7 @@ IIFE。所以 core 是 rc.31、插件 rc.137 —— **不要单独降 `vuepress`
 ## 历史记录（Docusaurus 时代）
 
 以下内容写于 2026-10 迁移之前。**提到 Docusaurus 专有机制的地方已经不适用**，
-但其中关于内容管线、算法可视化、题库出题、Pyodide 执行协议的记录仍然有效，
+但其中关于内容管线、题库出题、Pyodide 执行协议的记录仍然有效，
 是迁移时逐条对照过的依据。
 
 ### Content sources and data flow
@@ -511,9 +506,8 @@ IIFE。所以 core 是 rc.31、插件 rc.137 —— **不要单独降 `vuepress`
   - 「最近场次」看题库分组的 `groups`（日期 + 方向 + pids），不要只看 `/contest` 的模拟赛。选择题（`title: "选择题"`）不生成题解。
 - **自测题库** (`static/quiz/bank.json`): 主动回忆题，加在题解正文末尾。`plugins/self-test/index.ts` 只把「哪些题解有题」的清单放进 globalData，`src/theme/DocItem/Layout/index.tsx`（已 swizzle）在正文末尾渲染 `<SelfTest>`，题目数据由组件在用户点开时 fetch。**题解 md 一行都不用改** —— 题库是唯一事实来源。详见「自测题库」小节。
 - **知识图谱（题解 → 算法模式）** (`plugins/pattern-graph/index.ts`): 题解 frontmatter 的 `patterns` 是「题解 → 算法模式文档」的边，由 `scripts/gen-patterns.js`（`pnpm patterns:gen`）从 `tags` 机械推导（映射表在脚本里，`.agents/skills/leetcode-processor/SKILL.md` 有一份同步的）。插件在 `allContentLoaded` 里用 docs 插件给出的 `source`/`permalink`/`frontMatter` 建**反向索引**（pattern 文档 → 题目列表），只把标题/链接/难度发进 globalData；`src/components/training/pattern-graph/` 由已 swizzle 的 `DocItem/Layout` 在算法模式页末尾渲染「相关题目」，**md 一行都不用改**。改了题解 `tags` 后跑一次 `pnpm patterns:gen`。详见「知识图谱」小节。
-- **算法可视化（题解内嵌，录制式）**: `pnpm trace:record` 用 Pyodide 的 `sys.settrace` 跑题解里那份**已经通过样例**的代码，把逐行局部变量 + 递归深度落成 `static/traces/*.json`（进 git）；`plugins/vis-traces` 在构建期把轨迹过一遍八个 adapter（`visualizer/adapters/`：list/tree/stack/grid/array-scan/aux-table/string/dp-counter）转成帧，只把「哪篇有可视化 + 帧数 + 源码」这份清单发进 globalData；题解页由已 swizzle 的 `MDXComponents`（`src/theme/MDXComponents.tsx`）把 `visualizer/InlineVisualizer.tsx`（折叠壳 + `React.lazy`）接到 **`## 完整代码实现` 那一节的标题下面**，展开时才 fetch 轨迹并在浏览器里跑 adapter 出帧。**md 一行都不用改。** 182 篇题解里 171 篇录制成功、167 篇有可视化（录制产物的 98%），剩下 4 篇在页面上显式写「本题无可视化步骤」。详见「算法可视化」小节。
-- **算法可视化（手写 tracer，内嵌模式/数据结构文档）**: `src/components/training/visualizer/tracers/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。放置表在 `visualizer/inlinePlacement.ts`，**独立页已删除**（16 个 tracer 覆盖 16 篇文档）。
-- **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测与手写 tracer 两处都用它跳转（录制式可视化不跳转，它就长在那篇题解里）。
+- **算法可视化（手写 tracer，内嵌模式/数据结构文档）**: `src/components/training/visualizer/tracers/` 下每个算法是一个 tracer，只负责「跑一遍并记录状态」，播放/暂停/单步/换输入全部由通用 `AlgoPlayer` 提供。放置表在 `visualizer/inlinePlacement.ts`，**独立页已删除**（16 个 tracer 覆盖 16 篇文档）。录制式逐行回放（题解内嵌那份）已于 2026-11 删除，原因见「算法可视化」一节。
+- **文档 permalink 映射** (`plugins/doc-permalinks/index.ts`): 全站 code-training 文档的「md 相对路径 → 真实 permalink」。自测与手写 tracer 两处都用它跳转。
 - **静态重定向** (`plugins/static-redirects/index.ts`): 页面搬家后 `postBuild` 写一个 `<meta refresh>` HTML，保住已上线的旧地址。详见「板块根路径与旧地址」。
 
 ### 板块根路径与旧地址
@@ -595,7 +589,7 @@ classic preset 里的 `blog` 选项、导航栏「博客」项、`src/theme/Blog
 - **refresh-data.yml**: Daily at 3am UTC. Fetches stars and projects via `scripts/fetch-stars.js` / `scripts/fetch-projects.js`, then rebuilds and redeploys. Data is used at build time only — **never committed to git**, keeping history clean. `data/*.json` are fallback snapshots for local development.
 - **sync-leetcode.yml 已删除**（2026-10-25）。原因不在接口改版：`LEETCODE_SESSION` 过期后 `/api/submissions/` 一律返回 `HTTP 401 {"detail":"身份认证信息未提供。"}`（不带 cookie 与带过期 cookie 的报文完全一样），而仓库里**没有 `SYNC_PAT`/`STARS_PAT`**，`GITHUB_TOKEN` 又改不了 secret，于是脚本每次算出的新 cookie 都只落到 runner 的临时文件里就随机器销毁 —— 自动续期从来没真正闭环，断一次就永久失败（10-21 还是绿的，10-23 起连续两次红）。**脚本保留，只作同步逻辑的参考实现**，需要时由 AI/agent 手动跑。
 - **NowCoder sync**: No scheduled workflow and no routine manual sync. `scripts/sync-nowcoder.js` is kept only for AI/agent use when explicitly requested; it still needs `NOWCODER_COOKIE` / `NOWCODER_UID`.
-- **两个部署 workflow 的步骤必须逐条对齐（deploy.yml 与 refresh-data.yml）。** `static/pyodide/` 已 gitignore，CI 每次都要 `node scripts/fetch-pyodide.js` 现下。refresh-data.yml 早先漏了这一步，于是**每天的定时刷新都会用一份不含运行时的产物覆盖线上**：构建不失败（`trace:record` 的轨迹已进 git，构建期不需要 Pyodide），站点照常上线，只有读者点题解里的「▶ 运行」时浏览器 fetch `/pyodide/pyodide.mjs` 得到 404，报 `Failed to fetch dynamically imported module`。两个 workflow 现在都有 `Fetch Pyodide runtime`，并在 build 之后加了 `Verify Pyodide runtime is in the artifact`（查 `build/pyodide/pyodide.mjs` 是否存在）—— 这类缺口**永远不会让 `pnpm build` 失败**，只能显式挡住。
+- **两个部署 workflow 的步骤必须逐条对齐（deploy.yml 与 refresh-data.yml）。** `static/pyodide/` 已 gitignore，CI 每次都要 `node scripts/fetch-pyodide.js` 现下。refresh-data.yml 早先漏了这一步，于是**每天的定时刷新都会用一份不含运行时的产物覆盖线上**：构建不失败，站点照常上线，只有读者点题解里的「▶ 运行」时浏览器 fetch `/pyodide/pyodide.mjs` 得到 404，报 `Failed to fetch dynamically imported module`。两个 workflow 现在都有 `Fetch Pyodide runtime`，并在 build 之后加了 `Verify Pyodide runtime is in the artifact`（查 `build/pyodide/pyodide.mjs` 是否存在）—— 这类缺口**永远不会让 `pnpm build` 失败**，只能显式挡住。
 
 ### 字体：不用任何 Web Font
 
@@ -733,718 +727,81 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 （`toc` 读到 `undefined`）。两种 import 写法（本仓库其它插件用的
 `path.join(__dirname, '...index.ts')`）都试过，一样。
 
-### 算法可视化挂在哪（两条路，位置不同）
+### 算法可视化（只有手写 tracer）
 
-| | 录制式（题解内嵌） | 手写 tracer（模式页内嵌） |
-|---|---|---|
-| 挂点 | **`## 完整代码实现` 那一节的标题下面** | `## 算法可视化` 小节之后（正文末尾） |
-| 接缝 | swizzled `MDXComponents` 的 `h2`（`src/theme/MDXComponents.tsx`） | `DocItem/Layout` 的 `</DocItemContent>` 之后 |
-| TOC 条目 | **没有** —— 那是那一节的一部分 | 靠 md 里的 `## 算法可视化` 标题 |
+站点只保留**手写 tracer**：16 个算法 / 数据结构，挂在 16 篇模式与数据结构文档里
+（放置表 `src/components/training/visualizer/inlinePlacement.ts`，共 22 个播放器）。
+每个 tracer 30~60 行，只负责「跑一遍并记录状态帧」，播放/暂停/单步/回退/
+调速/改输入全部由通用 `AlgoPlayer` 提供。
 
-录制式原来也在正文末尾（离它回放的那段代码隔着「示例推演 / 复杂度 / 易错点 /
-相关题目 / 自测」几节），搬到了那一节里。**为什么不能挂到代码块下面**
-（挑不出「哪一块才是完整代码那一块」、以及那个计数器栽在
-`key={String(isBrowser)}` 重挂上的实测），见 `src/theme/MDXComponents.tsx`
-文件头。`id="visualizer"` 保留着，但**没有任何 `<a href>` 指向它**，
-只给 `pnpm check:vis` 扫页面用。
+**录制式逐行回放（题解页那份）已于 2026-11 整体删除**：`visualizer/recorder/`、
+`visualizer/adapters/`、`static/traces/`（249 份 / 13.2MB）、题解页的注入与
+离线包板块、`trace:record` / `test:adapters` / `check:vis` 全部移除。
 
-### 算法可视化（两条路，别混）
+删掉的原因是实测出来的，不是口味：
 
-可视化有两套实现，**互不替代**：
-
-| | 录制式（题解内嵌） | 手写 tracer（模式内嵌） |
-|---|---|---|
-| 入口 | `code-training/docs/problems/**/*.md` | `patterns/*.md`（放置表 `visualizer/inlinePlacement.ts`） |
-| 代码 | `visualizer/recorder/` + `visualizer/adapters/` | `visualizer/tracers/` |
-| 覆盖 | 每道能录制的题（**171/182 录制成功，167 篇适配 = 92%**） | 16 个算法模式，16 篇模式/数据结构文档 |
-| 产出 | 逐题，零手写 | 每个算法手写 30~60 行 |
-| 视图 | 数组/链表/树/网格/栈/DP/字符/字典八种 | 数组 / 树 / 网格 / DP 表格 |
-| 单测 | `pnpm test:adapters`（2310 项） | `pnpm test:tracers`（251 项） |
-
-**为什么要有录制这条路**：手写 tracer 覆盖不了 126 篇题解，而且手写的帧
-**会骗人** —— 算法写错了动画照样流畅跑完，读者反而更确信自己错了。
-录制直接跑题解里那份已经通过样例的代码，帧来自真实执行，不可能骗人。
-
-```bash
-pnpm trace:record          # 构建期跑 Pyodide 采执行轨迹 -> static/traces/*.json
-pnpm trace:record 0001 0034  # 只录这几篇
-pnpm test:adapters         # 2310 项断言，跑在真实录制产物上
-pnpm trace:probe           # 逐题报告哪个 adapter 认出来了（补覆盖率用）
-node scripts/check-vis.js  # 无头 Chrome 点真实按钮，十类视图各验一题
-```
-
-`trace:record` 需要先 `pnpm sync:pyodide`（12.9MB，已 gitignore）；
-没下运行时脚本会打印提示后以 0 退出，**不影响 `pnpm build`**。
-
-#### 八个 adapter 与它们的顺序
-
-顺序判据不是「特异性从高到低」，而是**「谁的画面才是这题的教学内容，谁先上」**。
-这两件事不一样，混起来会犯两种相反的错：
-
-- **更严的未必该先**：`aux-table` 的判据是「有字典」、`string` 是「有字符串」，
-  都很宽。但 0003 无重复子串、0076 最小覆盖子串、0001 两数之和里也有
-  `cnt_s` / `hash_dict`，auxTable 一旦排在前面就会把它们全抢走 ——
-  画面上「两根指针夹出的窗口」变成了一行字典，而这题的全部教学内容
-  恰恰是那个窗口。
-- **更宽的确实该后**：`stack` 与 `string` 画面几乎一样，但 stack 要求
-  「有个列表的长度在变」。0020 有效括号被 string 先认走时会把 `stack`
-  当成普通的「结果累加器」，而 stack 会把栈顶标成 active。
-
-所以顺序是：**结构 > 形状 > 指针 > 辅助 > 兜底**。
-
-| adapter | 覆盖 | 判据 |
-|---|---|---|
-| `list` | 14 | 局部变量里有 `{"$":"list"}` 标记 |
-| `tree` | 15 | 有 `{"$":"tree"}` 标记，或有递归深度 |
-| `stack` | 12 | 某个列表的**长度会变**（栈自己长大） |
-| `grid` | 21 | 二维数组 + 形状只增不减 + 被下标读过（另可带一行「累加结果」aux） |
-| `array-scan` | 59 | 一维序列 + 一到三根会动的下标 |
-| `aux-table` | 9 | 字典/集合（键渲染成 aux 行；没有入参数组时键就是主画面） |
-| `string` | 14 | 有被逐字符消费的字符串 + 字符值光标（0208 前缀树也走这条） |
-| `dp-counter` | 23 | 一维序列 + 滚动标量 / 合成格子条 / 逐位消费 |
-
-**最容易搞反的一处是 `dp-counter` 必须排在 `array-scan` 后面。**
-dpCounter 的判据比 arrayScan **宽**（它不要求指针是数组下标），所以一旦排在
-前面就会把双指针题全抢走 —— 实测 0011 盛水容器、0015 三数之和、0016、0034 二分
-全被判成 dp-counter，画面上两根指针的「区间收缩」不见了，只剩几个计数器，
-恰好把这类题最该讲的东西丢了。放在后面就对了：arrayScan 先拿走所有
-「有指针」的题，dpCounter 只接手 arrayScan 拒掉的（0198 打家劫舍、
-0070 爬楼梯、0152、0309、0338、0494、0621、0279、HJ150、0007）。
-
-`grid` 排 `array-scan` 前面也有讲究：网格题里常有另一个一维数组（0073 的
-`positions`），排前面能保证网格题一定走网格视图。
-
-#### 录制管线的形状
-
-`sys.settrace` 在 Pyodide 里装一个 line 事件的采集器，把「第几行 +
-局部变量快照 + 递归深度」记下来落成 `static/traces/<题解文件名>.json`。
-**不采 call/return 的 locals**：`line` 事件的 `f_locals` 是「即将执行这一行」
-的时刻，正好对应一帧；`call` 会给每个辅助函数和递归都产生一条，纯噪音。
-但 **call/return 要用来数递归深度**（见下）。
-
-录制是**通用**的（跟算法无关），翻译成画面才需要分类，所以分两层：
-录制一次，所有 adapter 复用同一份轨迹。改 adapter 不用重录。
-
-录制阶段的自检很硬：**跑出来的结果必须与题面样例一致**，否则整份轨迹丢弃
-（`result-mismatch`）。可视化是拿来帮助理解的，拿一份跑不出正确答案的代码
-演示等于教错。
-
-#### 录制阶段踩过的坑（每一条都对应一批题）
-
-- **挑样例与取期望必须是同一个动作。** 早先 `pickArgs` 只返回 `args`，
-  而期望值取的是 `usableSamples(samples)[0]` —— **另一条样例**。
-  于是 22 篇 `result-mismatch` 里有 18 篇是拿 A 的输入对 B 的答案：
-  0005 录的是 `"cbbd"` 却拿 `"babad"` 的 `"bab"` 去比、0013 录的是
-  `"MCMXCIV"`（实录 1994）却拿 `"III"` 的 3 去比。
-- **「跑通且结果对」还不够，还得有过程 —— 样例要走不进主循环就换下一组。**
-  0416 分割等和子集是唯一的实例，失败方式极其隐蔽：题面第一组样例
-  `nums = [1,2,3,5]` 总和是 **11（奇数）**，代码第三行
-  `if total % 2 != 0: return False` 就返回了 —— 轨迹 3 个事件，
-  judge 也判「结果一致」（确实是 False），两道关卡全过，**录制成功了**，
-  可这段轨迹里一行循环都没有。换成第二组样例（`[1,5,11,5]`，28 个事件）
-  立刻变成记忆化搜索的完整过程。
-  所以 `pickSamples` 返回**全部**候选（每个入口最多试 3 组），
-  取事件最多的那一份；一旦某份事件数 ≥12 就停，绝大多数题行为与从前一致。
-- **`json.dumps` 产的不是合法 JSON。** Python 默认 `allow_nan=True`，
-  把无穷写成裸的 `Infinity` / `NaN`，`JSON.parse` 直接报
-  `SyntaxError: No number after minus sign at position 142` ——
-  报错完全指不到真正的原因（0016/0152/0309/0581 用 `inf` 当哨兵初值）。
-  录制结果出来要用 `sanitizeJson` 把它们换成 `null`。
-- **链表/树题必须把数组还原成平台对象。** `l1 = [2,4,3]` 原样传进去，
-  代码第一句 `l1.val` 就是 `AttributeError: 'list' object has no attribute
-  'val'`，一次性 13 篇全挂。还原逻辑**从 `pyrunner/driver.ts` 整块复用**
-  （`BUILDER_PY`）—— 入参约定很细（层序 vs `[l,v,r]`、random 指针写下标、
-  0236 的 p/q 给的是节点值），抄第二份必然漂移。
-- **入口要「试到跑对为止」，不能一次选定。** HJ18 的代码有
-  `valid_ip` / `valid_mask` / `classify` / `solve` 四个顶层函数，
-  按「取第一个 def」就取到 `valid_ip`，而它要一个字符串、样例给的是 stdin。
-  45 篇 `no-entry` 里 42 篇是牛客题，全是这个问题。
-  `recorder/entries.ts` 按「文档入口 → solve/main → 其余顶层 def →
-  Solution 其它方法」排候选，挨个试，判据是**结果与样例一致**（不是「不报错」——
-  `valid_ip("1.2.3.4")` 也能跑通，但它不是题目的解法）。
-- **ACM 题必须跑成程序，不是调函数。** `solve()` 自己读 `sys.stdin`，
-  而且答案在 `stdout`。`sys.stdin` 要换成 `pyrunner` 那个 `__Stdin__`
-  垫片而不是 `io.StringIO` —— 后者没有 `.buffer` 属性，
-  而 9 篇牛客题写的是 `sys.stdin.buffer.read()`。
-- **原地修改类题目返回 None。** 0075 排序颜色、0189 轮转数组、0283 移动零，
-  题面的「输出」说的是改完之后的入参。拿返回值比永远是 `null`，
-  会被误判成「代码跑不对」。
-- **比较要复用 `pyrunner/compare.ts`。** 0108 的示例里写着
-  「`[0,-10,5,null,-3,null,9]` 也将被视为正确答案」、0347 题面写着
-  「可以按任意顺序返回」——这两个标记 py-samples 已经按题面文本算好挂在
-  每条样例上。自己从期望值文本正则是不行的，那句话不在期望值里。
-- **Python 代码里的 Markdown 反引号会截断 JS 模板字符串。**
-  `TRACER_PY` 是模板字面量，注释里写 `` `[1,2,3]` `` 会让字符串提前结束，
-  而 TS 报的是「Type 'String' has no call signatures at line 58」——
-  完全指不到真正那行。模板字符串里一律用单引号。
-- **`id()` 的比较要用 `==` 不是 `is`。** 判「这个对象是不是本帧的根节点」
-  时 `is` 只在 CPython 恰好 intern 掉同值小整数时才成立；0002 的 `l1`
-  拿到的 id 是个大整数，整条链表就录成了满屏的 `{"$":"n","i":0}`，
-  adapter 一个可画的值都拿不到。
-
-#### 角色识别是最容易出错的地方（`visualizer/adapters/roles.ts`）
-
-「哪个变量是数组、哪个是指针」判错**不会报错**，只会画出一个看起来正常、
-实则在误导读者的动画。这类 bug 踩了一堆，`pnpm test:adapters`
-的断言就是为了把它们钉死。已经踩过的：
-
-- **取值落在数组下标范围内 ≠ 是指针。** 0011 盛水容器的 `max_area` 取过
-  0/8/49，其中 8 恰好落在长度 9 里；0053 最大子数组和的 `max_sum` 比例
-  高到 0.88。累加器会以 `count += 1` 移动，`±1` 这条判据被骗到。
-  真正的判据是「源码里从不被用作下标」。
-- **也不能太严。** 二分的 `left`/`right` 从不写成 `nums[left]`，
-  判据太严会把它们全误杀（0034/0035 一度只剩 mid）。
-  所以分两轮：前面只负责**提名**（取值形状 + 源码证据 + 命名，宁可多提），
-  最后一关 `isLinkedToArray` 负责**否决**。
-- **指针必须能索引到画出来的那个数组。** 0079 单词搜索里 `i`/`j` 是
-  board 的行列、`k` 才是 word 的下标，而 board 录成嵌套 list 被排除，
-  主数组选中了 word。偏偏 board 是 3×3、word 长 3，`i`/`j` 的取值全在
-  word 的下标范围内，**范围检查过得去、画面上有指针还会动、没有一项
-  断言会失败** —— 但它画的是「board 的第几行」标在 word 的格子上。
-- **数组名正则前面要加 `\b`。** `s[...]` 不加边界会匹配到 `rows[index]`
-  的尾巴，0006 因此被误判成「index 在给 s 下标」。
-- **`enumerate` 必须连 iterate 部分一起匹配。** 只匹配 `for x,` 会把
-  0079 的 `for x, y in (i, j-1), ...`（四方向邻居）当成数组下标。
-- **主数组优先选入参。** 0300 里 nums 与 dp 都被 i/j 下标，光看下标关系
-  分不出高下，但题面描述的是 nums，dp 是中间产物。
-- **0647 反过来：指针在带哨兵的 `t` 上算**，硬套到入参 `s`（3 格）上会让
-  62% 的帧指针越界。指针能索引到哪个数组就画哪个数组。
-- **哨兵填充的数组直接放弃。** `nums = [1] + nums + [1]`（0312）、
-  `heights = [0] + heights + [0]`（0084）会让画面比题面多两格、
-  末尾永远没有高亮。宁可整题不画。
-- **`"<function>"` / `"<deque>"` 这类摘要串不是序列。** 0079 一度把 `dfs`
-  这个函数当成主数组（`"<function>"` 有 11 个字符）。
-- **取值范围是 `[-1, len]` 而不是 `[0, len)`。** 上界含 len 是因为左闭右开
-  二分的 `right` 初值就是 len（写死 `< n` 会把 0034 的 right 误杀）；
-  下界含 -1 是因为它就是 Python 约定的「没找到」哨兵（0076 的 `ans_left`、
-  0322 的 dfs 里的 `i - 1`）。
-- **多字符字符串数组也能当主数组。** 0014 最长公共前缀的入参是
-  `strs = ["flower","flow","flight"]`，按单字符判据会被拒掉，
-  而它恰恰有指针（`i` 逐字符下标 `strs[0]`），是很好的素材。
-- **`OVERRIDES` 覆盖表被断言护栏包着。** 覆盖表是手写的，题解改个变量名
-  就会指向不存在的变量。`test:adapters` 逐条核对覆盖表里的每个名字都真的
-  出现在该题轨迹里，题解一改就报错，不会悄悄画错。
-
-#### 断言必须按 adapter 分派（否则尺子会逼你把代码改成错的）
-
-`test:adapters` 早先只有一套「数组帧」的断言（首帧有内容、每帧数组一致、
-`states` 与数组等长）。加上链表/树/网格/栈/DP 之后这套断言大面积报错，
-但**报错的是尺子不是代码**：
-
-- 链表题的数组**本来每帧都在变**（0021 合并两链表就是原地改），
-  「每帧数组一致」是错的
-- 树帧的 `states` 用的是**层序坐标**，而录制时给越界节点编的号是
-  「锚点链坐标 + 追加」，可能超过 `tree.cells` 的物理长度，
-  所以不能断言 `states.length === cells.length`
-- 首帧是「入参」那一帧，**故意**没有 aux / 没有光标 / 没有 counters
-  —— 断言「每帧都挂了栈」「每帧都有指针标签」是错的
-- 双指针不变式（「两个指针之间必须标成 active」）只能对**真的**双指针题
-  要求，判据是源码里 `while a < b` 的两侧**都是已认出的指针**。
-  只看 `while a < b` 这个正则会误判：`while i < n`（0394 解码字符串）
-  形式上一样匹配。0207 课程表则是 DFS 染色，两根指针都在范围内也都会动，
-  但拿双指针的尺子去量它是量错了东西
-
-#### 字符串 / 字典 / 合成格子条：这三类的坑位
-
-新增 `string` / `aux-table` 两个 adapter 时踩的坑，每一条都对应一批题。
-它们共同的根因是：**局部变量不是「一帧一幅完整的画面」**。
-
-- **`sys.settrace` 记的是「这一行所属那个栈帧的局部变量」。**
-  字符串题的数据因此天然分散在好几个栈帧里。HJ29 字符串加解密的
-  `''.join(encrypt(c) for c in plain)`：`plain` 在 solve 的帧上、
-  当前字符 `ch` 在 encrypt 的帧上、推导式 `.0` 又有自己的帧 ——
-  **三者从不出现在同一帧里**。按「本帧有没有这个变量」取值的话，
-  带 `plain` 的帧没有 `ch`（光标恒 undefined），带 `ch` 的帧没有 `plain`
-  （整帧被跳过），60 多个事件最后只剩 3 帧静止画面。
-  正确做法是**把各帧的局部变量合并成一个持续存在的环境**，每一帧读合并后的值。
-- **`str(v)` 兜底产出的摘要串不是数据。** `<str_ascii_iterator>`、
-  `<function>`、`<deque>`，推导式内部的 `.0` / `.1` 也是。
-  不挡掉的话 HJ29 的主串会被选中成 `<str_ascii_iterator>`（20 字符
-  比 `plain` 的 8 字符还长，而主串正是按「出现帧数 × 长度」打分的），
-  画面上是一排英文字母。
-- **stdin 题的第一帧局部变量是空的。** `solve()` 第一行还没执行
-  `s = sys.stdin.readline()`。主串只扫第一帧的话，
-  HJ21/HJ31/HJ90/KY4 一篇都找不到主串 —— 必须扫**全部**帧。
-- **光标按字符值反查会撞上巧合。** HJ21 简单密码 `for ch in pwd` 的光标是
-  主串第 5 个字符，而 aux 行 `res` 里恰好也有一格是 `'z'`。
-  先查 aux 就会把光标标到「输出里那个 z」上。所以顺序是
-  **单字符先查主串，查不到才退 aux**（HJ90 的 `part` 是 `"10"/"137"`，
-  主串里根本没有这种多字符片段，那时才轮到 aux）。
-- **字典的键没有插入顺序信息。** 「这一帧新加了哪个键」只能靠
-  **相邻两帧的键集合求差**，那是唯一可靠的「刚刚发生了什么」。
-- **集合（`set()`）不能标 active。** 录成 `{}` 且键恒定，
-  分不清「刚加的」与「早就有的」—— 指着一个早就存在的键说「刚加的」比不标更糟。
-- **合成格子条上光标必须走一段连续整数。** 0198 打家劫舍的代码是
-  `for num in nums:`，没有下标变量，只有元素值 `num`（取值 2,7,9,3,1，
-  全落在 [0,5)）。只按「取值在范围内」挑，会把 `num=2` 标在**第 2 格**
-  （那一格是 9）—— 纯属巧合的高亮。真正的下标逐格走完，
-  「distinct 个值恰好铺满 [min,max]」把两类分得干干净净。
-- **名字像 DP 状态的一律不当光标。** 0070 爬楼梯踩过：`f1` 取过 1 和 2 而
-  格子条正好 3 格，于是 `f1` 被当成推进下标，结果它被排除出状态量
-  （那才是这题的主角），画面上只剩一个没有意义的「f1 指向第 1 格」。
-- **`for x in <列表>:` 没有下标变量时，光标位置数迭代次数。**
-  0152 乘积最大子数组、0169 多数元素、0128 最长连续序列写的都是
-  `for x in nums:` —— 循环变量是**元素值**，`cursorVar` 找不到，
-  于是整题画面一格都不标（0152 只有 3 帧、只有计数器在跳）。
-  而「现在算到第几个、滚动标量是多少」恰恰是这几题的全部教学内容。
-  办法：拿源码里那条 `for` 的行号，**数它在轨迹里出现了几次**
-  （`line` 事件是「即将执行这一行」，所以每出现一次就是新的一轮）。
-  三条判据缺一不可：已经有主画面、`cursorVar` 还没找到、
-  循环目标确实是录到了的列表（不是 `range(...)`）。
-- **越界过一次就整个否掉。** 0279 的 `for j in range(i*i, n+1, j)` 里
-  j 会取到 n，而格子条只有 0..n-1。只丢掉越界的那几帧的话，
-  前 8 帧指针全落在格子条外面 —— 要么空指针要么满屏高亮。
-- **「签名变了」不等于「有过程」。** HJ33 的 `num` 恰好被状态量正则
-  `n\w*` 命中，它**第一次出现**就让签名变了，于是判成「有过程」，
-  画出来是三帧完全一样的画面。判据必须是「光标到过 ≥2 个位置 /
-  aux 内容变过 / 某个状态量**改过值**」，第一次出现不算「改」。
-- **光标指到哪张表，哪张表就是主画面。** 0494 目标和的 `nums`（输入，5 格
-  从头到尾不变）与 `f`（背包表，每帧被改）：按「入参优先」挑会选中 `nums`，
-  画面是一排不动的 1。而源码里 `f[c] += f[c-x]` 说明光标 `c` 在 `f` 上，
-  主画面就该是 `f` —— 看到 c 从 m 一路退到 x，「内层为什么必须倒序」
-  这条规则自己就显出来了。
-- **「在长大」的数组要补空格而不是缩画面。** 0338 的 `bits` 一开始只有
-  一格。早先 `raw.length !== n` 就跳过该帧，丢掉的恰好是「表刚开始被填」
-  的那几帧。固定长度 + 空格子（`idle` = 还没算到）才对。
-- **每一行源码都产生一个事件帧，动画会卡住。** 0007 整数反转 21 个事件
-  只对应 4 张不同的画面。按「画面签名」（数组内容 + 光标 + 状态量）去重，
-  留每段静止期的第一帧。
-- **`bytes` / `bytearray` 必须解码成字符串。** ACM 题常写
-  `sys.stdin.buffer.read()`，录出来是 `"<bytes>"`，画面上什么也画不出来
-  —— HJ81 字符串字符匹配的两个入参**全是** bytes，整题因此无从下手。
-
-#### `**输入：**` 的收尾星号会粘在值上（规范里写的那个写法）
-
-题面最常见的写法是 `**输入：** nums = [1,2,3]` —— 星号包住的是**标签**。
-于是「输入 + 可选星号 + 冒号」这个正则，**冒号后面还剩一个收尾的 `**`**，
-值被读成 `** nums = [1,2,3]`：
-
-- `splitTopLevel` 按顶层逗号切 —— 逗号都在方括号里，切不开 →
-  整段变成**位置实参**，形参名匹配不上；
-- 期望值同样变成 `** 6`，`isUsableExpected` 判不可用。
-
-结果：**样例一条都抽不出来**，页面上不报错、只退化成「手动填参数」。
-
-之所以一直没被发现：现有 182 篇**恰好**都用不带星号的写法
-（或 `**输入：**` 后面跟围栏块 —— 那是 `readFencedValue` 的另一条路）。
-而 `leetcode-processor` 的规范明确要求写 `输入：`/`输出：`，新 agent 照着
-写成加粗的就会踩 —— 一踩就是整篇没有样例。
-
-修法是抽完标签再跳过残留的 `[\s*]`（`afterLabel`），单测两种形态都守着。
-
-**顺带暴露了第二件事**：星号修好之后，class-API 设计题（0146/0155/0208/0295）
-的「操作脚本」样例第一次被抽了出来，而运行条**不能**把它当调用跑
-（`push(["MinStack","push",...])` 必然报错）。于是 `usableSamples` 里加了
-`isScriptSample`：恰好一个实参、那个实参 JSON 解析后是数组、首元素是大写开头的
-字符串（类名）、期望值也是数组 —— 四条缺一不可。录制器不受影响，
-它走 `recorder/script.ts` 的独立通路。
-
-而录制器那边也有同一个坑的第二层：`pickSamples` 的「散文期望值」兜底分支
-只看「实参是不是合法字面量」，而那个脚本**恰好是合法字面量**，于是又漏了进来，
-0155 与 0295 两篇直接 `TypeError: '<' not supported between int and list`
-（实测录制数从 170 掉到 169）。同一个 `isScriptSample` 也要在那里挡一道。
-
-#### 期望值是散文时，别在抽取那层就丢掉
-
-`usableSamples` 只留「期望值能当字面量判」的样例，于是期望值写成散文的
-两篇整组丢掉：0095 唯一二叉搜索树（`5 棵不同的 BST`）、
-0142 环形链表 II（`指数为 1 的节点`）。而 `judge` 对散文**本来就放行**
-（「判不了就放行」），也就是说这层保护在录制路径上并没有对应的兜底 ——
-抽了就一定放行，不抽就一定没机会。
-
-所以 `pickSamples` 的兜底分支允许散文期望值，但加了条件：
-**实参必须是真字面量**（`toPythonLiteral` 能 parse）。
-散文实参（`（空）`、`` 用例 1 ``）不放行 —— 否则会由胡编的输入跑出一份
-轨迹，而 judge 又不会拦它，那份轨迹看起来还挺正常。
-
-#### 「题目入口」挑错的两种形态
-
-题解里「主入口 + 辅助函数」并存，而挑入口的启发式只看位置/名字，
-于是挑到辅助函数上。三个修法按代价从小到大：
-
-**1. 下划线开头的是私有辅助函数。** shoppee 合并降序链表写的是
-`MergeList(l1, l2)` 与 `_reverse(head)`，`_reverse` 排在最后，
-于是成了入口：录制报 `missing 1 required positional argument`，
-页面上「跑样例」也是同一个错（两边共用同一份判据）。
-`snippet.ts` 的 `pickEntry` 与 py-samples 的 `pickPublicEntry` 都要滤掉
-单下划线开头的方法 —— **两边必须同步**，否则构建期抽的样例
-与运行期调用的入口会对不上。
-
-**2. 文件名就是题面入口名的提示。** `analyzeSnippet` 在类里挑
-「第一个带 self 的方法」，而 0148 排序链表是
-`getListLength` / `splitList` / `mergeTwoLists` / `sortList` ——
-挑中 `getListLength`，题面要的是 `sortList` 的返回值。
-把文件名去编号后的 snake_case 转成 camelCase（`0148_sort_list` -> `sortList`）
-当提示传进去，对得上就排第一。其它命名（HJ17、牛客题）转出来对不上，
-不匹配就当没给。
-
-**3. 返回值是节点、题面期望的是节点的值时，按值比。**
-0236 二叉树最近公共祖先返回 TreeNode，编码成层序是
-`[3,5,1,6,2,0,8,null,null,7,4]`（以最近公共祖先为根的那棵子树），
-题面要的是 `3`。judge 里加一条：期望是标量 + 实录是数组 + 首元素正好
-是这个标量，三条同时成立才认。
-
-#### 环形链表：`head = [...], pos = 1`
-
-0141 环形链表的题面样例是 `输入：head = [3,2,0,-4], pos = 1`，
-意思是「把尾部接到第 pos 个节点上」。入口只收 `head`，`pos` 是给评测驱动用的
-元信息，但它**不是可有可无的**：不接环的话 `hasCycle` 返回 False，
-与题面期望的 True 判不上 → `result-mismatch`，整篇录不出来。
-
-两边都要动：
-
-- `driver.ts` 的 `__mk_list__(values, pos=None)`：建完链把尾接到第 pos 个节点。
-  `pos` 默认 None，**页面上「跑样例」那条路一个字都不用改**（它不传）。
-- 录制器：把 `pos` 也当成一个形参去抽（键数就对上了，`py-samples` 的
-  「键比形参多就不抽」守卫也就不再触发），抽完**丢掉**这个实参 ——
-  它不是入口的参数，是建链表时要用的。只对「第一个形参是链表」的入口这么做。
-
-录出来是 `list` 视图：`[3, 2, 0, -4]` 四个格子，`slow` / `fast` 两根指针，
-`fast` 走到末尾后回到下标 1 —— Floyd 快慢指针在环上相遇的过程。
-
-0142（环形链表 II）还是录不了，卡在另一处：它的期望值是散文
-「指数为 1 的节点」，而返回的是**节点**（序列化成从交点开始的那条链），
-两者没法直接比。
-
-#### 实例上的容器也要录（`self.<attr>`）
-
-采集器一直跳过 `self` —— 「局部变量」嘛，`self` 不是变量。**但有一批题的数据
-全在实例属性上**，跳过的结果整题只剩几个标量参数：
-
-- 0399 口袋算式：带权并查集在 `uf.parent` / `uf.weight` 两个数组里，
-  路径压缩时它们一格一格改。不摊平的话录到的只有 `equations`、`n`、`x`、`y`。
-- 0146 LRU：`self.key_to_node` 的键就是「缓存里现在有哪几个 key」。
-- shoppee 那几题：`self.memo` 之类的记忆化表。
-
-摊平的对象**分两种口径**，这个区分是必需的：
-
-- **脚本模式（class-API 设计题）**：全都要，标量也记 ——
-  `self.capacity` 是 LRU 淘汰的判据。
-- **普通模式**：只要**容器**（list / dict / set）。标量属性（计数、容量、开关）
-  在普通题里到处都是，记进来会让 adapter 的选型整体漂移；
-  而 `Solution` 的方法大多无状态，真正带实例容器的题不多。
-
-顺带修掉 grid 的一个误判：**二维数组不等于网格题**。0399 的 `equations` 是
-`[["a","b"],["b","c"]]`，形状不变内容不变也没有光标，画出来是 38 帧都不变的
-字母表。现在 grid 要求「格子变过 **或** 有光标」——
-只满足后者的是 0221 最大正方形（`matrix` 只读，真正在变的是滚动数组 `dp`，
-但光标沿着矩阵走，「算的是哪一格」正是这题要讲的）与 0207 课程表。
-
-再加第三种：0056 合并区间、0406 按身高重建队列的输入网格**排完序就静止了**
-（`intervals.sort()` 之后一个格子都不再变），真正在动的是 `merged` / `ans` ——
-而它是**参差**的列表（每项两个数、行长还不一样），塞不进网格。
-所以 `GridFrame` 也带 `aux` 行，画面上多一行「累加结果」：
-`merged` 从 `[1,3]` 长成 `[1,6]`、`[1,6],[8,10]`、`[15,18]` ——
-题解教的就是 `merged.append(curr)` 这一步，不显示它等于没显示。
-判据四条：不是网格自己、元素都是同样长度的小列表、**长度在变**、
-且只出现一个候选（有两个都在长的就当没给）。
-aux 还要参与帧去重的键，否则「网格没动」的那些帧会被判重复全跳过。
-
-#### `\Z` 在 JavaScript 里不是「字符串结尾」
-
-`recorder/entries.ts` 的 `solutionMethods` 用了
-`/^class\s+(\w+)[^\n]*:\n([\s\S]*?)(?=^class\s|\Z)/gm` —— 第二个分支是从
-Python 的 `re` 照搬过来的。JS 的锚点只有 `^` 和 `$`，`\Z` 是 Annex B 的
-**identity escape**，匹配的是字面量字符 `Z`。
-
-后果不是「少一个候选」：`classRe` 一条都不匹配，于是 `Solution` 的所有方法
-（除恰好被 `analyzeSnippet` 挑中的那个）**从来就没进过候选表**。
-0085 最大矩形（真入口是 `maximalRectangle(matrix)`，挑中的是辅助函数
-`largestRectangleArea(heights)`）、0399 口袋算式（`calcEquation` 与并查集的
-辅助方法）、0101 对称二叉树（`isSymmetric(root)` 与 `isSameTree(p, q)`）
-都是这么丢的，而报错写着「候选入口 XXX 都匹配不上样例」——
-指向一个**根本没被试过**的入口。
-
-JS 里「字符串结尾」要写 `$(?![\s\S])`。凡是照着 Python 正则搬过来的地方
-都要过一遍这条。
-
-#### 样例抽取的两处口径（录制器与「跑样例」必须一致）
-
-`recorder/index.ts` 与页面上「跑样例」那条路（`runner.ts`）**各有一份
-「样例实参 -> Python 字面量」的转换**。口径不一致的后果不是「多录一篇」，
-而是「页面上样例全过，但录制说跑不对」这种自相矛盾：
-
-- `reverse_number(num_str: str)` 拿到围栏样例 `1516000`：直接
-  `toPythonLiteral` 会把它变成**整数**，于是 `'int' object is not subscriptable`
-  —— 而运行条按 `str` 标注补了引号，跑得好好的（HJ11 数字颠倒）。
-  现在录制器也走 `asCallArgument(raw, annotations[i])`，与 runner 同一函数。
-- shoppee 的围栏写的是 `grid = [[0,0,0]]`，不剥掉 `grid = ` 就是 SyntaxError。
-
-另外三件事都记在「录制阶段踩过的坑」之外，但同源：
-
-- **`**输入：**` 后面跟围栏块时，那一行正文就是实参。**
-  早先一律当 stdin 丢掉（理由是「会造出 `{args:['**']}` 这种必然失败的
-  垃圾样例」—— 那条理由本身成立，因为 `readValue` 只吃得到三个反引号）。
-  但 HJ1 / HJ11 / HJ85 的入口就是单参函数，围栏里那一行**正是**它的实参，
-  一丢掉页面上只能手动输参数、录制整篇录不了。
-  **多行且没有 `k = ` 形式的围栏仍然不当实参**（那是 ACM 的 `n` + 数组、
-  牛客的多行输入，走 stdin 通道）。
-- **stdin 样例只能喂给真的读 stdin 的入口。** 早先不分青红皂白都给，
-  于是「需要 1 个位置参数」的入口拿到「空参数 + 一段 stdin」，驱动报的是
-  `missing 1 required positional argument: 'grid'` —— 而真正的问题是
-  样例形态对不上，报错指不到。
-- **「首行 n + 后面 n 行、每行 n 个数字」是网格输入**，按二维列表还原
-  （shoppee 迷宫）。判据里两个「恰好」是这条规则敢不敢用的全部理由。
-
-#### 「操作脚本」样例：class-API 设计题（0146 LRU / 0155 最小栈 / 0208 前缀树 / 0295 中位数）
-
-这几类题的样例**不是一次调用**，而是「构造一次 + 挨个调方法」的序列：
-
-```
-输入
-["LRUCache", "put", "put", "get", "put", "get", "put", "get", "get", "get"]
-[[2], [1, 1], [2, 2], [1], [3, 3], [2], [4, 4], [1], [3], [4]]
-输出
-[null, null, null, 1, null, -1, null, -1, 3, 4]
-```
-
-`extractDocSamples` 按「实参个数 == 入口签名」过滤，这种样例一个都匹配不上 ——
-`no-sample` 报的还是「候选入口都匹配不上样例」，完全指不到真正的原因。
-`recorder/script.ts` 专门补这一形态：**只在常规路径一条样例都抽不到时**启用。
-
-踩过的坑：
-
-- **类名要按样例核对，不能取代码里的第一个 `class`。**
-  0146 的第一个 class 是 `Node`（双向链表节点），0208 的是 `TrieNode`；
-  被测的那个是样例第一项里的 `LRUCache` / `Trie`。
-- **构造器那一步也要占一个返回值位置**（记 null）——
-  力扣的期望值第一项就对应构造器，少一个就整体对不上。
-- **实参用 `json.loads` 还原，不要拼 Python 字面量**：
-  JSON 的 null 直接就是 Python 的 None，也拼不出非法字面量。
-- **这一类题的数据全在 `self.*` 上，而采集器一直跳过 `self`。**
-  不摊平的话 0146 的局部变量里只剩 `capacity` / `key` / `value` 三个标量，
-  画面上什么也没有。摊平成 `self.<attr>` 之后 `self.key_to_node` 的键开始增减
-  （LRU 的核心），`self.stack` / `self.min_stack` 开始长高又变矮（最小栈的核心）。
-  **只在脚本模式开这个开关** —— 一旦全局打开，所有题解的轨迹都会多出
-  `self.*`，adapter 的选型（哪个变量是主数组）会跟着变。
-- **TRACER_PY 里不能出现反引号**（又一次）。Python docstring 里写
-  `` `capture_self` `` 会当场截断 JS 模板字面量，报的却是 Python 的
-  `IndentationError`，指不到真正的行。
-
-#### 视图侧踩过的坑
-
-- **树按层画，不摊平成网格。** 摊平后 `[1,2,3,null,5]` 里 5 会紧贴 3，
-  读者看不出 5 是 2 的孩子；空槽位要用虚线小点画出来而不是隐藏 ——
-  隐藏的话空位后面的节点会跳到左边，「空 = 没孩子」这个语义就没了。
-- **层序下标是 0 起。** 力扣的 `[1,2,3,null,5]` 里下标 0 就是根，
-  录制器的 `_tlayer_order` 也从 0 编号。`TreeView.positionOf` 早先按 1 起算
-  （`if (i < 1) return null`），结果根节点被跳过、整棵树错一层，
-  而且 `data-cursor` 永远匹配不上 —— 页面上树画得出来但没有任何一格被高亮。
-  位置公式：深度 = `(i+1)` 的二进制位数减一，槽位 = `(i+1)` 去掉最高位 1。
-- **树题的递归深度要单独记。** 0104 每层的 `root` 都是「当前这棵子树」，
-  满树时每层长度完全一样，光看局部变量分不出「现在是第几层」。
-  深度是唯一能讲清递归过程的信息，所以录制器在 call/return 事件上数深度。
-- **节点坐标必须锚定入口实参，不能每帧重挑「根」。** 这是树题最大的一个坑：
-  录制器早先在**每一帧**重新挑一个「根节点局部变量」（按名字白名单 +
-  「谁的值最大」），而递归里 `root` 会被重新绑定成**子树** ——
-  0104 第一帧 root 是整棵 7 格，第二层就只剩左边那 1 格。
-  录出来的轨迹于是每帧一棵更小的树，adapter 忠实地画出来，
-  读者看到的是「树在递归中越缩越小」，**而这题根本没有删节点**。
-  现在 `_tbuild_nmap(locals, capture_self, anchor)` 的 `anchor`
-  钉住入口那个对象，index 变成整棵树层序里的稳定坐标；
-  `treeRec` 也配套地**只认入参那一棵树**（取一次全程复用）。
-  0104 7 -> 21 帧、0101 7 -> 15 帧，而且 0101 第一次有了光标
-  （`p=第1格(2)，q=第2格(2)` 正好是那对镜像节点 —— 这题的题眼）。
-  **链表故意不钉**：0206/0021/0148 本来就是原地改链，
-  每帧的锚点链正是要显示的那条链。
-- **深度只进 note，别拿它当光标。** 0108 是自底向上**造**树，
-  `root = TreeNode(nums[mid])` 造出来的新节点不在入参那棵树里，坐标越界，
-  于是「一个节点变量都没有」。早先的兜底是恒定高亮第 0 格 ——
-  画面上永远指着根，而 note 里写着「递归深度 5」，直接矛盾。
-  指着一个明知不对的位置比不指更糟，所以 `depth` 只进 note，
-  `test:adapters` 里 0108 是「至少有一帧有光标」的唯一例外（有注释说明）。
-
-#### 内嵌的技术约束
-
-- **播放器 `React.lazy` + 帧数据运行时 `fetch`**：题解有 126 篇力扣题
-  （外加牛客/其它共 182 篇），全打进主 bundle 的话每个读者都要为用不到
-  的那几篇付费。globalData 只发「哪篇有可视化 + 帧数 + 源码」这份清单
-  （与自测题库同一个取舍）。
-- **键盘监听挂在容器上而不是 `window`**。这是内嵌必须付的代价：题解正文很长，
-  读者滚动、按空格翻页是常态，独立页那样在 window 上监听会抢走整页的
-  方向键与空格。容器 `tabIndex={0}`，点播放时把焦点收进来。
-- **不复用 `AlgoPlayer`**：那个组件的输入框假设「输入可编辑、改完重跑
-  `run()`」，而录制式的帧是固定的（换输入要重录，构建期才能做）。
-  硬塞给它只会得到一个「改了输入但画面不变」的假输入框。
-- **`note` 里放的是源码那一行**（去注释）+ 指针当前值。代码行才是作者
-  真正想说的话，自动生成的文案再漂亮也比不上。
-- **位置在「完整代码实现」那一节的标题下面，不在页面最底部，也不再有单独的
-  TOC 条目**：由 swizzled 的 `@theme/MDXComponents` 的 `h2` 接上
-  （`src/theme/MDXComponents.tsx`）。早先它渲染在 `</DocItemContent>` 之后，
-  离它回放的那段代码隔了好几节。`id="visualizer"` 保留着，只给
-  `pnpm check:vis` 扫页面用，没有任何 `<a href>` 指向它 —— 所以那条
-  「Broken anchor → #visualizer」的误报自然消失了（见 `docusaurus.config.ts`）。
-  完整推导（含「为什么不能挂到代码块下面」）在那个文件头。
-- **端到端靠无头 Chrome 点真实按钮验证**，不是肉眼看：`pnpm check:vis`
-  每类 adapter 挑一题，验证播放器挂上、**对应视图的格子真的渲染了**、
-  指针/光标/状态量出现、单步有效。
-  「有没有指出当前在哪」有三种形态，不能一律查指针标签：数组/链表/栈是
-  指针标签，树是**高亮的格子**（`data-cursor`），DP 是**计数器面板** ——
-  早先一律要求指针标签，于是树与 DP 被误报成「没有指针」，
-  是尺子错了不是页面错了。
-- **`pnpm check:vis --all` 验的是「166 篇都上得了页面」**（830 项，全绿）。
-  抽样模式验的是「视图类型对不对」，全站模式验的是另一件事：
-  构建期 `adapt()` 成功只说明**帧**生成对了，页面上那一步是另一回事 ——
-  `React.lazy` 的 chunk 拉不下来、`fetch('/traces/x.json')` 404、
-  轨迹里某个值渲染时抛异常，读者看到的都是一个红框，
-  而这些**不会让任何单测失败**。
-  页面清单从 `build` 产物里「含 `id="visualizer`」现扫，不维护第二份清单。
-  写这个模式时踩的三个坑，全都在**尺子自己身上**，报错却指向页面：
-  - 服务器必须是 `docusaurus serve`（**不是** `python3 -m http.server`）。
-    站点 `trailingSlash: false`，`/problems/leetcode/560` 对应磁盘上的
-    `560.html`；`http.server` 不做无扩展名解析，于是 12 个页面**全部**报
-    「页面上没有 #visualizer」，没有一个字提到服务器。
-    spawn 的还得是 `node` + `bin/docusaurus.mjs`，不能 spawn `.bin/docusaurus`
-    —— 那是个 shell shim，交给 node 会报 `SyntaxError`。
-  - CDP 端口不能写死 9222。上一轮跑挂后残留的无头 Chrome 还占着端口，
-    新起的绑定失败直接退出，而连上的是**残留实例** —— 症状同样是一整页
-    「没有 #visualizer」。现在端口取 `HTTP 端口 + 1`、profile 走临时目录，
-    并且监听 Chrome 的 `exit`：真起不来时报的是「多半是端口被占」。
-  - 就绪探测不能复用取 JSON 的那个函数（它对响应体 `JSON.parse`，
-    页面是 HTML）—— 于是「等服务器起来」这个逻辑自己先崩了。
-  - **必须把视口固定成桌面宽度**（`Emulation.setDeviceMetricsOverride` 1280×900）。
-    无头 Chrome 默认窗口 800×600 → `useWindowSize()` 判成 mobile，
-    `DocItemLayout` 只渲染 `DocItemTOCMobile`，而那个下拉**默认收起**、
-    条目不在 DOM 里 —— 于是「TOC 里没有条目」会**每页都失败**，
-    而页面上明明有条目。是尺子错了，不是页面错了。
-    （顺带记一条：Docusaurus 3.9 的 `onBrokenAnchors` 只接受枚举值，
-    **不支持**按链接内容返回结果的函数形式（3.10+ 才有），
-    所以 `#visualizer` / `#vis-*` / `#selftest` 这几个 React 生成的锚点
-    没法单独放过。实测它们在产物里都真实存在，警告保持默认的 `warn`。）
-
-**`--tracers` 模式**验的是内嵌手写 tracer 的那 16 篇文档（82 项）：折叠壳数量对不对、
-懒加载的 chunk 到没到（放置表 id 拼错时页面上一片空白）、画面画出了东西、
-单步有效。CSS module 的类名是哈希过的，所以格子一律按 `data-testid` 查：
-`cell` / `grid > *` / `tree-node` / `aux-array > *` / `dp-table td` ——
-漏掉 `dp-table td` 时两个 DP 播放器会被误报成「画面是空的」。
-
-而且**期望要按播放器给，不能按页面给**：`dynamic_programming.md` 一页挂着三个
-表视图的播放器，`patterns/dfs.md` 是树 + 回溯；按页面给一个 view 必然有播放器
-对不上。而且查表时**必须剥掉 `vis-` 前缀**（box id 是 `vis-grid-bfs`，
-表里的键是 `grid-bfs`）—— 忘了剥的话每项都退化成 `any`，而树 / 网格 / 表三种视图
-都没有 `cell`，六个播放器会被一起误报成「画面是空的」。
-
-#### 手写 tracer（内嵌在模式文档里）
-
-覆盖录制式管线画不出来的形态：排序（柱状图）、网格 BFS、DP 表格、树、回溯、
-并查集、链表、词典。录制式目前只从**题解代码**取轨迹，而模式/数据结构页
-讲的是算法与结构本身，没有「一道题 + 一组样例」可录。
-
-**独立页 `/code-training/visualizer` 已删除**，tracer 全部搬进讲它们的那篇文档
-（放置表 `visualizer/inlinePlacement.ts`）：
-
-**16 个 tracer 覆盖 16 篇文档**（模式 9 + 数据结构 7 = 全部）：
-
-| 文档 | 内嵌 |
+| 指标 | 删除前 |
 |---|---|
-| `patterns/two_pointers.md` | 两数之和 |
-| `patterns/sliding_window.md` | 滑动窗口 |
-| `patterns/sorting.md` | 冒泡 / 归并 / 快排 |
-| `patterns/dynamic_programming.md` | 爬楼梯 / 0-1 背包 / LCS（二维 DP 表） |
-| `patterns/bfs.md` | 网格 BFS |
-| `patterns/dfs.md` | 树的 DFS 遍历 / 回溯：子集 |
-| `patterns/search.md` | 二分 / lower_bound |
-| `patterns/backtracking.md` | 回溯：子集 |
-| `patterns/hash_map.md` | 哈希表：就地统计出现次数 |
-| `data-structures/hash_table.md` | 哈希表：就地统计出现次数 |
-| `data-structures/linked_list.md` | 链表反转：三个指针 |
-| `data-structures/unionfind.md` | 并查集：路径压缩 + 按大小合并 |
-| `data-structures/tree.md` | 树的 DFS 遍历 |
-| `data-structures/string.md`、`array.md` | LCS（二维 DP 表） |
-| `data-structures/graph.md` | 网格 BFS |
+| 轨迹 / 体积 | 249 份 / 13.2MB，进 git、进离线包 |
+| 能播放 | 239 份（10 份 adapter 认不出） |
+| 总帧数 → 不同画面 | 20,012 → 2,905（冗余 6.9×） |
+| 超过 65% 帧重复的题 | 124 / 239 |
+| 极端 | 0095 是 273 帧 / 4 张画面；HJ16 是 1500 帧（上限）/ 4 张画面 |
 
-新增的六个（`tracers/trees.ts`、`tracers/structures.ts`）都是**结构自身的用法**，
-不是某道题：词典那一行就是计数表本身、链表的已反转段一格格长出来、
-并查集的路径压缩把树压扁、LCS 的表格行列各对应一个前缀长度。
-`patterns/greedy.md` 与 `patterns/recursion.md` 仍然没有播放器 ——
-它们讲的是「什么时候能贪心」「递归三要素」这类**判断标准**，
-没有可逐步展示的状态，硬摆一个不相干的动画只会添乱。
+逐行录制的输入是**局部变量**，不是算法的概念状态：谁是窗口边界、DP 当前
+算哪格，全靠变量名与取值形状猜。猜错不报错，只画错 —— 0104 递归深度 3 之后
+高亮丢失、0042 接雨水只画了 left 一根指针、0072 编辑距离 124 帧里 99 帧
+画面不动。这些都不会让构建或单测失败。**错的可视化比没有更糟**，所以整条
+管线砍掉，而不是继续修。
 
-**为什么放文档里而不是留一个独立页**：读者在「滑动窗口」这一页读到窗口怎么收缩时，
-顺手就该能把输入调大重跑，而不是跳去另一个页面从头找。独立页的算法与文档一一对应，
-拆开只有两个好处（不用滚动、可以并排对比），代价是**每个算法都得有地方放**。
+规则就一条：**只画「状态本身就是算法」的东西**（窗口、栈、指针、DP 表、树、
+并查集、排序过程）。讲「什么时候能贪心」「递归三要素」这类判断标准的页面
+不摆播放器，硬摆只会添乱 —— `patterns/greedy.md`、`patterns/recursion.md`
+至今没有。
 
-**放置表必须与注册表同步**，所以那条断言在 `pnpm test:tracers` 里：
+#### 播放器长什么样
 
-- `TRACERS` 里有的 tracer，放置表里必须也有；
-- 放置表里的 id 必须都注册过（否则 `findTracer` 返回 undefined，页面上一片空白）；
-- 放置表的键要是**真实存在的 md**，且那个 md 里有 `## 算法可视化` 小节
-  （播放器渲染在正文末尾，那个标题是它在 TOC 里的入口）。
+- md 里是**普通 Markdown 标题** `## 算法可视化`，播放器渲染在正文末尾
+  （`plugins/training.ts` 往 token 流末尾插 `TracerVisualizerMount`）。
+  这批文档走 `markdown.format: 'detect'`，实测被当作 CommonMark 解析，
+  **不能写 JSX**（`<ProbeMarker />` 会被小写成 `<probemarker>`）。
+- 每个播放器是一层 `<details>`：**一页里第一个默认展开，其余收起**。
+  排序那一页有三个算法，全展开会把正文顶下去；全部收起又会让这节看起来
+  只有一行标题。
+- 折叠壳上的标题来自放置表的 `title`，不用 tracer 自己的 —— 壳是同步渲染的
+  （SSR 里就要出现），而 `tracers/index.ts` 只能懒加载。
+- 播放器与 tracer 模块都是 `React.lazy`：不展开就不下载。
 
-少写一行放置表，`test:tracers` 与 `test:adapters` 全都绿，而那个算法从此
-在任何页面上都不出现 —— 没有别的单测会失败。
+#### 新增一个算法
 
-**md 里加的是普通 Markdown 标题，不是 JSX 组件。** 这批文档走
-`markdown.format: 'detect'`，实测**被当作 CommonMark 解析**：`<ProbeMarker />`
-被小写成 `<probemarker>`，加一行 `import` 也一样。换成 `format: 'mdx'` 能用
-JSX，但那是 220 多篇文档的解析方式，里面还有大段含 `{` 与 `<` 的散文 ——
-为了摆播放器去改它不划算。自定义 remark 插件在这套配置下压根不会被调用。
+1. 在 `visualizer/tracers/` 写 30~60 行 trace 函数，注册到 `tracers/index.ts`；
+2. 在 `tracers/index.ts` 的 `INPUT_HINTS` 补输入提示（`formatInput` 必须由
+   tracer 自己提供，播放器不能用 `String(value)` 兜底）；
+3. 在 `inlinePlacement.ts` 加一条放置（`tracerId` + 可读 `title`）；
+4. 在目标 md 里加 `## 算法可视化` 小节（有这一节才显得出播放器在讲什么）；
+5. 跑 `pnpm test:tracers`。
 
-核心是 `types.ts` 里的 tracer 契约：
-**tracer 只产出「状态帧」，播放器负责全部交互**。新增算法 = 写 30~60 行
-trace 函数，白送一整套播放/暂停/单步/回退/调速/换输入/源码高亮。
+**放置表、注册表、文档标题是同一件事的三个副本**，`test:tracers` 双向断言：
+注册了没放置、放置了没标题、已经写了 `## 算法可视化` 却没放播放器，任何一条
+都会红。少写一行，那个算法从此在任何页面上都不出现 —— 没有别的单测会失败。
 
-```bash
-pnpm test:tracers          # 251 项：算法结果与参考实现对拍 + 放置表完整性
-node scripts/check-vis.js --tracers   # 82 项：16 篇文档的播放器在浏览器里真能跑
-```
+#### 已经踩过的坑
 
-**这个单测不是可选项。** tracer 的 `run()` 有两类高危 bug：
-状态记录错了（画面元素乱跳但不报错）、算法本身写错了（可视化会**掩盖**它）。
-所以断言的是「最后一帧的数组 == 独立参考实现的输出」。
-
-已经踩过的坑，别再犯：
-
-- **`formatInput` 必须由 tracer 自己提供。** 播放器曾在内部用 `String(value)`
-  兜底格式化，对象类型的 `defaultInput` 变成 `"[object Object]"`，解析必然失败、
-  首屏 0 帧。现在契约里有 `formatInput`，且有断言保证
-  `parseInput(formatInput(defaultInput))` 一定能解析回来。
-- **滑动窗口的 `left` 约定必须与题解一致。** 题解用的是「left 指向被排除的
-  重复字符、`ans = i - left`」。曾写成「left = prev + 1 却算 `i - left`」，
-  混用两套约定导致 off-by-one，结果比正确答案少 1。断言
-  「abcbbad = 3」抓住了它。
-- **`frame.note` 是给读者看的文案，不是 markdown。** 写 `**强调**` 会原样显示星号。
+- **`formatInput` 必须由 tracer 提供**：内部用 `String(value)` 兜底时，对象
+  类型的 `defaultInput` 会变成 `"[object Object]"`，首屏 0 帧。
+- **滑动窗口的 `left` 约定必须与题解一致**：题解是「left 指向被排除的重复
+  字符、`ans = i - left`」。曾写成 `left = prev + 1` 却仍算 `i - left`，
+  结果比正确答案少 1；断言「abcbbad = 3」抓住了它。
+- **`frame.note` 是给读者看的纯文本，不是 markdown**；写 `**强调**` 会原样
+  显示星号。
 - **网格类 tracer 找到答案后不要再补「不可达」的尾帧**，画面会自相矛盾。
-- 帧数上限 1500（`MAX_FRAMES`），超限截断并插入提示帧。快排在 50 个元素上
-  就可能几百帧，动画太慢也看不清。
-- **折叠壳上显示的标题要写在放置表里**，不能用 tracer 的 `title` ——
-  壳是同步渲染的（SSR 里就要出现），而 `tracers/index.ts` 只能懒加载。
-- **`AlgoPlayer` 的 note 用 `[data-testid="note"]`**，不是 `[data-testid="vis-note"]`
-  （那是 `RecordedPlayer` 的）。CSS module 的类名是哈希过的
-  （形如 `_gridCell_x1y2z`），按类名查网格一个都查不到 —— 一律用 data-testid。
-
-#### 当前覆盖与缺口
-
-182 篇题解里 **171 篇录制成功、167 篇有可视化（92%）**。
-
-**录制失败的 11 篇**（每一类都是内容问题，不是管线问题）：
-
-- **`no-sample=6`**：题面里**没有可抽的样例**。
-  - 0031 下一个排列、0543 二叉树直径、0761 特殊二进制串、
-    0160 相交链表（只写了「相交节点的值为 8」）：
-    `## 示例` / `## 示例推演` 里是散文推演，没有 `输入：` / `输出：`。
-  - 0297 序列化的入口只有 2 行（`只采到 2 个事件`）、HJ11 数字颠倒
-    是 `num_str[::-1]` 一行到底（`只采到 1 个事件`）——
-    没有过程就没有可视化，硬画是两张静止画面。
-  - （1480 前缀和与 0142 环形链表 II 原先也在这张表里，
-    前者是 `**输入：**` 星号形态没被认 —— 已修，见下面那条。）
-- **`exec-error=1`**：ML23 实现 k-Means 依赖 numpy，
-  录制器**故意不装包**（见 Pyodide 那节）。
-- **`no-code=4`**：`## 完整代码实现` 里没有可运行代码（4 篇 SQL 题）。
-
-要再往上走只能**改题解内容**（给这 5 篇补 `## 示例`），那是内容工作，
-不是可视化管线的问题，所以没做。
-
-**录到了但没有 adapter 认领的 4 篇**，全是一行正则替换 / 一次切片：
-HJ31 单词倒排（`re.findall` 一次成型）、HJ33 整数与 IP 转换
-（`a,b,c,d = map(int, split('.'))`）、HJ96 表示数字（`re.sub`）、
-KY4 反序输出（每行 `s[::-1]`）。它们的局部变量里**没有逐步推进的痕迹** ——
-硬画出来是两三帧静止画面。这 4 篇在页面上显式写一行「本题无可视化步骤」
-（`VisTracesData.noVisual`），而不是什么都不显示：不写等于让读者以为
-「这个功能是按题目难度挑的」。
-
-也就是说 **166/170 = 98% 的录制产物都有可视化**，剩下 4 篇是算法本身
-没有中间过程，不是覆盖率不足。
+- **帧数上限 1500**（`MAX_FRAMES`），超限截断并插入提示帧。快排在 50 个元素上就可能几百帧。
+- **`AlgoPlayer` 的 note 用 `[data-testid="note"]`**（`RecordedPlayer` 的
+  `vis-note` 已不存在）。CSS module 类名是哈希过的，按类名查格子一个都
+  查不到 —— 浏览器里验页面时一律按 `data-testid` 查
+  （`cell` / `grid > *` / `tree-node` / `aux-array > *` / `dp-table td`）。
+- **单测断言的是「最后一帧 == 独立参考实现的输出」**，不是「画面动过」。
+  tracer 的状态记录错与算法本身写错都不报错，这套对拍是唯一的闸门。
 
 ### 浏览器内跑代码（Pyodide）
 
@@ -1587,12 +944,12 @@ webpack 打浏览器 bundle 时会连这些分支一起解析。**与体积无�
 
 **新写一篇题解的体检：`pnpm check:docs`（纯 Node、亚秒级）。**
 
-三个功能是从文档**派生**出来的，而且**都不报错**：样例抽不出来 → 页面静默退化成
-「手动填参数」；没录轨迹 → 页面上没有那一节；题库里没这道题 → 没有自测小节。
-新 agent 很容易以为「写完就好了」，而这三个一个都不会自己出现。
+两个功能是从文档**派生**出来的，而且**都不报错**：样例抽不出来 → 页面静默退化成
+「手动填参数」；题库里没这道题 → 没有自测小节。
+新 agent 很容易以为「写完就好了」，而这两个一个都不会自己出现。
 
-每篇 `problems/` 下的题解报四行（运行条样例数 / 有无轨迹 / 有无自测题 /
-frontmatter），并把问题分成两级：
+每篇 `problems/` 下的题解报三行（运行条样例数 / 有无自测题 / frontmatter），
+并把问题分成两级：
 
 - **error**（退出码 1）：只有「新题一定能做对、且会让功能坏掉」的那些 ——
   frontmatter 缺必填字段、`patterns` 指向不存在的文件。
@@ -1601,9 +958,8 @@ frontmatter），并把问题分成两级：
   另外三种是题面本来就那样：散文推演、操作脚本样例、环形链表的 `pos` 约定。
   把它们报成 error 的话这个脚本会**永久是红的**，而红着红的脚本等于没有。
 
-现状：178 篇（有 python 代码的）**error 0**，样例可跑 121 / 有轨迹 171 /
-有自测题 177；4 篇 SQL 题没有 python 块，不计入。
-它只管 `problems/`，算法模式 / 数据结构那两页归 `check:tracers`。
+现状以 `pnpm check:docs` 的输出为准（`error 0` 才算过）；4 篇 SQL 题没有
+python 块，不计入。它只管 `problems/`，模式/数据结构页的播放器归 `test:tracers`。
 
 **原来的端到端扫描脚本 `bars.mjs` / `sweep2.mjs` 已不在仓库里**，
 `check:runbar` 在 Node 里跑同一条路径，不必开浏览器。要在浏览器里点真实

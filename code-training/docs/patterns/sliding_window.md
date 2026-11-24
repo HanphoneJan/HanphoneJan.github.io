@@ -166,6 +166,13 @@ def length_of_longest_substring(s):
 
 答案 3（`abc`）。
 
+把上表画成四帧：
+
+![四帧看懂窗口怎么扩、怎么缩](/diagrams/sliding-window-keyframes.png)
+
+绿格是当前窗口，橙格是这一步刚纳入的字符，灰格是当前不在窗口里的字符。
+盯住一件事件：**`right` 每轮只走一格，`left` 只在撞车时前进** —— 这就是 O(n) 的全部理由。
+
 > 这里 `left` 是**窗口左端**，窗口是 `[left, right]`，长度 `right - left + 1`。
 > 还有一种写法让 `left` 指向「被排除的那个字符」，窗口是 `(left, right]`，
 > 长度就是 `right - left`。两种写法都对，**但不要在同一个函数里混用**。

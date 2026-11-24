@@ -3,30 +3,28 @@
  *
  * ## 为什么需要它
  *
- * 页面上有三个功能是**从题解文档派生**出来的，而且它们**都不报错**：
+ * 页面上有两个功能是**从题解文档派生**出来的，而且它们**都不报错**：
  *
  * | 功能 | 数据来源 | 缺了会怎样 |
  * |---|---|---|
  * | 「▶ 跑样例」 | `plugins/py-samples` 抽 `## 完整代码实现` + `## 示例` 的 `输入：`/`输出：` | 样例区空着，退化成「手动填参数」——**没有任何提示** |
- * | 逐帧可视化 | `static/traces/<文件名>.json`（`pnpm trace:record` 产出） | 页面上没有那一节——**没有任何提示** |
  * | 自测题 | `static/quiz/bank.json` 的 `docId`（`pnpm quiz:gen` + `merge` 产出） | 页面上没有自测小节——**没有任何提示** |
  *
- * 扫的目录是 `problems/` 下面递归（182 篇题解），不含算法模式 /
- * 数据结构那三页 —— 那三页的功能由 `check:tracers` 管。
+ * 扫的目录是 `problems/` 下面递归，不含算法模式 / 数据结构那几页 ——
+ * 那几页的功能由 `test:tracers` 管。
  *
- * 新写一篇题解的 agent 很容易以为「写完就好了」，而这三个功能一个都不会自己出现。
+ * 新写一篇题解的 agent 很容易以为「写完就好了」，而这两个功能一个都不会自己出现。
  * 这个脚本把「有没有」变成一眼能看的东西。
  *
  * ## 它检查什么
  *
- * 每篇题解（`problems/` 下面递归）报四行：
+ * 每篇题解（`problems/` 下面递归）报三行：
  *
  * 1. **运行条样例数** —— 与 `check-run-bar` 用**同一个抽取函数**，不是另写一套
- * 2. **有无轨迹** —— 文件名去掉 `.json` 后的 `<id>_<slug>` 要与 md 文件名一致
- * 3. **有无自测题** —— `bank.json` 里有没有这个 `docId`
- * 4. **frontmatter** —— `id/title/platform/difficulty/tags/patterns/date_added`
+ * 2. **有无自测题** —— `bank.json` 里有没有这个 `docId`
+ * 3. **frontmatter** —— `id/title/platform/difficulty/tags/patterns/date_added`
  *
- * 第 4 条里 `difficulty` 影响题解页的难度徽标（认不出就不显示）、`patterns`
+ * 第 3 条里 `difficulty` 影响题解页的难度徽标（认不出就不显示）、`patterns`
  * 只影响知识图谱，缺了不会让页面坏掉，但会让复习卡片少信息 ——
  * 所以它们报成 **warn** 而不是 error。
  *
@@ -37,7 +35,7 @@
  *
  * 有几类题**天然**缺某些功能，不该被算成 error，所以显式排除：
  *
- * - **SQL 题**（`## 完整代码实现` 里没有 python 块）—— 运行条与录制都不适用
+ * - **SQL 题**（`## 完整代码实现` 里没有 python 块）—— 运行条不适用
  * - **算法模式 / 数据结构**（不在 `problems/` 下）—— 本脚本只扫题库
  *
  * ## 跑法
@@ -68,7 +66,6 @@ import {parseDifficulty} from '../src/components/training/difficulty';
 const ROOT = process.cwd();
 const DOCS_ROOT = path.join(ROOT, 'code-training', 'docs');
 const PROBLEMS_ROOT = path.join(DOCS_ROOT, 'problems');
-const TRACES_DIR = path.join(ROOT, 'static', 'traces');
 const BANK = path.join(ROOT, 'static', 'quiz', 'bank.json');
 
 const only = process.argv.slice(2).filter((a) => !a.startsWith('--'));
@@ -84,7 +81,6 @@ interface Row {
   name: string;
   samples: number;
   hasCode: boolean;
-  hasTrace: boolean;
   hasQuiz: boolean;
   fm: Record<string, boolean>;
   issues: Issue[];
@@ -226,17 +222,17 @@ function inspect(doc: {docId: string; abs: string}, bankDocIds: Set<string>): Ro
       } else if (noInputLabel) {
         issues.push({
           level: 'warn',
-          text: '`## 示例` 里没有 `输入：` —— 题面是散文推演，运行条与录制都没有样例可抽',
+          text: '`## 示例` 里没有 `输入：` —— 题面是散文推演，运行条没有样例可抽',
         });
       } else if (isScriptSample) {
         issues.push({
           level: 'warn',
-          text: '样例是「构造 + 挨个调方法」的操作脚本，运行条不支持（录制器走脚本模式，能录）',
+          text: '样例是「构造 + 挨个调方法」的操作脚本，运行条不支持',
         });
       } else if (hasCyclePos) {
         issues.push({
           level: 'warn',
-          text: '样例多一个用来造环的 `pos` 键，运行条不支持（录制器认这个约定，能录）',
+          text: '样例多一个用来造环的 `pos` 键，运行条不支持（环形链表的约定）',
         });
       } else if (stdin > 0) {
         issues.push({
@@ -252,20 +248,14 @@ function inspect(doc: {docId: string; abs: string}, bankDocIds: Set<string>): Ro
     }
   }
 
-  // ── 2. 轨迹 ─────────────────────────────────────────────────
-  const hasTrace = fs.existsSync(path.join(TRACES_DIR, `${name}.json`));
-  if (!hasTrace && hasCode) {
-    issues.push({level: 'warn', text: '没有录制轨迹（`pnpm trace:record ' + name.split('_')[0] + '`）'});
-  }
-
-  // ── 2b. 「解题思路」里不该有和完整代码一字不差的代码块 ────────
+  // ── 2. 「解题思路」里不该有和完整代码一字不差的代码块 ────────
   //
   // 完整代码的位置只有一个：`## 完整代码实现`。而「解题思路」里再抄一份，
-  // 读者会读到同一段代码两遍，而且**第二遍才是录制与运行条用的那份** ——
-  // 两份一旦只改了一份，可视化播的就和眼前这段对不上。
+  // 读者会读到同一段代码两遍，而且**第二遍才是运行条与正文引用的那份** ——
+  // 两份一旦只改了一份，页面上跑的就和眼前这段对不上。
   //
-  // 为什么是 warn 不是 error：它不影响任何功能（可视化挂的是「完整代码实现」
-  // 那一节，逐帧照样播）。只是文档冗余，改起来是内容工作。
+  // 为什么是 warn 不是 error：它不影响任何功能（运行条挂的是「完整代码实现」
+  // 那一节，照样能跑）。只是文档冗余，改起来是内容工作。
   //
   // 判据：全文所有 ```python 块里，出现次数 > 1 的那一份。
   if (hasCode) {
@@ -348,7 +338,7 @@ function inspect(doc: {docId: string; abs: string}, bankDocIds: Set<string>): Ro
     }
   }
 
-  return {docId: doc.docId, name, samples, hasCode, hasTrace, hasQuiz, fm, issues};
+  return {docId: doc.docId, name, samples, hasCode, hasQuiz, fm, issues};
 }
 
 // ============================================================
@@ -369,7 +359,7 @@ function main(): void {
   );
 
   const rows: Row[] = [];
-  /** SQL 题没有 python 块，运行条与录制都不适用，不算它的错 */
+  /** SQL 题没有 python 块，运行条不适用，不算它的错 */
   const skipped: string[] = [];
   for (const d of docs) {
     const row = inspect(d, bankDocIds);
@@ -384,7 +374,7 @@ function main(): void {
     console.log('题解体检报告\n');
     console.log(
       '文档'.padEnd(46) +
-        '样例  轨迹  自测  frontmatter',
+        '样例  自测  frontmatter',
     );
     for (const r of rows) {
       const fmOk = r.issues.filter(
@@ -393,7 +383,6 @@ function main(): void {
       console.log(
         r.docId.padEnd(46) +
           String(r.samples).padEnd(6) +
-          (r.hasTrace ? '✓' : '✗').padEnd(6) +
           (r.hasQuiz ? '✓' : '✗').padEnd(6) +
           (fmOk === 0 ? '✓' : `${fmOk} 处缺`),
       );
@@ -410,7 +399,6 @@ function main(): void {
 
   console.log(`检查 ${rows.length} 篇（有 python 代码的题解）`);
   console.log(`  样例可跑: ${rows.filter((r) => r.samples > 0).length}`);
-  console.log(`  有轨迹:   ${rows.filter((r) => r.hasTrace).length}`);
   console.log(`  有自测题: ${rows.filter((r) => r.hasQuiz).length}`);
   console.log(`  跳过（无 python 块，多为 SQL 题）: ${skipped.length}`);
   console.log(`  error ${errors.length}｜warn ${warns.length}`);

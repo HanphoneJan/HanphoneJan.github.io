@@ -1,8 +1,9 @@
 /**
  * 文档内嵌的**手写 tracer**（滑动窗口、二分、排序、网格 BFS、DP…）。
  *
- * 与 `InlineVisualizer`（题解页的录制式）是两个组件，但壳是一样的：
- * `<details>` 折叠 + 显式 id + 点开才 `React.lazy`。
+ * 每个播放器是一层 `<details>` 折叠壳 + 懒加载的本体：
+ * **一页里第一个默认展开**，其余收起 —— 排序那一页有三个算法，
+ * 全展开会把正文顶下去；但全部收起又会让这节看起来像「只有一行标题」。
  *
  * ## 为什么不复用 `AlgoPlayer` 的懒加载边界
  *
@@ -15,7 +16,6 @@
  *
  * 播放器要按帧数算进度条与按钮禁用状态，服务器上没有帧可算；
  * 而 `parseInput` + `run` 是在 `useEffect` 里跑的。
- * 所以这一层在 SSR 就是一个 `<summary>`，与录制式那条路径一致。
  *
  * ## 折叠壳上为什么先显示 tracerId
  *
@@ -44,8 +44,8 @@ interface Props {
 /**
  * 一篇文档里的**全部**播放器，按放置表渲染。
  *
- * 每个播放器各自是折叠壳：读者默认看到的是那几行标题，
- * 想看哪一个点开哪一个 —— 排序那一页有三个算法，全展开就没法读了。
+ * 第一个默认展开，其余收起：读者读到这里就能看见画面，不用再找「哪里点开」；
+ * 一页三个算法时，后两个仍收着，免得把正文顶下去。
  */
 export default function InlineTracerSection({
   placements,
@@ -57,17 +57,24 @@ export default function InlineTracerSection({
   }
   return (
     <>
-      {placements.map((p) => (
-        <InlineTracerVisualizer key={p.tracerId} placement={p} />
+      {placements.map((p, index) => (
+        <InlineTracerVisualizer
+          key={p.tracerId}
+          placement={p}
+          defaultOpen={index === 0}
+        />
       ))}
     </>
   );
 }
 
 /** 单个播放器的折叠壳 */
-function InlineTracerVisualizer({placement}: Props): React.ReactElement {
+function InlineTracerVisualizer({
+  placement,
+  defaultOpen,
+}: Props & {defaultOpen: boolean}): React.ReactElement {
   const {tracerId, title} = placement;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <details
       id={tracerAnchorId(tracerId)}
@@ -75,8 +82,8 @@ function InlineTracerVisualizer({placement}: Props): React.ReactElement {
       open={open}
       onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
       <summary className={styles.visSummary}>
-        算法可视化 · {title ?? tracerId}
-        <span className={styles.visMeta}>可改输入后重跑</span>
+        算法动画 · {title ?? tracerId}
+        <span className={styles.visMeta}>改输入重跑 · 逐帧看状态</span>
       </summary>
       <div className={styles.visBody}>
         {open ? (

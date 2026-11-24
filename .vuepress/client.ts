@@ -17,9 +17,7 @@ import DifficultyInfo from './components/DifficultyInfo.vue'
 import LayoutToggle from './components/LayoutToggle.vue'
 import NavbarHomeLink from './components/NavbarHomeLink.vue'
 import NavbarSettingsLink from './components/NavbarSettingsLink.vue'
-import NoVisStepsMount from './components/NoVisStepsMount.vue'
 import PatternGraphMount from './components/PatternGraphMount.vue'
-import RecordedVisualizerMount from './components/RecordedVisualizerMount.vue'
 import SelfTestMount from './components/SelfTestMount.vue'
 import ProjectsMount from './components/ProjectsMount.vue'
 import SnippetBarMount from './components/SnippetBarMount.vue'
@@ -108,8 +106,6 @@ export default defineClientConfig({
   enhance({ app, router }) {
     app.component('SelfTestMount', SelfTestMount)
     app.component('PatternGraphMount', PatternGraphMount)
-    app.component('RecordedVisualizerMount', RecordedVisualizerMount)
-    app.component('NoVisStepsMount', NoVisStepsMount)
     app.component('SnippetBarMount', SnippetBarMount)
     app.component('TracerVisualizerMount', TracerVisualizerMount)
     app.component('StarsMount', StarsMount)

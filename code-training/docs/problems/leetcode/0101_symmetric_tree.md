@@ -168,7 +168,7 @@ class Solution:
     """
 
     def isSymmetric(self, root: Optional[TreeNode]) -> bool:
-        # 入口放在第一个方法：页面「跑样例」与录制器都取第一个带 self 的方法
+        # 入口放在第一个方法：页面「跑样例」取第一个带 self 的方法
         return self.isSameTree(root.left, root.right)
 
     def isSameTree(self, p: Optional[TreeNode], q: Optional[TreeNode]) -> bool:

@@ -672,8 +672,8 @@ for (const t of TRACERS) {
 // 变成了**两张表的交集**：`TRACERS`（注册了什么）与 `INLINE_TRACER_PLACEMENT`
 // （放到了哪篇文档）。
 //
-// 少写一行放置表，`test:tracers` 与 `test:adapters` 全都绿，
-// 而那个算法从此在任何页面上都不出现 —— **没有任何单测会失败**。
+// 少写一行放置表，`test:tracers` 全绿，而那个算法从此
+// 在任何页面上都不出现 —— **没有任何单测会失败**。
 // 唯一能守住的就是这条：注册表里有的，放置表里必须也有。
 // ============================================================
 
@@ -712,6 +712,33 @@ for (const t of TRACERS) {
     check(
       `${docId}: 每条都写了可读标题（折叠壳是同步渲染的，拿不到 tracer.title）`,
       titles.every((t) => t.trim().length > 0),
+    );
+  }
+
+  // 反过来也要守：写了 `## 算法可视化` 却没有放置条目，读者看到的是
+  // 一句「下面的播放器可以改输入重跑」，而下面什么都没有。
+  // 这条曾经真的存在于 `data-structures/stack.md`，没有单测报过。
+  const headingDocs: string[] = [];
+  const walk = (dir: string): void => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+      } else if (
+        entry.name.endsWith('.md') &&
+        /^##\s+算法可视化\s*$/m.test(fs.readFileSync(full, 'utf8'))
+      ) {
+        headingDocs.push(
+          path.relative(docsRoot, full).split(path.sep).join('/'),
+        );
+      }
+    }
+  };
+  walk(docsRoot);
+  for (const docId of headingDocs) {
+    check(
+      `${docId}: 写了「## 算法可视化」就必须有播放器`,
+      docId in INLINE_TRACER_PLACEMENT,
     );
   }
 }

@@ -128,7 +128,6 @@ for span in div.xpath('.//span[contains(@class,"katex")]'):
 # 每条官方样例逐字节对拍（脚本从 md 抽代码和样例）
 pnpm check:docs
 pnpm check:runbar P####       # 有可判定样例时
-pnpm test:adapters            # 有轨迹的题，改过首块必须重录
 pnpm quiz:gen && pnpm quiz:merge && pnpm quiz:validate
 ```
 

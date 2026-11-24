@@ -15,8 +15,7 @@ import { docIdOf } from './data/training-data'
  * - `settings.md` 只有 12 行，整页是 `<CacheSettings />`：离线包的板块、
  *   体积、版本提示全来自组件与插件；
  * - `stars.md` / `projects.md` / `index.md` 同理，正文是 React 孤岛；
- * - 题解的「逐帧动画」来自 `static/traces/<文件名>.json`，自测题来自
- *   `static/quiz/bank.json` 里那几条；
+ * - 题解的自测题来自 `static/quiz/bank.json` 里那几条；
  * - 算法模式页的播放器来自 `tracers/*.ts`。
  *
  * 只认 md 的后果是：11 月把设置页的离线包改了十几轮，页脚还停在 10/26
@@ -32,9 +31,8 @@ import { docIdOf } from './data/training-data'
  * 2. md 里**手写**的组件（`<CacheSettings />`、`<HomePage />`），
  *    以及这些组件按相对路径 import 到的本地文件（递归）；
  * 3. 正文里引用的本地图片（`/img/...` 或相对路径）；
- * 4. 这一页自己的录制轨迹 `static/traces/<md 文件名>.json`；
- * 5. 这一页内嵌的 tracer 模块（放置表 `INLINE_TRACER_PLACEMENT`）；
- * 6. 自测题库里属于这一页的条目（按行 blame，见 `quizEntryUpdatedTimes`）。
+ * 4. 这一页内嵌的 tracer 模块（放置表 `INLINE_TRACER_PLACEMENT`）；
+ * 5. 自测题库里属于这一页的条目（按行 blame，见 `quizEntryUpdatedTimes`）。
  *
  * **刻意不包含**的东西：
  *
@@ -320,16 +318,6 @@ export function pageContentFiles(sourceDir: string, filePath: string): string[] 
   for (const image of referencedImages(sourceDir, filePath, markdown)) {
     deps.add(image)
   }
-
-  // ── 这一页自己的录制轨迹 ────────────────────────────────────────
-  // 命名口径见 `.vuepress/data/training-data.ts` 的 buildTraces：
-  // `static/traces/<md 文件名>.json`。
-  const trace = path.join(
-    sourceDir,
-    'static/traces',
-    `${path.basename(filePath, path.extname(filePath))}.json`,
-  )
-  if (isFile(trace)) deps.add(trace)
 
   // ── 内嵌 tracer 的模块 ──────────────────────────────────────────
   const relative = path.relative(sourceDir, filePath).split(path.sep).join('/')

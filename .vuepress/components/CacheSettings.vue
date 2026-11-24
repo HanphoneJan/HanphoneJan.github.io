@@ -511,7 +511,6 @@ const ACTION_LABEL: Record<RowAction, string> = {
 
 const HTML_CACHE = 'html-v2'
 const ASSET_CACHE = 'assets'
-const TRACE_CACHE = 'traces'
 const QUIZ_CACHE = 'quiz'
 // 搜索索引 worker（`assets/slimsearch.<BUILD_ID>.js`）。它是 worker 请求，
 // SW 的 script/style 路由接不住，见 `theme.ts` 里那条单独的路由。
@@ -567,16 +566,14 @@ const keysOf = (name: string): Set<string> => cacheKeys.get(name) ?? new Set<str
 /**
  * 一条资源该进哪个桶。
  *
- * 必须与 `.vuepress/theme.ts` 里的 Workbox 路由对齐：`/traces/*.json` 走
- * `traces`（CacheFirst）、`/quiz/*.json` 走 `quiz`（SWR）、其余 HTML 走
- * `html-v2`（NetworkFirst）。塞错桶不会报错，只是离线时那条路由读不到
- * 我们写进去的那份 —— 该请求会去网络拿，然后失败。
+ * 必须与 `.vuepress/theme.ts` 里的 Workbox 路由对齐：`/quiz/*.json` 走
+ * `quiz`（SWR）、其余 HTML 走 `html-v2`（NetworkFirst）。塞错桶不会报错，
+ * 只是离线时那条路由读不到我们写进去的那份 —— 该请求会去网络拿，然后失败。
  */
 function targetCache(url: string): string {
   // 外链图（`https://hanphone.top/...`）同样由 SW 的 image 路由伺候，
   // 读的就是 `images` 桶。
   if (/^https?:\/\//i.test(url)) return IMAGE_CACHE
-  if (url.startsWith('/traces/')) return TRACE_CACHE
   if (url.startsWith('/quiz/')) return QUIZ_CACHE
   // 12.9MB 的 Python 解释器有自己的桶，不归 SW 管（见 pyrunner/runtime.ts）
   if (url.startsWith('/pyodide/')) return PYODIDE_CACHE
@@ -726,7 +723,6 @@ async function readCacheKeys(): Promise<void> {
     [
       HTML_CACHE,
       ASSET_CACHE,
-      TRACE_CACHE,
       QUIZ_CACHE,
       IMAGE_CACHE,
       PYODIDE_CACHE,

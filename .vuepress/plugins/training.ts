@@ -1,6 +1,9 @@
 import type { App } from 'vuepress/core'
 import type { Markdown } from 'vuepress/markdown'
-import { placementsOf } from '../../src/components/training/visualizer/inlinePlacement'
+import {
+  INLINE_TRACER_PLACEMENT,
+  placementsOf,
+} from '../../src/components/training/visualizer/inlinePlacement'
 import { analyzeSnippet } from '../../src/components/training/pyrunner/snippet'
 import { docIdOf, trainingData } from '../data/training-data'
 
@@ -12,12 +15,12 @@ import { docIdOf, trainingData } from '../data/training-data'
  * token 流在渲染前是**完全可控**的 —— 直接往 token 流里插组件标签，
  * VuePress 会把渲染结果当 Vue 模板编译，组件就挂上去了。
  *
- * 四个注入点，与旧站点的位置一一对应：
+ * 下面是全部注入点：
  *
  * | 位置 | 组件 |
  * |---|---|
  * | 每个可运行的 python 代码块之后 | 运行条（Pyodide） |
- * | `## 完整代码实现` 标题之后 | 录制式逐帧动画 / 「本题无可视化步骤」 |
+ * | 正文末尾 | 手写 tracer（算法模式 / 数据结构页） |
  * | 正文末尾 | 相关题目（算法模式页） |
  * | 正文末尾 | 自测题（题解页） |
  *
@@ -47,15 +50,17 @@ export const trainingPlugin = (app: App) => {
     // 题库、轨迹帧仍然按需 fetch，不进主 bundle。
     define: () => {
       const data = trainingData(sourceDir)
+      const tracerCount = Object.values(INLINE_TRACER_PLACEMENT).reduce(
+        (sum, list) => sum + list.length,
+        0,
+      )
       return {
         __SITE_DATA__: JSON.stringify({
           'pattern-graph': { byPattern: data.byPattern },
-          // 首页要的三个数字。只发「清单」：vis-traces 只需要条数，
-          // 不发每篇的源码；题库只发 docId。
+          // 首页要的几个数字。只发清单，不发正文：题库只发 docId，
+          // 播放器数量按放置表算。
           'doc-permalinks': {map: data.permalinks},
-          'vis-traces': {
-            entries: new Array(Object.keys(data.traces).length).fill(null),
-          },
+          'visualizers': { count: tracerCount },
           'self-test': {docIds: [...data.selfTest]},
         }),
       }
@@ -110,7 +115,7 @@ export const trainingPlugin = (app: App) => {
             }
           }
 
-          // ── 录制式动画：紧跟「完整代码实现」那一节的标题 ─────────────
+          // ── 「相关题目」小节存在与否，决定要不要注入知识图谱 ───────
           if (
             token.type === 'heading_close' &&
             token.tag === 'h2' &&
@@ -120,20 +125,6 @@ export const trainingPlugin = (app: App) => {
             const title = inline?.type === 'inline' ? inline.content.trim() : ''
             if (title === '相关题目') {
               hasRelatedHeading = true
-            }
-            if (title === '完整代码实现') {
-              const entry = data.traces[docId]
-              if (entry) {
-                output.push(
-                  makeHtml(
-                    `<RecordedVisualizerMount trace-b64="${b64(
-                      JSON.stringify(entry),
-                    )}" />`,
-                  ),
-                )
-              } else if (data.noVisual.has(docId)) {
-                output.push(makeHtml('<NoVisStepsMount />'))
-              }
             }
           }
         }
