@@ -167,14 +167,17 @@ html[data-theme='dark'] .page-difficulty-info {
 
 // 设置页（`/settings.html`）：主题那套大号页面标题（h1 + `<hr>` + 上下留白）
 // 在设置页里要占掉一百多像素，而设置页的标题只是「设置」两个字。
-// 标题改由 `CacheSettings.vue` 自己渲染（它是 SSR 的，源码里仍有 h1），
-// 这里只把主题标题让掉，并用 padding-top 补回失去的呼吸感。
-.settings-page .vp-page-title {
+// 标题改由 `CacheSettings.vue` 自己渲染（它是 SSR 的，源码里仍有 h1）。
+// 面包屑在 `settings.md` 里已经关掉，但主题仍会渲染一个空的
+// `nav.vp-breadcrumb.disable`（17px 内边距），和 `[vp-content]` 的
+// padding-top 叠在导航栏下面，所以这两块一起收掉，只留一点呼吸感。
+.settings-page .vp-page-title,
+.settings-page .vp-breadcrumb {
   display: none;
 }
 
 .settings-page [vp-content]:not(.custom) {
-  padding-top: 1.75rem;
+  padding-top: 0.75rem;
 }
 
 // ============================================
