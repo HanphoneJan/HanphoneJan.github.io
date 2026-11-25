@@ -224,6 +224,12 @@ class Solution:
 
 **结果：** `dp[11] = True`，可以分割
 
+四帧看 `dp` 数组怎么变：绿色是本帧刚变 `True` 的格子，橙框是目标 11。
+
+![dp[j] 只记「和 j 能不能凑出」](/diagrams/416-partition-equal-subset-sum.png)
+
+所以一维数组就够了：倒序遍历保证每个数只被用一次。
+
 ---
 
 ## 复杂度分析

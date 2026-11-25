@@ -162,6 +162,12 @@ class Solution:
 **为什么遍历到 n-1 而不是 n？**
 因为最后一个位置是终点，到达它就不需要再跳了。
 
+四帧按上表的四行走：橙格是当前下标，下面三个数字是 `current_end`、`farthest`、`ans`。
+
+![按当前能到哪分层，走到边界就多跳一次](/diagrams/45-jump-game-ii.png)
+
+所以 `ans` 只在 `i == current_end` 时加一，`farthest` 只负责把下一次边界推远。
+
 ---
 
 ## 复杂度分析
