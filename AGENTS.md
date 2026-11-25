@@ -591,6 +591,7 @@ classic preset 里的 `blog` 选项、导航栏「博客」项、`src/theme/Blog
 - **sync-leetcode.yml 已删除**（2026-10-25）。原因不在接口改版：`LEETCODE_SESSION` 过期后 `/api/submissions/` 一律返回 `HTTP 401 {"detail":"身份认证信息未提供。"}`（不带 cookie 与带过期 cookie 的报文完全一样），而仓库里**没有 `SYNC_PAT`/`STARS_PAT`**，`GITHUB_TOKEN` 又改不了 secret，于是脚本每次算出的新 cookie 都只落到 runner 的临时文件里就随机器销毁 —— 自动续期从来没真正闭环，断一次就永久失败（10-21 还是绿的，10-23 起连续两次红）。**脚本保留，只作同步逻辑的参考实现**，需要时由 AI/agent 手动跑。
 - **NowCoder sync**: No scheduled workflow and no routine manual sync. `scripts/sync-nowcoder.js` is kept only for AI/agent use when explicitly requested; it still needs `NOWCODER_COOKIE` / `NOWCODER_UID`.
 - **两个部署 workflow 的步骤必须逐条对齐（deploy.yml 与 refresh-data.yml）。** `static/pyodide/` 已 gitignore，CI 每次都要 `node scripts/fetch-pyodide.js` 现下。refresh-data.yml 早先漏了这一步，于是**每天的定时刷新都会用一份不含运行时的产物覆盖线上**：构建不失败，站点照常上线，只有读者点题解里的「▶ 运行」时浏览器 fetch `/pyodide/pyodide.mjs` 得到 404，报 `Failed to fetch dynamically imported module`。两个 workflow 现在都有 `Fetch Pyodide runtime`，并在 build 之后加了 `Verify Pyodide runtime is in the artifact`（查 `build/pyodide/pyodide.mjs` 是否存在）—— 这类缺口**永远不会让 `pnpm build` 失败**，只能显式挡住。
+- **两个 workflow 都必须是 `build` → `deploy` 两个 job，上传与部署不能塞进同一个 job。** `upload-pages-artifact` 的产物要过零点几秒才在 Pages API 里可见，同一 job 里紧挨着调 `deploy-pages` 是抢跑：2026-11-25 的定时刷新上传 12:16:33.835 finalized，部署 12:16:34.086 去查就拿到 `No artifacts named "github-pages" were found`；前一天同样写法间隔 730ms 才查，蒙混过关。**这不是偶发网络抖动，是缺一个 job 边界**——`deploy.yml` 一直是两个 job，`refresh-data.yml` 曾是一个 `build-and-deploy`，已改成同样的结构（`environment: github-pages` 挂在 deploy 上）。
 
 ### 字体：不用任何 Web Font
 

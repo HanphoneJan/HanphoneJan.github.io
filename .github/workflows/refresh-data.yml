@@ -15,11 +15,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  # 上传与部署**必须是两个 job**：`upload-pages-artifact` 的产物要过一会儿才
+  # 在 Pages API 里看得见，同一个 job 里紧挨着调 `deploy-pages` 是抢跑 ——
+  # 2026-11-25 的定时刷新就是这么红的：上传 12:16:33.835 finalized，部署
+  # 12:16:34.086 去查，250ms 之差拿到「Found 0 artifact(s)」。前一天同样的
+  # 写法 730ms 才查，就过了。这不是偶发的网络抖动，是把「差不多能行」当成了
+  # 保证；`deploy.yml` 一直是 build / deploy 两个 job，这里对齐。
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -141,6 +144,14 @@ jobs:
         with:
           path: './.vuepress/dist'
 
+  deploy:
+    # `environment` 挂在真正部署的那个 job 上，才能拿到 Pages 的部署地址
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
