@@ -109,6 +109,10 @@ export default hopeTheme({
   displayFooter: true,
 
   markdown: {
+    // 中文加粗的容错来自 markdown-ext 的 `cjkFriendly`：它按 `lang: 'zh-CN'`
+    // **自动开启**，兜住 `**端口号（Port）**完成`（闭合符后面直接跟汉字）
+    // 这一类。改成非 CJK 的 lang 会让 40 多处正文退化成字面 `**`，
+    // 回归测试 `pnpm test:bold` 会先红。它兜不住 `**` 后跟空格那种，只能改正文。
     align: true,
     codeTabs: true,
     mermaid: true,

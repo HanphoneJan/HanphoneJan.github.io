@@ -4,7 +4,7 @@
 
 ### 序列模型
 
-  股价波动、用户行为、文本语句等都是序列数据，其特点是**前后数据相互关联，顺序不能打乱。序列数据的**时间依赖性**使得传统机器学习模型难以处理，需专门的统计工具和神经网络架构。
+  股价波动、用户行为、文本语句等都是序列数据，其特点是**前后数据相互关联，顺序不能打乱**。序列数据的**时间依赖性**使得传统机器学习模型难以处理，需专门的统计工具和神经网络架构。
 
 #### 统计工具：自回归与隐变量模型
 
@@ -618,7 +618,7 @@ lstm_layer = nn.LSTM(num_inputs, num_hiddens, num_layers=2)  # num_layers=2表�
 
 #### **Seq2Seq 模型的核心架构**
 
-Seq2Seq 模型由**编码器（Encoder）和解码器（Decoder）两部分组成：
+Seq2Seq 模型由**编码器（Encoder）和解码器（Decoder）**两部分组成：
 
 <img src="https://hanphone.top/gh/HanphoneJan/public-pictures/ml/16-Seq2Seq模型架构.webp" alt="Seq2Seq模型架构" />
 

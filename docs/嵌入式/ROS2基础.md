@@ -107,7 +107,7 @@ colcon build --packages-select <包名>  # 编译指定包
 
 **核心文件**
 • **`package.xml`**：定义包名、版本、依赖等元数据；
-• **`CMakeLists.txt`（C++）**或** `setup.py`（Python）**：配置编译规则；
+• **`CMakeLists.txt`（C++）**或**`setup.py`（Python）**：配置编译规则；
 • **`src`目录**：存放节点源码。
 
 ### 依赖管理工具 rosdepc

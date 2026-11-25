@@ -117,6 +117,12 @@ jobs:
         # `左 < 根 < 右` 显示成 `&lt;`。`pnpm test:markdown` 钉住「只转义一次」。
         run: pnpm test:markdown
 
+      - name: Verify bold rendering
+        # `**` 后跟空格、或开闭数不配对时，页面上会原样露出星号，而构建、
+        # SSR、上面几条全绿。`pnpm test:bold` 用线上同一套规则
+        # （vuepress/markdown + markdown-it-cjk-friendly）渲染全站 md 后检查。
+        run: pnpm test:bold
+
       - name: Verify full-text search index
         # slimsearch 的 worker 变回 ESM、或正文没进索引时，构建、SSR、
         # `test:markdown` 全都正常，只有线上搜索框打不开 / 只搜标题。

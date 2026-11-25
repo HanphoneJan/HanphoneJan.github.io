@@ -32,6 +32,7 @@ pnpm sync:pyodide     # Download the 12.9MB Pyodide runtime into static/pyodide/
 pnpm test:offline     # 离线包口径（板块归类 + 路由表解析 + dist 覆盖率）
 pnpm test:difficulty  # 难度口径（8 种写法归一 + 全库覆盖率 + 徽标接线契约）
 pnpm test:markdown    # 尖括号只转义一次（页面不出现 `&lt;` 字面量）
+pnpm test:bold        # 正文里不出现字面 `**`（中文标点 / 空格的加粗规则）
 pnpm test:search      # 全文搜索口径（worker 是经典脚本 + 正文词能命中）
 pnpm solutions:fetch  # 抓力扣某题的前几篇高赞题解（写题解前读，不照抄）
 ```
@@ -621,6 +622,19 @@ Minimal Python project (`pyproject.toml`, `uv.lock`) with numpy dependency. The 
 ### 尖括号只转义一次（`.vuepress/markdown/escape-stray-html.ts`）
 
 正文里的 `<id>`、`<class 'int'>`、`左 < 根 < 右` 必须转成 `&lt;`，否则 VuePress 会把它们当 Vue 标签编译。**只在 `html_inline` token 上原地转义，并保持 `html_inline`**；`text` token 一个字都别动 —— markdown-it 的 text 渲染器自己会转义，提前塞 `&lt;` 会被再转一次（`&amp;lt;`），页面上显示成字面量 `&lt;`。迁移后 102 篇文档踩过这个坑（`左 < 根 < 右`、表格里的 `< 2s`），构建与日志全程正常，只能靠产物发现。`pnpm test:markdown` 钉住这件事。
+
+### 加粗：`**` 与中文标点（`markdown-it-cjk-friendly`）
+
+`**` 有两道闸门，全都在 CommonMark 的「左右翼定界符」规则里：
+
+1. **`**` 后面紧跟空白就不能开**：`这是一个经典的** Flood Fill（洪水填充）**问题` 的星号会连同整句一起原样显示。
+2. **闭合的 `**` 前一个字符是标点、后一个字符又既不是空白也不是标点时，同样不成立**：`**端口号（Port）**完成` 正好中招 —— 而这恰恰是中文里最顺手的写法。
+
+第 2 类由 **hope 的 `@vuepress/plugin-markdown-ext` 的 `cjkFriendly`** 兜住：站点 `lang: 'zh-CN'` 时它**自动开启**，所以线上 `**中文（注）**后面` 是正常的，全站有 40 多处靠它。**别把 `lang` 改成非 CJK**，也别去关这个插件；`theme.ts` 的 `markdown` 块里有同样的注释。
+
+`cjkFriendly` 兜不住的只有两类 —— 第 1 类（`**` 后跟空格）和**配对数量不对**（`**四个必要条件：` 开了不收、`**前后…***` 收错位置），再加上行内代码的反引号把星号吃进去（`` **反撇号（`）** ``）。这类只能改正文：2026-11 一次扫出 14 处，全部按「去掉多余空格 / 补齐闭合 / 反引号转义」修完。
+
+**回归是 `pnpm test:bold`**：它用线上同一套规则（`vuepress/markdown` + `markdown-it-cjk-friendly`）渲染 `docs/`、`code-training/docs/` 与四个根页面，正文 text token 里出现字面 `**` 就红并列出 `文件:行号`。`markdown-it-cjk-friendly` 之所以是**直接 devDependency**（它本来只是 hope 的传递依赖），就是为了让测试和线上用同一份规则、而不是各写一份正则 —— 构建本身不会因为星号没生效而失败，只能显式挡住。
 
 ### Typecheck (`pnpm typecheck`)
 
