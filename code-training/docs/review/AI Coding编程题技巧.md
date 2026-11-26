@@ -1,7 +1,5 @@
 ---
 title: AI Coding编程题技巧
-sidebar_label: 编程题技巧
-sidebar_position: 1
 description: 用 AI 做项目型编程题的技巧：从 README 拆功能点、写开发文档、分功能实现，到边界用例收尾。
 ---
 

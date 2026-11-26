@@ -10,7 +10,6 @@ export default navbar([
       { text: '机器学习', link: '/code-training/category/机器学习' },
       { text: '数据结构', link: '/code-training/category/数据结构' },
       { text: '算法模式', link: '/code-training/category/算法模式' },
-      { text: 'AI Coding', link: '/code-training/ai-coding/AI Coding编程题技巧.html' },
       { text: '复习系统', link: '/code-training/category/复习系统' },
     ],
   },
