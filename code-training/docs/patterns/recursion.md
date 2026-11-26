@@ -240,10 +240,9 @@ def flatten(root):
 
 选 `i` 作为根，左子树有 `i-1` 个节点，右子树有 `n-i` 个节点，两边独立：
 
-```
-G(n) = Σ G(i-1) × G(n-i)     (i = 1..n)
-G(0) = G(1) = 1
-```
+$$
+G(n)=\sum_{i=1}^{n}G(i-1)\,G(n-i),\qquad G(0)=G(1)=1
+$$
 
 ```python
 def num_trees(n):

@@ -132,6 +132,13 @@ jobs:
         # （vuepress/markdown + markdown-it-cjk-friendly）渲染全站 md 后检查。
         run: pnpm test:bold
 
+      - name: Verify math rendering
+        # KaTeX 默认 `throwOnError: false`：写错的公式渲染成红字，构建照常成功。
+        # 公式写在代码块里同样不报错，只是分式变成 ASCII 横线。
+        # `pnpm test:math` 用 `throwOnError: true` 渲染全站 `$...$` / `$$...$$`，
+        # 并扫出「无语言 / text 围栏里的 Σ、√、ln(、ASCII 分数线」。
+        run: pnpm test:math
+
       - name: Verify full-text search index
         # slimsearch 的 worker 变回 ESM、或正文没进索引时，构建、SSR、
         # `test:markdown` 全都正常，只有线上搜索框打不开 / 只搜标题。

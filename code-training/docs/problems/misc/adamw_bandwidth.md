@@ -99,9 +99,9 @@ AdamW 的更新是一串固定公式，输入多少样本就循环多少步。�
 
 **先分清 Adam 与 AdamW**：Adam 把 L2 正则项加进梯度（`g += λθ`），权重衰减因此会经过一阶、二阶动量的缩放；AdamW 把 `λθ` 直接减在参数上，和动量解耦。本题要求后者：
 
-```text
-θ_t = θ_{t-1} - α · ( m̂_t / (√v̂_t + ε) + λ · θ_{t-1} )
-```
+$$
+\theta_t=\theta_{t-1}-\alpha\left(\frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}+\lambda\,\theta_{t-1}\right)
+$$
 
 **一个样本要走的顺序**：
 

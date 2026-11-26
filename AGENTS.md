@@ -33,6 +33,7 @@ pnpm test:offline     # 离线包口径（板块归类 + 路由表解析 + dist 
 pnpm test:difficulty  # 难度口径（8 种写法归一 + 全库覆盖率 + 徽标接线契约）
 pnpm test:markdown    # 尖括号只转义一次（页面不出现 `&lt;` 字面量）
 pnpm test:bold        # 正文里不出现字面 `**`（中文标点 / 空格的加粗规则）
+pnpm test:math        # 公式口径（KaTeX 可解析 + 公式不写在代码块里）
 pnpm test:search      # 全文搜索口径（worker 是经典脚本 + 正文词能命中）
 pnpm solutions:fetch  # 抓力扣某题的前几篇高赞题解（写题解前读，不照抄）
 ```
@@ -636,6 +637,20 @@ Minimal Python project (`pyproject.toml`, `uv.lock`) with numpy dependency. The 
 `cjkFriendly` 兜不住的只有两类 —— 第 1 类（`**` 后跟空格）和**配对数量不对**（`**四个必要条件：` 开了不收、`**前后…***` 收错位置），再加上行内代码的反引号把星号吃进去（`` **反撇号（`）** ``）。这类只能改正文：2026-11 一次扫出 14 处，全部按「去掉多余空格 / 补齐闭合 / 反引号转义」修完。
 
 **回归是 `pnpm test:bold`**：它用线上同一套规则（`vuepress/markdown` + `markdown-it-cjk-friendly`）渲染 `docs/`、`code-training/docs/` 与四个根页面，正文 text token 里出现字面 `**` 就红并列出 `文件:行号`。`markdown-it-cjk-friendly` 之所以是**直接 devDependency**（它本来只是 hope 的传递依赖），就是为了让测试和线上用同一份规则、而不是各写一份正则 —— 构建本身不会因为星号没生效而失败，只能显式挡住。
+
+### 公式：KaTeX，不写进代码块
+
+**复杂公式（分式、Σ/∏、上下标、多行推导）写 `$$...$$`，行内写 `$...$`；围栏只放代码、伪代码、ASCII 图与逐帧状态。** 写进围栏不会报错，只是分式只能画 ASCII 横线、下标靠 `_` 手写 —— 2026-11 一次扫出 19 处，BM25 那条最典型（三行 `─` 画出来的分数）。
+
+几个容易踩的地方：
+
+- **KaTeX 解析失败不会让构建失败。** `@mdit/plugin-katex-slim` 默认 `throwOnError: false`，坏公式渲染成 `<span class="katex-error">`（红字）照样出页面，日志里只有一行 `console.error`。`pnpm test:math` 用 `throwOnError: true` 渲染全站公式，是这条口径唯一的闸门。
+- **中文进 `\text{}`**；`%`、`#`、`&` 要转义（`100\%`）；多行用 `\begin{aligned}`，`&` 对齐；`$$` 写在列表项里要按列表缩进，否则会把列表截断。
+- **`|` 在表格里会切断单元格**：公式放进表格时用 `\vert` 或 `\lVert`，不要直接写 `|D|`。
+- **长公式已经会自己横向滚**：`@vuepress/plugin-markdown-math` 自带的 `katex.css` 给 `.katex-display` 写了 `overflow: auto hidden`，别再在 `styles/index.scss` 里补一条（冗余，而且会盖掉它的滚动条样式）。
+- **`machine-learning/**` 是 Quarto 生成的**：那边的公式要改源 `code-training/machine-learning/**.ipynb` 再 `pnpm sync:ml`，`test:math` 不查这个目录的围栏写法。
+
+`scripts/check-math.mjs` 做两件事：先把围栏块与行内代码遮掉（`$DSH_HOME` 这类不能当公式配对），再逐个 `katex.renderToString(..., { throwOnError: true })`；然后用同一份遮罩扫「无语言 / `text` / `plaintext`」围栏里的 `Σ`、`∑`、`√`、`ln(`、`cos(` 与 ASCII 分数线。`log(` 不算信号 —— `console.log(` 和 `O(n log n)` 太常见。
 
 ### Typecheck (`pnpm typecheck`)
 

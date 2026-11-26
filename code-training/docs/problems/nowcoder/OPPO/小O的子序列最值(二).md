@@ -75,9 +75,9 @@ date_reviewed: []
 
 设 `A` 的最大值恰好为 `x`、`B` 的最小值恰好为 `y`，条件就是 `x <= y`。于是
 
-```
-答案 = Σ_{x <= y} cnt_a[x] * cnt_b[y]
-```
+$$
+\text{答案}=\sum_{x\le y}\mathrm{cnt}_a[x]\cdot\mathrm{cnt}_b[y]
+$$
 
 其中 `cnt_a[x]` 是「最大值恰好为 x」的非空子集数，`cnt_b[y]` 是「最小值恰好为 y」的
 非空子集数。两边的计数互相独立，先各自算好，再按 `x <= y` 合并。

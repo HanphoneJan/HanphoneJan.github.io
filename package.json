@@ -20,6 +20,7 @@
     "test:taxonomy": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-taxonomy.ts",
     "test:markdown": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\",\"paths\":{\"vuepress/markdown\":[\"node_modules/vuepress/dist/markdown.d.ts\"]}}' ts-node scripts/test-markdown.ts",
     "test:bold": "node scripts/test-bold.mjs",
+    "test:math": "node scripts/check-math.mjs",
     "test:updated": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-updated.ts",
     "test:sidebar": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-sidebar.ts",
     "test:difficulty": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' ts-node scripts/test-difficulty.ts",
