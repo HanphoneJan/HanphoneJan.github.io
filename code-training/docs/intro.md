@@ -28,6 +28,7 @@ slug: /
 | [机器学习](/code-training/category/机器学习) | Jupyter Notebooks 转换的机器学习深度笔记 |
 | [数据结构](/code-training/category/数据结构) | 数据结构分类的知识体系梳理 |
 | [算法模式](/code-training/category/算法模式) | 通用解题套路、思维框架，以及每个模式的标准实现 |
+| [AI Coding](/code-training/ai-coding/AI%20Coding编程题技巧.html) | 用 AI 做项目型编程题：从 README 拆功能点、写开发文档，到边界用例收尾 |
 | [复习系统](/code-training/category/复习系统) | 学习笔记与速查表 |
 
 ## 使用方式

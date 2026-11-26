@@ -31,6 +31,7 @@ const TRAINING_DIR_LABELS: Record<string, string> = {
   'machine-learning': '机器学习',
   'data-structures': '数据结构',
   patterns: '算法模式',
+  'ai-coding': 'AI Coding',
   review: '复习系统',
 }
 
