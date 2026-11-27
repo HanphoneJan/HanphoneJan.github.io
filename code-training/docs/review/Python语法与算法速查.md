@@ -1650,45 +1650,162 @@ def foo(tup: tuple): ...      # tuple 可哈希
 - **参数必须可哈希**：`list`、`dict` 等不可哈希类型需转为 `tuple`、`frozenset`
 - **内存权衡**：`maxsize=None` 可能占用大量内存，谨慎使用
 
-### 常用数学函数
+### 整数取整与数值技巧
 
-#### math 模块
+> 这一节全是「看起来会、写出来差 1」的地方：`//` 在负数上向 $-\infty$ 取整，`round` 是银行家舍入，`math.ceil(a / b)` 会先把 `a / b` 转成 float。先记结论，再看反例。
+
+#### 四种取整
+
+| 取整方式 | 写法 | 结果 | 例 |
+|---|---|---|---|
+| 向下取整 floor | `a // b`（整数）、`math.floor(x)`（浮点） | 向 $-\infty$ | `7 // 2 = 3`，`-7 // 2 = -4` |
+| 向上取整 ceil | `(a + b - 1) // b`（$a\ge0$）、`math.ceil(x)` | 向 $+\infty$ | `(7 + 2) // 3 = 3`，`math.ceil(-3.7) = -3` |
+| 向零截断 trunc | `int(x)`、`math.trunc(x)` | 丢掉小数部分 | `int(-3.7) = -3` |
+| 四舍五入 round | `round(x)` | 半值向偶数 | `round(2.5) = 2`，`round(3.5) = 4` |
+
+**`//` 和 `int()` 在负数上不是一回事。** `-7 // 2` 是 $-4$（向 $-\infty$），`int(-7 / 2)` 是 $-3$（向 $0$）。题目说「向下取整」时用前者，说「去掉小数」时用后者。
+
+#### 向上取整：整数写法
+
+对 $a\ge0$、$b>0$，向上取整不需要转 float：
+
+```python
+(a + b - 1) // b      # ceil(a / b)：7/3 → (7+2)//3 = 3
+-(-a // b)            # 等价写法，对负数也成立
+a // b                # floor(a / b)，别和上一行混用
+```
+
+为什么成立：设 $a=qb+r$，$0\le r<b$，则
+
+$$
+\left\lfloor\frac{a+b-1}{b}\right\rfloor
+=q+\left\lfloor\frac{r+b-1}{b}\right\rfloor
+$$
+
+$r=0$ 时后面是 $\lfloor(b-1)/b\rfloor=0$，结果是 $q$；$r\ge1$ 时后面是 $1$，结果是 $q+1$。正好等于 $\lceil a/b\rceil$。
+
+**别写 `math.ceil(a / b)`。** `a / b` 先变成 float，$a$ 超过 $2^{53}$ 就开始丢精度：
 
 ```python
 import math
 
-# 无穷大（推荐写法）
-inf = math.inf                  # 正无穷
-neg_inf = -math.inf             # 负无穷
-inf = float('inf')              # 不需要导入math
-neg_inf = float('-inf')
+a = 10**18 - 1
+math.ceil(a / 3)          # 333333333333333312（错）
+(a + 2) // 3              # 333333333333333333（对）
+```
 
-# 常用函数
-math.floor(x)                   # 向下取整
-math.ceil(x)                    # 向上取整
-math.sqrt(x)                    # 平方根（返回float）
-math.isqrt(x)                   # 整数平方根（向下取整，返回int）
+这类写法在二分答案里最常见：判定「$R$ 回合够不够」时是 `sum((d + x - 1) // x for d in hp) <= R`，不是 `sum(math.ceil(d / x))`。
+
+#### 负数的 `//` 与 `%`
+
+Python 的商向 $-\infty$ 取整，余数符号**跟除数**；C / Java 的商向 $0$ 截断，余数符号跟被除数：
+
+```python
+-7 // 2    # -4      C/Java: -3
+-7 % 2     #  1      C/Java: -1
+ 7 // -2   # -4      C/Java: -3
+ 7 % -2    # -1      C/Java:  1
+divmod(-7, 2)   # (-4, 1)
+```
+
+`a == (a // b) * b + a % b` 在 Python 里恒成立。正除数 $m>0$ 时，`a % m` 已经在 $[0,m)$ 内，不用再写 `(a % m + m) % m`；那种归一化是给 C / Java 的。
+
+`divmod` 适合边取商边取余，比如逐位拆数：`n, d = divmod(n, 10)`。
+
+#### 四舍五入：`round` 是银行家舍入
+
+`round` 遇到正好一半时**向偶数靠**，不是中国习惯的「四舍五入」：
+
+```python
+round(0.5)   # 0
+round(1.5)   # 2
+round(2.5)   # 2   ← 不是 3
+round(3.5)   # 4
+```
+
+再加上 float 本身的表示误差，`round(2.675, 2)` 得到 `2.67` 而不是 `2.68`。要严格半向上，用 `Decimal`：
+
+```python
+from decimal import Decimal, ROUND_HALF_UP
+
+Decimal('2.675').quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)  # 2.68
+```
+
+`int(x + 0.5)` 只适合非负数；`int(-2.5 + 0.5)` 是 `-2`，而 $-2.5$ 的半向上应该是 $-3$。OJ 只要求「保留 k 位小数」时，用 f-string 的 `f"{x:.2f}"` 通常就够；要精确到分、要判相等，就别用 float。
+
+#### 取整到 $k$ 的倍数
+
+```python
+x // k * k              # 向下取整到 k 的倍数：17 → 16
+(x + k - 1) // k * k    # 向上取整到 k 的倍数：17 → 24
+(x + k // 2) // k * k   # 取最近的 k 的倍数：17 → 16，20 → 24
+```
+
+`x // k` 是块号，`(x + k - 1) // k` 是块数。页码、内存对齐、按 $k$ 分组编号都是这三个式子。
+
+#### 精确开方、对数与比较
+
+`math.sqrt` 和 `x ** 0.5` 都返回 float，大整数会丢精度：
+
+```python
+import math
+
+n = 10**18 - 1
+int(n ** 0.5)        # 1000000000（错）
+math.isqrt(n)        # 999999999（对）
+```
+
+判完全平方用 `r = math.isqrt(n); r * r == n`。循环里要比较「$a\le\sqrt{n}$」时，写成 `a * a <= n`，不要每轮开方。
+
+对数同理：求 $\lfloor\log_2 n\rfloor$（$n\ge1$）用 `n.bit_length() - 1`，求 $\lceil\log_2 n\rceil$ 用 `(n - 1).bit_length()`（$n>1$）。`math.log` 只在确实需要实数结果时用。
+
+#### 模运算与快速幂
+
+```python
+pow(a, b, m)      # a^b % m，边乘边取模，数字不会膨胀
+pow(a, -1, m)     # a 在模 m 下的逆元（Python 3.8+，要求 gcd(a, m) == 1）
+pow(a, m - 2, m)  # m 为质数时的等价写法（费马小定理）
+```
+
+`pow(a, b, m)` 是 O(log b) 次乘法，比先算 `a ** b` 再取模稳得多；指数很大时后者会先造出一个巨数。
+
+#### 其余 `math` 函数速查
+
+```python
+import math
+
+math.sqrt(x)                    # 平方根（返回 float；精确整数用 isqrt）
 math.gcd(a, b)                  # 最大公约数（Python 3.5+）
 math.lcm(a, b)                  # 最小公倍数（Python 3.9+）
 math.log(x)                     # 自然对数
-math.log2(x)                    # 以2为底的对数
-math.log10(x)                   # 以10为底的对数
-math.pow(x, y)                  # x的y次方（返回float）
-math.factorial(n)               # n的阶乘
+math.log2(x)                    # 以 2 为底的对数
+math.log10(x)                   # 以 10 为底的对数
+math.pow(x, y)                  # x 的 y 次方（返回 float；整数用 pow 或 **）
+math.factorial(n)               # n 的阶乘
 math.comb(n, k)                 # 组合数 C(n,k)（Python 3.8+）
 math.perm(n, k)                 # 排列数 P(n,k)（Python 3.8+）
-
-# 常用内置函数（无需导入）
-abs(x)                          # 绝对值
-pow(x, y)                       # x的y次方（整数运算不丢精度）
-pow(x, y, mod)                  # 快速幂取模，等价于 x**y % mod
-divmod(a, b)                    # 返回 (a//b, a%b) 元组
-round(x, n)                     # 四舍五入，n为小数位数
+math.prod(iterable)             # 连乘（Python 3.8+）
 ```
 
-#### 无穷大的算法应用
+#### 无穷大与常用小式子
 
 ```python
+import math
+
+inf = math.inf                  # 正无穷；float('inf') 不需要导入 math
+neg_inf = -math.inf
+
+sign = (x > 0) - (x < 0)        # -1 / 0 / 1，没有分支
+clamp = max(lo, min(x, hi))     # 夹在 [lo, hi]
+abs(x)                          # 绝对值
+pow(x, y)                       # 整数幂，不丢精度（等价于 x ** y）
+best = min(candidates, default=0)   # 空序列不报错（default 3.4+）
+a, b = b, a                     # 交换
+```
+
+```python
+import math
+
 # 初始化最大值/最小值的技巧
 min_val = float('inf')    # 比较时任何实数都比它小
 max_val = float('-inf')   # 比较时任何实数都比它大
@@ -1706,6 +1823,7 @@ def isValidBST(root, left=-math.inf, right=math.inf):
 dis = [float('inf')] * n
 dis[start] = 0
 ```
+
 ## 三、算法套路
 
 > 每一节给一个能直接抄的骨架，再解释骨架里哪个常数、哪个方向不能改。
@@ -1896,8 +2014,11 @@ x | (1 << n)   # 将第n位置1（n从0开始计，第n位即值 2^n）
 x & ~(1 << n)  # 将第n位置0
 x ^ (1 << n)   # 翻转第n位（0↔1）
 
-# 统计二进制中1的个数
-bin(x).count('1')        # 简单直观；或用 while x: cnt += x&1; x >>= 1
+# 二进制位数与 1 的个数
+x.bit_length()            # 有效位数；floor(log2 x) = x.bit_length() - 1
+(x - 1).bit_length()      # ceil(log2 x)，x > 1
+x.bit_count()             # 1 的个数（Python 3.10+）
+bin(x).count('1')         # 旧版本的等价写法；或 while x: cnt += x & 1; x >>= 1
 
 # 判断是否是2的幂：2的幂二进制只有一个1，减1后变成全1
 x > 0 and (x & (x - 1)) == 0   # 例：8(1000) & 7(0111) = 0 → True
