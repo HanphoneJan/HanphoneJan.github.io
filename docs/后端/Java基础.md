@@ -561,8 +561,24 @@ try{
 }finally{
   // 程序代码
 }
-无论是否发生异常，finally 代码块中的代码总会被执行。
 ```
+
+除 `System.exit()`、`Runtime.halt()`、JVM 崩溃等情况外，`finally` 都会被执行。
+
+##### 用 finally 关闭资源的问题
+
+`finally` 只保证语句被执行，不保证关闭成功，也不保证后面的资源还能关。多资源时问题集中出现：
+
+- **顺序**：必须先开后关。包装流依赖底层流（`writer` 要在 `fos` 之前关），`ResultSet → Statement → Connection` 同理，顺序写反了等于没关对。
+- **一个失败，后面全不关**：`finally` 里前一个 `close()` 抛异常，后面的 `close()` 直接跳过，资源泄漏。所以每个 `close` 都得单独包 `try-catch`。
+- **覆盖主异常**：`try` 里已经抛了业务异常，`finally` 里 `close()` 再抛，后抛的会顶掉前者，排查时只看到关闭失败。
+- **判空**：资源声明在 `try` 外，`A` 创建成功、`B` 创建失败时，必须逐个判断非空。
+- **不总是执行**：`System.exit()`、`Runtime.halt()`、JVM 崩溃时 `finally` 不走。
+- **`finally` 里 `return`**：直接吞掉 `try` 的异常和返回值。
+
+单个资源、单次 `close`、关闭不失败时，手写 `finally` 没有问题；上面的坑都来自「多个资源」和「关闭本身会失败」。
+
+Java 7 的 try-with-resources 把这几件事内置了：逆序关闭、关闭异常作为 suppressed 附加到主异常、只关初始化成功的资源。
 
 ##### throw 
 
