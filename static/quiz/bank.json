@@ -4515,6 +4515,15 @@
       "explain": "记忆化搜索的时间复杂度是 O(N²)。同一张表里其他解法也是 O(N²)，这题的区分点不在时间。"
     },
     {
+      "docId": "problems/misc/min_rounds_frost_legions.md",
+      "source": "复杂度分析",
+      "id": "other-min_rounds_frost_legions-complexity",
+      "type": "blank",
+      "stem": "本题最优解「二分答案 + 逐军团判定」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n log S)",
+      "explain": "二分答案 + 逐军团判定的时间复杂度是 O(n log S)。"
+    },
+    {
       "docId": "problems/misc/min_token_allocation.md",
       "source": "复杂度分析",
       "id": "other-min_token_allocation-complexity",
