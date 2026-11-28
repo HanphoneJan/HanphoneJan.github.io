@@ -4466,6 +4466,28 @@
       "source": "复杂度分析"
     },
     {
+      "docId": "problems/misc/jd_binary_merge_game.md",
+      "source": "复杂度分析",
+      "id": "other-jd_binary_merge_game-complexity",
+      "type": "blank",
+      "stem": "本题最优解「分长度判断」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(n)",
+      "explain": "分长度判断的时间复杂度是 O(n)。"
+    },
+    {
+      "docId": "problems/misc/jd_minecart_collision.md",
+      "source": "复杂度分析",
+      "id": "other-jd_minecart_collision-complexity",
+      "type": "single",
+      "stem": "本题最优解「排序 + 二分 LIS」的时间复杂度是？",
+      "options": [
+        "O(m log m)",
+        "O(m²)"
+      ],
+      "answer": 0,
+      "explain": "排序 + 二分 LIS的时间复杂度是 O(m log m)。表里的其他解法分别是排序 + 朴素 LIS O(m²) —— 答错说明还没分清它们各自慢在哪里。"
+    },
+    {
       "docId": "problems/misc/kmeans_delivery.md",
       "source": "复杂度分析",
       "id": "other-kmeans_delivery-complexity",
