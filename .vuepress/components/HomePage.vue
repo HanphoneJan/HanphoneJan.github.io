@@ -137,7 +137,7 @@ const ENTRIES: Entry[] = [
     to: '/code-training/category/题库.html',
     icon: '🧮',
     title: '代码训练',
-    desc: '力扣 / 牛客题解，每道题都能在浏览器里直接跑样例；算法模式页可逐帧看状态变化。',
+    desc: '力扣 / 牛客题解，每道题都能跑样例、提交服务器评测；算法模式页可逐帧看状态变化。',
     cta: '开始刷题',
   },
   {
@@ -160,8 +160,8 @@ const FEATURES: Feature[] = [
   {
     to: '/code-training/category/题库.html',
     icon: '▶',
-    title: '浏览器里跑样例',
-    desc: '题解里点一下就能运行代码、比对样例输出，不用装 Python 环境，也不用复制粘贴。',
+    title: '跑样例 + 提交评测',
+    desc: '题解里点一下就能运行样例；完整代码可提交到服务器，用 10~25 个测试点判 AC / WA / TLE。',
   },
   {
     to: '/code-training/category/算法模式.html',

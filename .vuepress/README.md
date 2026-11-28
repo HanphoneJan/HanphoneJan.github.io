@@ -148,6 +148,7 @@ Vue 页面
 | 位置 | 组件 |
 |---|---|
 | 每个「能跑」的 python 代码块之后 | `SnippetBarMount` |
+| 「完整代码实现」块 | `SnippetBarMount`（额外带 `judge-id`，渲染提交评测） |
 | 正文末尾 | `TracerVisualizerMount`、`PatternGraphMount`、`SelfTestMount` |
 
 `PatternGraphMount` 只在文档**没有自己写** `## 相关题目` 时注入 ——
@@ -158,6 +159,11 @@ Vue 页面
 `plugins/py-samples` 抽取函数、题库清单、`patterns` 反向索引。**只把
 「模式 -> 相关题目」这一张表**用 Vite `define` 注入客户端；题库
 （`/quiz/bank.json`）仍然按需 fetch。
+
+「完整代码实现」块额外带 `judge-id`（`src/components/training/judge/id.ts` 归一化
+`platform + id`），`SnippetBar` 里的 `JudgePanel` 再按需请求
+`https://hanphone.cn/judge-api/v1/problems`。评测服务不在构建期依赖里，
+服务不可用时提交入口静默隐藏；服务端代码在 `hanphone-blog/judge-server/`。
 
 ### 3. 构建期生成页面：`createPage`
 
