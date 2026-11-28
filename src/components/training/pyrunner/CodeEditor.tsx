@@ -14,11 +14,14 @@
  * （CodeMirror 全部是纯 ESM、无 install 脚本，所以 pnpm 11 的 build 白名单、
  * CI 的 frozen-lockfile 都不受影响 —— 这也是选它而不是 Monaco 的原因之一。）
  *
- * ## 配色：零主题包，复用代码块的 CSS 变量
+ * ## 配色：零主题包，复用主题的代码块变量
  *
- * 容器上已经有 `--prism-background-color` / `--prism-color`，编辑器 theme
- * 直接读这些变量，配 `--ifm-color-emphasis-*`。深浅色自动跟随，
- * 不引入 `@codemirror/theme-one-dark`。
+ * 运行条与代码块共用 `--code-c-bg` / `--code-c-text` / `--code-c-line-number`，
+ * 编辑器直接读这几个变量，深浅色自动跟随，不引入
+ * `@codemirror/theme-one-dark`。
+ *
+ * （早先读的是 `--prism-color` / `--ifm-*` —— 那是 Docusaurus 时代的变量，
+ * VuePress 主题里一个都没有，`color: var(--prism-color)` 会退化成继承。）
  *
  * ## 高度：显式给，编辑器内部滚动
  *
@@ -112,18 +115,18 @@ const errorLineField = StateField.define<DecorationSet>({
 /** 主题：全部走 CSS 变量，跟着代码块配色走 */
 const editorTheme = EditorView.theme({
   '&': {
-    fontSize: 'var(--ifm-code-font-size)',
+    fontSize: 'var(--code-font-size, 0.875em)',
     backgroundColor: 'transparent',
-    color: 'var(--prism-color)',
+    color: 'var(--code-c-text)',
   },
   '.cm-content': {
-    fontFamily: 'var(--ifm-font-family-monospace)',
-    caretColor: 'var(--prism-color)',
+    fontFamily: 'var(--code-font-family, monospace)',
+    caretColor: 'var(--code-c-text)',
     padding: '0.5rem 0',
   },
   '.cm-gutters': {
     backgroundColor: 'transparent',
-    color: 'var(--ifm-color-emphasis-600)',
+    color: 'var(--code-c-line-number)',
     border: 'none',
   },
   '.cm-activeLine': {backgroundColor: 'rgba(127,127,127,0.12)'},
@@ -131,7 +134,7 @@ const editorTheme = EditorView.theme({
   '.cm-selectionBackground, &.cm-focused .cm-selectionBackground': {
     backgroundColor: 'rgba(127,127,127,0.25)',
   },
-  '.cm-cursor': {borderLeftColor: 'var(--prism-color)'},
+  '.cm-cursor': {borderLeftColor: 'var(--code-c-text)'},
 });
 
 export default function CodeEditor({

@@ -1,121 +1,253 @@
 /**
  * 运行条与编辑器的样式。
  *
- * ## 为什么挂在 theme-code-block 容器**里面**
+ * ## 只认主题自己的变量
  *
- * 容器上带着 `--prism-background-color` / `--prism-color`（由 Container
- * 组件内联注入），运行条放进去就自动继承代码块配色，深浅色跟随零成本。
+ * 这一版之前整份照抄 Docusaurus/Infima：`--ifm-pre-padding`、
+ * `--ifm-color-emphasis-*`、`--prism-color`。迁移到 VuePress 之后这些变量在
+ * 主题里**一个都没有**，于是 `padding: 0.45rem var(--ifm-pre-padding)` 整条
+ * 声明失效（计算值 0 —— 按钮贴在容器左边缘）、`font-size` 落回 17px
+ * （比它上面 14.875px 的代码还大）。现在只用 hope 在 `:root` 上定义的那几个：
  *
- * 代价是要处理圆角：容器 `overflow` 默认 visible，运行条得自己把底部两个角
- * 补上，否则代码块圆角和运行条直角之间会露出一条缝。
+ * | 用途 | 变量 |
+ * |---|---|
+ * | 与代码块同一套底色/字色 | `--code-c-bg` / `--code-c-text` |
+ * | 留白、字号、字体、圆角 | `--code-padding-x` / `--code-font-size` / `--code-font-family` / `--code-border-radius` |
+ * | 主操作（与主题按钮同一套） | `--vp-c-accent-bg` / `--vp-c-accent-text` / `--vp-c-accent` / `--vp-c-accent-soft` |
+ * | 次要文字、分隔线 | `--vp-c-text-mute` / `--vp-c-divider`（这里用 currentColor 混出来） |
+ * | 判定色 | `--vp-c-green-text` / `--vp-c-red-text` |
+ *
+ * ## 运行条不在代码块容器里
+ *
+ * 老注释说「挂在 theme-code-block 容器内部，自动继承 prism 配色」——
+ * VuePress 这边是 fence 之后独立的 `react-mount`，是代码块的**兄弟**。
+ * 所以这里显式取 `--code-c-bg` 才和上面的代码块是同一块颜色，
+ * 底部的两个圆角也要自己补（代码块只有上面两个角）。
+ *
+ * 移动端跟随主题：`--code-border-radius` 在 <=419px 归零、代码块本身
+ * `margin-inline: -1.5rem` 顶到屏幕边，运行条也一起顶边（见文件末尾）。
  */
 
 .bar {
-  border-top: 1px solid var(--ifm-color-emphasis-300);
-  border-bottom-left-radius: inherit;
-  border-bottom-right-radius: inherit;
-  font-size: var(--ifm-code-font-size);
+  /* 横向留白＝代码块的左右 padding，按钮行和代码正文左对齐 */
+  --bar-x: var(--code-padding-x, 1.25rem);
+  /* --code-font-size 是 `.875em`，按父级（正文 17px）算出 14.875px */
+  font-size: var(--code-font-size, 0.875rem);
+  color: var(--code-c-text, inherit);
+  background: var(--code-c-bg, var(--vp-c-bg-alt));
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-bottom-right-radius: var(--code-border-radius, 6px);
+  border-bottom-left-radius: var(--code-border-radius, 6px);
+  padding-bottom: 0.5rem;
 }
 
-/* ---------- 按钮行 ---------- */
+/* ---------- 按钮 ---------- */
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem 0.5rem;
+  gap: 0.3rem 0.45rem;
   align-items: center;
-  padding: 0.45rem var(--ifm-pre-padding);
+  padding: 0.42rem var(--bar-x) 0;
   /* rtl:ignore */
   direction: ltr;
 }
 
-/*
- * 运行条不是主按钮，统一成「细边框 + 轻微底纹」。
- * 之前提交按钮用整块 accent 填充，颜色由 --ifm-color-primary-contrast-background
- * 取到的是 accent-soft（深蓝底上的半透明深蓝），看起来就是一块蓝块。
- * 现在主/次按钮都靠边框和底纹区分，不靠大面积填色。
- */
 .buttonBase {
   display: inline-flex;
+  gap: 0.35em;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
-  min-height: 2rem;
-  padding: 0.3rem 0.72rem;
+  height: 1.75rem;
+  padding: 0 0.625rem;
   font: inherit;
-  font-size: 0.92em;
+  font-size: 0.95em;
   font-weight: 600;
-  line-height: 1.2;
-  color: var(--ifm-font-color-base);
+  line-height: 1;
   white-space: nowrap;
   cursor: pointer;
-  border: 1px solid var(--ifm-color-emphasis-500);
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--ifm-color-emphasis-200) 42%, transparent);
+  border: 1px solid transparent;
+  border-radius: 5px;
   transition:
     background 0.15s,
     border-color 0.15s,
     color 0.15s,
-    transform 0.05s;
+    transform 0.06s,
+    opacity 0.15s;
 }
 
-.runButton {
+/* 主操作：一屏里唯一一块实心填充（跑样例，或没有样例时的 ▶ 运行） */
+.primary {
   composes: buttonBase;
+  color: var(--vp-c-accent-text, #fff);
+  background: var(--vp-c-accent-bg, var(--vp-c-accent));
 }
 
-.runButton:hover:not(:disabled),
-.customRun:hover:not(:disabled) {
-  color: var(--ifm-color-primary);
-  border-color: color-mix(in srgb, var(--ifm-color-primary) 55%, transparent);
-  background: color-mix(in srgb, var(--ifm-color-primary) 10%, transparent);
+.primary:hover:not(:disabled) {
+  background: var(--vp-c-accent-hover, var(--vp-c-accent-bg));
 }
 
-.runButton:active:not(:disabled),
-.customRun:active:not(:disabled) {
+/*
+ * 次操作：描边。
+ *
+ * 文字用 `--vp-c-indigo-text` 而不是 `--vp-c-accent` —— 后者是**填充色**，
+ * 暗色下是 #2d69ec（压在 #282c34 上对比度只有 2.6:1，小字读不清）。
+ * `--vp-c-indigo-text` 就是主题给「强调色文字」准备的那一档（亮 #3451b2 / 暗 #a8b1ff）。
+ */
+.secondary {
+  composes: buttonBase;
+  color: var(--vp-c-indigo-text, var(--vp-c-accent));
+  background: transparent;
+  border-color: color-mix(
+    in srgb,
+    var(--vp-c-indigo-text, var(--vp-c-accent)) 45%,
+    transparent
+  );
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--vp-c-accent-soft);
+  border-color: color-mix(
+    in srgb,
+    var(--vp-c-indigo-text, var(--vp-c-accent)) 70%,
+    transparent
+  );
+}
+
+/* 三级操作：改代码 / 收起输入 / 还原 —— 不抢主操作的位置 */
+.ghost {
+  composes: buttonBase;
+  padding: 0 0.4rem;
+  font-weight: 500;
+  color: var(--vp-c-text-mute);
+  background: none;
+}
+
+.ghost:hover:not(:disabled),
+.ghost[aria-expanded='true'] {
+  color: var(--code-c-text, inherit);
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.primary:active:not(:disabled),
+.secondary:active:not(:disabled),
+.ghost:active:not(:disabled) {
   transform: translateY(1px);
 }
 
-.runButton:focus-visible,
-.customRun:focus-visible,
-.linkButton:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ifm-color-primary) 45%, transparent);
+.primary:focus-visible,
+.secondary:focus-visible,
+.ghost:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--vp-c-accent) 55%, transparent);
   outline-offset: 2px;
 }
 
-.runButton:disabled {
+.primary:disabled {
   cursor: progress;
-  opacity: 0.55;
+  opacity: 0.6;
 }
 
-.linkButton {
-  min-height: 2rem;
-  padding: 0.25rem 0.42rem;
-  font: inherit;
-  font-size: 0.9em;
-  color: var(--ifm-font-color-base);
-  cursor: pointer;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: none;
-  opacity: 0.72;
-  transition: background 0.15s, opacity 0.15s;
+.secondary:disabled,
+.ghost:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
-.linkButton:hover {
-  opacity: 1;
-  background: color-mix(in srgb, var(--prism-color) 8%, transparent);
+/*
+ * 运行时在按钮上转一个小圈。
+ * 按钮文字本来就切成「加载中…/运行中…」，这里的圈只是让「点到了」更明显 ——
+ * 12.9MB 的运行时第一次下载要十几秒，只有一个字变了的按钮容易被当成没反应。
+ */
+.primary[data-busy='true']::before {
+  width: 0.68em;
+  height: 0.68em;
+  content: '';
+  border: 1.5px solid currentcolor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary[data-busy='true']::before {
+    animation: none;
+  }
+}
+
+/* 样例数：跟按钮走，但不抢字重 */
+.count {
+  font-size: 0.92em;
+  font-weight: 500;
+  opacity: 0.78;
+  font-variant-numeric: tabular-nums;
 }
 
 .spacer {
   flex: 1 1 auto;
 }
 
-/* ---------- 自己输一行跑一下 ---------- */
+/* 「浏览器里跑」与「送到评测机」之间那道分隔 */
+.sep {
+  width: 1px;
+  height: 1.05rem;
+  margin: 0 0.15rem;
+  background: color-mix(in srgb, currentColor 22%, transparent);
+}
+
+/* ---------- 自己输参数 / stdin ---------- */
 .custom {
   display: flex;
-  gap: 0.45rem;
-  align-items: center;
-  padding: 0 var(--ifm-pre-padding) 0.55rem;
+  gap: 0.4rem;
+  align-items: flex-start;
+  padding: 0.4rem var(--bar-x) 0;
+  /* rtl:ignore */
   direction: ltr;
+}
+
+/* 输入框与代码同一套等宽字体：这里填的是给 Python 的字面量，不是散文 */
+.field {
+  flex: 1 1 14rem;
+  min-width: 0;
+  max-width: 38rem;
+  padding: 0.34rem 0.55rem;
+  font: inherit;
+  font-family: var(--code-font-family, monospace);
+  font-size: 0.95em;
+  line-height: 1.45;
+  color: inherit;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: 5px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field::placeholder {
+  color: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.field:focus {
+  border-color: var(--vp-c-accent);
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--vp-c-accent) 18%, transparent);
+}
+
+.args {
+  composes: field;
+  height: 1.75rem;
+}
+
+/* stdin 可能是多行（HJ24：先一个 n，再一行数组），必须能装下换行 */
+.stdin {
+  composes: field;
+  min-height: 1.75rem;
+  overflow: auto;
+  white-space: pre;
+  resize: vertical;
 }
 
 .customRun {
@@ -123,75 +255,55 @@
   flex: 0 0 auto;
 }
 
-.customRun:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.args {
-  flex: 1 1 12rem;
-  min-width: 8rem;
-  max-width: 34rem;
-  min-height: 2rem;
-  padding: 0.3rem 0.6rem;
-  font: inherit;
-  color: var(--ifm-font-color-base);
-  border: 1px solid var(--ifm-color-emphasis-500);
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--ifm-color-emphasis-200) 36%, transparent);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-/* stdin 可能是多行（HJ24：先一个 n，再一行数组），必须能装下换行 */
-.stdin {
-  flex: 1 1 16rem;
-  min-width: 8rem;
-  max-width: 34rem;
-  padding: 0.35rem 0.6rem;
-  font: inherit;
-  /* 保留作者手写的换行与缩进，别让 textarea 把它折成一行 */
-  white-space: pre;
-  overflow: auto;
-  resize: vertical;
-  color: var(--ifm-font-color-base);
-  border: 1px solid var(--ifm-color-emphasis-500);
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--ifm-color-emphasis-200) 36%, transparent);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.stdin:focus,
-.args:focus {
-  outline: none;
-  border-color: var(--ifm-color-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ifm-color-primary) 16%, transparent);
-}
-
-.args::placeholder {
-  color: var(--ifm-color-emphasis-600);
-}
-
 /* ---------- 结果 ---------- */
 .results {
-  padding: 0.25rem var(--ifm-pre-padding) 0.75rem;
+  --verdict: var(--vp-c-text-mute, #666);
+  padding: 0.5rem 0.65rem 0.6rem;
+  margin: 0.55rem var(--bar-x) 0;
+  border: 1px solid color-mix(in srgb, var(--verdict) 28%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--verdict) 8%, transparent);
+}
+
+.results[data-verdict='pass'] {
+  --verdict: var(--vp-c-green-text, #18794e);
+}
+
+.results[data-verdict='fail'] {
+  --verdict: var(--vp-c-red-text, #b8272c);
 }
 
 .summary {
-  margin: 0.3rem 0 0.5rem;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 0.95em;
   font-weight: 600;
 }
 
+.summary .verdictMark {
+  display: grid;
+  place-items: center;
+  width: 1.15em;
+  height: 1.15em;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: var(--vp-c-bg, #fff);
+  background: var(--verdict);
+  border-radius: 50%;
+}
+
 .list {
-  margin: 0;
   padding: 0;
+  margin: 0.35rem 0 0;
   list-style: none;
 }
 
 .row {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.4rem 0;
-  border-top: 1px solid var(--ifm-color-emphasis-1000);
+  gap: 0.45rem;
+  padding: 0.24rem 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
 }
 
 .row:first-child {
@@ -199,25 +311,24 @@
 }
 
 .mark {
+  display: grid;
   flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.15rem;
-  height: 1.15rem;
-  margin-top: 0.1rem;
+  place-items: center;
+  width: 1.1em;
+  height: 1.1em;
+  margin-top: 0.2em;
+  font-size: 0.8em;
   font-weight: 700;
-  line-height: 1;
-  color: #fff;
+  color: var(--vp-c-bg, #fff);
   border-radius: 50%;
 }
 
 .pass {
-  background: #2f855a;
+  background: var(--vp-c-green-text, #2f855a);
 }
 
 .fail {
-  background: #c53030;
+  background: var(--vp-c-red-text, #c53030);
 }
 
 .rowBody {
@@ -225,71 +336,124 @@
   min-width: 0;
 }
 
+/* 通过 / 未判定的那一行：`调用 → 返回值` 压在同一行 */
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+/* 调用文本：这是代码，等宽 */
 .call {
+  font-family: var(--code-font-family, monospace);
+  font-size: 0.95em;
+  word-break: break-all;
+}
+
+.actual {
+  font-family: var(--code-font-family, monospace);
   font-size: 0.95em;
   word-break: break-all;
 }
 
 .note {
-  margin-top: 0.2rem;
+  margin-top: 0.1rem;
   font-size: 0.85em;
-  color: var(--ifm-color-emphasis-600);
+  color: var(--vp-c-text-mute);
 }
 
+.arrow {
+  color: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+/*
+ * 失败才并列「期望 / 实际」。
+ * 之前通过的行也并列打印 —— `[0,1]` 与 `[0, 1]` 只差一个空格，
+ * 看起来像不一致，读者要自己二次判断这一行到底过没过。
+ */
 .diff {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.2rem 0.9rem;
+  margin-top: 0.2rem;
+  font-family: var(--code-font-family, monospace);
+  font-size: 0.92em;
+}
+
+.diffItem {
+  display: inline-flex;
+  gap: 0.3rem;
   align-items: baseline;
-  margin-top: 0.25rem;
 }
 
 .diffLabel {
-  font-size: 0.85em;
-  opacity: 0.7;
+  font-family: inherit;
+  color: color-mix(in srgb, currentColor 52%, transparent);
 }
 
 .diff code {
   padding: 0 0.3rem;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--prism-color) 10%, transparent);
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
 }
 
 .bad {
-  background: color-mix(in srgb, #c53030 25%, transparent);
+  color: var(--vp-c-red-text, #c53030);
+  background: color-mix(in srgb, var(--vp-c-red-text, #c53030) 14%, transparent);
 }
 
-.reason,
-.output,
-.error {
-  margin: 0.4rem 0 0;
+.reason {
+  padding: 0.4rem 0.5rem;
+  margin: 0.3rem 0 0;
   overflow-x: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-size: 0.92em;
+  font-family: var(--code-font-family, monospace);
+  font-size: 0.9em;
   line-height: 1.5;
-}
-
-.error {
-  padding: 0.6rem var(--ifm-pre-padding);
-  color: #ffb4b4;
-  border-top: 1px solid color-mix(in srgb, #c53030 40%, transparent);
-  background: color-mix(in srgb, #c53030 12%, transparent);
+  word-break: break-word;
+  white-space: pre-wrap;
+  background: color-mix(in srgb, var(--vp-c-red-text, #c53030) 8%, transparent);
+  border-radius: 5px;
 }
 
 .output {
-  padding: 0.5rem var(--ifm-pre-padding);
+  padding: 0.5rem 0.65rem;
+  margin: 0.55rem var(--bar-x) 0;
+  overflow-x: auto;
+  font-family: var(--code-font-family, monospace);
+  font-size: 0.92em;
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+  background: color-mix(in srgb, currentColor 6%, transparent);
+  border-radius: 5px;
+}
+
+.error {
+  padding: 0.55rem 0.65rem;
+  margin: 0.55rem var(--bar-x) 0;
+  overflow-x: auto;
+  font-family: var(--code-font-family, monospace);
+  font-size: 0.9em;
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+  color: var(--vp-c-red-text, #b8272c);
+  background: color-mix(in srgb, var(--vp-c-red-text, #b8272c) 10%, transparent);
+  border-radius: 5px;
 }
 
 .loading {
-  padding: 0 0.75rem 0.6rem;
+  padding: 0 var(--bar-x) 0.3rem;
   margin: 0;
+  font-size: 0.9em;
   opacity: 0.7;
 }
 
 /* ---------- 编辑器 ---------- */
 .editorHost {
-  border-top: 1px solid var(--ifm-color-emphasis-1000);
+  margin-top: 0.45rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
 }
 
 /*
@@ -310,37 +474,26 @@
 }
 
 .editorHint {
+  padding: 0.15rem var(--bar-x) 0.3rem;
   margin: 0;
-  padding: 0.2rem var(--ifm-pre-padding) 0.5rem;
   font-size: 0.85em;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 /* traceback 指到的出错行 */
 .cmErrorLine {
-  background: color-mix(in srgb, #c53030 22%, transparent);
-  box-shadow: inset 2px 0 0 #c53030;
+  background: color-mix(in srgb, var(--vp-c-red-text, #c53030) 20%, transparent);
+  box-shadow: inset 2px 0 0 var(--vp-c-red-text, #c53030);
 }
 
-@media (max-width: 576px) {
-  .diff {
-    flex-direction: column;
-    gap: 0.15rem;
-  }
-
-  .actions,
-  .custom {
-    align-items: stretch;
-  }
-
-  .runButton,
-  .customRun {
-    flex: 1 1 auto;
-  }
-
-  .args,
-  .stdin {
-    flex-basis: 100%;
-    max-width: none;
+/*
+ * 移动端：主题在 <=419px 把代码块顶到屏幕边（`#content > div[class*=language-]`
+ * 的 `margin-inline: -1.5rem`）并把圆角归零，运行条跟它一起走，
+ * 否则会出现「代码顶边、按钮缩在中间」的错位。
+ */
+@media (width <= 419px) {
+  .bar {
+    margin-inline: -1.5rem;
+    border-radius: 0;
   }
 }

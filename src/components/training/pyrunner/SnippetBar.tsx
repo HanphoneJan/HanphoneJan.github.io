@@ -15,10 +15,26 @@
  * 右上角那排位置是复制/换行按钮的地盘，把运行塞进去会挤成一团；
  * 而且读者在代码块里的第一反应是「读完这段」，不是「点右上角」。
  *
- * ## 为什么渲染在 CodeBlock 容器内部
+ * ## 一条主操作栏，一屏一块实心按钮
  *
- * 容器上带着 `--prism-background-color` / `--prism-color`，塞进去就自动
- * 跟随代码块配色，深浅色零维护；放到容器外面就得自己再实现一遍主题。
+ * ```
+ * ▶ 跑样例 3   自定义输入          还原 改代码 │ 提交评测  LeetCode · 25/63 测试点
+ * ```
+ *
+ * 「跑样例」是主操作（有期望值，判对错）；「自定义输入」是次级入口，
+ * 点开才出现输入框 + ▶ 运行；「改代码」是三级（它改的是代码，不是运行）；
+ * 「提交评测」单独一组（它把代码送到远程，不是浏览器里跑）。
+ *
+ * 之前是两行：第一行「跑样例 / 改代码」，第二行一个 600px 宽的输入框 +
+ * 「▶ 运行」——两个「跑」外观几乎一样，读者看不出一个判样例、一个不判；
+ * 而只读代码的人每次都要多看一层常驻控件。
+ *
+ * ## 为什么不再假设「继承了代码块配色」
+ *
+ * 这套组件原先跑在 Docusaurus 的 theme-code-block 容器**内部**，靠容器上的
+ * `--prism-*` 变量自动跟随配色。VuePress 这边是 fence 之后独立的
+ * `react-mount`（代码块的兄弟节点），继承不到任何东西 —— 所以样式显式取
+ * `--code-c-bg` / `--code-c-text`，见 styles.module.css 的文件头。
  *
  * ## 片段不给按钮
  *
@@ -41,7 +57,7 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import type {PySample, StdinSample} from '@site/plugins/py-samples';
 import {analyzeSnippet, samplesFit} from './snippet';
 import {isUsableExpected} from './compare';
-import JudgePanel from '../judge/JudgePanel';
+import {JudgeReport, JudgeSubmit, useJudge} from '../judge/JudgePanel';
 import {
   asCallArgument,
   usableSamples,
@@ -90,11 +106,15 @@ export default function SnippetBar({
   /** 用户改过的代码；null 表示「没改过，跑的就是页面上的源码」 */
   const [edited, setEdited] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  /** 「自定义输入」是否展开。默认收起，见下面的 customVisible */
+  const [customOpen, setCustomOpen] = useState(false);
   /**
    * 输入框初值：程序块给第一组样例的 stdin，其余给第一组样例的参数。
    * 只在首次挂载时填（下面的 useEffect），读者改过之后不要覆盖回去。
    */
   const [customText, setCustomText] = useState('');
+
+  const judge = useJudge(judgeId ?? null);
 
   const analysis = useMemo(
     () => analyzeSnippet(code, entryName),
@@ -248,10 +268,6 @@ export default function SnippetBar({
     }
   }, [prefill]);
 
-  const runLabel = canRunSamples
-    ? `▶ 跑样例（${derivedCallSamples.length}）`
-    : '▶ 跑样例';
-
   const doRun = useCallback(
     async (runMode: RunMode) => {
       setPhase('loading');
@@ -293,40 +309,83 @@ export default function SnippetBar({
   const showOutput =
     result !== null && result.rows.length === 0 && Boolean(result.output);
 
+  /**
+   * 有样例的页面：自定义输入默认收起，点一下才展开。
+   * **没有样例的页面必须默认展开**，否则那一块只剩一个「自定义输入」，
+   * 而「跑一下」这件事本身被藏起来了。
+   */
+  const customVisible = sampleMode === null || customOpen;
+
+  const judgedRows = result?.rows.filter((r) => r.expected !== '') ?? [];
+  const judged = judgedRows.length > 0;
+  const allPass = judged && judgedRows.every((r) => r.verdict === 'pass');
+  const judgeReady = Boolean(judge.problem?.languages.includes('python'));
+
   return (
     <div className={styles.bar} data-testid="snippet-bar">
       <div className={styles.actions}>
         {sampleMode && (
           <button
             type="button"
-            className={styles.runButton}
+            className={styles.primary}
             onClick={() => void doRun(sampleMode)}
             disabled={busy}
+            data-busy={busy || undefined}
             data-testid="run">
-            {busy ? (phase === 'loading' ? '加载中…' : '运行中…') : runLabel}
+            {busy ? (
+              phase === 'loading' ? (
+                '加载中…'
+              ) : (
+                '运行中…'
+              )
+            ) : (
+              <>
+                ▶ 跑样例
+                {derivedCallSamples.length > 0 && (
+                  <span className={styles.count}>
+                    {derivedCallSamples.length}
+                  </span>
+                )}
+              </>
+            )}
           </button>
         )}
 
-        <button
-          type="button"
-          className={styles.linkButton}
-          onClick={() => setEditing((v) => !v)}
-          aria-expanded={editing}>
-          {editing ? '收起代码' : '改代码'}
-        </button>
+        {showCustomInput && sampleMode && (
+          <button
+            type="button"
+            className={styles.ghost}
+            onClick={() => setCustomOpen((v) => !v)}
+            aria-expanded={customVisible}>
+            {customVisible ? '收起输入' : '自定义输入'}
+          </button>
+        )}
+
+        <span className={styles.spacer} />
+
         {modified && (
           <button
             type="button"
-            className={styles.linkButton}
+            className={styles.ghost}
             onClick={() => setEdited(null)}>
             还原
           </button>
         )}
+        <button
+          type="button"
+          className={styles.ghost}
+          onClick={() => setEditing((v) => !v)}
+          aria-expanded={editing}>
+          {editing ? '收起代码' : '改代码'}
+        </button>
 
+        {/* 右侧一组：把代码送到评测机，和「浏览器里跑」分开 */}
+        {judgeReady && <span className={styles.sep} aria-hidden="true" />}
+        <JudgeSubmit judge={judge} code={edited ?? code} />
       </div>
 
       {/* 自己输一行参数/输入跑一下 —— 与「跑样例」并存，不互相顶替 */}
-      {showCustomInput && (
+      {showCustomInput && customVisible && (
         <div className={styles.custom}>
           {/*
             多行输入要用 textarea。
@@ -375,7 +434,7 @@ export default function SnippetBar({
           )}
           <button
             type="button"
-            className={styles.customRun}
+            className={sampleMode ? styles.secondary : styles.primary}
             onClick={() => void doRun(customMode)}
             disabled={busy || needCustom}
             title={needCustom ? '先填内容' : undefined}
@@ -406,7 +465,10 @@ export default function SnippetBar({
       )}
 
       {result !== null && result.rows.length > 0 && (
-        <div className={styles.results}>
+        <div
+          className={styles.results}
+          data-verdict={judged ? (allPass ? 'pass' : 'fail') : undefined}
+          data-testid="run-result">
           {/*
             只有真的判过（有期望值）才说「N / N 组通过」。
 
@@ -414,56 +476,67 @@ export default function SnippetBar({
             pass（那是「没崩」不是「答对」）。照旧渲染的话会得到一句
             「1 / 1 组通过」，读者以为验过了 —— 其实什么都没验。
           */}
-          {result.rows.some((r) => r.expected !== '') && (
+          {judged && (
             <p className={styles.summary}>
-              {result.passCount} / {result.total} 组通过
+              <span className={styles.verdictMark}>
+                {allPass ? '✓' : '✗'}
+              </span>
+              <span>
+                {result.passCount} / {result.total} 组通过
+              </span>
             </p>
           )}
           <ul className={styles.list}>
             {result.rows.map((row, i) => {
-              const judged = row.expected !== '';
+              const rowJudged = row.expected !== '';
+              const pass = row.verdict === 'pass';
               return (
                 <li key={i} className={styles.row}>
-                  {judged && (
+                  {rowJudged && (
                     <span
                       className={`${styles.mark} ${
-                        row.verdict === 'pass' ? styles.pass : styles.fail
+                        pass ? styles.pass : styles.fail
                       }`}>
-                      {row.verdict === 'pass' ? '✓' : '✗'}
+                      {pass ? '✓' : '✗'}
                     </span>
                   )}
                   <div className={styles.rowBody}>
-                    <code className={styles.call}>{row.call}</code>
-                    {row.note && <div className={styles.note}>{row.note}</div>}
                     {/*
-                      结果永远摆出来。
+                      通过的行「调用 → 返回值」压在同一行。
+                      之前通过的行也并列打印「期望 / 实际」——
+                      `[0,1]` 与 `[0, 1]` 只差一个空格，看着像不一致，
+                      读者还得自己判断这一行到底过没过。
 
-                      早先这一块只在 `verdict !== 'pass' && expected !== ''` 时
-                      渲染，于是有两类运行**只显示调用文本、没有任何输出**：
-                        - 自己输参数（没有期望值）—— 读者只想试一下，却不给看返回值
-                        - stdin 模式通过时 —— 只剩一句占位文案「（喂给 stdin 的输入）」
-                      而「看到代码算出了什么」正是运行条存在的全部意义。
-                      判过的样例把期望与实际并列；没判过的只标「输出」。
-                      没判过又出错（自己输的参数炸了）时不摆这块 —— 那行「输出」
-                      只会是 traceback 的最后一行，下面的完整 traceback 才是要读的。
+                      没判过的（自己输的参数 / 无期望的 stdin）也只给「输出」；
+                      出错时不摆这块 —— 那行「输出」只会是 traceback 的最后一行，
+                      下面的完整 traceback 才是要读的。
                     */}
-                    {(judged || row.verdict !== 'error') && (
+                    <div className={styles.line}>
+                      <code className={styles.call}>{row.call}</code>
+                      {rowJudged && pass && (
+                        <>
+                          <span className={styles.arrow}>→</span>
+                          <code className={styles.actual}>{row.actual}</code>
+                        </>
+                      )}
+                      {!rowJudged && row.verdict !== 'error' && (
+                        <>
+                          <span className={styles.arrow}>→</span>
+                          <code className={styles.actual}>{row.actual}</code>
+                        </>
+                      )}
+                    </div>
+                    {row.note && <div className={styles.note}>{row.note}</div>}
+                    {rowJudged && !pass && (
                       <div className={styles.diff}>
-                        {judged && (
-                          <>
-                            <span className={styles.diffLabel}>期望</span>
-                            <code>{row.expected}</code>
-                          </>
-                        )}
-                        <span className={styles.diffLabel}>
-                          {judged ? '实际' : '输出'}
+                        <span className={styles.diffItem}>
+                          <span className={styles.diffLabel}>期望</span>
+                          <code>{row.expected}</code>
                         </span>
-                        <code
-                          className={
-                            row.verdict === 'pass' ? undefined : styles.bad
-                          }>
-                          {row.actual}
-                        </code>
+                        <span className={styles.diffItem}>
+                          <span className={styles.diffLabel}>实际</span>
+                          <code className={styles.bad}>{row.actual}</code>
+                        </span>
                       </div>
                     )}
                     {row.verdict !== 'pass' && row.reason && (
@@ -496,7 +569,7 @@ export default function SnippetBar({
         </pre>
       )}
 
-      {judgeId && <JudgePanel judgeId={judgeId} code={edited ?? code} />}
+      <JudgeReport judge={judge} />
     </div>
   );
 }
