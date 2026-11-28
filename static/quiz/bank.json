@@ -3811,6 +3811,15 @@
       "explain": "状态机 DP的时间复杂度是 O(n)。表里的其他解法分别是枚举分界点 O(n²) —— 答错说明还没分清它们各自慢在哪里。"
     },
     {
+      "docId": "problems/misc/cg_cookie_allocation.md",
+      "source": "复杂度分析",
+      "id": "other-cg_cookie_allocation-complexity",
+      "type": "blank",
+      "stem": "本题最优解「状压 DP + 子集枚举」的时间复杂度是？（直接写复杂度表达式）",
+      "answer": "O(3^m)",
+      "explain": "状压 DP + 子集枚举的时间复杂度是 O(3^m)。"
+    },
+    {
       "docId": "problems/misc/confusable_model_match.md",
       "source": "复杂度分析",
       "id": "other-confusable_model_match-complexity",
