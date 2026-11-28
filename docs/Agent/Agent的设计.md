@@ -1,5 +1,9 @@
 ---
 ---
+::: important
+生产四要素：评测 eval、可观测 trace、部署 deploy、安全 security
+:::
+
 一个简洁的定义：**智能体 = 在循环中自主调用工具的 LLM**。
 典型的 Agent 循环由两个主要步骤组成：
 
