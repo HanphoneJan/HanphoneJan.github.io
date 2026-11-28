@@ -41,6 +41,7 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import type {PySample, StdinSample} from '@site/plugins/py-samples';
 import {analyzeSnippet, samplesFit} from './snippet';
 import {isUsableExpected} from './compare';
+import JudgePanel from '../judge/JudgePanel';
 import {
   asCallArgument,
   usableSamples,
@@ -70,6 +71,8 @@ interface Props {
    * `matchesDocEntry`。
    */
   entryName: string | null;
+  /** 评测服务里的题目 ID；只有「完整代码实现」块会传 */
+  judgeId?: string | null;
 }
 
 type Phase = 'idle' | 'loading' | 'running';
@@ -79,6 +82,7 @@ export default function SnippetBar({
   samples,
   stdinSamples,
   entryName,
+  judgeId,
 }: Props): ReactNode {
   const indexUrl = useBaseUrl(INDEX_URL_PATH);
   const [phase, setPhase] = useState<Phase>('idle');
@@ -491,6 +495,8 @@ export default function SnippetBar({
           <code>{result.driverError}</code>
         </pre>
       )}
+
+      {judgeId && <JudgePanel judgeId={judgeId} code={edited ?? code} />}
     </div>
   );
 }

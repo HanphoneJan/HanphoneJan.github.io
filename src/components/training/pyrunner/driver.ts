@@ -492,8 +492,20 @@ export function buildCallDriver(
    * 样例模式由 runner 先翻译好（见 toPythonLiteral），手动输入走这条。
    */
   translateJs = false,
+  /**
+   * 服务端 harness 用：把结果写到文件而不是作为裸表达式返回。
+   * 浏览器里不传，保持 `runPythonAsync` 的返回值协议不变。
+   */
+  resultPath?: string,
+  /**
+   * 服务端 harness 用：从 `/w/case.json` 读 `args`，而不是把参数写死在驱动里。
+   * 一个 harness 可以服务同一道题的所有测试点。
+   */
+  caseFile?: string,
 ): string {
-  const kinds = (cases[0] ?? []).map((_, i) => nodeKinds[i] ?? 'none');
+  const kinds = nodeKinds.length
+    ? nodeKinds
+    : (cases[0] ?? []).map((_, i) => nodeKinds[i] ?? 'none');
   const dump = textCompare ? '__dump_text__' : '__j__';
 
   return [
@@ -506,7 +518,9 @@ export function buildCallDriver(
     `__kinds__ = ${JSON.stringify(kinds)}`,
     `__dummy_head__ = ${dummyHead ? 'True' : 'False'}`,
     '__r__ = []',
-    `for __a__ in ${JSON.stringify(cases)}:`,
+    caseFile
+      ? `for __a__ in [__json__.load(open(${JSON.stringify(caseFile)}, encoding="utf-8"))["args"]]:`
+      : `for __a__ in ${JSON.stringify(cases)}:`,
     '    try:',
     // 必须 literal_eval：cases 通过 JSON 传进来，元素是**字符串**。
     // 直接 splat 过去，入口拿到的是 "9" 而不是 9，`target - n` 立刻 TypeError。
@@ -534,7 +548,9 @@ export function buildCallDriver(
     `        __r__.append({"v": ${dump}(__enc__(__v__)), "m": __mut__})`,
     '    except Exception:',
     '        __r__.append({"e": __tb__.format_exc()})',
-    '__json__.dumps(__r__, ensure_ascii=False)',
+    resultPath
+      ? `with open(${JSON.stringify(resultPath)}, "w", encoding="utf-8") as __f__:\n    __f__.write(__json__.dumps(__r__[0] if __r__ else {}, ensure_ascii=False))`
+      : '__json__.dumps(__r__, ensure_ascii=False)',
   ]
     .filter(Boolean)
     .join('\n');

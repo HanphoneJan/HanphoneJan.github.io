@@ -59,6 +59,11 @@ jobs:
         # deploy.yml 一直有这一步，两个 workflow 必须保持一致。
         run: node scripts/fetch-pyodide.js
 
+      - name: Verify judge id mapping
+        # judgeIdOf 同时被构建注入和 judge-server 生成器使用；改规则时
+        # 这里会先红，避免页面算出的 id 与服务端题目包对不上。
+        run: pnpm test:judge
+
       - name: Build website
         run: pnpm run build
 

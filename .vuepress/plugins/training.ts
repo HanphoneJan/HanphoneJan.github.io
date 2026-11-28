@@ -1,3 +1,4 @@
+import path from 'node:path'
 import type { App } from 'vuepress/core'
 import type { Markdown } from 'vuepress/markdown'
 import {
@@ -5,7 +6,9 @@ import {
   placementsOf,
 } from '../../src/components/training/visualizer/inlinePlacement'
 import { analyzeSnippet } from '../../src/components/training/pyrunner/snippet'
+import { judgeIdOf } from '../../src/components/training/judge/id'
 import { docIdOf, trainingData } from '../data/training-data'
+import { readFrontMatter } from '../paths'
 
 /**
  * 把训练相关的交互组件注入题解页。
@@ -86,29 +89,54 @@ export const trainingPlugin = (app: App) => {
         const hasRunnableSamples =
           py && (py.samples.length > 0 || py.stdinSamples.length > 0)
 
+        /**
+         * 只有题解页参与评测；模式/数据结构页没有题号。
+         * 评测包存在与否由客户端查 `/v1/problems` 决定，构建期不依赖服务端。
+         */
+        const fullPath = path.join(sourceDir, env.filePathRelative as string)
+        const judgeId = docId.startsWith('problems/')
+          ? judgeIdOf(readFrontMatter(fullPath), docId)
+          : ''
+
         // 有些文档自己写了 `## 相关题目`（221 篇，含全部模式页）。
         // 那种情况不再注入知识图谱组件，否则页面上会出现两个同名小节。
         let hasRelatedHeading = false
+        /** 当前所在的 h2 标题，用来只给「完整代码实现」块挂提交入口 */
+        let section = ''
+        let pendingH2 = false
 
         for (const token of tokens) {
+          if (token.type === 'heading_open' && token.tag === 'h2') {
+            pendingH2 = true
+          } else if (pendingH2 && token.type === 'inline') {
+            section = token.content.trim()
+            pendingH2 = false
+          }
+
           output.push(token)
 
           // ── 运行条：挂在每个「能跑」的 python 块下面 ─────────────────
-          if (hasRunnableSamples && token.type === 'fence') {
+          if (token.type === 'fence') {
             const lang = (token.info || '').trim().split(/\s+/)[0]
-            if (lang === 'python' || lang === 'py') {
-              const analysis = analyzeSnippet(token.content, py.method)
+            const inFullCode = section === '完整代码实现'
+            const canMount = Boolean(hasRunnableSamples) || (inFullCode && judgeId !== '')
+            if ((lang === 'python' || lang === 'py') && canMount) {
+              const analysis = analyzeSnippet(token.content, py?.method ?? null)
               if (analysis.runnable) {
+                const judgeAttr =
+                  inFullCode && judgeId !== ''
+                    ? ` judge-id="${escapeAttr(judgeId)}"`
+                    : ''
                 output.push(
                   makeHtml(
                     `<SnippetBarMount code-b64="${b64(token.content)}" ` +
                       `samples-b64="${b64(
-                        JSON.stringify(py.samples.slice(0, SAMPLE_LIMIT)),
+                        JSON.stringify(py?.samples.slice(0, SAMPLE_LIMIT) ?? []),
                       )}" ` +
                       `stdin-b64="${b64(
-                        JSON.stringify(py.stdinSamples.slice(0, SAMPLE_LIMIT)),
+                        JSON.stringify(py?.stdinSamples.slice(0, SAMPLE_LIMIT) ?? []),
                       )}" ` +
-                      `entry-name="${escapeAttr(py.method ?? '')}" />`,
+                      `entry-name="${escapeAttr(py?.method ?? '')}"${judgeAttr} />`,
                   ),
                 )
               }

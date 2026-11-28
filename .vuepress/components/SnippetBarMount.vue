@@ -11,6 +11,7 @@ const props = defineProps<{
   samplesB64: string
   stdinB64: string
   entryName: string
+  judgeId?: string
 }>()
 
 const host = useReactMount(
@@ -20,6 +21,7 @@ const host = useReactMount(
     samples: decodeJson(props.samplesB64) ?? [],
     stdinSamples: decodeJson(props.stdinB64) ?? [],
     entryName: props.entryName || null,
+    judgeId: props.judgeId || null,
   }),
 )
 </script>

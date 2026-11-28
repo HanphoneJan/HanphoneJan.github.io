@@ -36,6 +36,12 @@ pnpm test:bold        # 正文里不出现字面 `**`（中文标点 / 空格的
 pnpm test:math        # 公式口径（KaTeX 可解析 + 公式不写在代码块里）
 pnpm test:search      # 全文搜索口径（worker 是经典脚本 + 正文词能命中）
 pnpm solutions:fetch  # 抓力扣某题的前几篇高赞题解（写题解前读，不照抄）
+pnpm judge:gen       # 从 LeetCodeDataset 生成 LeetCode 题目包（见「代码评测服务」）
+pnpm judge:gen-docs  # 用题面可见样例生成牛客/CodeFun 等题目包
+pnpm judge:inventory # 打印 351 篇题解的评测包覆盖报告
+pnpm judge:gen-custom  # 链表/类 API/Shopee 等专用 harness
+pnpm judge:gen-hidden  # 给 docs-samples 包补 fuzz 隐藏测试
+pnpm test:judge      # judgeId 归一化契约
 ```
 
 > **环境版本必须对齐**：本地与 CI 均使用 **Node 24 + pnpm 11**（见 `.github/workflows/`）。
@@ -699,6 +705,31 @@ pnpm quiz:validate  # 校验；有 error 退出非 0
   对应小节里字面核对答案文本，找不到就报错。**改动题解后必须重跑**。
 - 出题规范（含干扰项设计、红线、常见错误）见
   `.agents/skills/quiz-bank-processor/SKILL.md`。
+
+### 代码评测服务（judge-server）
+
+题解页的「提交评测」由 `hanphone-blog/judge-server` 提供：Express + PostgreSQL +
+**go-judge** 沙箱，首期只跑 Python。文档站**运行时不硬依赖**它：`JudgePanel`
+先查 `/v1/problems`，服务不可用就静默隐藏按钮；构建、离线 PWA、Pyodide 跑样例都不受影响。
+
+- 服务端代码：`/home/hanphone/develop-projects/hanphone-blog/judge-server`；
+  本地起法见那边的 `README.md` / `DEPLOYMENT.md`。
+- 前端：`src/components/training/judge/`；`SnippetBar` 多了 `judgeId`，
+  只有「## 完整代码实现」块会拿到 `judge-id`（`.vuepress/plugins/training.ts`）。
+- 题目 ID：`judgeIdOf()`（`src/components/training/judge/id.ts`）把
+  `platform + id` 归一成 `leetcode-1` / `nowcoder-hj80`。生成器与服务端导入
+  都用同一条规则；改规则要同时改两边。
+- 测试数据：LeetCode 优先用 `newfacade/LeetCodeDataset`，由
+  `pnpm judge:gen -- --dataset <jsonl.gz> --out <judge-server/data/problems> --only leetcode-1`
+  生成。生成器会先跑数据集参考解、再跑文档解，两边都通过的用例才保留；
+  默认 25 个 active、全量保留。牛客/CodeFun/自定义题后续用参考解 + CYaRon/ojgen 生成。
+- 数据不进公开仓库：`judge-server/data/` 已 gitignore；生成物只放服务端。
+- 不要给 C/Java 代码块挂提交按钮：首期只支持 Python，`language` 字段会拒绝。
+- 改比较口径时，`judge-server/src/compare.ts` 与
+  `src/components/training/pyrunner/compare.ts` 必须同步，并跑
+  `judge-server` 的 `pnpm test`。
+- 回归：`pnpm typecheck`、`pnpm test:judge`、`pnpm test:pyrunner`、
+  `pnpm test:pyodide`、`pnpm build`；前端不给 `judge-server` 增加构建期请求。
 
 ### 知识图谱（题解 → 算法模式）
 

@@ -503,8 +503,12 @@ export function analyzeSnippet(
     });
   }
   if (candidates.length > 0) {
+    // 先找同名方法，再退回「变体后缀」匹配。
+    // 0240 里 searchMatrix_binary_search 排在 searchMatrix 前面；
+    // 只用 isDocEntryOf 会先命中它，而数据集参考解只实现了 searchMatrix。
     const match = docEntryName
-      ? candidates.find((c) => isDocEntryOf(c.name, docEntryName))
+      ? (candidates.find((c) => c.name === docEntryName) ??
+        candidates.find((c) => isDocEntryOf(c.name, docEntryName)))
       : undefined;
     const picked = match ?? pickEntry(candidates);
     return {
@@ -540,7 +544,8 @@ export function analyzeSnippet(
   }
   if (funcs.length > 0) {
     const match = docEntryName
-      ? funcs.find((f) => isDocEntryOf(f.name, docEntryName))
+      ? (funcs.find((f) => f.name === docEntryName) ??
+        funcs.find((f) => isDocEntryOf(f.name, docEntryName)))
       : undefined;
     // 顶层函数沿用「取第一个」的旧规则（牛客题一篇里通常只有一个函数）；
     // 但文档入口名能对上时就用那个 —— 0300 的最后一节里
