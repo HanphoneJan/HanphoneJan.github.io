@@ -12,22 +12,24 @@
  * | sphinx-execution | 每个代码块正下方一个 Play |
  * | docusaurus-theme-live-codeblock | `.playgroundToolbar`，块下方，opacity .5 → 悬停 1 |
  *
- * 右上角那排位置是复制/换行按钮的地盘，把运行塞进去会挤成一团；
+ * 右上角那排位置是复制/换行按钮的地盘，整条运行条塞进去会挤成一团；
  * 而且读者在代码块里的第一反应是「读完这段」，不是「点右上角」。
+ * 所以主栏放在下方，**只有**次要块用右上角一个图标（见下一节）。
  *
- * ## 一条主操作栏，一屏一块实心按钮
+ * ## 两条形态：主栏 / 右上角图标
+ *
+ * 「完整代码实现」是这一页的主代码，整条摆出来：
  *
  * ```
  * ▶ 跑样例 3   自定义输入          还原 改代码 │ 提交评测  LeetCode · 25/63 测试点
  * ```
  *
- * 「跑样例」是主操作（有期望值，判对错）；「自定义输入」是次级入口，
- * 点开才出现输入框 + ▶ 运行；「改代码」是三级（它改的是代码，不是运行）；
- * 「提交评测」单独一组（它把代码送到远程，不是浏览器里跑）。
+ * 其余块（思路 / 暴力 / 易错点）只在**代码块右上角**留一个 ▶，位置在复制
+ * 按钮左边，hover 代码块才淡入 —— 静态时一个像素都不占。点过之后它变成
+ * ✓ / ✗，结果卡片落在代码块下方，动作行（自定义输入 / 改代码）这时才出现。
  *
- * 之前是两行：第一行「跑样例 / 改代码」，第二行一个 600px 宽的输入框 +
- * 「▶ 运行」——两个「跑」外观几乎一样，读者看不出一个判样例、一个不判；
- * 而只读代码的人每次都要多看一层常驻控件。
+ * 为什么不干脆删掉这些块上的运行条：思路块常常是同一题的另一解法，读者
+ * 读到一半就想验一下。删掉是减能力，图标是减注意力 —— 见 emphasis。
  *
  * ## 为什么不再假设「继承了代码块配色」
  *
@@ -53,6 +55,7 @@ import React, {
   useState,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import type {PySample, StdinSample} from '@site/plugins/py-samples';
 import {analyzeSnippet, samplesFit} from './snippet';
@@ -89,6 +92,14 @@ interface Props {
   entryName: string | null;
   /** 评测服务里的题目 ID；只有「完整代码实现」块会传 */
   judgeId?: string | null;
+  /**
+   * 运行条的层级：
+   *
+   * - `primary`（完整代码实现）：整条摆出来，实心「跑样例」+ 提交评测；
+   * - `inline`（思路 / 暴力 / 易错点）：不占版面，只在代码块右上角留一个
+   *   ▶ 图标，hover 代码块才淡入 —— 静态时和复制按钮同一档。
+   */
+  emphasis?: 'primary' | 'inline';
 }
 
 type Phase = 'idle' | 'loading' | 'running';
@@ -99,6 +110,7 @@ export default function SnippetBar({
   stdinSamples,
   entryName,
   judgeId,
+  emphasis = 'primary',
 }: Props): ReactNode {
   const indexUrl = useBaseUrl(INDEX_URL_PATH);
   const [phase, setPhase] = useState<Phase>('idle');
@@ -115,6 +127,30 @@ export default function SnippetBar({
   const [customText, setCustomText] = useState('');
 
   const judge = useJudge(judgeId ?? null);
+
+  const inline = emphasis === 'inline';
+  const barRef = useRef<HTMLDivElement>(null);
+  /**
+   * inline 版那个 ▶ 图标要塞进**上面那个代码块**的右上角（复制按钮左边）。
+   *
+   * 运行条本身是代码块的**兄弟**节点（`.react-mount` 紧跟在
+   * `div.language-*` 后面），CSS 没办法跨节点定位，所以用 portal 把按钮
+   * 渲染进前一个兄弟元素。找不到（结构变了、被别的容器包了一层）就退回
+   * 条子内的普通按钮 —— 宁可难看，不能把「跑一下」弄丢。
+   */
+  const [chipHost, setChipHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!inline) {
+      setChipHost(null);
+      return;
+    }
+    const host = barRef.current?.closest('.react-mount')?.previousElementSibling;
+    setChipHost(
+      host instanceof HTMLElement && /(^|\s)language-/.test(host.className)
+        ? host
+        : null,
+    );
+  }, [inline]);
 
   const analysis = useMemo(
     () => analyzeSnippet(code, entryName),
@@ -321,68 +357,136 @@ export default function SnippetBar({
   const allPass = judged && judgedRows.every((r) => r.verdict === 'pass');
   const judgeReady = Boolean(judge.problem?.languages.includes('python'));
 
+  /**
+   * inline 版那个图标的状态：跑之前是 ▶，跑完变 ✓ / ✗（出错是 !）。
+   * 它同时是「这条代码跑过没有」的唯一提示 —— 结果卡片在代码块下方，
+   * 读者停在代码上时不往下看也知道刚才那一下成没成。
+   */
+  const sampleCount = derivedCallSamples.length;
+  const chipState = busy
+    ? 'busy'
+    : result?.error
+      ? 'error'
+      : judged
+        ? allPass
+          ? 'pass'
+          : 'fail'
+        : undefined;
+  const chipGlyph =
+    chipState === 'pass'
+      ? '✓'
+      : chipState === 'fail'
+        ? '✗'
+        : chipState === 'error'
+          ? '!'
+          : '▶';
+  const chipHint = busy
+    ? phase === 'loading'
+      ? '正在加载 Python 运行时…'
+      : '运行中…'
+    : judged
+      ? `${result.passCount} / ${result.total} 组通过，点一下再跑一次`
+      : sampleCount > 0
+        ? `跑样例（${sampleCount} 组）`
+        : '跑样例';
+
+  /** 图标确实进了代码块：静态时整条运行条可以一个像素都不占 */
+  const chipReady = inline && sampleMode !== null && chipHost !== null;
+  /** inline 版的动作行只在「跑过」或「正在改代码」时出现 */
+  const showActions = !inline || !chipReady || result !== null || editing;
+
   return (
-    <div className={styles.bar} data-testid="snippet-bar">
-      <div className={styles.actions}>
-        {sampleMode && (
+    <div
+      className={styles.bar}
+      data-variant={inline ? 'inline' : 'primary'}
+      data-testid="snippet-bar"
+      ref={barRef}>
+      {/*
+        inline 版的 ▶：塞进上面那个代码块的右上角，位置在复制按钮左边。
+        静态 opacity 0，hover 代码块 / 键盘聚焦时淡入（见 styles.module.css）。
+      */}
+      {chipReady &&
+        sampleMode &&
+        createPortal(
           <button
             type="button"
-            className={styles.primary}
+            className={styles.chip}
+            data-state={chipState}
+            title={chipHint}
+            aria-label={chipHint}
             onClick={() => void doRun(sampleMode)}
             disabled={busy}
-            data-busy={busy || undefined}
             data-testid="run">
-            {busy ? (
-              phase === 'loading' ? (
-                '加载中…'
+            <span aria-hidden="true">
+              {chipState === 'busy' ? '' : chipGlyph}
+            </span>
+          </button>,
+          chipHost,
+        )}
+
+      {showActions && (
+        <div className={styles.actions} data-compact={inline || undefined}>
+          {/* 有样例：primary 版是整块实心按钮；inline 版平时只靠上面的图标 */}
+          {sampleMode && (!inline || !chipReady) && (
+            <button
+              type="button"
+              className={styles.primary}
+              onClick={() => void doRun(sampleMode)}
+              disabled={busy}
+              data-busy={busy || undefined}
+              data-testid="run">
+              {busy ? (
+                phase === 'loading' ? (
+                  '加载中…'
+                ) : (
+                  '运行中…'
+                )
               ) : (
-                '运行中…'
-              )
-            ) : (
-              <>
-                ▶ 跑样例
-                {derivedCallSamples.length > 0 && (
-                  <span className={styles.count}>
-                    {derivedCallSamples.length}
-                  </span>
-                )}
-              </>
-            )}
-          </button>
-        )}
+                <>
+                  ▶ 跑样例
+                  {sampleCount > 0 && (
+                    <span className={styles.count}>{sampleCount}</span>
+                  )}
+                </>
+              )}
+            </button>
+          )}
 
-        {showCustomInput && sampleMode && (
+          {showCustomInput && sampleMode && (
+            <button
+              type="button"
+              className={styles.ghost}
+              onClick={() => setCustomOpen((v) => !v)}
+              aria-expanded={customVisible}>
+              {customVisible ? '收起输入' : '自定义输入'}
+            </button>
+          )}
+
+          {!inline && <span className={styles.spacer} />}
+
+          {modified && (
+            <button
+              type="button"
+              className={styles.ghost}
+              onClick={() => setEdited(null)}>
+              还原
+            </button>
+          )}
           <button
             type="button"
             className={styles.ghost}
-            onClick={() => setCustomOpen((v) => !v)}
-            aria-expanded={customVisible}>
-            {customVisible ? '收起输入' : '自定义输入'}
+            onClick={() => setEditing((v) => !v)}
+            aria-expanded={editing}>
+            {editing ? '收起代码' : '改代码'}
           </button>
-        )}
 
-        <span className={styles.spacer} />
-
-        {modified && (
-          <button
-            type="button"
-            className={styles.ghost}
-            onClick={() => setEdited(null)}>
-            还原
-          </button>
-        )}
-        <button
-          type="button"
-          className={styles.ghost}
-          onClick={() => setEditing((v) => !v)}
-          aria-expanded={editing}>
-          {editing ? '收起代码' : '改代码'}
-        </button>
-
-        {/* 右侧一组：把代码送到评测机，和「浏览器里跑」分开 */}
-        {judgeReady && <span className={styles.sep} aria-hidden="true" />}
-        <JudgeSubmit judge={judge} code={edited ?? code} />
-      </div>
+          {/* 右侧一组：把代码送到评测机，和「浏览器里跑」分开 */}
+          {!inline && judgeReady && (
+            <span className={styles.sep} aria-hidden="true" />
+          )}
+          {!inline && <JudgeSubmit judge={judge} code={edited ?? code} />}
+        </div>
+      )}
 
       {/* 自己输一行参数/输入跑一下 —— 与「跑样例」并存，不互相顶替 */}
       {showCustomInput && customVisible && (
@@ -434,7 +538,9 @@ export default function SnippetBar({
           )}
           <button
             type="button"
-            className={sampleMode ? styles.secondary : styles.primary}
+            className={
+              sampleMode || inline ? styles.secondary : styles.primary
+            }
             onClick={() => void doRun(customMode)}
             disabled={busy || needCustom}
             title={needCustom ? '先填内容' : undefined}

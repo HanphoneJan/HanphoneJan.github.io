@@ -890,6 +890,20 @@ TOC 是**构建期**从 mdast 抽标题的，渲染在 `</DocItemContent>` 之�
 运行入口**长在每个代码块下方**（`src/components/training/pyrunner/SnippetBar.tsx`），
 由 `@theme/CodeBlock/Layout` 这个官方 swizzle 接缝挂上去。没有页面末尾的运行区。
 
+**两种形态，按「是不是完整代码实现」分**（`plugins/training.ts` 传 `emphasis`）：
+
+- `primary`（`## 完整代码实现`）：一整条运行条 —— 实心「跑样例」、自定义输入、
+  改代码、右侧「提交评测」+ 测试点数；
+- `inline`（思路 / 暴力 / 易错点）：条子**高度为 0**，只在代码块右上角留一个 ▶
+  图标（portal 进 `div.language-*`，位置在复制按钮左边 3.25rem），hover 代码块
+  才淡入，形状/尺寸沿用 `.vp-copy-code-button`。跑过之后图标变 ✓/✗ 并常亮，
+  结果卡片与动作行（自定义输入 / 改代码）这时才出现在代码块下方。
+
+不改成「只在完整代码块留入口」：146 篇有可判样例的页面里，399 个能跑的块有
+245 个在思路小节 —— 那是「读到哪试到哪」。删掉是减能力，图标是减注意力。
+`inline` 找不到前一个代码块节点时会退回条子内的普通按钮（宁可难看，别丢功能）。
+触摸设备没有 hover：`@media (hover: none)` 里常显 0.75。
+
 ```bash
 pnpm test:pyrunner   # 纯函数：可运行性判定、样例抽取、驱动代码生成（必跑）
 pnpm test:pyodide    # 用真 Pyodide 跑执行协议；需要先 pnpm sync:pyodide

@@ -127,6 +127,10 @@ export const trainingPlugin = (app: App) => {
                   inFullCode && judgeId !== ''
                     ? ` judge-id="${escapeAttr(judgeId)}"`
                     : ''
+                // 「完整代码实现」是这一页的主代码，运行条整条摆出来；
+                // 其余块（思路/暴力/易错点）只留代码块右上角一个 ▶ 图标，
+                // 静态时和复制按钮同一档。见 SnippetBar 的 emphasis。
+                const emphasis = inFullCode ? 'primary' : 'inline'
                 output.push(
                   makeHtml(
                     `<SnippetBarMount code-b64="${b64(token.content)}" ` +
@@ -136,7 +140,8 @@ export const trainingPlugin = (app: App) => {
                       `stdin-b64="${b64(
                         JSON.stringify(py?.stdinSamples.slice(0, SAMPLE_LIMIT) ?? []),
                       )}" ` +
-                      `entry-name="${escapeAttr(py?.method ?? '')}"${judgeAttr} />`,
+                      `entry-name="${escapeAttr(py?.method ?? '')}" ` +
+                      `emphasis="${emphasis}"${judgeAttr} />`,
                   ),
                 )
               }
